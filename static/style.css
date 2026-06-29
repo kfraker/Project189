@@ -1,0 +1,224 @@
+body {
+    font-family: Arial, sans-serif;
+    margin: 0;
+    min-height: 100vh;
+    padding-bottom: 80px;
+    overflow-x: hidden;
+
+    background: linear-gradient(
+        180deg,
+        #1a0035 0%,
+        #4a0d6b 12%,
+        #8c1a7e 22%,
+        #c73862 32%,
+        #e8583a 42%,
+        #f5aa3c 50%,
+        #1e6878 51%,
+        #164f60 64%,
+        #0e3448 100%
+    );
+}
+
+
+.container {
+    position: relative;
+    z-index: 1;
+    max-width: 760px;
+    margin: 0 auto;
+    padding: 60px 20px 0;
+    text-align: center;
+}
+
+
+h1 {
+    font-family: 'Pacifico', cursive;
+    font-size: 52px;
+    margin-bottom: 48px;
+    color: #ffe0ee;
+    text-shadow:
+        0 0 4px  #ffe0ee,
+        0 0 10px #ff80aa,
+        0 0 20px #ff2d78,
+        0 0 40px #ff2d78,
+        0 0 70px #ff2d78,
+        0 0 100px rgba(255, 45, 120, 0.4);
+}
+
+
+/* ── Weight plates ─────────────────────────────────────────── */
+
+.plates {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 28px;
+}
+
+.plate {
+    position: relative;
+    aspect-ratio: 1;
+    border-radius: 50%;
+    overflow: hidden;
+    will-change: transform;
+
+    background:
+        /* Specular sheen — off-center highlight like studio light on iron */
+        radial-gradient(circle at 36% 30%, rgba(255,255,255,0.09) 0%, rgba(255,255,255,0.03) 30%, transparent 58%),
+        /* Concentric ring pattern — hard stops create sharp groove lines */
+        radial-gradient(circle,
+            rgba(82,82,82,0) 0%,  rgba(82,82,82,0) 10%,  /* transparent hole — alpha-0 gray avoids background bleed at boundary */
+            #525252 10%,          #525252 11%,          /* hole rim highlight */
+            #181818 11%,     #181818 14%,    /* deep shadow at hole edge */
+
+            #252525 14%,    #252525 22%,    /* ring 1 */
+            #090909 22%,    #090909 23%,    /* groove */
+            #282828 23%,    #282828 34%,    /* ring 2 */
+            #090909 34%,    #090909 35%,    /* groove */
+            #2a2a2a 35%,    #2a2a2a 47%,    /* ring 3 */
+            #090909 47%,    #090909 48%,    /* groove */
+            #2d2d2d 48%,    #2d2d2d 61%,    /* ring 4 */
+            #090909 61%,    #090909 62%,    /* groove */
+            #303030 62%,    #303030 75%,    /* ring 5 */
+            #090909 75%,    #090909 76%,    /* groove */
+            #363636 76%,    #363636 87%,    /* outer face */
+            #080808 87%,    #080808 89%,    /* outer groove */
+            #4e4e4e 89%,    #4e4e4e 93%,    /* outer rim highlight */
+            #242424 93%,    #242424 100%    /* outer edge */
+        );
+
+    box-shadow:
+        /* Outer rim glow — catches the Miami sunset */
+        0 0 0 2px #3a3a3a,
+        /* Stepped physical edge — each band is one slice of the plate's side */
+        0 1px 0 #585858,
+        0 2px 0 #505050,
+        0 3px 0 #484848,
+        0 4px 0 #404040,
+        0 5px 0 #383838,
+        0 6px 0 #303030,
+        0 7px 0 #282828,
+        0 8px 0 #202020,
+        0 9px 0 #181818,
+        /* Floating depth shadow */
+        0 22px 50px  rgba(0, 0, 0, 0.78),
+        0 44px 90px  rgba(0, 0, 0, 0.56),
+        0 75px 120px rgba(0, 0, 0, 0.34);
+
+    transition: transform 0.25s ease, box-shadow 0.25s ease;
+}
+
+.plate:hover {
+    transform: translateY(-12px) rotate(3deg);
+    box-shadow:
+        0 0 0 2px #3a3a3a,
+        0 1px 0 #585858,
+        0 2px 0 #505050,
+        0 3px 0 #484848,
+        0 4px 0 #404040,
+        0 5px 0 #383838,
+        0 6px 0 #303030,
+        0 7px 0 #282828,
+        0 8px 0 #202020,
+        0 9px 0 #181818,
+        0 34px 65px  rgba(0, 0, 0, 0.84),
+        0 62px 110px rgba(0, 0, 0, 0.60),
+        0 105px 150px rgba(0, 0, 0, 0.38);
+}
+
+/* Bore depth — transparent overlay sized to cover the full gradient hole;
+   inset shadow is the only paint here, giving the unified hole a 3-D cavity
+   look that shifts on plate tilt. No background fill so the see-through
+   effect is preserved. */
+.plate::after {
+    content: '';
+    position: absolute;
+    width: 14%;
+    height: 14%;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    border-radius: 50%;
+    box-shadow:
+        inset 0 3px 10px rgba(0, 0, 0, 0.95),
+        inset 0 -1px 4px rgba(255, 255, 255, 0.07);
+    pointer-events: none;
+    transition: box-shadow 0.25s ease;
+}
+
+.plate:hover::after {
+    box-shadow:
+        inset 2px 5px 14px rgba(0, 0, 0, 0.98),
+        inset -1px -2px 5px rgba(255, 255, 255, 0.04);
+}
+
+
+/* ── Curved SVG title text ── */
+
+.plate-text-svg {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+}
+
+
+/* ── lbs / kg values — each centered in its own half-zone ──────
+   Zone boundaries: hole edge = 50% ± 5% of plate width (hole r = 10% of gradient radius)
+   lbs midpoint = midpoint of [0%, 45%] = 22.5%
+   kg  midpoint = midpoint of [55%, 100%] = 77.5%
+   ─────────────────────────────────────────────────────────── */
+
+.plate-lbs,
+.plate-kg {
+    position: absolute;
+    top: 50%;
+    text-align: center;
+    transform: translate(-50%, -50%);
+}
+
+.plate-lbs { left: 22.5%; }
+.plate-kg  { left: 77.5%; }
+
+.plate-num {
+    font-family: 'Arial Black', Impact, sans-serif;
+    font-size: 28px;
+    font-weight: 900;
+    color: #d8d8d8;
+    line-height: 1;
+    letter-spacing: -0.5px;
+    text-shadow:
+        0  1px 0   rgba(255, 255, 255, 0.10),
+        0 -1px 0   rgba(0,   0,   0,   0.75),
+        0  2px 8px rgba(0,   0,   0,   0.90);
+}
+
+.plate-unit {
+    margin-top: 6px;
+    font-size: 13px;
+    font-weight: 700;
+    color: #aaaaaa;
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    text-shadow: 0 1px 3px rgba(0, 0, 0, 0.9);
+}
+
+
+/* ── Palm trees ─────────────────────────────────────────────── */
+
+.palm {
+    position: fixed;
+    bottom: 0;
+    width: 200px;
+    height: auto;
+    pointer-events: none;
+    z-index: 0;
+}
+
+.palm-left {
+    left: -20px;
+}
+
+.palm-right {
+    right: -20px;
+    transform: scaleX(-1);
+}

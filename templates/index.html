@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Project 189</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Pacifico&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+
+<body>
+
+<svg class="palm palm-left" viewBox="0 0 120 300" xmlns="http://www.w3.org/2000/svg">
+    <g fill="#0a1520">
+        <path d="M62 300 C60 250 62 200 64 150 C66 100 67 80 68 55"
+              stroke="#0a1520" stroke-width="10" fill="none" stroke-linecap="round"/>
+        <path d="M68 55 Q28 5 3 12 Q32 30 68 55Z"/>
+        <path d="M68 55 Q42 0 28 6 Q46 22 68 55Z"/>
+        <path d="M68 55 Q58 14 63 3 Q67 14 68 55Z"/>
+        <path d="M68 55 Q92 0 108 6 Q90 22 68 55Z"/>
+        <path d="M68 55 Q105 5 118 15 Q102 28 68 55Z"/>
+        <path d="M68 55 Q28 38 2 50 Q30 54 68 55Z"/>
+        <path d="M68 55 Q100 38 118 50 Q98 54 68 55Z"/>
+        <path d="M68 55 Q28 62 5 84 Q32 72 68 55Z"/>
+        <path d="M68 55 Q100 62 118 84 Q98 72 68 55Z"/>
+    </g>
+</svg>
+
+<svg class="palm palm-right" viewBox="0 0 120 300" xmlns="http://www.w3.org/2000/svg">
+    <g fill="#0a1520">
+        <path d="M62 300 C60 250 62 200 64 150 C66 100 67 80 68 55"
+              stroke="#0a1520" stroke-width="10" fill="none" stroke-linecap="round"/>
+        <path d="M68 55 Q28 5 3 12 Q32 30 68 55Z"/>
+        <path d="M68 55 Q42 0 28 6 Q46 22 68 55Z"/>
+        <path d="M68 55 Q58 14 63 3 Q67 14 68 55Z"/>
+        <path d="M68 55 Q92 0 108 6 Q90 22 68 55Z"/>
+        <path d="M68 55 Q105 5 118 15 Q102 28 68 55Z"/>
+        <path d="M68 55 Q28 38 2 50 Q30 54 68 55Z"/>
+        <path d="M68 55 Q100 38 118 50 Q98 54 68 55Z"/>
+        <path d="M68 55 Q28 62 5 84 Q32 72 68 55Z"/>
+        <path d="M68 55 Q100 62 118 84 Q98 72 68 55Z"/>
+    </g>
+</svg>
+
+<div class="container">
+
+    <h1>Project 189</h1>
+
+    <div class="plates">
+
+        <!-- Starting Weight -->
+        <div class="plate">
+            <svg class="plate-text-svg" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+                <defs>
+                    <!--
+                        Top arc  r=34: baseline sits at r=34, glyphs extend OUTWARD → visual band 34–42
+                        Bot arc  r=42: baseline sits at r=42, glyphs extend INWARD  → visual band 34–42
+                        Both bands identical → same ring.
+                    -->
+                    <path id="t1" d="M 14,50 A 36,36 0 0,1 86,50"/>
+                    <path id="b1" d="M  8,50 A 42,42 0 0,0 92,50"/>
+                </defs>
+                <text font-family="'Arial Black', Impact, sans-serif" font-weight="900" font-size="9" fill="#d0d0d0" letter-spacing="1" text-anchor="middle">
+                    <textPath href="#t1" startOffset="50%">STARTING</textPath>
+                </text>
+                <text font-family="'Arial Black', Impact, sans-serif" font-weight="900" font-size="9" fill="#d0d0d0" letter-spacing="1" text-anchor="middle">
+                    <textPath href="#b1" startOffset="50%">WEIGHT</textPath>
+                </text>
+            </svg>
+            <div class="plate-lbs">
+                <div class="plate-num">238</div>
+                <div class="plate-unit">lbs</div>
+            </div>
+            <div class="plate-kg">
+                <div class="plate-num">107.9</div>
+                <div class="plate-unit">kgs</div>
+            </div>
+        </div>
+
+        <!-- Current Weight -->
+        <div class="plate">
+            <svg class="plate-text-svg" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+                <defs>
+                    <path id="t2" d="M 14,50 A 36,36 0 0,1 86,50"/>
+                    <path id="b2" d="M  8,50 A 42,42 0 0,0 92,50"/>
+                </defs>
+                <text font-family="'Arial Black', Impact, sans-serif" font-weight="900" font-size="9" fill="#d0d0d0" letter-spacing="1" text-anchor="middle">
+                    <textPath href="#t2" startOffset="50%">CURRENT</textPath>
+                </text>
+                <text font-family="'Arial Black', Impact, sans-serif" font-weight="900" font-size="9" fill="#d0d0d0" letter-spacing="1" text-anchor="middle">
+                    <textPath href="#b2" startOffset="50%">WEIGHT</textPath>
+                </text>
+            </svg>
+            <div class="plate-lbs">
+                <div class="plate-num">226.2</div>
+                <div class="plate-unit">lbs</div>
+            </div>
+            <div class="plate-kg">
+                <div class="plate-num">102.6</div>
+                <div class="plate-unit">kgs</div>
+            </div>
+        </div>
+
+        <!-- Lost Weight -->
+        <div class="plate">
+            <svg class="plate-text-svg" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+                <defs>
+                    <path id="t3" d="M 14,50 A 36,36 0 0,1 86,50"/>
+                    <path id="b3" d="M  8,50 A 42,42 0 0,0 92,50"/>
+                </defs>
+                <text font-family="'Arial Black', Impact, sans-serif" font-weight="900" font-size="9" fill="#d0d0d0" letter-spacing="1" text-anchor="middle">
+                    <textPath href="#t3" startOffset="50%">LOST</textPath>
+                </text>
+                <text font-family="'Arial Black', Impact, sans-serif" font-weight="900" font-size="9" fill="#d0d0d0" letter-spacing="1" text-anchor="middle">
+                    <textPath href="#b3" startOffset="50%">WEIGHT</textPath>
+                </text>
+            </svg>
+            <div class="plate-lbs">
+                <div class="plate-num">11.8</div>
+                <div class="plate-unit">lbs</div>
+            </div>
+            <div class="plate-kg">
+                <div class="plate-num">5.4</div>
+                <div class="plate-unit">kgs</div>
+            </div>
+        </div>
+
+        <!-- Goal Weight -->
+        <div class="plate">
+            <svg class="plate-text-svg" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+                <defs>
+                    <path id="t4" d="M 14,50 A 36,36 0 0,1 86,50"/>
+                    <path id="b4" d="M  8,50 A 42,42 0 0,0 92,50"/>
+                </defs>
+                <text font-family="'Arial Black', Impact, sans-serif" font-weight="900" font-size="9" fill="#d0d0d0" letter-spacing="1" text-anchor="middle">
+                    <textPath href="#t4" startOffset="50%">GOAL</textPath>
+                </text>
+                <text font-family="'Arial Black', Impact, sans-serif" font-weight="900" font-size="9" fill="#d0d0d0" letter-spacing="1" text-anchor="middle">
+                    <textPath href="#b4" startOffset="50%">WEIGHT</textPath>
+                </text>
+            </svg>
+            <div class="plate-lbs">
+                <div class="plate-num">189</div>
+                <div class="plate-unit">lbs</div>
+            </div>
+            <div class="plate-kg">
+                <div class="plate-num">85.7</div>
+                <div class="plate-unit">kgs</div>
+            </div>
+        </div>
+
+    </div>
+
+</div>
+
+</body>
+</html>
