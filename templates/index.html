@@ -9,37 +9,8 @@
 
 <body>
 
-<svg class="palm palm-left" viewBox="0 0 120 300" xmlns="http://www.w3.org/2000/svg">
-    <g fill="#0a1520">
-        <path d="M62 300 C60 250 62 200 64 150 C66 100 67 80 68 55"
-              stroke="#0a1520" stroke-width="10" fill="none" stroke-linecap="round"/>
-        <path d="M68 55 Q28 5 3 12 Q32 30 68 55Z"/>
-        <path d="M68 55 Q42 0 28 6 Q46 22 68 55Z"/>
-        <path d="M68 55 Q58 14 63 3 Q67 14 68 55Z"/>
-        <path d="M68 55 Q92 0 108 6 Q90 22 68 55Z"/>
-        <path d="M68 55 Q105 5 118 15 Q102 28 68 55Z"/>
-        <path d="M68 55 Q28 38 2 50 Q30 54 68 55Z"/>
-        <path d="M68 55 Q100 38 118 50 Q98 54 68 55Z"/>
-        <path d="M68 55 Q28 62 5 84 Q32 72 68 55Z"/>
-        <path d="M68 55 Q100 62 118 84 Q98 72 68 55Z"/>
-    </g>
-</svg>
-
-<svg class="palm palm-right" viewBox="0 0 120 300" xmlns="http://www.w3.org/2000/svg">
-    <g fill="#0a1520">
-        <path d="M62 300 C60 250 62 200 64 150 C66 100 67 80 68 55"
-              stroke="#0a1520" stroke-width="10" fill="none" stroke-linecap="round"/>
-        <path d="M68 55 Q28 5 3 12 Q32 30 68 55Z"/>
-        <path d="M68 55 Q42 0 28 6 Q46 22 68 55Z"/>
-        <path d="M68 55 Q58 14 63 3 Q67 14 68 55Z"/>
-        <path d="M68 55 Q92 0 108 6 Q90 22 68 55Z"/>
-        <path d="M68 55 Q105 5 118 15 Q102 28 68 55Z"/>
-        <path d="M68 55 Q28 38 2 50 Q30 54 68 55Z"/>
-        <path d="M68 55 Q100 38 118 50 Q98 54 68 55Z"/>
-        <path d="M68 55 Q28 62 5 84 Q32 72 68 55Z"/>
-        <path d="M68 55 Q100 62 118 84 Q98 72 68 55Z"/>
-    </g>
-</svg>
+<div class="miami-left"></div>
+<div class="miami-right"></div>
 
 <div class="container">
 
@@ -48,7 +19,8 @@
     <div class="plates">
 
         <!-- Starting Weight -->
-        <div class="plate">
+        <div class="plate" id="start-plate" role="button" tabindex="0" aria-label="Edit starting weight">
+            <img class="plate-img" src="{{ url_for('static', filename='weightplate.png') }}" alt="">
             <svg class="plate-text-svg" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
                 <defs>
                     <!--
@@ -56,94 +28,97 @@
                         Bot arc  r=42: baseline sits at r=42, glyphs extend INWARD  → visual band 34–42
                         Both bands identical → same ring.
                     -->
-                    <path id="t1" d="M 14,50 A 36,36 0 0,1 86,50"/>
-                    <path id="b1" d="M  8,50 A 42,42 0 0,0 92,50"/>
+                    <path id="t1" d="M 18,50 A 32,32 0 0,1 82,50"/>
+                    <path id="b1" d="M 13,50 A 37,37 0 0,0 87,50"/>
                 </defs>
-                <text font-family="'Arial Black', Impact, sans-serif" font-weight="900" font-size="9" fill="#d0d0d0" letter-spacing="1" text-anchor="middle">
+                <text font-family="'Arial Black', Impact, sans-serif" font-weight="900" font-size="5.5" fill="#f2f2f2" letter-spacing="0.5" text-anchor="middle">
                     <textPath href="#t1" startOffset="50%">STARTING</textPath>
                 </text>
-                <text font-family="'Arial Black', Impact, sans-serif" font-weight="900" font-size="9" fill="#d0d0d0" letter-spacing="1" text-anchor="middle">
+                <text font-family="'Arial Black', Impact, sans-serif" font-weight="900" font-size="5.5" fill="#f2f2f2" letter-spacing="0.5" text-anchor="middle">
                     <textPath href="#b1" startOffset="50%">WEIGHT</textPath>
                 </text>
             </svg>
             <div class="plate-lbs">
-                <div class="plate-num">238</div>
+                <div class="plate-num" id="start-lbs-num">238</div>
                 <div class="plate-unit">lbs</div>
             </div>
             <div class="plate-kg">
-                <div class="plate-num">107.9</div>
+                <div class="plate-num" id="start-kg-num">107.9</div>
                 <div class="plate-unit">kgs</div>
             </div>
         </div>
 
         <!-- Current Weight -->
-        <div class="plate">
+        <div class="plate" id="current-plate" role="button" tabindex="0" aria-label="Edit current weight">
+            <img class="plate-img" src="{{ url_for('static', filename='weightplate.png') }}" alt="">
             <svg class="plate-text-svg" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
                 <defs>
-                    <path id="t2" d="M 14,50 A 36,36 0 0,1 86,50"/>
-                    <path id="b2" d="M  8,50 A 42,42 0 0,0 92,50"/>
+                    <path id="t2" d="M 18,50 A 32,32 0 0,1 82,50"/>
+                    <path id="b2" d="M 13,50 A 37,37 0 0,0 87,50"/>
                 </defs>
-                <text font-family="'Arial Black', Impact, sans-serif" font-weight="900" font-size="9" fill="#d0d0d0" letter-spacing="1" text-anchor="middle">
+                <text font-family="'Arial Black', Impact, sans-serif" font-weight="900" font-size="5.5" fill="#f2f2f2" letter-spacing="0.5" text-anchor="middle">
                     <textPath href="#t2" startOffset="50%">CURRENT</textPath>
                 </text>
-                <text font-family="'Arial Black', Impact, sans-serif" font-weight="900" font-size="9" fill="#d0d0d0" letter-spacing="1" text-anchor="middle">
+                <text font-family="'Arial Black', Impact, sans-serif" font-weight="900" font-size="5.5" fill="#f2f2f2" letter-spacing="0.5" text-anchor="middle">
                     <textPath href="#b2" startOffset="50%">WEIGHT</textPath>
                 </text>
             </svg>
             <div class="plate-lbs">
-                <div class="plate-num">226.2</div>
+                <div class="plate-num" id="current-lbs-num">226.2</div>
                 <div class="plate-unit">lbs</div>
             </div>
             <div class="plate-kg">
-                <div class="plate-num">102.6</div>
+                <div class="plate-num" id="current-kg-num">102.6</div>
                 <div class="plate-unit">kgs</div>
             </div>
         </div>
 
-        <!-- Lost Weight -->
+        <!-- Lost Weight (auto-computed: starting - current) -->
         <div class="plate">
+            <img class="plate-img" src="{{ url_for('static', filename='weightplate.png') }}" alt="">
             <svg class="plate-text-svg" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
                 <defs>
-                    <path id="t3" d="M 14,50 A 36,36 0 0,1 86,50"/>
-                    <path id="b3" d="M  8,50 A 42,42 0 0,0 92,50"/>
+                    <path id="t3" d="M 18,50 A 32,32 0 0,1 82,50"/>
+                    <path id="b3" d="M 13,50 A 37,37 0 0,0 87,50"/>
                 </defs>
-                <text font-family="'Arial Black', Impact, sans-serif" font-weight="900" font-size="9" fill="#d0d0d0" letter-spacing="1" text-anchor="middle">
+                <text font-family="'Arial Black', Impact, sans-serif" font-weight="900" font-size="5.5" fill="#f2f2f2" letter-spacing="0.5" text-anchor="middle">
                     <textPath href="#t3" startOffset="50%">LOST</textPath>
                 </text>
-                <text font-family="'Arial Black', Impact, sans-serif" font-weight="900" font-size="9" fill="#d0d0d0" letter-spacing="1" text-anchor="middle">
+                <text font-family="'Arial Black', Impact, sans-serif" font-weight="900" font-size="5.5" fill="#f2f2f2" letter-spacing="0.5" text-anchor="middle">
                     <textPath href="#b3" startOffset="50%">WEIGHT</textPath>
                 </text>
             </svg>
             <div class="plate-lbs">
-                <div class="plate-num">11.8</div>
+                <div class="plate-num" id="lost-lbs-num">11.8</div>
                 <div class="plate-unit">lbs</div>
             </div>
             <div class="plate-kg">
-                <div class="plate-num">5.4</div>
+                <div class="plate-num" id="lost-kg-num">5.4</div>
                 <div class="plate-unit">kgs</div>
             </div>
         </div>
 
         <!-- Goal Weight -->
-        <div class="plate">
+        <div class="plate" id="goal-plate" role="button" tabindex="0" aria-label="Edit goal weight">
+            <img class="plate-img" src="{{ url_for('static', filename='weightplate.png') }}" alt="">
             <svg class="plate-text-svg" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
                 <defs>
-                    <path id="t4" d="M 14,50 A 36,36 0 0,1 86,50"/>
-                    <path id="b4" d="M  8,50 A 42,42 0 0,0 92,50"/>
+                    <path id="t4" d="M 18,50 A 32,32 0 0,1 82,50"/>
+                    <path id="b4" d="M 13,50 A 37,37 0 0,0 87,50"/>
                 </defs>
-                <text font-family="'Arial Black', Impact, sans-serif" font-weight="900" font-size="9" fill="#d0d0d0" letter-spacing="1" text-anchor="middle">
+                <text font-family="'Arial Black', Impact, sans-serif" font-weight="900" font-size="5.5" fill="#f2f2f2" letter-spacing="0.5" text-anchor="middle">
                     <textPath href="#t4" startOffset="50%">GOAL</textPath>
                 </text>
-                <text font-family="'Arial Black', Impact, sans-serif" font-weight="900" font-size="9" fill="#d0d0d0" letter-spacing="1" text-anchor="middle">
+                <text font-family="'Arial Black', Impact, sans-serif" font-weight="900" font-size="5.5" fill="#f2f2f2" letter-spacing="0.5" text-anchor="middle">
                     <textPath href="#b4" startOffset="50%">WEIGHT</textPath>
                 </text>
             </svg>
             <div class="plate-lbs">
-                <div class="plate-num">189</div>
+                <div class="plate-num" id="goal-lbs-num">189</div>
                 <div class="plate-unit">lbs</div>
             </div>
             <div class="plate-kg">
-                <div class="plate-num">85.7</div>
+                <div class="plate-num" id="goal-kg-num">85.7</div>
                 <div class="plate-unit">kgs</div>
             </div>
         </div>
@@ -152,5 +127,200 @@
 
 </div>
 
+<!-- Goal Weight Modal -->
+<div id="goal-modal" class="modal-overlay" hidden>
+    <div class="modal-card">
+        <h2 class="modal-title">Goal Weight</h2>
+        <label class="modal-label" for="goal-input">New goal (lbs)</label>
+        <div class="modal-input-row">
+            <input type="number" class="weight-input" id="goal-input" min="50" max="999" step="0.1" placeholder="189">
+            <span class="modal-unit-tag">lbs</span>
+            <div class="goal-stepper">
+                <button type="button" class="stepper-btn stepper-up" id="goal-step-up" aria-label="Increase goal weight"></button>
+                <button type="button" class="stepper-btn stepper-down" id="goal-step-down" aria-label="Decrease goal weight"></button>
+            </div>
+        </div>
+        <div class="modal-kg-preview" id="goal-kg-preview"></div>
+        <div class="modal-actions">
+            <button class="modal-btn modal-cancel" id="goal-cancel">Cancel</button>
+            <button class="modal-btn modal-save" id="goal-save">Save</button>
+        </div>
+    </div>
+</div>
+
+<!-- Current Weight Modal -->
+<div id="current-modal" class="modal-overlay" hidden>
+    <div class="modal-card">
+        <h2 class="modal-title">Current Weight</h2>
+        <label class="modal-label" for="current-input">New current weight (lbs)</label>
+        <div class="modal-input-row">
+            <input type="number" class="weight-input" id="current-input" min="50" max="999" step="0.1" placeholder="226.2">
+            <span class="modal-unit-tag">lbs</span>
+            <div class="goal-stepper">
+                <button type="button" class="stepper-btn stepper-up" id="current-step-up" aria-label="Increase current weight"></button>
+                <button type="button" class="stepper-btn stepper-down" id="current-step-down" aria-label="Decrease current weight"></button>
+            </div>
+        </div>
+        <div class="modal-kg-preview" id="current-kg-preview"></div>
+        <div class="modal-actions">
+            <button class="modal-btn modal-cancel" id="current-cancel">Cancel</button>
+            <button class="modal-btn modal-save" id="current-save">Save</button>
+        </div>
+    </div>
+</div>
+
+<!-- Starting Weight Modal -->
+<div id="start-modal" class="modal-overlay" hidden>
+    <div class="modal-card">
+        <h2 class="modal-title">Starting Weight</h2>
+        <label class="modal-label" for="start-input">New starting weight (lbs)</label>
+        <div class="modal-input-row">
+            <input type="number" class="weight-input" id="start-input" min="50" max="999" step="0.1" placeholder="238">
+            <span class="modal-unit-tag">lbs</span>
+            <div class="goal-stepper">
+                <button type="button" class="stepper-btn stepper-up" id="start-step-up" aria-label="Increase starting weight"></button>
+                <button type="button" class="stepper-btn stepper-down" id="start-step-down" aria-label="Decrease starting weight"></button>
+            </div>
+        </div>
+        <div class="modal-kg-preview" id="start-kg-preview"></div>
+        <div class="modal-actions">
+            <button class="modal-btn modal-cancel" id="start-cancel">Cancel</button>
+            <button class="modal-btn modal-save" id="start-save">Save</button>
+        </div>
+    </div>
+</div>
+
+<script>
+    (function () {
+        const left  = document.querySelector('.miami-left');
+        const right = document.querySelector('.miami-right');
+
+        function update() {
+            const maxScroll = document.documentElement.scrollHeight - window.innerHeight;
+            const progress  = maxScroll > 0 ? Math.min(window.scrollY / maxScroll, 1) : 0;
+            const scale = 1 - progress * 0.25;
+            const t = 'scale(' + scale + ')';
+            left.style.transform  = t;
+            right.style.transform = t;
+        }
+
+        window.addEventListener('scroll', update, { passive: true });
+        update();
+    })();
+
+    /* Recompute Lost Weight whenever Starting or Current changes */
+    function updateLostWeight() {
+        const startLbs   = parseFloat(document.getElementById('start-lbs-num').textContent)   || 0;
+        const currentLbs = parseFloat(document.getElementById('current-lbs-num').textContent) || 0;
+        const diff = Math.max(0, Math.round((startLbs - currentLbs) * 10) / 10);
+        const fmt  = n => n === Math.round(n) ? Math.round(n) : parseFloat(n.toFixed(1));
+        document.getElementById('lost-lbs-num').textContent = fmt(diff);
+        document.getElementById('lost-kg-num').textContent  = (diff / 2.2046).toFixed(1);
+    }
+
+    /* Weight edit modal — shared by all editable weight cards */
+    function setupWeightModal(cfg) {
+        const modal   = document.getElementById(cfg.modal);
+        const input   = document.getElementById(cfg.input);
+        const preview = document.getElementById(cfg.preview);
+        const lbsNum  = document.getElementById(cfg.lbsNum);
+        const kgNum   = document.getElementById(cfg.kgNum);
+
+        function toKg(lbs) { return (lbs / 2.2046).toFixed(1); }
+
+        function updatePreview() {
+            const v = parseFloat(input.value);
+            preview.textContent = (!isNaN(v) && v > 0) ? '= ' + toKg(v) + ' kgs' : '';
+        }
+
+        function open() {
+            input.value = lbsNum.textContent;
+            updatePreview();
+            modal.hidden = false;
+            setTimeout(() => { input.focus(); input.select(); }, 50);
+        }
+
+        function close() { modal.hidden = true; }
+
+        function save() {
+            const v = parseFloat(input.value);
+            if (isNaN(v) || v <= 0) return;
+            lbsNum.textContent = v === Math.round(v) ? Math.round(v) : parseFloat(v.toFixed(1));
+            kgNum.textContent  = toKg(v);
+            close();
+            if (cfg.onSave) cfg.onSave();
+        }
+
+        function step(amount) {
+            const cur = parseFloat(input.value) || 0;
+            const min = parseFloat(input.min);
+            const max = parseFloat(input.max);
+            let next = Math.round((cur + amount) * 10) / 10;
+            next = Math.min(max, Math.max(min, next));
+            input.value = next;
+            updatePreview();
+        }
+
+        document.getElementById(cfg.plate).addEventListener('click', open);
+        document.getElementById(cfg.plate).addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') open(); });
+        document.getElementById(cfg.cancel).addEventListener('click', close);
+        document.getElementById(cfg.save).addEventListener('click', save);
+        document.getElementById(cfg.stepUp).addEventListener('click', () => step(1));
+        document.getElementById(cfg.stepDown).addEventListener('click', () => step(-1));
+        modal.addEventListener('click', e => { if (e.target === modal) close(); });
+        document.addEventListener('keydown', e => { if (e.key === 'Escape') close(); });
+        input.addEventListener('keydown', e => { if (e.key === 'Enter') save(); });
+        input.addEventListener('input', updatePreview);
+    }
+
+    setupWeightModal({
+        plate: 'goal-plate', modal: 'goal-modal', input: 'goal-input', preview: 'goal-kg-preview',
+        lbsNum: 'goal-lbs-num', kgNum: 'goal-kg-num', cancel: 'goal-cancel', save: 'goal-save',
+        stepUp: 'goal-step-up', stepDown: 'goal-step-down'
+    });
+
+    setupWeightModal({
+        plate: 'start-plate', modal: 'start-modal', input: 'start-input', preview: 'start-kg-preview',
+        lbsNum: 'start-lbs-num', kgNum: 'start-kg-num', cancel: 'start-cancel', save: 'start-save',
+        stepUp: 'start-step-up', stepDown: 'start-step-down',
+        onSave: updateLostWeight
+    });
+
+    setupWeightModal({
+        plate: 'current-plate', modal: 'current-modal', input: 'current-input', preview: 'current-kg-preview',
+        lbsNum: 'current-lbs-num', kgNum: 'current-kg-num', cancel: 'current-cancel', save: 'current-save',
+        stepUp: 'current-step-up', stepDown: 'current-step-down',
+        onSave: updateLostWeight
+    });
+
+    /* Custom cursor: scale pointer.png to 48px tall, strip white background,
+       set hotspot at fingertip (upper-left of image). */
+    (function () {
+        const img = new Image();
+        img.onload = function () {
+            const h = 48;
+            const scale = h / img.height;
+            const w = Math.round(img.width * scale);
+            const canvas = document.createElement('canvas');
+            canvas.width  = w;
+            canvas.height = h;
+            const ctx = canvas.getContext('2d');
+            ctx.drawImage(img, 0, 0, w, h);
+
+            const id = ctx.getImageData(0, 0, w, h);
+            const d  = id.data;
+            for (let i = 0; i < d.length; i += 4) {
+                if (d[i] > 230 && d[i + 1] > 230 && d[i + 2] > 230) d[i + 3] = 0;
+            }
+            ctx.putImageData(id, 0, 0);
+
+            const hotX = Math.round(280 * scale);
+            const hotY = Math.round(60 * scale);
+            const url  = canvas.toDataURL();
+            document.body.style.cursor = `url(${url}) ${hotX} ${hotY}, default`;
+        };
+        img.src = '/static/pointer.png';
+    })();
+</script>
 </body>
 </html>

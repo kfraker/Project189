@@ -1,3 +1,7 @@
+body, button, input, a, [role="button"] {
+    cursor: inherit;
+}
+
 body {
     font-family: Arial, sans-serif;
     margin: 0;
@@ -23,7 +27,7 @@ body {
 .container {
     position: relative;
     z-index: 1;
-    max-width: 760px;
+    max-width: 920px;
     margin: 0 auto;
     padding: 60px 20px 0;
     text-align: center;
@@ -32,7 +36,7 @@ body {
 
 h1 {
     font-family: 'Pacifico', cursive;
-    font-size: 52px;
+    font-size: 72px;
     margin-bottom: 48px;
     color: #ffe0ee;
     text-shadow:
@@ -59,80 +63,46 @@ h1 {
     border-radius: 50%;
     overflow: hidden;
     will-change: transform;
-
-    background:
-        /* Specular sheen — off-center highlight like studio light on iron */
-        radial-gradient(circle at 36% 30%, rgba(255,255,255,0.09) 0%, rgba(255,255,255,0.03) 30%, transparent 58%),
-        /* Concentric ring pattern — hard stops create sharp groove lines */
-        radial-gradient(circle,
-            rgba(82,82,82,0) 0%,  rgba(82,82,82,0) 10%,  /* transparent hole — alpha-0 gray avoids background bleed at boundary */
-            #525252 10%,          #525252 11%,          /* hole rim highlight */
-            #181818 11%,     #181818 14%,    /* deep shadow at hole edge */
-
-            #252525 14%,    #252525 22%,    /* ring 1 */
-            #090909 22%,    #090909 23%,    /* groove */
-            #282828 23%,    #282828 34%,    /* ring 2 */
-            #090909 34%,    #090909 35%,    /* groove */
-            #2a2a2a 35%,    #2a2a2a 47%,    /* ring 3 */
-            #090909 47%,    #090909 48%,    /* groove */
-            #2d2d2d 48%,    #2d2d2d 61%,    /* ring 4 */
-            #090909 61%,    #090909 62%,    /* groove */
-            #303030 62%,    #303030 75%,    /* ring 5 */
-            #090909 75%,    #090909 76%,    /* groove */
-            #363636 76%,    #363636 87%,    /* outer face */
-            #080808 87%,    #080808 89%,    /* outer groove */
-            #4e4e4e 89%,    #4e4e4e 93%,    /* outer rim highlight */
-            #242424 93%,    #242424 100%    /* outer edge */
-        );
-
     box-shadow:
-        /* Outer rim glow — catches the Miami sunset */
-        0 0 0 2px #3a3a3a,
-        /* Stepped physical edge — each band is one slice of the plate's side */
-        0 1px 0 #585858,
-        0 2px 0 #505050,
-        0 3px 0 #484848,
-        0 4px 0 #404040,
-        0 5px 0 #383838,
-        0 6px 0 #303030,
-        0 7px 0 #282828,
-        0 8px 0 #202020,
-        0 9px 0 #181818,
-        /* Floating depth shadow */
         0 22px 50px  rgba(0, 0, 0, 0.78),
         0 44px 90px  rgba(0, 0, 0, 0.56),
         0 75px 120px rgba(0, 0, 0, 0.34);
-
     transition: transform 0.25s ease, box-shadow 0.25s ease;
 }
 
 .plate:hover {
     transform: translateY(-12px) rotate(3deg);
     box-shadow:
-        0 0 0 2px #3a3a3a,
-        0 1px 0 #585858,
-        0 2px 0 #505050,
-        0 3px 0 #484848,
-        0 4px 0 #404040,
-        0 5px 0 #383838,
-        0 6px 0 #303030,
-        0 7px 0 #282828,
-        0 8px 0 #202020,
-        0 9px 0 #181818,
         0 34px 65px  rgba(0, 0, 0, 0.84),
         0 62px 110px rgba(0, 0, 0, 0.60),
         0 105px 150px rgba(0, 0, 0, 0.38);
 }
 
-/* Bore depth — transparent overlay sized to cover the full gradient hole;
-   inset shadow is the only paint here, giving the unified hole a 3-D cavity
-   look that shifts on plate tilt. No background fill so the see-through
-   effect is preserved. */
+/* Image fills the circular plate card; object-fit:cover crops the
+   1408×768 source to a perfect square centered on the plate.
+   mask-image punches a clean circle at the center so the live
+   gradient background shows through — no pixel-manipulation needed. */
+.plate-img {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+    pointer-events: none;
+    z-index: 0;
+    -webkit-mask-image: radial-gradient(circle, transparent 8%, black 9%);
+    mask-image:         radial-gradient(circle, transparent 8%, black 9%);
+}
+
+/* Bore depth — no background so the live gradient shows through the
+   transparent hole. Inset shadow gives cavity depth; shifts on hover
+   to simulate tilt changing the light angle. */
 .plate::after {
     content: '';
     position: absolute;
-    width: 14%;
-    height: 14%;
+    width: 12%;
+    height: 12%;
     top: 50%;
     left: 50%;
     transform: translate(-50%, -50%);
@@ -140,6 +110,7 @@ h1 {
     box-shadow:
         inset 0 3px 10px rgba(0, 0, 0, 0.95),
         inset 0 -1px 4px rgba(255, 255, 255, 0.07);
+    z-index: 1;
     pointer-events: none;
     transition: box-shadow 0.25s ease;
 }
@@ -183,7 +154,7 @@ h1 {
     font-family: 'Arial Black', Impact, sans-serif;
     font-size: 28px;
     font-weight: 900;
-    color: #d8d8d8;
+    color: #f4f4f4;
     line-height: 1;
     letter-spacing: -0.5px;
     text-shadow:
@@ -194,31 +165,225 @@ h1 {
 
 .plate-unit {
     margin-top: 6px;
-    font-size: 13px;
+    font-size: 15px;
     font-weight: 700;
-    color: #aaaaaa;
+    color: #d8d8d8;
     text-transform: uppercase;
     letter-spacing: 1.5px;
     text-shadow: 0 1px 3px rgba(0, 0, 0, 0.9);
 }
 
 
-/* ── Palm trees ─────────────────────────────────────────────── */
 
-.palm {
+/* ── Goal weight modal ──────────────────────────────────────── */
+
+.modal-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.75);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 100;
+}
+
+.modal-overlay[hidden] { display: none; }
+
+.modal-card {
+    background: #0d0020;
+    border: 1px solid rgba(255, 45, 120, 0.4);
+    border-radius: 16px;
+    padding: 36px 40px;
+    width: 320px;
+    box-shadow:
+        0 0 30px rgba(255, 45, 120, 0.2),
+        0 20px 60px rgba(0, 0, 0, 0.8);
+}
+
+.modal-title {
+    font-family: 'Pacifico', cursive;
+    font-size: 28px;
+    color: #ffe0ee;
+    text-shadow: 0 0 10px #ff80aa, 0 0 25px #ff2d78;
+    margin: 0 0 24px;
+    text-align: center;
+}
+
+.modal-label {
+    display: block;
+    font-family: 'Arial Black', Impact, sans-serif;
+    font-size: 11px;
+    letter-spacing: 2px;
+    color: #aaa;
+    text-transform: uppercase;
+    margin-bottom: 10px;
+}
+
+.modal-input-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 8px;
+}
+
+.weight-input {
+    flex: 1;
+    width: 100%;
+    background: #1a0035;
+    border: 1px solid rgba(255, 45, 120, 0.3);
+    border-radius: 8px;
+    padding: 12px 16px;
+    font-size: 26px;
+    font-family: 'Arial Black', Impact, sans-serif;
+    font-weight: 900;
+    color: #f4f4f4;
+    outline: none;
+}
+
+.weight-input:focus {
+    border-color: rgba(255, 45, 120, 0.7);
+    box-shadow: 0 0 12px rgba(255, 45, 120, 0.25);
+}
+
+/* Hide native number spinner — replaced by .goal-stepper */
+.weight-input::-webkit-inner-spin-button,
+.weight-input::-webkit-outer-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+}
+.weight-input {
+    -moz-appearance: textfield;
+    appearance: textfield;
+}
+
+.goal-stepper {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.stepper-btn {
+    width: 26px;
+    height: 19px;
+    padding: 0;
+    border: none;
+    border-radius: 5px;
+    background: linear-gradient(135deg, #3a0f55, #1a0035);
+    position: relative;
+    transition: background 0.2s ease, box-shadow 0.2s ease;
+}
+
+.stepper-btn:hover {
+    background: linear-gradient(135deg, #ff2d78, #c73862);
+    box-shadow: 0 0 10px rgba(255, 45, 120, 0.5);
+}
+
+.stepper-btn:active {
+    background: linear-gradient(135deg, #c73862, #8c1a7e);
+}
+
+.stepper-btn::after {
+    content: '';
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    border-left: 5px solid transparent;
+    border-right: 5px solid transparent;
+}
+
+.stepper-up::after {
+    border-bottom: 6px solid #f4f4f4;
+    transform: translate(-50%, -65%);
+}
+
+.stepper-down::after {
+    border-top: 6px solid #f4f4f4;
+    transform: translate(-50%, -35%);
+}
+
+.modal-unit-tag {
+    font-family: 'Arial Black', Impact, sans-serif;
+    font-size: 14px;
+    color: #d8d8d8;
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+}
+
+.modal-kg-preview {
+    font-family: Arial, sans-serif;
+    font-size: 13px;
+    color: #888;
+    min-height: 18px;
+    margin-bottom: 26px;
+}
+
+.modal-actions {
+    display: flex;
+    gap: 12px;
+    justify-content: flex-end;
+}
+
+.modal-btn {
+    padding: 12px 22px;
+    border-radius: 8px;
+    border: none;
+    font-family: 'Arial Black', Impact, sans-serif;
+    font-size: 13px;
+    font-weight: 900;
+    letter-spacing: 1px;
+    transition: all 0.2s ease;
+}
+
+.modal-cancel {
+    background: #2a2a3a;
+    color: #aaa;
+}
+
+.modal-cancel:hover {
+    background: #3a3a4a;
+    color: #ddd;
+}
+
+.modal-save {
+    background: linear-gradient(135deg, #ff2d78, #c73862);
+    color: #fff;
+    box-shadow: 0 4px 15px rgba(255, 45, 120, 0.4);
+}
+
+.modal-save:hover {
+    box-shadow: 0 6px 20px rgba(255, 45, 120, 0.6);
+    transform: translateY(-1px);
+}
+
+
+/* ── Miami frame overlay ─────────────────────────────────────── */
+
+/* Image (1376×768) split into two halves via background-size: 200%.
+   Each half scales from its outer edge so trees hug the screen edge
+   as they recede on scroll, rather than collapsing toward the center. */
+.miami-left,
+.miami-right {
     position: fixed;
     bottom: 0;
-    width: 200px;
-    height: auto;
+    width: 50vw;
+    height: 55.8vw;   /* matches image aspect ratio: 768/1376 ≈ 55.8% */
     pointer-events: none;
     z-index: 0;
+    will-change: transform;
+    background-image: url('/static/miamibackground.png');
+    background-repeat: no-repeat;
+    background-size: 200% auto;  /* renders full image at 100vw; each half fills container */
+    mix-blend-mode: multiply;
 }
 
-.palm-left {
-    left: -20px;
+.miami-left {
+    left: 0;
+    transform-origin: bottom left;
+    background-position: left bottom;
 }
 
-.palm-right {
-    right: -20px;
-    transform: scaleX(-1);
+.miami-right {
+    right: 0;
+    transform-origin: bottom right;
+    background-position: right bottom;
 }
