@@ -1,0 +1,24 @@
+Technology stack and reasoning
+
+Layer: Technology: Why
+Frontend: HTML + CSS + JavaScript:Simple and fast
+Backend: Python + Flask: Easy to build and deploy
+Database: SQLite: No server setup needed
+Charts: Chart.js: Excellent line charts
+Source Control: Git + GitHub: Industry standard
+
+Initial plan:
+
+Version 1: Weight Dashboard
+Solving a daily need I have. The best weight tracker I've ever used. Landing page with a place to enter today's weight. Show starting weight. Show current weight. Show total lost. Show static goal (that can be changed if goals change).
+Show remaining weight to lose. Show current daily entry streak. Show graph with weight trend. Have a selection to dynamically change date range of dashboard (week/month/3 months/all time/custom range). Add simple AI assistant to ask
+questions about dashboard and get real time insights.
+
+Version 2: Meal/calorie tracker
+Today's insights. Based on calorie intake and daily calorie burn, at this pace you'll reach 189 in xx days, on January 18, 2027 (example).
+
+Version 3: Workout tracker
+
+Version 4: AI Coach
+
+Version 5: AI Meal randomizer
