@@ -1,3 +1,7 @@
+html {
+    scroll-snap-type: y mandatory;
+}
+
 body, button, input, a, [role="button"] {
     cursor: inherit;
 }
@@ -5,8 +9,6 @@ body, button, input, a, [role="button"] {
 body {
     font-family: Arial, sans-serif;
     margin: 0;
-    min-height: 100vh;
-    padding-bottom: 80px;
     overflow-x: hidden;
 
     background: linear-gradient(
@@ -21,8 +23,28 @@ body {
         #164f60 64%,
         #0e3448 100%
     );
+    background-attachment: fixed;
+    background-size: 100% 100%;
 }
 
+
+.page {
+    min-height: 100vh;
+    scroll-snap-align: start;
+}
+
+.page--chart {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    padding: 40px 0;
+    box-sizing: border-box;
+}
+
+.page--chart .container {
+    width: 100%;
+    max-width: 1100px;
+}
 
 .container {
     position: relative;
@@ -363,6 +385,360 @@ h1 {
     line-height: 1.6;
     margin: 0 0 26px;
     padding-top: 8px;
+}
+
+
+/* ── Weight chart ───────────────────────────────────────────── */
+
+.chart-section {
+    padding-bottom: 20px;
+}
+
+.chart-card {
+    background: #0a001a;
+    border: 1px solid rgba(255, 45, 120, 0.25);
+    border-radius: 20px;
+    padding: 36px 48px 40px;
+    box-shadow:
+        0 0 40px rgba(255, 45, 120, 0.08),
+        0 24px 60px rgba(0, 0, 0, 0.7);
+    text-align: left;
+    width: 100%;
+    box-sizing: border-box;
+    overflow: hidden;
+}
+
+.chart-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 14px;
+    margin-bottom: 22px;
+}
+
+.chart-title {
+    font-family: 'Pacifico', cursive;
+    font-size: 24px;
+    color: #ffe0ee;
+    text-shadow: 0 0 10px #ff80aa, 0 0 24px #ff2d78;
+    margin: 0;
+}
+
+.chart-controls {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+.range-btns {
+    display: flex;
+    gap: 3px;
+    background: #130028;
+    border-radius: 8px;
+    padding: 4px;
+}
+
+.range-btn {
+    padding: 5px 12px;
+    border: none;
+    border-radius: 5px;
+    background: transparent;
+    color: #666;
+    font-family: 'Arial Black', Impact, sans-serif;
+    font-size: 11px;
+    font-weight: 900;
+    letter-spacing: 0.5px;
+    transition: all 0.18s ease;
+}
+
+.range-btn:hover:not(.active) {
+    color: #bbb;
+    background: rgba(255, 255, 255, 0.05);
+}
+
+.range-btn.active {
+    background: linear-gradient(135deg, #ff2d78, #c73862);
+    color: #fff;
+    box-shadow: 0 0 10px rgba(255, 45, 120, 0.45);
+}
+
+.custom-days-wrap {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.custom-days-input {
+    width: 60px;
+    background: #130028;
+    border: 1px solid rgba(255, 45, 120, 0.3);
+    border-radius: 6px;
+    padding: 5px 8px;
+    font-size: 13px;
+    font-family: 'Arial Black', Impact, sans-serif;
+    color: #f4f4f4;
+    outline: none;
+    text-align: center;
+    -webkit-appearance: none;
+    appearance: textfield;
+}
+
+.custom-days-input::-webkit-inner-spin-button,
+.custom-days-input::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
+
+.custom-days-input:focus {
+    border-color: rgba(255, 45, 120, 0.7);
+}
+
+.custom-days-label {
+    font-family: Arial, sans-serif;
+    font-size: 12px;
+    color: #666;
+}
+
+.chart-add-btn {
+    width: 32px;
+    height: 32px;
+    border: none;
+    border-radius: 8px;
+    background: linear-gradient(135deg, #ff2d78, #c73862);
+    color: #fff;
+    font-size: 22px;
+    font-weight: 900;
+    line-height: 30px;
+    text-align: center;
+    box-shadow: 0 0 12px rgba(255, 45, 120, 0.4);
+    transition: all 0.2s ease;
+    flex-shrink: 0;
+}
+
+.chart-add-btn:hover {
+    box-shadow: 0 0 22px rgba(255, 45, 120, 0.65);
+    transform: translateY(-1px);
+}
+
+.chart-wrap,
+.data-table-wrap {
+    width: 100%;
+    height: clamp(320px, 45vh, 520px);
+    overflow: hidden;
+    contain: strict;
+}
+
+.chart-wrap canvas {
+    width: 100% !important;
+    height: 100% !important;
+    display: block;
+}
+
+.chart-empty {
+    text-align: center;
+    font-family: Arial, sans-serif;
+    font-size: 14px;
+    color: #444;
+    padding: 80px 0;
+    margin: 0;
+}
+
+/* ── Chart footer / toggle ── */
+
+.chart-footer {
+    display: flex;
+    justify-content: flex-end;
+    margin-top: 18px;
+}
+
+.view-toggle-btn {
+    padding: 6px 0;
+    width: 80px;
+    border: 1px solid rgba(255, 45, 120, 0.45);
+    border-radius: 8px;
+    background: transparent;
+    color: #ff2d78;
+    font-family: 'Arial Black', Impact, sans-serif;
+    font-size: 11px;
+    font-weight: 900;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    transition: all 0.18s ease;
+}
+
+.view-toggle-btn:hover {
+    background: rgba(255, 45, 120, 0.12);
+    border-color: rgba(255, 45, 120, 0.8);
+    box-shadow: 0 0 14px rgba(255, 45, 120, 0.3);
+}
+
+/* ── Data table ── */
+
+.data-table-scroll {
+    height: 100%;
+    width: 100%;
+    overflow-y: auto;
+    box-sizing: border-box;
+    scrollbar-width: thin;
+    scrollbar-color: rgba(255,45,120,0.3) transparent;
+}
+
+.data-table-scroll::-webkit-scrollbar        { width: 6px; }
+.data-table-scroll::-webkit-scrollbar-track  { background: transparent; }
+.data-table-scroll::-webkit-scrollbar-thumb  { background: rgba(255,45,120,0.3); border-radius: 3px; }
+
+.data-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-family: Arial, sans-serif;
+}
+
+.data-table thead th {
+    font-family: 'Arial Black', Impact, sans-serif;
+    font-size: 11px;
+    font-weight: 900;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    color: #555;
+    padding: 12px 14px;
+    border-bottom: 1px solid rgba(255, 45, 120, 0.2);
+    text-align: left;
+    position: sticky;
+    top: 0;
+    background: #0a001a;
+    z-index: 1;
+}
+
+.data-table thead th:first-child { padding-left: 0; }
+.data-table thead th:last-child  { padding-right: 0; }
+
+.data-table td {
+    padding: 10px 14px;
+    font-size: 14px;
+    color: #d0d0d0;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.03);
+    transition: background 0.12s;
+}
+
+.data-table td:first-child { padding-left: 0; }
+.data-table td:last-child  { padding-right: 0; }
+
+.data-table tbody tr:hover td {
+    background: rgba(255, 45, 120, 0.06);
+}
+
+.data-table tbody tr:last-child td {
+    border-bottom: none;
+}
+
+/* Missing rows */
+.row-missing td {
+    color: #ff6ea8;
+}
+
+.row-missing {
+    background: rgba(255, 45, 120, 0.07);
+}
+
+.row-missing:hover td {
+    background: rgba(255, 45, 120, 0.13);
+}
+
+.missing-dash {
+    color: #ff6ea8;
+}
+
+.missing-badge {
+    font-family: 'Arial Black', Impact, sans-serif;
+    font-size: 9px;
+    font-weight: 900;
+    letter-spacing: 0.8px;
+    text-transform: uppercase;
+    color: #ff6ea8;
+    border: 1px solid rgba(255, 110, 168, 0.5);
+    border-radius: 4px;
+    padding: 2px 7px;
+}
+
+/* Editable weight cell */
+.cell-weight {
+    cursor: pointer;
+}
+
+.cell-weight:hover {
+    color: #ff2d78;
+}
+
+.cell-missing.cell-weight:hover .missing-dash {
+    color: #ff2d78;
+}
+
+.table-edit-input {
+    background: transparent;
+    border: none;
+    border-bottom: 1px solid #ff2d78;
+    color: #ff2d78;
+    font-size: 14px;
+    font-family: Arial, sans-serif;
+    width: 72px;
+    outline: none;
+    padding: 0 0 2px;
+    -webkit-appearance: none;
+    appearance: textfield;
+}
+
+.table-edit-input::-webkit-inner-spin-button,
+.table-edit-input::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
+
+.table-empty-cell {
+    text-align: center;
+    color: #444;
+    padding: 40px;
+    font-family: Arial, sans-serif;
+    font-size: 14px;
+}
+
+.table-delete-btn {
+    background: transparent;
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    border-radius: 5px;
+    color: #444;
+    font-size: 16px;
+    line-height: 1;
+    width: 26px;
+    height: 26px;
+    padding: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.15s ease;
+}
+
+.table-delete-btn:hover {
+    border-color: rgba(255, 45, 120, 0.6);
+    color: #ff2d78;
+    background: rgba(255, 45, 120, 0.1);
+    box-shadow: 0 0 8px rgba(255, 45, 120, 0.2);
+}
+
+/* Historical weight date input */
+.history-date-input {
+    width: 100%;
+    background: #1a0035;
+    border: 1px solid rgba(255, 45, 120, 0.3);
+    border-radius: 8px;
+    padding: 10px 14px;
+    font-size: 15px;
+    font-family: Arial, sans-serif;
+    color: #f4f4f4;
+    outline: none;
+    box-sizing: border-box;
+    margin-bottom: 18px;
+    color-scheme: dark;
+}
+
+.history-date-input:focus {
+    border-color: rgba(255, 45, 120, 0.7);
+    box-shadow: 0 0 12px rgba(255, 45, 120, 0.25);
 }
 
 

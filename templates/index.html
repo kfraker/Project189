@@ -4,7 +4,8 @@
     <title>Project 189</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link href="https://fonts.googleapis.com/css2?family=Pacifico&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}?v=14">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 </head>
 
 <body>
@@ -12,6 +13,7 @@
 <div class="miami-left"></div>
 <div class="miami-right"></div>
 
+<section class="page page--plates">
 <div class="container">
 
     <h1>Project 189</h1>
@@ -125,6 +127,92 @@
 
     </div>
 
+</div>
+</section>
+
+<section class="page page--chart">
+<div class="container">
+
+    <!-- Weight Chart -->
+    <div class="chart-section">
+        <div class="chart-card">
+            <div class="chart-header">
+                <h2 class="chart-title">Weight Over Time</h2>
+                <div class="chart-controls">
+                    <div class="range-btns">
+                        <button class="range-btn" data-range="7d">7D</button>
+                        <button class="range-btn" data-range="30d">30D</button>
+                        <button class="range-btn" data-range="90d">90D</button>
+                        <button class="range-btn" data-range="1y">1Y</button>
+                        <button class="range-btn active" data-range="all">All</button>
+                        <button class="range-btn" data-range="custom">Custom</button>
+                    </div>
+                    <div class="custom-days-wrap" id="custom-days-wrap" hidden>
+                        <input type="number" id="custom-days" class="custom-days-input" min="1" max="3650" placeholder="30">
+                        <span class="custom-days-label">days</span>
+                    </div>
+                    <button class="chart-add-btn" id="chart-add-btn" title="Log a past weight">+</button>
+                </div>
+            </div>
+            <div class="chart-wrap">
+                <canvas id="weight-chart"></canvas>
+            </div>
+            <p class="chart-empty" id="chart-empty" hidden>No weight data yet — start logging!</p>
+            <div class="data-table-wrap" id="data-table-wrap" hidden>
+                <div class="data-table-scroll">
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>Date</th>
+                                <th>Weight (lbs)</th>
+                                <th>Weight (kg)</th>
+                                <th></th>
+                            </tr>
+                        </thead>
+                        <tbody id="data-table-body"></tbody>
+                    </table>
+                </div>
+            </div>
+            <div class="chart-footer">
+                <button class="view-toggle-btn" id="view-toggle-btn">Table</button>
+            </div>
+        </div>
+    </div>
+
+</div>
+</section>
+
+<!-- Historical Weight Modal -->
+<div id="history-modal" class="modal-overlay" hidden>
+    <div class="modal-card">
+        <div id="history-screen-input">
+            <h2 class="modal-title">Log Past Weight</h2>
+            <label class="modal-label" for="history-date">Date</label>
+            <input type="date" id="history-date" class="history-date-input">
+            <label class="modal-label" for="history-weight">Weight (lbs)</label>
+            <div class="modal-input-row">
+                <input type="number" class="weight-input" id="history-weight" min="50" max="999" step="0.1" placeholder="0.0">
+                <span class="modal-unit-tag">lbs</span>
+                <div class="goal-stepper">
+                    <button type="button" class="stepper-btn stepper-up"   id="history-step-up"   aria-label="Increase weight"></button>
+                    <button type="button" class="stepper-btn stepper-down" id="history-step-down" aria-label="Decrease weight"></button>
+                </div>
+            </div>
+            <div class="modal-kg-preview" id="history-kg-preview"></div>
+            <div class="modal-actions">
+                <button class="modal-btn modal-cancel" id="history-cancel">Cancel</button>
+                <button class="modal-btn modal-save"   id="history-save">Save</button>
+            </div>
+        </div>
+        <div id="history-screen-confirm" hidden>
+            <h2 class="modal-title">Confirm Overwrite</h2>
+            <p id="history-overwrite-message" class="overwrite-message"></p>
+            <div class="modal-actions">
+                <button class="modal-btn modal-cancel" id="history-overwrite-cancel">Cancel</button>
+                <button class="modal-btn modal-save"   id="history-overwrite-confirm">Overwrite</button>
+            </div>
+        </div>
+    </div>
 </div>
 
 <!-- Goal Weight Modal -->
@@ -394,6 +482,375 @@
             return false;
         }
     });
+
+    /* ── Weight chart ── */
+    (function () {
+        let chartInst  = null;
+        let activeRange = 'all';
+        let activeDays  = 30;
+
+        const canvas   = document.getElementById('weight-chart');
+        const emptyMsg = document.getElementById('chart-empty');
+
+        function fmtAxisDate(iso, spanDays) {
+            const [y, m, d] = iso.split('-').map(Number);
+            const dt = new Date(y, m - 1, d);
+            return spanDays <= 90
+                ? dt.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+                : dt.toLocaleDateString('en-US', { month: 'short', year: '2-digit' });
+        }
+
+        async function loadChart(range, days) {
+            if (range !== undefined) activeRange = range;
+            if (days  !== undefined) activeDays  = days;
+            if (window.onChartRangeChange) window.onChartRangeChange();
+
+            let url = '/api/weights?range=' + activeRange;
+            if (activeRange === 'custom') url += '&days=' + activeDays;
+
+            const rows = await fetch(url).then(r => r.json());
+
+            if (!rows.length) {
+                canvas.hidden   = true;
+                emptyMsg.hidden = false;
+                if (chartInst) { chartInst.destroy(); chartInst = null; }
+                return;
+            }
+
+            canvas.hidden   = false;
+            emptyMsg.hidden = true;
+
+            const first = new Date(rows[0].date + 'T00:00:00');
+            const last  = new Date(rows[rows.length - 1].date + 'T00:00:00');
+
+            const dataMap = new Map(rows.map(r => [r.date, r.weight_lbs]));
+            const allDates = [];
+            const cursor = new Date(first);
+            while (cursor <= last) {
+                allDates.push(cursor.toISOString().split('T')[0]);
+                cursor.setDate(cursor.getDate() + 1);
+            }
+
+            const spanDays = allDates.length;
+            const labels   = allDates.map(d => fmtAxisDate(d, spanDays));
+            const weights  = allDates.map(d => dataMap.has(d) ? dataMap.get(d) : null);
+            const minW     = Math.min(...rows.map(r => r.weight_lbs));
+            const maxW     = Math.max(...rows.map(r => r.weight_lbs));
+            const ptRadius = rows.length > 60 ? 2 : 4;
+
+            if (chartInst) {
+                chartInst.data.labels                   = labels;
+                chartInst.data.datasets[0].data         = weights;
+                chartInst.data.datasets[0].pointRadius  = ptRadius;
+                chartInst.options.scales.y.min          = Math.floor(minW - 5);
+                chartInst.options.scales.y.max          = Math.ceil(maxW  + 5);
+                chartInst.update();
+                return;
+            }
+
+            const ctx = canvas.getContext('2d');
+            chartInst = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels,
+                    datasets: [{
+                        data: weights,
+                        spanGaps: true,
+                        borderColor: '#ff2d78',
+                        borderWidth: 2.5,
+                        pointBackgroundColor: '#ff2d78',
+                        pointBorderColor: '#ff2d78',
+                        pointRadius: ptRadius,
+                        pointHoverRadius: 6,
+                        pointHoverBackgroundColor: '#ffe0ee',
+                        fill: true,
+                        backgroundColor: function (context) {
+                            const ch = context.chart;
+                            if (!ch.chartArea) return 'rgba(255,45,120,0.15)';
+                            const g = ch.ctx.createLinearGradient(0, ch.chartArea.top, 0, ch.chartArea.bottom);
+                            g.addColorStop(0, 'rgba(255,45,120,0.35)');
+                            g.addColorStop(1, 'rgba(255,45,120,0)');
+                            return g;
+                        },
+                        tension: 0.35,
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    animation: { duration: 400 },
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: {
+                            backgroundColor: '#0d0020',
+                            borderColor: 'rgba(255,45,120,0.5)',
+                            borderWidth: 1,
+                            titleColor: '#ffe0ee',
+                            bodyColor: '#ccc',
+                            padding: 12,
+                            cornerRadius: 8,
+                            displayColors: false,
+                            callbacks: {
+                                title: items => formatDateDisplay(rows[items[0].dataIndex].date),
+                                label: item  => item.parsed.y + ' lbs  ·  ' + (item.parsed.y / 2.2046).toFixed(1) + ' kg'
+                            }
+                        }
+                    },
+                    scales: {
+                        x: {
+                            grid:   { color: 'rgba(255,255,255,0.04)' },
+                            border: { color: 'rgba(255,255,255,0.08)' },
+                            ticks:  { color: '#666', font: { family: 'Arial', size: 11 }, maxTicksLimit: 10, maxRotation: 0 }
+                        },
+                        y: {
+                            min:    Math.floor(minW - 5),
+                            max:    Math.ceil(maxW  + 5),
+                            grid:   { color: 'rgba(255,255,255,0.04)' },
+                            border: { color: 'rgba(255,255,255,0.08)' },
+                            ticks:  { color: '#666', font: { family: 'Arial', size: 11 }, maxTicksLimit: 6, callback: v => v + ' lbs' }
+                        }
+                    }
+                }
+            });
+        }
+
+        document.querySelectorAll('.range-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                document.querySelectorAll('.range-btn').forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+                const wrap = document.getElementById('custom-days-wrap');
+                if (btn.dataset.range === 'custom') {
+                    wrap.hidden = false;
+                    loadChart('custom', parseInt(document.getElementById('custom-days').value) || 30);
+                } else {
+                    wrap.hidden = true;
+                    loadChart(btn.dataset.range);
+                }
+            });
+        });
+
+        const customIn = document.getElementById('custom-days');
+        function applyCustom() {
+            const d = parseInt(customIn.value);
+            if (d && d > 0) loadChart('custom', d);
+        }
+        customIn.addEventListener('keydown', e => { if (e.key === 'Enter') applyCustom(); });
+        customIn.addEventListener('change', applyCustom);
+
+        window.refreshChart   = loadChart;
+        window.getChartRange  = () => ({ range: activeRange, days: activeDays });
+        loadChart('all');
+    })();
+
+    /* ── Data table toggle ── */
+    (function () {
+        const toggleBtn = document.getElementById('view-toggle-btn');
+        const chartWrap = document.querySelector('.chart-wrap');
+        const chartEmpty = document.getElementById('chart-empty');
+        const tableWrap = document.getElementById('data-table-wrap');
+        const tableBody = document.getElementById('data-table-body');
+
+        let isTableView = false;
+
+        function addDays(iso, n) {
+            const d = new Date(iso + 'T00:00:00');
+            d.setDate(d.getDate() + n);
+            return d.toISOString().split('T')[0];
+        }
+
+        function dateRange(start, end) {
+            const dates = [];
+            let cur = start;
+            while (cur <= end) { dates.push(cur); cur = addDays(cur, 1); }
+            return dates;
+        }
+
+        async function renderTable() {
+            const { range, days } = window.getChartRange();
+            let url = '/api/weights?range=' + range;
+            if (range === 'custom') url += '&days=' + days;
+            const rows = await fetch(url).then(r => r.json());
+
+            const map = {};
+            rows.forEach(r => { map[r.date] = r; });
+
+            const today = getTodayISO();
+            let startDate;
+            if (range === 'all') {
+                startDate = rows.length ? rows[0].date : today;
+            } else {
+                let n = days || 30;
+                if (range === '7d')  n = 7;
+                if (range === '30d') n = 30;
+                if (range === '90d') n = 90;
+                if (range === '1y')  n = 365;
+                startDate = addDays(today, -(n - 1));
+            }
+
+            const allDates = dateRange(startDate, today).reverse();
+            tableBody.innerHTML = '';
+
+            if (!allDates.length) {
+                tableBody.innerHTML = '<tr><td colspan="4" class="table-empty-cell">No data yet.</td></tr>';
+                return;
+            }
+
+            allDates.forEach(date => {
+                const entry = map[date];
+                const missing = !entry;
+                const tr = document.createElement('tr');
+                if (missing) tr.classList.add('row-missing');
+
+                const dateTd = document.createElement('td');
+                dateTd.textContent = formatDateDisplay(date);
+
+                const wtTd = document.createElement('td');
+                wtTd.className = 'cell-weight' + (missing ? ' cell-missing' : '');
+                wtTd.dataset.date = date;
+                wtTd.dataset.lbs  = entry ? entry.weight_lbs : '';
+                wtTd.innerHTML = missing ? '<span class="missing-dash">—</span>' : fmtLbs(entry.weight_lbs);
+
+                const kgTd = document.createElement('td');
+                kgTd.innerHTML = missing ? '<span class="missing-dash">—</span>' : (entry.weight_kg + ' kg');
+
+                const stTd = document.createElement('td');
+                if (missing) {
+                    stTd.innerHTML = '<span class="missing-badge">Missing</span>';
+                } else {
+                    const del = document.createElement('button');
+                    del.className = 'table-delete-btn';
+                    del.title = 'Delete this entry';
+                    del.textContent = '×';
+                    del.addEventListener('click', e => { e.stopPropagation(); deleteEntry(date); });
+                    stTd.appendChild(del);
+                }
+
+                tr.append(dateTd, wtTd, kgTd, stTd);
+                tableBody.appendChild(tr);
+
+                wtTd.addEventListener('click', () => startEdit(wtTd, kgTd));
+            });
+        }
+
+        async function startEdit(wtTd, kgTd) {
+            if (wtTd.querySelector('input')) return;
+            const date = wtTd.dataset.date;
+            const cur  = wtTd.dataset.lbs;
+
+            const inp = document.createElement('input');
+            inp.type = 'number'; inp.min = '50'; inp.max = '999'; inp.step = '0.1';
+            inp.value = cur; inp.className = 'table-edit-input';
+            wtTd.innerHTML = ''; wtTd.appendChild(inp);
+            inp.focus(); if (cur) inp.select();
+
+            let done = false;
+            async function save() {
+                if (done) return; done = true;
+                const lbs = parseFloat(inp.value);
+                if (isNaN(lbs) || lbs <= 0) { renderTable(); return; }
+                await fetch('/api/weight', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ weight_lbs: lbs, date, overwrite: true })
+                });
+                await renderTable();
+                if (window.refreshChart) window.refreshChart();
+            }
+            function cancel() { if (done) return; done = true; renderTable(); }
+
+            inp.addEventListener('keydown', e => { if (e.key === 'Enter') save(); if (e.key === 'Escape') cancel(); });
+            inp.addEventListener('blur', save);
+        }
+
+        async function deleteEntry(date) {
+            await fetch('/api/weight/' + date, { method: 'DELETE' });
+            await renderTable();
+            if (window.refreshChart) window.refreshChart();
+        }
+
+        toggleBtn.addEventListener('click', () => {
+            isTableView = !isTableView;
+            chartWrap.hidden  = isTableView;
+            chartEmpty.hidden = true;
+            tableWrap.hidden  = !isTableView;
+            toggleBtn.textContent = isTableView ? 'Chart' : 'Table';
+            if (isTableView) renderTable();
+            else if (window.refreshChart) window.refreshChart();
+        });
+
+        window.onChartRangeChange = () => { if (isTableView) renderTable(); };
+    })();
+
+    /* ── Historical weight modal ── */
+    (function () {
+        const modal    = document.getElementById('history-modal');
+        const dateIn   = document.getElementById('history-date');
+        const weightIn = document.getElementById('history-weight');
+        const preview  = document.getElementById('history-kg-preview');
+
+        dateIn.max = getTodayISO();
+
+        function close() {
+            modal.hidden = true;
+            document.getElementById('history-screen-input').hidden   = false;
+            document.getElementById('history-screen-confirm').hidden = true;
+        }
+
+        function updatePreview() {
+            const v = parseFloat(weightIn.value);
+            preview.textContent = (!isNaN(v) && v > 0) ? '= ' + (v / 2.2046).toFixed(1) + ' kgs' : '';
+        }
+
+        async function doSave(dt, lbs, overwrite) {
+            const res  = await fetch('/api/weight', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ weight_lbs: lbs, date: dt, overwrite })
+            });
+            const data = await res.json();
+
+            if (data.success) { close(); window.refreshChart(); return; }
+
+            if (data.conflict) {
+                document.getElementById('history-overwrite-message').textContent =
+                    'Are you sure you want to overwrite your weight for ' + formatDateDisplay(dt) + '?';
+                document.getElementById('history-screen-input').hidden   = true;
+                document.getElementById('history-screen-confirm').hidden = false;
+                document.getElementById('history-overwrite-cancel').onclick  = close;
+                document.getElementById('history-overwrite-confirm').onclick = () => doSave(dt, lbs, true);
+            }
+        }
+
+        function trySave() {
+            const dt  = dateIn.value;
+            const lbs = parseFloat(weightIn.value);
+            if (!dt)              { dateIn.focus();   return; }
+            if (isNaN(lbs) || lbs <= 0) { weightIn.focus(); return; }
+            doSave(dt, lbs, false);
+        }
+
+        function step(amount) {
+            const cur  = parseFloat(weightIn.value) || 0;
+            weightIn.value = Math.min(999, Math.max(50, Math.round((cur + amount) * 10) / 10));
+            updatePreview();
+        }
+
+        document.getElementById('chart-add-btn').addEventListener('click', () => {
+            dateIn.value = ''; weightIn.value = ''; preview.textContent = '';
+            close();
+            modal.hidden = false;
+            setTimeout(() => dateIn.focus(), 50);
+        });
+
+        document.getElementById('history-cancel').addEventListener('click', close);
+        document.getElementById('history-save').addEventListener('click', trySave);
+        document.getElementById('history-step-up').addEventListener('click',   () => step(1));
+        document.getElementById('history-step-down').addEventListener('click', () => step(-1));
+        modal.addEventListener('click', e => { if (e.target === modal) close(); });
+        document.addEventListener('keydown', e => { if (e.key === 'Escape' && !modal.hidden) close(); });
+        weightIn.addEventListener('input', updatePreview);
+        weightIn.addEventListener('keydown', e => { if (e.key === 'Enter') trySave(); });
+    })();
 
     /* Custom cursor: scale pointer.png to 48px tall, strip white background,
        set hotspot at fingertip (upper-left of image). */

@@ -1,6 +1,7 @@
 from flask import Flask, render_template, request, jsonify
 import sqlite3
 import os
+from datetime import date, timedelta
 
 app = Flask(__name__)
 DB_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'weights.db')
@@ -68,6 +69,46 @@ def save_weight():
                 "INSERT INTO weights (date, weight_lbs, weight_kg) VALUES (?, ?, ?)",
                 (entry_date, weight_lbs, weight_kg),
             )
+        conn.commit()
+        return jsonify({"success": True})
+    finally:
+        conn.close()
+
+
+@app.route("/api/weights")
+def get_weights():
+    range_param = request.args.get("range", "all")
+    custom_days = request.args.get("days", type=int)
+
+    conn = get_db()
+    try:
+        if range_param == "all":
+            rows = conn.execute(
+                "SELECT date, weight_lbs, weight_kg FROM weights ORDER BY date"
+            ).fetchall()
+        else:
+            if   range_param == "7d":  days = 7
+            elif range_param == "30d": days = 30
+            elif range_param == "90d": days = 90
+            elif range_param == "1y":  days = 365
+            else:                      days = custom_days or 30
+
+            start = (date.today() - timedelta(days=days - 1)).isoformat()
+            rows = conn.execute(
+                "SELECT date, weight_lbs, weight_kg FROM weights WHERE date >= ? ORDER BY date",
+                (start,),
+            ).fetchall()
+
+        return jsonify([dict(r) for r in rows])
+    finally:
+        conn.close()
+
+
+@app.route("/api/weight/<string:entry_date>", methods=["DELETE"])
+def delete_weight(entry_date):
+    conn = get_db()
+    try:
+        conn.execute("DELETE FROM weights WHERE date = ?", (entry_date,))
         conn.commit()
         return jsonify({"success": True})
     finally:
