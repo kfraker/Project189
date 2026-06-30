@@ -355,6 +355,16 @@ h1 {
     transform: translateY(-1px);
 }
 
+/* Screen 2 confirmation text */
+.overwrite-message {
+    font-family: Arial, sans-serif;
+    font-size: 15px;
+    color: #ccc;
+    line-height: 1.6;
+    margin: 0 0 26px;
+    padding-top: 8px;
+}
+
 
 /* ── Miami frame overlay ─────────────────────────────────────── */
 

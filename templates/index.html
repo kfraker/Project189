@@ -130,62 +130,97 @@
 <!-- Goal Weight Modal -->
 <div id="goal-modal" class="modal-overlay" hidden>
     <div class="modal-card">
-        <h2 class="modal-title">Goal Weight</h2>
-        <label class="modal-label" for="goal-input">New goal (lbs)</label>
-        <div class="modal-input-row">
-            <input type="number" class="weight-input" id="goal-input" min="50" max="999" step="0.1" placeholder="189">
-            <span class="modal-unit-tag">lbs</span>
-            <div class="goal-stepper">
-                <button type="button" class="stepper-btn stepper-up" id="goal-step-up" aria-label="Increase goal weight"></button>
-                <button type="button" class="stepper-btn stepper-down" id="goal-step-down" aria-label="Decrease goal weight"></button>
+        <div id="goal-screen-input">
+            <h2 class="modal-title">Goal Weight</h2>
+            <label class="modal-label" for="goal-input">New goal (lbs)</label>
+            <div class="modal-input-row">
+                <input type="number" class="weight-input" id="goal-input" min="50" max="999" step="0.1" placeholder="189">
+                <span class="modal-unit-tag">lbs</span>
+                <div class="goal-stepper">
+                    <button type="button" class="stepper-btn stepper-up" id="goal-step-up" aria-label="Increase goal weight"></button>
+                    <button type="button" class="stepper-btn stepper-down" id="goal-step-down" aria-label="Decrease goal weight"></button>
+                </div>
+            </div>
+            <div class="modal-kg-preview" id="goal-kg-preview"></div>
+            <div class="modal-actions">
+                <button class="modal-btn modal-cancel" id="goal-cancel">Cancel</button>
+                <button class="modal-btn modal-save" id="goal-save">Save</button>
             </div>
         </div>
-        <div class="modal-kg-preview" id="goal-kg-preview"></div>
-        <div class="modal-actions">
-            <button class="modal-btn modal-cancel" id="goal-cancel">Cancel</button>
-            <button class="modal-btn modal-save" id="goal-save">Save</button>
+        <div id="goal-screen-confirm" hidden>
+            <h2 class="modal-title">Confirm Overwrite</h2>
+            <p id="goal-overwrite-message" class="overwrite-message"></p>
+            <div class="modal-actions">
+                <button class="modal-btn modal-cancel" id="goal-overwrite-cancel">Cancel</button>
+                <button class="modal-btn modal-save" id="goal-overwrite-confirm">Overwrite</button>
+            </div>
         </div>
     </div>
 </div>
 
-<!-- Current Weight Modal -->
+<!-- Current Weight Modal (two-screen card) -->
 <div id="current-modal" class="modal-overlay" hidden>
     <div class="modal-card">
-        <h2 class="modal-title">Current Weight</h2>
-        <label class="modal-label" for="current-input">New current weight (lbs)</label>
-        <div class="modal-input-row">
-            <input type="number" class="weight-input" id="current-input" min="50" max="999" step="0.1" placeholder="226.2">
-            <span class="modal-unit-tag">lbs</span>
-            <div class="goal-stepper">
-                <button type="button" class="stepper-btn stepper-up" id="current-step-up" aria-label="Increase current weight"></button>
-                <button type="button" class="stepper-btn stepper-down" id="current-step-down" aria-label="Decrease current weight"></button>
+
+        <!-- Screen 1: weight input -->
+        <div id="current-screen-input">
+            <h2 class="modal-title">Current Weight</h2>
+            <label class="modal-label" for="current-input">New current weight (lbs)</label>
+            <div class="modal-input-row">
+                <input type="number" class="weight-input" id="current-input" min="50" max="999" step="0.1" placeholder="226.2">
+                <span class="modal-unit-tag">lbs</span>
+                <div class="goal-stepper">
+                    <button type="button" class="stepper-btn stepper-up" id="current-step-up" aria-label="Increase current weight"></button>
+                    <button type="button" class="stepper-btn stepper-down" id="current-step-down" aria-label="Decrease current weight"></button>
+                </div>
+            </div>
+            <div class="modal-kg-preview" id="current-kg-preview"></div>
+            <div class="modal-actions">
+                <button class="modal-btn modal-cancel" id="current-cancel">Cancel</button>
+                <button class="modal-btn modal-save" id="current-save">Save</button>
             </div>
         </div>
-        <div class="modal-kg-preview" id="current-kg-preview"></div>
-        <div class="modal-actions">
-            <button class="modal-btn modal-cancel" id="current-cancel">Cancel</button>
-            <button class="modal-btn modal-save" id="current-save">Save</button>
+
+        <!-- Screen 2: overwrite confirmation -->
+        <div id="current-screen-confirm" hidden>
+            <h2 class="modal-title">Confirm Overwrite</h2>
+            <p id="current-overwrite-message" class="overwrite-message"></p>
+            <div class="modal-actions">
+                <button class="modal-btn modal-cancel" id="current-overwrite-cancel">Cancel</button>
+                <button class="modal-btn modal-save" id="current-overwrite-confirm">Overwrite</button>
+            </div>
         </div>
+
     </div>
 </div>
 
 <!-- Starting Weight Modal -->
 <div id="start-modal" class="modal-overlay" hidden>
     <div class="modal-card">
-        <h2 class="modal-title">Starting Weight</h2>
-        <label class="modal-label" for="start-input">New starting weight (lbs)</label>
-        <div class="modal-input-row">
-            <input type="number" class="weight-input" id="start-input" min="50" max="999" step="0.1" placeholder="238">
-            <span class="modal-unit-tag">lbs</span>
-            <div class="goal-stepper">
-                <button type="button" class="stepper-btn stepper-up" id="start-step-up" aria-label="Increase starting weight"></button>
-                <button type="button" class="stepper-btn stepper-down" id="start-step-down" aria-label="Decrease starting weight"></button>
+        <div id="start-screen-input">
+            <h2 class="modal-title">Starting Weight</h2>
+            <label class="modal-label" for="start-input">New starting weight (lbs)</label>
+            <div class="modal-input-row">
+                <input type="number" class="weight-input" id="start-input" min="50" max="999" step="0.1" placeholder="238">
+                <span class="modal-unit-tag">lbs</span>
+                <div class="goal-stepper">
+                    <button type="button" class="stepper-btn stepper-up" id="start-step-up" aria-label="Increase starting weight"></button>
+                    <button type="button" class="stepper-btn stepper-down" id="start-step-down" aria-label="Decrease starting weight"></button>
+                </div>
+            </div>
+            <div class="modal-kg-preview" id="start-kg-preview"></div>
+            <div class="modal-actions">
+                <button class="modal-btn modal-cancel" id="start-cancel">Cancel</button>
+                <button class="modal-btn modal-save" id="start-save">Save</button>
             </div>
         </div>
-        <div class="modal-kg-preview" id="start-kg-preview"></div>
-        <div class="modal-actions">
-            <button class="modal-btn modal-cancel" id="start-cancel">Cancel</button>
-            <button class="modal-btn modal-save" id="start-save">Save</button>
+        <div id="start-screen-confirm" hidden>
+            <h2 class="modal-title">Confirm Overwrite</h2>
+            <p id="start-overwrite-message" class="overwrite-message"></p>
+            <div class="modal-actions">
+                <button class="modal-btn modal-cancel" id="start-overwrite-cancel">Cancel</button>
+                <button class="modal-btn modal-save" id="start-overwrite-confirm">Overwrite</button>
+            </div>
         </div>
     </div>
 </div>
@@ -208,17 +243,35 @@
         update();
     })();
 
-    /* Recompute Lost Weight whenever Starting or Current changes */
+    /* ── Helpers ── */
+    function getTodayISO() {
+        const d = new Date();
+        return d.getFullYear() + '-' +
+            String(d.getMonth() + 1).padStart(2, '0') + '-' +
+            String(d.getDate()).padStart(2, '0');
+    }
+
+    function formatDateDisplay(isoDate) {
+        const [y, m, d] = isoDate.split('-').map(Number);
+        return new Date(y, m - 1, d).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
+    }
+
+    function fmtLbs(n) { return n === Math.round(n) ? Math.round(n) : parseFloat(n.toFixed(1)); }
+
+    /* ── Recompute Lost Weight whenever Starting or Current changes ── */
     function updateLostWeight() {
         const startLbs   = parseFloat(document.getElementById('start-lbs-num').textContent)   || 0;
         const currentLbs = parseFloat(document.getElementById('current-lbs-num').textContent) || 0;
         const diff = Math.max(0, Math.round((startLbs - currentLbs) * 10) / 10);
-        const fmt  = n => n === Math.round(n) ? Math.round(n) : parseFloat(n.toFixed(1));
-        document.getElementById('lost-lbs-num').textContent = fmt(diff);
+        document.getElementById('lost-lbs-num').textContent = fmtLbs(diff);
         document.getElementById('lost-kg-num').textContent  = (diff / 2.2046).toFixed(1);
     }
 
-    /* Weight edit modal — shared by all editable weight cards */
+    /* ── Weight edit modal — shared by all editable weight cards ──
+       apiSave(lbs, overwrite) must return:
+         true             — saved, proceed with DOM update + close
+         false            — error, do nothing
+         'conflict:MSG'   — show confirm screen with MSG, await user choice  */
     function setupWeightModal(cfg) {
         const modal   = document.getElementById(cfg.modal);
         const input   = document.getElementById(cfg.input);
@@ -227,36 +280,54 @@
         const kgNum   = document.getElementById(cfg.kgNum);
 
         function toKg(lbs) { return (lbs / 2.2046).toFixed(1); }
-
         function updatePreview() {
             const v = parseFloat(input.value);
             preview.textContent = (!isNaN(v) && v > 0) ? '= ' + toKg(v) + ' kgs' : '';
         }
 
+        function close() { modal.hidden = true; }
+
+        function commitSave(v) {
+            lbsNum.textContent = fmtLbs(v);
+            kgNum.textContent  = toKg(v);
+            close();
+            if (cfg.onSave) cfg.onSave();
+        }
+
+        function showConfirmScreen(v, message) {
+            document.getElementById(cfg.confirmMsgId).textContent = message;
+            document.getElementById(cfg.screens[0]).hidden = true;
+            document.getElementById(cfg.screens[1]).hidden = false;
+            document.getElementById(cfg.confirmBtnId).onclick = () => doSave(v, true);
+        }
+
+        async function doSave(v, overwrite) {
+            if (cfg.apiSave) {
+                const result = await cfg.apiSave(v, overwrite);
+                if (typeof result === 'string' && result.startsWith('conflict:')) {
+                    showConfirmScreen(v, result.slice('conflict:'.length));
+                    return;
+                }
+                if (!result) return;
+            }
+            commitSave(v);
+        }
+
         function open() {
+            if (cfg.screens) {
+                document.getElementById(cfg.screens[0]).hidden = false;
+                document.getElementById(cfg.screens[1]).hidden = true;
+            }
             input.value = lbsNum.textContent;
             updatePreview();
             modal.hidden = false;
             setTimeout(() => { input.focus(); input.select(); }, 50);
         }
 
-        function close() { modal.hidden = true; }
-
-        function save() {
-            const v = parseFloat(input.value);
-            if (isNaN(v) || v <= 0) return;
-            lbsNum.textContent = v === Math.round(v) ? Math.round(v) : parseFloat(v.toFixed(1));
-            kgNum.textContent  = toKg(v);
-            close();
-            if (cfg.onSave) cfg.onSave();
-        }
-
         function step(amount) {
             const cur = parseFloat(input.value) || 0;
-            const min = parseFloat(input.min);
-            const max = parseFloat(input.max);
             let next = Math.round((cur + amount) * 10) / 10;
-            next = Math.min(max, Math.max(min, next));
+            next = Math.min(parseFloat(input.max), Math.max(parseFloat(input.min), next));
             input.value = next;
             updatePreview();
         }
@@ -264,33 +335,64 @@
         document.getElementById(cfg.plate).addEventListener('click', open);
         document.getElementById(cfg.plate).addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') open(); });
         document.getElementById(cfg.cancel).addEventListener('click', close);
-        document.getElementById(cfg.save).addEventListener('click', save);
+        document.getElementById(cfg.save).addEventListener('click', () => { const v = parseFloat(input.value); if (!isNaN(v) && v > 0) doSave(v, false); });
         document.getElementById(cfg.stepUp).addEventListener('click', () => step(1));
         document.getElementById(cfg.stepDown).addEventListener('click', () => step(-1));
         modal.addEventListener('click', e => { if (e.target === modal) close(); });
         document.addEventListener('keydown', e => { if (e.key === 'Escape') close(); });
-        input.addEventListener('keydown', e => { if (e.key === 'Enter') save(); });
+        input.addEventListener('keydown', e => { if (e.key === 'Enter') { const v = parseFloat(input.value); if (!isNaN(v) && v > 0) doSave(v, false); } });
         input.addEventListener('input', updatePreview);
+        if (cfg.screens) {
+            document.getElementById(cfg.confirmCancelId).addEventListener('click', close);
+        }
     }
 
     setupWeightModal({
         plate: 'goal-plate', modal: 'goal-modal', input: 'goal-input', preview: 'goal-kg-preview',
         lbsNum: 'goal-lbs-num', kgNum: 'goal-kg-num', cancel: 'goal-cancel', save: 'goal-save',
-        stepUp: 'goal-step-up', stepDown: 'goal-step-down'
+        stepUp: 'goal-step-up', stepDown: 'goal-step-down',
+        screens: ['goal-screen-input', 'goal-screen-confirm'],
+        confirmMsgId: 'goal-overwrite-message', confirmBtnId: 'goal-overwrite-confirm', confirmCancelId: 'goal-overwrite-cancel',
+        apiSave: async (lbs, overwrite) => {
+            const res  = await fetch('/api/setting', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ key: 'goal_weight', value_lbs: lbs, overwrite }) });
+            const data = await res.json();
+            if (data.success)  return true;
+            if (data.conflict) return 'conflict:Are you sure you want to update your goal weight?';
+            return false;
+        }
     });
 
     setupWeightModal({
         plate: 'start-plate', modal: 'start-modal', input: 'start-input', preview: 'start-kg-preview',
         lbsNum: 'start-lbs-num', kgNum: 'start-kg-num', cancel: 'start-cancel', save: 'start-save',
         stepUp: 'start-step-up', stepDown: 'start-step-down',
-        onSave: updateLostWeight
+        screens: ['start-screen-input', 'start-screen-confirm'],
+        confirmMsgId: 'start-overwrite-message', confirmBtnId: 'start-overwrite-confirm', confirmCancelId: 'start-overwrite-cancel',
+        onSave: updateLostWeight,
+        apiSave: async (lbs, overwrite) => {
+            const res  = await fetch('/api/setting', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ key: 'starting_weight', value_lbs: lbs, overwrite }) });
+            const data = await res.json();
+            if (data.success)  return true;
+            if (data.conflict) return 'conflict:Are you sure you want to update your starting weight?';
+            return false;
+        }
     });
 
     setupWeightModal({
         plate: 'current-plate', modal: 'current-modal', input: 'current-input', preview: 'current-kg-preview',
         lbsNum: 'current-lbs-num', kgNum: 'current-kg-num', cancel: 'current-cancel', save: 'current-save',
         stepUp: 'current-step-up', stepDown: 'current-step-down',
-        onSave: updateLostWeight
+        screens: ['current-screen-input', 'current-screen-confirm'],
+        confirmMsgId: 'current-overwrite-message', confirmBtnId: 'current-overwrite-confirm', confirmCancelId: 'current-overwrite-cancel',
+        onSave: updateLostWeight,
+        apiSave: async (lbs, overwrite) => {
+            const today = getTodayISO();
+            const res   = await fetch('/api/weight', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ weight_lbs: lbs, date: today, overwrite }) });
+            const data  = await res.json();
+            if (data.success)  return true;
+            if (data.conflict) return 'conflict:Are you sure you want to overwrite your weight for ' + formatDateDisplay(today) + '?';
+            return false;
+        }
     });
 
     /* Custom cursor: scale pointer.png to 48px tall, strip white background,
