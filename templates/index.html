@@ -4,7 +4,7 @@
     <title>Project 189</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link href="https://fonts.googleapis.com/css2?family=Pacifico&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}?v=14">
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}?v=60">
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 </head>
 
@@ -41,11 +41,11 @@
                 </text>
             </svg>
             <div class="plate-lbs">
-                <div class="plate-num" id="start-lbs-num">238</div>
+                <div class="plate-num" id="start-lbs-num">—</div>
                 <div class="plate-unit">lbs</div>
             </div>
             <div class="plate-kg">
-                <div class="plate-num" id="start-kg-num">107.9</div>
+                <div class="plate-num" id="start-kg-num">—</div>
                 <div class="plate-unit">kgs</div>
             </div>
         </div>
@@ -66,11 +66,11 @@
                 </text>
             </svg>
             <div class="plate-lbs">
-                <div class="plate-num" id="current-lbs-num">226.2</div>
+                <div class="plate-num" id="current-lbs-num">—</div>
                 <div class="plate-unit">lbs</div>
             </div>
             <div class="plate-kg">
-                <div class="plate-num" id="current-kg-num">102.6</div>
+                <div class="plate-num" id="current-kg-num">—</div>
                 <div class="plate-unit">kgs</div>
             </div>
         </div>
@@ -91,11 +91,11 @@
                 </text>
             </svg>
             <div class="plate-lbs">
-                <div class="plate-num" id="lost-lbs-num">11.8</div>
+                <div class="plate-num" id="lost-lbs-num">—</div>
                 <div class="plate-unit">lbs</div>
             </div>
             <div class="plate-kg">
-                <div class="plate-num" id="lost-kg-num">5.4</div>
+                <div class="plate-num" id="lost-kg-num">—</div>
                 <div class="plate-unit">kgs</div>
             </div>
         </div>
@@ -116,11 +116,11 @@
                 </text>
             </svg>
             <div class="plate-lbs">
-                <div class="plate-num" id="goal-lbs-num">189</div>
+                <div class="plate-num" id="goal-lbs-num">—</div>
                 <div class="plate-unit">lbs</div>
             </div>
             <div class="plate-kg">
-                <div class="plate-num" id="goal-kg-num">85.7</div>
+                <div class="plate-num" id="goal-kg-num">—</div>
                 <div class="plate-unit">kgs</div>
             </div>
         </div>
@@ -140,40 +140,47 @@
                 <h2 class="chart-title">Weight Over Time</h2>
                 <div class="chart-controls">
                     <div class="range-btns">
-                        <button class="range-btn" data-range="7d">7D</button>
+                        <button class="range-btn active" data-range="7d">7D</button>
                         <button class="range-btn" data-range="30d">30D</button>
                         <button class="range-btn" data-range="90d">90D</button>
                         <button class="range-btn" data-range="1y">1Y</button>
-                        <button class="range-btn active" data-range="all">All</button>
+                        <button class="range-btn" data-range="all">All</button>
                         <button class="range-btn" data-range="custom">Custom</button>
                     </div>
                     <div class="custom-days-wrap" id="custom-days-wrap" hidden>
-                        <input type="number" id="custom-days" class="custom-days-input" min="1" max="3650" placeholder="30">
+                        <input type="number" id="custom-days" class="custom-days-input" min="1" max="1095" placeholder="30">
                         <span class="custom-days-label">days</span>
                     </div>
-                    <button class="chart-add-btn" id="chart-add-btn" title="Log a past weight">+</button>
+                    <button class="chart-add-btn" id="chart-add-btn" data-tip="Log a past weight">+</button>
                 </div>
             </div>
             <div class="chart-wrap">
                 <canvas id="weight-chart"></canvas>
+                <div id="chart-info-icon">i</div>
             </div>
             <p class="chart-empty" id="chart-empty" hidden>No weight data yet — start logging!</p>
             <div class="data-table-wrap" id="data-table-wrap" hidden>
-                <div class="data-table-scroll">
-                    <table class="data-table">
-                        <thead>
-                            <tr>
-                                <th>Date</th>
-                                <th>Weight (lbs)</th>
-                                <th>Weight (kg)</th>
-                                <th></th>
-                            </tr>
-                        </thead>
-                        <tbody id="data-table-body"></tbody>
-                    </table>
+                <div class="data-table-scroll-area">
+                    <div class="data-table-scroll">
+                        <table class="data-table">
+                            <thead>
+                                <tr>
+                                    <th style="width:30%">Date</th>
+                                    <th id="th-primary"   style="width:28%">Weight (lbs)</th>
+                                    <th id="th-secondary" style="width:28%">Weight (kgs)</th>
+                                    <th style="width:14%"></th>
+                                </tr>
+                            </thead>
+                            <tbody id="data-table-body"></tbody>
+                        </table>
+                    </div>
+                    <div class="custom-scrollbar-track">
+                        <div class="custom-scrollbar-thumb" id="custom-scrollbar-thumb"></div>
+                    </div>
                 </div>
             </div>
             <div class="chart-footer">
+                <button class="unit-toggle-btn" id="unit-toggle-btn">KGS</button>
                 <button class="view-toggle-btn" id="view-toggle-btn">Table</button>
             </div>
         </div>
@@ -313,6 +320,19 @@
     </div>
 </div>
 
+<!-- Shared table confirm modal (overwrite + delete) -->
+<div id="table-confirm-modal" class="modal-overlay" hidden>
+    <div class="modal-card">
+        <h2 class="modal-title" id="table-confirm-title">Confirm</h2>
+        <p id="table-confirm-message" class="overwrite-message"></p>
+        <div class="modal-actions">
+            <button class="modal-btn modal-cancel" id="table-confirm-cancel">Cancel</button>
+            <button class="modal-btn modal-save"   id="table-confirm-ok">Confirm</button>
+        </div>
+    </div>
+</div>
+
+<div id="site-cursor"></div>
 <script>
     (function () {
         const left  = document.querySelector('.miami-left');
@@ -348,12 +368,40 @@
 
     /* ── Recompute Lost Weight whenever Starting or Current changes ── */
     function updateLostWeight() {
-        const startLbs   = parseFloat(document.getElementById('start-lbs-num').textContent)   || 0;
-        const currentLbs = parseFloat(document.getElementById('current-lbs-num').textContent) || 0;
+        const startLbs   = parseFloat(document.getElementById('start-lbs-num').textContent);
+        const currentLbs = parseFloat(document.getElementById('current-lbs-num').textContent);
+        if (isNaN(startLbs) || isNaN(currentLbs)) {
+            document.getElementById('lost-lbs-num').textContent = '—';
+            document.getElementById('lost-kg-num').textContent  = '—';
+            return;
+        }
         const diff = Math.max(0, Math.round((startLbs - currentLbs) * 10) / 10);
         document.getElementById('lost-lbs-num').textContent = fmtLbs(diff);
         document.getElementById('lost-kg-num').textContent  = (diff / 2.2046).toFixed(1);
     }
+
+    /* ── Sync all plates from DB on load ── */
+    Promise.all([
+        fetch('/api/latest-weight').then(r => r.json()),
+        fetch('/api/settings').then(r => r.json())
+    ]).then(([latest, settings]) => {
+        window.oldestEntryDate = latest.oldest_date || null;
+        if (latest.weight_lbs !== undefined) {
+            document.getElementById('current-lbs-num').textContent = fmtLbs(latest.weight_lbs);
+            document.getElementById('current-kg-num').textContent  = latest.weight_kg.toFixed(1);
+        }
+        const sw = settings['starting_weight'];
+        if (sw) {
+            document.getElementById('start-lbs-num').textContent = fmtLbs(sw.value_lbs);
+            document.getElementById('start-kg-num').textContent  = sw.value_kg.toFixed(1);
+        }
+        const gw = settings['goal_weight'];
+        if (gw) {
+            document.getElementById('goal-lbs-num').textContent = fmtLbs(gw.value_lbs);
+            document.getElementById('goal-kg-num').textContent  = gw.value_kg.toFixed(1);
+        }
+        updateLostWeight();
+    });
 
     /* ── Weight edit modal — shared by all editable weight cards ──
        apiSave(lbs, overwrite) must return:
@@ -483,11 +531,21 @@
         }
     });
 
+    /* ── Shared unit state ── */
+    window.activeUnit = 'lbs';
+
     /* ── Weight chart ── */
+    const chartTtEl = document.createElement('div');
+    chartTtEl.id = 'chart-tooltip';
+    document.body.appendChild(chartTtEl);
+
     (function () {
-        let chartInst  = null;
-        let activeRange = 'all';
-        let activeDays  = 30;
+        let chartInst    = null;
+        let activeRange  = 'all';
+        let activeDays   = 30;
+        let currentDates = [];
+        let currentRawW  = [];
+        let mouseX = 0, mouseY = 0;
 
         const canvas   = document.getElementById('weight-chart');
         const emptyMsg = document.getElementById('chart-empty');
@@ -520,10 +578,25 @@
             canvas.hidden   = false;
             emptyMsg.hidden = true;
 
-            const first = new Date(rows[0].date + 'T00:00:00');
-            const last  = new Date(rows[rows.length - 1].date + 'T00:00:00');
+            const last      = new Date(rows[rows.length - 1].date + 'T00:00:00');
+            const dataFirst = new Date(rows[0].date + 'T00:00:00');
+            let   first;
+            if (activeRange === 'all') {
+                first = dataFirst;
+            } else {
+                const n = activeRange === '7d'  ? 7  :
+                          activeRange === '30d' ? 30 :
+                          activeRange === '90d' ? 90 :
+                          activeRange === '1y'  ? 365 : Math.min(activeDays || 30, 1095);
+                const today0 = new Date(); today0.setHours(0, 0, 0, 0);
+                first = new Date(today0);
+                first.setDate(today0.getDate() - (n - 1));
+                if (first < dataFirst) first = dataFirst;
+                if (first > last) first = last;
+            }
 
-            const dataMap = new Map(rows.map(r => [r.date, r.weight_lbs]));
+            const unit    = window.activeUnit || 'lbs';
+            const dataMap = new Map(rows.map(r => [r.date, r]));
             const allDates = [];
             const cursor = new Date(first);
             while (cursor <= last) {
@@ -531,19 +604,53 @@
                 cursor.setDate(cursor.getDate() + 1);
             }
 
+            currentDates = allDates;
+
+            const infoIcon = document.getElementById('chart-info-icon');
+            if (activeRange !== 'all') {
+                const nReq = activeRange === '7d'  ? 7  :
+                             activeRange === '30d' ? 30 :
+                             activeRange === '90d' ? 90 :
+                             activeRange === '1y'  ? 365 : (activeDays || 30);
+                if (allDates.length < nReq - 1) {
+                    infoIcon.dataset.tip = 'Showing max data - ' + rows.length + (rows.length !== 1 ? ' entries' : ' entry') + ' logged';
+                    infoIcon.style.display = 'flex';
+                } else {
+                    infoIcon.style.display = 'none';
+                }
+            } else {
+                infoIcon.style.display = 'none';
+            }
+
             const spanDays = allDates.length;
             const labels   = allDates.map(d => fmtAxisDate(d, spanDays));
-            const weights  = allDates.map(d => dataMap.has(d) ? dataMap.get(d) : null);
-            const minW     = Math.min(...rows.map(r => r.weight_lbs));
-            const maxW     = Math.max(...rows.map(r => r.weight_lbs));
+            const rawW     = allDates.map(d => {
+                const r = dataMap.get(d);
+                return r ? (unit === 'lbs' ? r.weight_lbs : r.weight_kg) : null;
+            });
+            currentRawW = rawW;
+            const weights  = rawW.map((v, i, arr) => {
+                if (v !== null) return v;
+                let lo = i - 1, hi = i + 1;
+                while (lo >= 0 && arr[lo] === null) lo--;
+                while (hi < arr.length && arr[hi] === null) hi++;
+                if (lo >= 0 && hi < arr.length)
+                    return arr[lo] + (arr[hi] - arr[lo]) * (i - lo) / (hi - lo);
+                return lo >= 0 ? arr[lo] : arr[hi];
+            });
+            const minW     = Math.min(...rows.map(r => unit === 'lbs' ? r.weight_lbs : r.weight_kg));
+            const maxW     = Math.max(...rows.map(r => unit === 'lbs' ? r.weight_lbs : r.weight_kg));
             const ptRadius = rows.length > 60 ? 2 : 4;
+            const ptRadii  = rawW.map(v => v === null ? 0 : ptRadius);
+            const hoverRadii = rawW.map(v => v === null ? 0 : 6);
 
             if (chartInst) {
-                chartInst.data.labels                   = labels;
-                chartInst.data.datasets[0].data         = weights;
-                chartInst.data.datasets[0].pointRadius  = ptRadius;
-                chartInst.options.scales.y.min          = Math.floor(minW - 5);
-                chartInst.options.scales.y.max          = Math.ceil(maxW  + 5);
+                chartInst.data.labels                          = labels;
+                chartInst.data.datasets[0].data                = weights;
+                chartInst.data.datasets[0].pointRadius         = ptRadii;
+                chartInst.data.datasets[0].pointHoverRadius    = hoverRadii;
+                chartInst.options.scales.y.min                 = Math.floor(minW - 5);
+                chartInst.options.scales.y.max                 = Math.ceil(maxW  + 5);
                 chartInst.update();
                 return;
             }
@@ -555,13 +662,12 @@
                     labels,
                     datasets: [{
                         data: weights,
-                        spanGaps: true,
                         borderColor: '#ff2d78',
                         borderWidth: 2.5,
                         pointBackgroundColor: '#ff2d78',
                         pointBorderColor: '#ff2d78',
-                        pointRadius: ptRadius,
-                        pointHoverRadius: 6,
+                        pointRadius: ptRadii,
+                        pointHoverRadius: hoverRadii,
                         pointHoverBackgroundColor: '#ffe0ee',
                         fill: true,
                         backgroundColor: function (context) {
@@ -579,20 +685,31 @@
                     responsive: true,
                     maintainAspectRatio: false,
                     animation: { duration: 400 },
+                    interaction: { mode: 'index', intersect: false, axis: 'x' },
                     plugins: {
                         legend: { display: false },
                         tooltip: {
-                            backgroundColor: '#0d0020',
-                            borderColor: 'rgba(255,45,120,0.5)',
-                            borderWidth: 1,
-                            titleColor: '#ffe0ee',
-                            bodyColor: '#ccc',
-                            padding: 12,
-                            cornerRadius: 8,
-                            displayColors: false,
-                            callbacks: {
-                                title: items => formatDateDisplay(rows[items[0].dataIndex].date),
-                                label: item  => item.parsed.y + ' lbs  ·  ' + (item.parsed.y / 2.2046).toFixed(1) + ' kg'
+                            enabled: false,
+                            external: function(context) {
+                                const tt = context.tooltip;
+                                if (tt.opacity === 0) { chartTtEl.style.opacity = '0'; return; }
+                                const dp = tt.dataPoints?.[0];
+                                if (!dp) return;
+                                const idx    = dp.dataIndex;
+                                const date   = currentDates[idx];
+                                if (!date) return;
+                                const isReal = currentRawW[idx] !== null;
+                                const val    = dp.parsed.y;
+                                const est    = isReal ? '' : ' <span class="ctt-est">(est.)</span>';
+                                const label  = window.activeUnit === 'kg'
+                                    ? val.toFixed(1) + ' kgs' + est + '  ·  ' + (val * 2.2046).toFixed(1) + ' lbs'
+                                    : Number(val.toFixed(1)) + ' lbs' + est + '  ·  ' + (val / 2.2046).toFixed(1) + ' kgs';
+                                chartTtEl.innerHTML =
+                                    `<div class="ctt-title">${formatDateDisplay(date)}</div><div class="ctt-body">${label}</div>`;
+                                chartTtEl.style.opacity = '1';
+                                chartTtEl.style.top  = Math.round(mouseY - chartTtEl.offsetHeight / 2) + 'px';
+                                const w = chartTtEl.offsetWidth;
+                                chartTtEl.style.left = Math.max(8, Math.round(mouseX - 12 - w)) + 'px';
                             }
                         }
                     },
@@ -603,11 +720,12 @@
                             ticks:  { color: '#666', font: { family: 'Arial', size: 11 }, maxTicksLimit: 10, maxRotation: 0 }
                         },
                         y: {
-                            min:    Math.floor(minW - 5),
-                            max:    Math.ceil(maxW  + 5),
-                            grid:   { color: 'rgba(255,255,255,0.04)' },
-                            border: { color: 'rgba(255,255,255,0.08)' },
-                            ticks:  { color: '#666', font: { family: 'Arial', size: 11 }, maxTicksLimit: 6, callback: v => v + ' lbs' }
+                            min:     Math.floor(minW - 5),
+                            max:     Math.ceil(maxW  + 5),
+                            grid:    { color: 'rgba(255,255,255,0.04)' },
+                            border:  { color: 'rgba(255,255,255,0.08)' },
+                            ticks:   { color: '#666', font: { family: 'Arial', size: 11 }, maxTicksLimit: 6, callback: v => v + ' ' + (window.activeUnit === 'kg' ? 'kgs' : 'lbs') },
+                            afterFit: scale => { scale.width = 75; }
                         }
                     }
                 }
@@ -631,15 +749,21 @@
 
         const customIn = document.getElementById('custom-days');
         function applyCustom() {
-            const d = parseInt(customIn.value);
-            if (d && d > 0) loadChart('custom', d);
+            const d = Math.min(Math.max(parseInt(customIn.value) || 1, 1), 1095);
+            customIn.value = d;
+            document.querySelectorAll('.range-btn').forEach(b => b.classList.remove('active'));
+            document.querySelector('.range-btn[data-range="custom"]').classList.add('active');
+            loadChart('custom', d);
         }
         customIn.addEventListener('keydown', e => { if (e.key === 'Enter') applyCustom(); });
         customIn.addEventListener('change', applyCustom);
 
+        canvas.addEventListener('mousemove',  e => { mouseX = e.clientX; mouseY = e.clientY; });
+        canvas.addEventListener('mouseleave', () => { chartTtEl.style.opacity = '0'; });
+
         window.refreshChart   = loadChart;
         window.getChartRange  = () => ({ range: activeRange, days: activeDays });
-        loadChart('all');
+        loadChart('7d');
     })();
 
     /* ── Data table toggle ── */
@@ -684,7 +808,9 @@
                 if (range === '30d') n = 30;
                 if (range === '90d') n = 90;
                 if (range === '1y')  n = 365;
+                n = Math.min(n, 1095);
                 startDate = addDays(today, -(n - 1));
+                if (rows.length && startDate < rows[0].date) startDate = rows[0].date;
             }
 
             const allDates = dateRange(startDate, today).reverse();
@@ -694,6 +820,10 @@
                 tableBody.innerHTML = '<tr><td colspan="4" class="table-empty-cell">No data yet.</td></tr>';
                 return;
             }
+
+            const unit = window.activeUnit || 'lbs';
+            document.getElementById('th-primary').textContent   = unit === 'lbs' ? 'Weight (lbs)' : 'Weight (kgs)';
+            document.getElementById('th-secondary').textContent = unit === 'lbs' ? 'Weight (kgs)' : 'Weight (lbs)';
 
             allDates.forEach(date => {
                 const entry = map[date];
@@ -708,10 +838,13 @@
                 wtTd.className = 'cell-weight' + (missing ? ' cell-missing' : '');
                 wtTd.dataset.date = date;
                 wtTd.dataset.lbs  = entry ? entry.weight_lbs : '';
-                wtTd.innerHTML = missing ? '<span class="missing-dash">—</span>' : fmtLbs(entry.weight_lbs);
+                wtTd.dataset.kg   = entry ? entry.weight_kg  : '';
+                const primaryVal   = entry ? (unit === 'lbs' ? fmtLbs(entry.weight_lbs) : fmtLbs(entry.weight_kg)) : null;
+                const secondaryVal = entry ? (unit === 'lbs' ? fmtLbs(entry.weight_kg) : fmtLbs(entry.weight_lbs)) : null;
+                wtTd.innerHTML = missing ? '<span class="missing-dash">—</span>' : primaryVal;
 
                 const kgTd = document.createElement('td');
-                kgTd.innerHTML = missing ? '<span class="missing-dash">—</span>' : (entry.weight_kg + ' kg');
+                kgTd.innerHTML = missing ? '<span class="missing-dash">—</span>' : secondaryVal;
 
                 const stTd = document.createElement('td');
                 if (missing) {
@@ -719,7 +852,7 @@
                 } else {
                     const del = document.createElement('button');
                     del.className = 'table-delete-btn';
-                    del.title = 'Delete this entry';
+                    del.dataset.tip = 'Delete this entry';
                     del.textContent = '×';
                     del.addEventListener('click', e => { e.stopPropagation(); deleteEntry(date); });
                     stTd.appendChild(del);
@@ -730,24 +863,43 @@
 
                 wtTd.addEventListener('click', () => startEdit(wtTd, kgTd));
             });
+
+            if (rows.length && window.oldestEntryDate && startDate <= window.oldestEntryDate) {
+                const footerTr = document.createElement('tr');
+                footerTr.className = 'no-earlier-row';
+                const footerTd = document.createElement('td');
+                footerTd.colSpan = 4;
+                footerTd.className = 'no-earlier-cell';
+                footerTd.innerHTML = '<span class="no-earlier-inner">&#9670;&nbsp;&nbsp;No Earlier Data Recorded&nbsp;&nbsp;&#9670;</span>';
+                footerTr.appendChild(footerTd);
+                tableBody.appendChild(footerTr);
+            }
+        }
+
+        function showTableConfirm(title, message, okLabel, onOk) {
+            document.getElementById('table-confirm-title').textContent   = title;
+            document.getElementById('table-confirm-message').textContent = message;
+            document.getElementById('table-confirm-ok').textContent      = okLabel;
+            const modal = document.getElementById('table-confirm-modal');
+            modal.hidden = false;
+            document.getElementById('table-confirm-ok').onclick     = () => { modal.hidden = true; onOk(); };
+            document.getElementById('table-confirm-cancel').onclick  = () => { modal.hidden = true; renderTable(); };
         }
 
         async function startEdit(wtTd, kgTd) {
             if (wtTd.querySelector('input')) return;
-            const date = wtTd.dataset.date;
-            const cur  = wtTd.dataset.lbs;
+            const date    = wtTd.dataset.date;
+            const unit    = window.activeUnit || 'lbs';
+            const cur     = unit === 'lbs' ? wtTd.dataset.lbs : wtTd.dataset.kg;
 
             const inp = document.createElement('input');
-            inp.type = 'number'; inp.min = '50'; inp.max = '999'; inp.step = '0.1';
+            inp.type = 'number'; inp.min = '1'; inp.max = '999'; inp.step = '0.1';
             inp.value = cur; inp.className = 'table-edit-input';
             wtTd.innerHTML = ''; wtTd.appendChild(inp);
             inp.focus(); if (cur) inp.select();
 
             let done = false;
-            async function save() {
-                if (done) return; done = true;
-                const lbs = parseFloat(inp.value);
-                if (isNaN(lbs) || lbs <= 0) { renderTable(); return; }
+            async function commitSave(lbs) {
                 await fetch('/api/weight', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
@@ -756,16 +908,46 @@
                 await renderTable();
                 if (window.refreshChart) window.refreshChart();
             }
+            async function save() {
+                if (done) return; done = true;
+                inp.removeEventListener('blur', save);
+                const val = parseFloat(inp.value);
+                if (isNaN(val) || val <= 0) { renderTable(); return; }
+                const lbs = unit === 'lbs' ? val : parseFloat((val * 2.2046).toFixed(1));
+                if (!wtTd.dataset.lbs) {
+                    await commitSave(lbs);
+                } else {
+                    showTableConfirm(
+                        'Confirm Overwrite',
+                        'Are you sure you want to overwrite your weight for ' + formatDateDisplay(date) + '?',
+                        'Overwrite',
+                        () => commitSave(lbs)
+                    );
+                }
+            }
             function cancel() { if (done) return; done = true; renderTable(); }
 
             inp.addEventListener('keydown', e => { if (e.key === 'Enter') save(); if (e.key === 'Escape') cancel(); });
             inp.addEventListener('blur', save);
         }
 
-        async function deleteEntry(date) {
-            await fetch('/api/weight/' + date, { method: 'DELETE' });
-            await renderTable();
-            if (window.refreshChart) window.refreshChart();
+        function deleteEntry(date) {
+            showTableConfirm(
+                'Confirm Delete',
+                'Are you sure you want to delete your weight entry for ' + formatDateDisplay(date) + '?',
+                'Delete',
+                async () => {
+                    const res  = await fetch('/api/weight/' + date, { method: 'DELETE' });
+                    const data = await res.json();
+                    if (data.latest && data.latest.weight_lbs !== undefined) {
+                        document.getElementById('current-lbs-num').textContent = fmtLbs(data.latest.weight_lbs);
+                        document.getElementById('current-kg-num').textContent  = data.latest.weight_kg.toFixed(1);
+                        updateLostWeight();
+                    }
+                    await renderTable();
+                    if (window.refreshChart) window.refreshChart();
+                }
+            );
         }
 
         toggleBtn.addEventListener('click', () => {
@@ -778,7 +960,56 @@
             else if (window.refreshChart) window.refreshChart();
         });
 
+        /* ── Custom scrollbar ── */
+        const scrollEl = document.querySelector('.data-table-scroll');
+        const thumbEl  = document.getElementById('custom-scrollbar-thumb');
+        const trackEl  = thumbEl.parentElement;
+
+        function syncThumb() {
+            if (scrollEl.scrollHeight <= scrollEl.clientHeight) {
+                thumbEl.style.display = 'none';
+                return;
+            }
+            const thumbH    = Math.max((scrollEl.clientHeight / scrollEl.scrollHeight) * trackEl.clientHeight, 30);
+            const maxTop    = trackEl.clientHeight - thumbH;
+            const maxScroll = scrollEl.scrollHeight - scrollEl.clientHeight;
+            thumbEl.style.display = 'block';
+            thumbEl.style.height  = thumbH + 'px';
+            thumbEl.style.top     = (scrollEl.scrollTop / maxScroll) * maxTop + 'px';
+        }
+
+        scrollEl.addEventListener('scroll', syncThumb);
+        new MutationObserver(syncThumb).observe(
+            document.getElementById('data-table-body'), { childList: true }
+        );
+
+        let drag = false, dragY = 0, dragScroll = 0;
+        thumbEl.addEventListener('mousedown', e => {
+            drag = true; dragY = e.clientY; dragScroll = scrollEl.scrollTop;
+            e.preventDefault();
+        });
+        document.addEventListener('mousemove', e => {
+            if (!drag) return;
+            const maxTop    = trackEl.clientHeight - parseFloat(thumbEl.style.height);
+            const maxScroll = scrollEl.scrollHeight - scrollEl.clientHeight;
+            scrollEl.scrollTop = Math.max(0, Math.min(maxScroll,
+                dragScroll + (e.clientY - dragY) * (maxScroll / maxTop)));
+        });
+        document.addEventListener('mouseup', () => { drag = false; });
+
         window.onChartRangeChange = () => { if (isTableView) renderTable(); };
+        window.renderTable = renderTable;
+    })();
+
+    /* ── Unit toggle ── */
+    (function () {
+        const unitBtn = document.getElementById('unit-toggle-btn');
+        unitBtn.addEventListener('click', () => {
+            window.activeUnit = window.activeUnit === 'lbs' ? 'kg' : 'lbs';
+            unitBtn.textContent = window.activeUnit === 'lbs' ? 'KGS' : 'LBS';
+            if (window.refreshChart) window.refreshChart();
+            if (window.renderTable)  window.renderTable();
+        });
     })();
 
     /* ── Historical weight modal ── */
@@ -852,33 +1083,109 @@
         weightIn.addEventListener('keydown', e => { if (e.key === 'Enter') trySave(); });
     })();
 
-    /* Custom cursor: scale pointer.png to 48px tall, strip white background,
-       set hotspot at fingertip (upper-left of image). */
+    /* Custom cursor: DOM element follows the mouse so cursor: none works
+       even over scrollbars (which ignore CSS cursor on pseudo-elements). */
     (function () {
-        const img = new Image();
-        img.onload = function () {
-            const h = 48;
-            const scale = h / img.height;
-            const w = Math.round(img.width * scale);
-            const canvas = document.createElement('canvas');
-            canvas.width  = w;
-            canvas.height = h;
-            const ctx = canvas.getContext('2d');
-            ctx.drawImage(img, 0, 0, w, h);
+        const el      = document.getElementById('site-cursor');
+        const cursors = {};
+        let activeKey = 'normal';
 
-            const id = ctx.getImageData(0, 0, w, h);
-            const d  = id.data;
-            for (let i = 0; i < d.length; i += 4) {
-                if (d[i] > 230 && d[i + 1] > 230 && d[i + 2] > 230) d[i + 3] = 0;
-            }
-            ctx.putImageData(id, 0, 0);
+        function processImg(src, origHotX, origHotY, removeDark, key, renderH) {
+            const img = new Image();
+            img.onload = function () {
+                const h = renderH || 48, scale = h / img.height, w = Math.round(img.width * scale);
+                const cv = document.createElement('canvas');
+                cv.width = w; cv.height = h;
+                const ctx = cv.getContext('2d');
+                ctx.drawImage(img, 0, 0, w, h);
+                const id = ctx.getImageData(0, 0, w, h), d = id.data;
+                for (let i = 0; i < d.length; i += 4) {
+                    if (removeDark
+                        ? (d[i] < 25  && d[i+1] < 25  && d[i+2] < 25)
+                        : (d[i] > 230 && d[i+1] > 230 && d[i+2] > 230))
+                        d[i+3] = 0;
+                }
+                ctx.putImageData(id, 0, 0);
+                cursors[key] = { url: cv.toDataURL(), hotX: Math.round(origHotX * scale), hotY: Math.round(origHotY * scale), w, h };
+                if (key === 'normal') { applyCursor('normal'); el.style.display = 'block'; }
+                if (key === activeKey) applyCursor(key);
+            };
+            img.src = src;
+        }
 
-            const hotX = Math.round(280 * scale);
-            const hotY = Math.round(60 * scale);
-            const url  = canvas.toDataURL();
-            document.body.style.cursor = `url(${url}) ${hotX} ${hotY}, default`;
-        };
-        img.src = '/static/pointer.png';
+        function applyCursor(key) {
+            const c = cursors[key];
+            if (!c) return;
+            el.style.width           = c.w + 'px';
+            el.style.height          = c.h + 'px';
+            el.style.backgroundImage = `url(${c.url})`;
+        }
+
+        processImg('/static/pointer.png',     280, 60,  false, 'normal', 48);
+        processImg('/static/editpointer.png', 660, 30,  true,  'edit',   64);
+
+        const EDIT_PLATES = '#start-plate, #current-plate, #goal-plate';
+
+        let lastMX = 0, lastMY = 0;
+
+        function evalCursor(target) {
+            const cellEl = target.closest('.cell-weight');
+            const isEdit = target.closest(EDIT_PLATES) ||
+                           (cellEl && !cellEl.classList.contains('cell-missing'));
+            const key = isEdit ? 'edit' : 'normal';
+            if (key !== activeKey) { activeKey = key; applyCursor(key); }
+        }
+
+        document.addEventListener('mouseover', e => evalCursor(e.target));
+
+        document.addEventListener('click', () => {
+            setTimeout(() => {
+                const t = document.elementFromPoint(lastMX, lastMY);
+                if (t) evalCursor(t);
+            }, 0);
+        });
+
+        document.addEventListener('mousemove', e => {
+            lastMX = e.clientX; lastMY = e.clientY;
+            const c = cursors[activeKey];
+            if (!c) return;
+            el.style.left = (e.clientX - c.hotX) + 'px';
+            el.style.top  = (e.clientY - c.hotY) + 'px';
+        });
+
+        document.addEventListener('mouseleave', () => { el.style.display = 'none'; });
+        document.addEventListener('mouseenter', () => { el.style.display = 'block'; });
+    })();
+
+    /* ── Site-wide hover tooltips (matches chart tooltip style) ── */
+    (function () {
+        const ttEl = document.createElement('div');
+        ttEl.id = 'site-tooltip';
+        document.body.appendChild(ttEl);
+
+        function position(x, y) {
+            const w = ttEl.offsetWidth, h = ttEl.offsetHeight;
+            ttEl.style.top  = Math.round(y - h / 2) + 'px';
+            ttEl.style.left = Math.max(8, Math.round(x - 12 - w)) + 'px';
+        }
+
+        document.addEventListener('mouseover', e => {
+            const t = e.target.closest('[data-tip]');
+            if (t) { ttEl.textContent = t.dataset.tip; ttEl.style.opacity = '1'; }
+            else   { ttEl.style.opacity = '0'; }
+        });
+
+        document.addEventListener('mousemove', e => {
+            if (ttEl.style.opacity === '1') position(e.clientX, e.clientY);
+        });
+
+        document.addEventListener('mouseleave', () => { ttEl.style.opacity = '0'; });
+
+        document.addEventListener('wheel', () => {
+            ttEl.style.opacity = '0';
+            const ct = document.getElementById('chart-tooltip');
+            if (ct) ct.style.opacity = '0';
+        }, { passive: true });
     })();
 </script>
 </body>

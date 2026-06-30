@@ -1,0 +1,88 @@
+# Project 189 — Weight Loss Dashboard
+
+A personal weight tracking dashboard built with Flask and SQLite. Logs daily weight entries, visualizes progress on an interactive line chart, and tracks start, current, and goal weight milestones.
+
+## Features
+
+- **Weight plate cards** — displays start, current, and goal weights as styled plates; lost weight is calculated automatically. Click any plate to set or update its value with overwrite confirmation.
+- **Interactive line chart** — powered by Chart.js with a floating HTML tooltip that follows the cursor. Interpolates estimated values between logged dates and marks them visually. Shows a warning icon when a selected date range exceeds available data history.
+- **Date range controls** — 7D (default), 30D, 90D, 1Y, All, or a custom day count (capped at 1,095 days / 3 years). Custom range highlights the Custom button on change.
+- **Data table** — scrollable log of entries for the selected range, showing weight in both lbs and kg. Inline editing with overwrite and delete confirmation modals. Dates with no entry display as empty rows; a "No Earlier Data Recorded" footer marks the bottom of available history.
+- **Unit toggle** — switch between lbs and kg; all plates, chart, and table update instantly.
+- **Custom cursor** — pointer cursor for buttons and scrollbars; an alternate edit cursor for editable fields and plates.
+- **Site-wide tooltips** — hover help on buttons and icons matches the chart tooltip style.
+- **Persistent storage** — all entries and settings (start/goal weights) are stored in a local SQLite database (`weights.db`).
+
+## Stack
+
+| Layer | Technology |
+|---|---|
+| Backend | Python 3, Flask |
+| Database | SQLite (via `sqlite3` stdlib) |
+| Frontend | Vanilla JS, Chart.js 4.4.0 |
+| Styling | Custom CSS |
+
+## Setup
+
+**1. Clone the repo and create a virtual environment**
+
+```bash
+git clone <repo-url>
+cd project-189
+python -m venv .venv
+```
+
+**2. Activate the virtual environment**
+
+Windows:
+```bash
+.venv\Scripts\activate
+```
+
+macOS/Linux:
+```bash
+source .venv/bin/activate
+```
+
+**3. Install dependencies**
+
+```bash
+pip install flask
+```
+
+**4. Run the app**
+
+```bash
+python app.py
+```
+
+Open `http://127.0.0.1:5000` in your browser.
+
+The SQLite database (`weights.db`) is created automatically on first run in the project root.
+
+## Project Structure
+
+```
+project-189/
+├── app.py                  # Flask app and REST API routes
+├── weights.db              # SQLite database (auto-created)
+├── templates/
+│   └── index.html          # Single-page UI
+└── static/
+    ├── style.css           # All styles
+    ├── pointer.png         # Custom pointer cursor
+    ├── editpointer.png     # Custom edit cursor
+    ├── weightplate.png     # Weight plate graphic
+    └── miamibackground.png # Background image
+```
+
+## API Endpoints
+
+| Method | Endpoint | Description |
+|---|---|---|
+| `GET` | `/api/weights?range=7d` | Fetch weight entries for a range (`7d`, `30d`, `90d`, `1y`, `all`, or `custom&days=N`) |
+| `POST` | `/api/weight` | Log or overwrite a weight entry |
+| `DELETE` | `/api/weight/<date>` | Delete an entry by date (`YYYY-MM-DD`) |
+| `GET` | `/api/latest-weight` | Get the most recent weight and oldest entry date |
+| `GET` | `/api/settings` | Get saved settings (start weight, goal weight) |
+| `POST` | `/api/setting` | Save or overwrite a setting |

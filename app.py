@@ -91,7 +91,7 @@ def get_weights():
             elif range_param == "30d": days = 30
             elif range_param == "90d": days = 90
             elif range_param == "1y":  days = 365
-            else:                      days = custom_days or 30
+            else:                      days = min(custom_days or 30, 1095)
 
             start = (date.today() - timedelta(days=days - 1)).isoformat()
             rows = conn.execute(
@@ -104,13 +104,42 @@ def get_weights():
         conn.close()
 
 
+@app.route("/api/latest-weight")
+def latest_weight():
+    conn = get_db()
+    try:
+        row = conn.execute(
+            "SELECT weight_lbs, weight_kg FROM weights ORDER BY date DESC LIMIT 1"
+        ).fetchone()
+        oldest = conn.execute("SELECT MIN(date) as d FROM weights").fetchone()["d"]
+        if row:
+            return jsonify({"weight_lbs": row["weight_lbs"], "weight_kg": row["weight_kg"], "oldest_date": oldest})
+        return jsonify({})
+    finally:
+        conn.close()
+
+
 @app.route("/api/weight/<string:entry_date>", methods=["DELETE"])
 def delete_weight(entry_date):
     conn = get_db()
     try:
         conn.execute("DELETE FROM weights WHERE date = ?", (entry_date,))
         conn.commit()
-        return jsonify({"success": True})
+        row = conn.execute(
+            "SELECT weight_lbs, weight_kg FROM weights ORDER BY date DESC LIMIT 1"
+        ).fetchone()
+        latest = {"weight_lbs": row["weight_lbs"], "weight_kg": row["weight_kg"]} if row else {}
+        return jsonify({"success": True, "latest": latest})
+    finally:
+        conn.close()
+
+
+@app.route("/api/settings")
+def get_settings():
+    conn = get_db()
+    try:
+        rows = conn.execute("SELECT key, value_lbs, value_kg FROM settings").fetchall()
+        return jsonify({r["key"]: {"value_lbs": r["value_lbs"], "value_kg": r["value_kg"]} for r in rows})
     finally:
         conn.close()
 
