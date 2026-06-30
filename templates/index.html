@@ -4,18 +4,29 @@
     <title>Project 189</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link href="https://fonts.googleapis.com/css2?family=Pacifico&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}?v=74">
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}?v=92">
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 </head>
 
-<body>
+<body class="preload">
 
 <div class="miami-left"></div>
 <div class="miami-right"></div>
 
-<button id="profile-btn" data-tip="Profile">
-    <img id="profile-btn-img" src="/static/profilebutton.png" alt="Profile">
-</button>
+<div id="profile-menu">
+    <button id="profile-btn" data-tip="Profile">
+        <img id="profile-btn-img" src="/static/profilebutton.png" alt="Profile">
+    </button>
+    <button id="dumbbell-btn" class="side-btn" data-tip="Workouts">
+        <img src="/static/dumbbellbutton.png" alt="Workouts">
+    </button>
+    <button id="protein-btn" class="side-btn" data-tip="Nutrition">
+        <img src="/static/proteinshakebutton.png" alt="Nutrition">
+    </button>
+    <button id="settings-btn" class="side-btn" data-tip="Settings">
+        <img src="/static/settingsbutton.png" alt="Settings">
+    </button>
+</div>
 
 <section class="page page--plates">
 <div class="container">
@@ -26,7 +37,6 @@
 
         <!-- Starting Weight -->
         <div class="plate" id="start-plate" role="button" tabindex="0" aria-label="Edit starting weight">
-            <img class="plate-img" src="{{ url_for('static', filename='weightplate.png') }}" alt="">
             <svg class="plate-text-svg" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
                 <defs>
                     <!--
@@ -56,7 +66,6 @@
 
         <!-- Current Weight -->
         <div class="plate" id="current-plate" role="button" tabindex="0" aria-label="Edit current weight">
-            <img class="plate-img" src="{{ url_for('static', filename='weightplate.png') }}" alt="">
             <svg class="plate-text-svg" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
                 <defs>
                     <path id="t2" d="M 18,50 A 32,32 0 0,1 82,50"/>
@@ -81,7 +90,6 @@
 
         <!-- Lost Weight (auto-computed: starting - current) -->
         <div class="plate">
-            <img class="plate-img" src="{{ url_for('static', filename='weightplate.png') }}" alt="">
             <svg class="plate-text-svg" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
                 <defs>
                     <path id="t3" d="M 18,50 A 32,32 0 0,1 82,50"/>
@@ -106,7 +114,6 @@
 
         <!-- Goal Weight -->
         <div class="plate" id="goal-plate" role="button" tabindex="0" aria-label="Edit goal weight">
-            <img class="plate-img" src="{{ url_for('static', filename='weightplate.png') }}" alt="">
             <svg class="plate-text-svg" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
                 <defs>
                     <path id="t4" d="M 18,50 A 32,32 0 0,1 82,50"/>
@@ -199,7 +206,20 @@
         <div id="history-screen-input">
             <h2 class="modal-title">Log Past Weight</h2>
             <label class="modal-label" for="history-date">Date</label>
-            <input type="date" id="history-date" class="history-date-input">
+            <div class="date-picker-wrap" id="history-date-wrap">
+                <input type="text" id="history-date" class="history-date-input" placeholder="Select a date" readonly>
+                <div class="date-picker-dropdown" id="history-calendar" hidden>
+                    <div class="dp-header">
+                        <button type="button" class="dp-nav" id="dp-prev">&#8249;</button>
+                        <span class="dp-month-year" id="dp-month-label"></span>
+                        <button type="button" class="dp-nav" id="dp-next">&#8250;</button>
+                    </div>
+                    <div class="dp-day-names">
+                        <span>Su</span><span>Mo</span><span>Tu</span><span>We</span><span>Th</span><span>Fr</span><span>Sa</span>
+                    </div>
+                    <div class="dp-grid" id="dp-grid"></div>
+                </div>
+            </div>
             <label class="modal-label" for="history-weight">Weight (lbs)</label>
             <div class="modal-input-row">
                 <input type="number" class="weight-input" id="history-weight" min="50" max="999" step="0.1" placeholder="0.0">
@@ -324,10 +344,61 @@
     </div>
 </div>
 
-<!-- Profile Modal -->
-<div id="profile-modal" class="modal-overlay" hidden>
+<!-- Fight Card Modal -->
+<div id="fight-card-modal" class="modal-overlay" hidden>
     <div class="modal-card">
-        <h2 class="modal-title">Profile Settings</h2>
+        <h2 class="modal-title">Fight Card</h2>
+
+        <div class="profile-setting-group">
+            <div class="fight-dob-header">
+                <label class="profile-setting-label" for="fight-dob">D.O.B.</label>
+                <div class="fight-age-display">
+                    <span id="fight-age-num">—</span>
+                    <span class="profile-custom-unit">yrs</span>
+                </div>
+            </div>
+            <div class="date-picker-wrap" id="fight-dob-wrap">
+                <input type="text" id="fight-dob" class="fight-dob-input" placeholder="Select date of birth" readonly>
+                <div class="date-picker-dropdown" id="fight-dob-calendar" hidden>
+                    <div class="dp-header">
+                        <button type="button" class="dp-nav" id="fight-dp-prev">&#8249;</button>
+                        <span class="dp-month-year" id="fight-dp-month-label"></span>
+                        <button type="button" class="dp-nav" id="fight-dp-next">&#8250;</button>
+                    </div>
+                    <div class="dp-day-names">
+                        <span>Su</span><span>Mo</span><span>Tu</span><span>We</span><span>Th</span><span>Fr</span><span>Sa</span>
+                    </div>
+                    <div class="dp-grid" id="fight-dp-grid"></div>
+                </div>
+            </div>
+        </div>
+
+        <div class="profile-setting-group">
+            <label class="profile-setting-label">Height</label>
+            <div class="profile-toggle-row" id="fight-height-us-row">
+                <input type="number" id="fight-height-ft" class="profile-custom-input" min="1" max="8" placeholder="—">
+                <span class="profile-custom-unit">ft</span>
+                <input type="number" id="fight-height-in" class="profile-custom-input" min="0" max="11" placeholder="—">
+                <span class="profile-custom-unit">in</span>
+            </div>
+            <div class="profile-toggle-row" id="fight-height-metric-row" style="display:none">
+                <input type="number" id="fight-height-cm" class="profile-custom-input" min="50" max="300" placeholder="—">
+                <span class="profile-custom-unit">cm</span>
+            </div>
+            <div class="modal-kg-preview" id="fight-height-preview"></div>
+        </div>
+
+        <div class="modal-actions">
+            <button class="modal-btn modal-cancel" id="fight-card-cancel">Cancel</button>
+            <button class="modal-btn modal-save"   id="fight-card-save">Save</button>
+        </div>
+    </div>
+</div>
+
+<!-- Settings Modal -->
+<div id="settings-modal" class="modal-overlay" hidden>
+    <div class="modal-card">
+        <h2 class="modal-title">Settings</h2>
 
         <div class="profile-setting-group">
             <label class="profile-setting-label">Default Measurement</label>
@@ -361,9 +432,17 @@
             </div>
         </div>
 
+        <div class="profile-setting-group">
+            <label class="profile-setting-label">Height Unit</label>
+            <div class="profile-toggle-row">
+                <button class="profile-opt-btn" id="prof-height-us">US</button>
+                <button class="profile-opt-btn" id="prof-height-metric">Metric</button>
+            </div>
+        </div>
+
         <div class="modal-actions">
-            <button class="modal-btn modal-cancel" id="profile-cancel">Cancel</button>
-            <button class="modal-btn modal-save"   id="profile-save">Save</button>
+            <button class="modal-btn modal-cancel" id="settings-cancel">Cancel</button>
+            <button class="modal-btn modal-save"   id="settings-save">Save</button>
         </div>
     </div>
 </div>
@@ -382,6 +461,15 @@
 
 <div id="site-cursor"></div>
 <script>
+    /* Prevent browser scroll restoration fighting scroll-snap on reload */
+    if ('scrollRestoration' in history) history.scrollRestoration = 'manual';
+    window.scrollTo(0, 0);
+
+    /* Remove preload class after first paint so transitions don't fire during init */
+    requestAnimationFrame(() => requestAnimationFrame(() => {
+        document.body.classList.remove('preload');
+    }));
+
     (function () {
         const left  = document.querySelector('.miami-left');
         const right = document.querySelector('.miami-right');
@@ -457,23 +545,32 @@
          false            — error, do nothing
          'conflict:MSG'   — show confirm screen with MSG, await user choice  */
     function setupWeightModal(cfg) {
-        const modal   = document.getElementById(cfg.modal);
-        const input   = document.getElementById(cfg.input);
-        const preview = document.getElementById(cfg.preview);
-        const lbsNum  = document.getElementById(cfg.lbsNum);
-        const kgNum   = document.getElementById(cfg.kgNum);
+        const modal    = document.getElementById(cfg.modal);
+        const input    = document.getElementById(cfg.input);
+        const preview  = document.getElementById(cfg.preview);
+        const lbsNum   = document.getElementById(cfg.lbsNum);
+        const kgNum    = document.getElementById(cfg.kgNum);
+        const screenEl = cfg.screens ? document.getElementById(cfg.screens[0]) : modal;
+        const labelEl  = screenEl ? screenEl.querySelector('.modal-label') : null;
+        const unitTag  = screenEl ? screenEl.querySelector('.modal-unit-tag') : null;
+        const baseLabel = labelEl ? labelEl.textContent.replace(/\s*\((lbs|kgs)\)$/, '') : '';
 
-        function toKg(lbs) { return (lbs / 2.2046).toFixed(1); }
+        function toKg(lbs)  { return (lbs / 2.2046).toFixed(1); }
+        function toLbs(kg)  { return (kg  * 2.2046).toFixed(1); }
+        function isKgMode() { return window.activeUnit === 'kg'; }
+
         function updatePreview() {
             const v = parseFloat(input.value);
-            preview.textContent = (!isNaN(v) && v > 0) ? '= ' + toKg(v) + ' kgs' : '';
+            preview.textContent = (!isNaN(v) && v > 0)
+                ? (isKgMode() ? toLbs(v) + ' lbs' : toKg(v) + ' kgs')
+                : '';
         }
 
         function close() { modal.hidden = true; }
 
-        function commitSave(v) {
-            lbsNum.textContent = fmtLbs(v);
-            kgNum.textContent  = toKg(v);
+        function commitSave(lbs) {
+            lbsNum.textContent = fmtLbs(lbs);
+            kgNum.textContent  = toKg(lbs);
             close();
             if (cfg.onSave) cfg.onSave();
         }
@@ -486,15 +583,16 @@
         }
 
         async function doSave(v, overwrite) {
+            const lbs = isKgMode() ? parseFloat(toLbs(v)) : v;
             if (cfg.apiSave) {
-                const result = await cfg.apiSave(v, overwrite);
+                const result = await cfg.apiSave(lbs, overwrite);
                 if (typeof result === 'string' && result.startsWith('conflict:')) {
                     showConfirmScreen(v, result.slice('conflict:'.length));
                     return;
                 }
                 if (!result) return;
             }
-            commitSave(v);
+            commitSave(lbs);
         }
 
         function open() {
@@ -502,7 +600,12 @@
                 document.getElementById(cfg.screens[0]).hidden = false;
                 document.getElementById(cfg.screens[1]).hidden = true;
             }
-            input.value = lbsNum.textContent;
+            const kg = isKgMode();
+            if (labelEl) labelEl.textContent = baseLabel + (kg ? ' (kgs)' : ' (lbs)');
+            if (unitTag) unitTag.textContent  = kg ? 'kgs' : 'lbs';
+            input.min   = kg ? '20'  : '50';
+            input.max   = kg ? '450' : '999';
+            input.value = kg ? kgNum.textContent : lbsNum.textContent;
             updatePreview();
             modal.hidden = false;
             setTimeout(() => { input.focus(); input.select(); }, 50);
@@ -581,6 +684,13 @@
 
     /* ── Shared unit state (localStorage-backed) ── */
     window.activeUnit = localStorage.getItem('pref_unit') || 'lbs';
+
+    window.applyPlateUnit = function(unit) {
+        document.querySelectorAll('.plate').forEach(p => {
+            p.classList.toggle('kg-primary', unit === 'kg');
+        });
+    };
+    window.applyPlateUnit(window.activeUnit);
 
     /* ── Weight chart ── */
     const chartTtEl = document.createElement('div');
@@ -1080,6 +1190,7 @@
         unitBtn.addEventListener('click', () => {
             window.activeUnit = window.activeUnit === 'lbs' ? 'kg' : 'lbs';
             unitBtn.textContent = window.activeUnit === 'lbs' ? 'KGS' : 'LBS';
+            window.applyPlateUnit(window.activeUnit);
             if (window.refreshChart) window.refreshChart();
             if (window.renderTable)  window.renderTable();
         });
@@ -1091,18 +1202,153 @@
         const dateIn   = document.getElementById('history-date');
         const weightIn = document.getElementById('history-weight');
         const preview  = document.getElementById('history-kg-preview');
+        const screenEl = document.getElementById('history-screen-input');
+        const labelEl  = screenEl.querySelector('label[for="history-weight"]');
+        const unitTag  = screenEl.querySelector('.modal-unit-tag');
+        const baseLabel = labelEl ? labelEl.textContent.replace(/\s*\((lbs|kgs)\)$/, '') : '';
 
-        dateIn.max = getTodayISO();
+        /* ── Custom date picker ── */
+        const calEl    = document.getElementById('history-calendar');
+        const gridEl   = document.getElementById('dp-grid');
+        const monthLbl = document.getElementById('dp-month-label');
+        const dayNames = calEl.querySelector('.dp-day-names');
+        const MONTHS   = ['January','February','March','April','May','June',
+                          'July','August','September','October','November','December'];
+        let viewDate        = new Date();
+        let selectedDateISO = '';
+        let calMode         = 'days';
+        let yearPage        = new Date().getFullYear() - 5;
+
+        function isoFromParts(y, m, d) {
+            return y + '-' + String(m + 1).padStart(2, '0') + '-' + String(d).padStart(2, '0');
+        }
+        function displayFromISO(iso) {
+            const [y, m, d] = iso.split('-');
+            return MONTHS[parseInt(m) - 1] + ' ' + parseInt(d) + ', ' + y;
+        }
+
+        function renderCalendar() {
+            calMode = 'days';
+            dayNames.style.display = '';
+            gridEl.style.gridTemplateColumns = 'repeat(7, 1fr)';
+            const today   = getTodayISO();
+            const todayD  = new Date();
+            const minDate = isoFromParts(todayD.getFullYear() - 10, todayD.getMonth(), todayD.getDate());
+            const y = viewDate.getFullYear(), m = viewDate.getMonth();
+            monthLbl.textContent = MONTHS[m] + ' ' + y;
+
+            const firstDow    = new Date(y, m, 1).getDay();
+            const daysInMonth = new Date(y, m + 1, 0).getDate();
+            const daysInPrev  = new Date(y, m, 0).getDate();
+            gridEl.innerHTML  = '';
+
+            for (let i = firstDow - 1; i >= 0; i--) {
+                const btn = document.createElement('button');
+                btn.type = 'button'; btn.className = 'dp-day dp-other-month';
+                btn.textContent = daysInPrev - i; btn.disabled = true;
+                gridEl.appendChild(btn);
+            }
+            for (let day = 1; day <= daysInMonth; day++) {
+                const iso = isoFromParts(y, m, day);
+                const btn = document.createElement('button');
+                btn.type = 'button'; btn.className = 'dp-day';
+                btn.textContent = day;
+                if (iso === today)           btn.classList.add('dp-today');
+                if (iso === selectedDateISO) btn.classList.add('dp-selected');
+                if (iso > today || iso < minDate) {
+                    btn.disabled = true;
+                } else {
+                    btn.addEventListener('click', () => {
+                        selectedDateISO = iso;
+                        dateIn.value = displayFromISO(iso);
+                        calEl.hidden = true;
+                    });
+                }
+                gridEl.appendChild(btn);
+            }
+            const rem = (firstDow + daysInMonth) % 7;
+            if (rem > 0) {
+                for (let i = 1; i <= 7 - rem; i++) {
+                    const btn = document.createElement('button');
+                    btn.type = 'button'; btn.className = 'dp-day dp-other-month';
+                    btn.textContent = i; btn.disabled = true;
+                    gridEl.appendChild(btn);
+                }
+            }
+        }
+
+        function renderYearGrid() {
+            calMode = 'years';
+            dayNames.style.display = 'none';
+            gridEl.style.gridTemplateColumns = 'repeat(3, 1fr)';
+            const todayY = new Date().getFullYear();
+            const minY   = todayY - 10;
+            const curY   = viewDate.getFullYear();
+            monthLbl.textContent = yearPage + ' – ' + (yearPage + 11);
+            gridEl.innerHTML = '';
+            for (let i = 0; i < 12; i++) {
+                const yr  = yearPage + i;
+                const btn = document.createElement('button');
+                btn.type = 'button'; btn.className = 'dp-day dp-year';
+                btn.textContent = yr;
+                if (yr === todayY) btn.classList.add('dp-today');
+                if (yr === curY)   btn.classList.add('dp-selected');
+                if (yr > todayY || yr < minY) {
+                    btn.disabled = true;
+                } else {
+                    btn.addEventListener('click', () => {
+                        viewDate = new Date(yr, viewDate.getMonth(), 1);
+                        renderCalendar();
+                    });
+                }
+                gridEl.appendChild(btn);
+            }
+        }
+
+        monthLbl.addEventListener('click', () => {
+            if (calMode === 'days') { yearPage = viewDate.getFullYear() - 5; renderYearGrid(); }
+            else                    { renderCalendar(); }
+        });
+
+        dateIn.addEventListener('click', () => {
+            if (calEl.hidden) {
+                viewDate = selectedDateISO ? new Date(selectedDateISO + 'T12:00:00') : new Date();
+                renderCalendar();
+                calEl.hidden = false;
+            } else {
+                calEl.hidden = true;
+            }
+        });
+
+        document.getElementById('dp-prev').addEventListener('click', () => {
+            if (calMode === 'years') { yearPage -= 12; renderYearGrid(); }
+            else { viewDate = new Date(viewDate.getFullYear(), viewDate.getMonth() - 1, 1); renderCalendar(); }
+        });
+        document.getElementById('dp-next').addEventListener('click', () => {
+            if (calMode === 'years') { yearPage += 12; renderYearGrid(); }
+            else { viewDate = new Date(viewDate.getFullYear(), viewDate.getMonth() + 1, 1); renderCalendar(); }
+        });
+
+        document.addEventListener('click', e => {
+            const wrap = document.getElementById('history-date-wrap');
+            if (!calEl.hidden && !e.composedPath().includes(wrap)) calEl.hidden = true;
+        });
+        /* ── end custom date picker ── */
+
+        function isKgMode() { return window.activeUnit === 'kg'; }
 
         function close() {
             modal.hidden = true;
+            calEl.hidden = true;
             document.getElementById('history-screen-input').hidden   = false;
             document.getElementById('history-screen-confirm').hidden = true;
         }
 
         function updatePreview() {
             const v = parseFloat(weightIn.value);
-            preview.textContent = (!isNaN(v) && v > 0) ? '= ' + (v / 2.2046).toFixed(1) + ' kgs' : '';
+            preview.textContent = (!isNaN(v) && v > 0)
+                ? (isKgMode() ? (v * 2.2046).toFixed(1) + ' lbs' : (v / 2.2046).toFixed(1) + ' kgs')
+                : '';
         }
 
         async function doSave(dt, lbs, overwrite) {
@@ -1126,21 +1372,30 @@
         }
 
         function trySave() {
-            const dt  = dateIn.value;
-            const lbs = parseFloat(weightIn.value);
-            if (!dt)              { dateIn.focus();   return; }
-            if (isNaN(lbs) || lbs <= 0) { weightIn.focus(); return; }
+            const dt  = selectedDateISO;
+            const raw = parseFloat(weightIn.value);
+            if (!dt)                    { dateIn.focus();   return; }
+            if (isNaN(raw) || raw <= 0) { weightIn.focus(); return; }
+            const lbs = isKgMode() ? parseFloat((raw * 2.2046).toFixed(1)) : raw;
             doSave(dt, lbs, false);
         }
 
         function step(amount) {
-            const cur  = parseFloat(weightIn.value) || 0;
-            weightIn.value = Math.min(999, Math.max(50, Math.round((cur + amount) * 10) / 10));
+            const kg  = isKgMode();
+            const min = kg ? 20  : 50;
+            const max = kg ? 450 : 999;
+            const cur = parseFloat(weightIn.value) || 0;
+            weightIn.value = Math.min(max, Math.max(min, Math.round((cur + amount) * 10) / 10));
             updatePreview();
         }
 
         document.getElementById('chart-add-btn').addEventListener('click', () => {
-            dateIn.value = ''; weightIn.value = ''; preview.textContent = '';
+            const kg = isKgMode();
+            if (labelEl) labelEl.textContent = baseLabel + (kg ? ' (kgs)' : ' (lbs)');
+            if (unitTag) unitTag.textContent  = kg ? 'kgs' : 'lbs';
+            weightIn.min = kg ? '20'  : '50';
+            weightIn.max = kg ? '450' : '999';
+            selectedDateISO = ''; dateIn.value = ''; weightIn.value = ''; preview.textContent = '';
             close();
             modal.hidden = false;
             setTimeout(() => dateIn.focus(), 50);
@@ -1151,7 +1406,12 @@
         document.getElementById('history-step-up').addEventListener('click',   () => step(1));
         document.getElementById('history-step-down').addEventListener('click', () => step(-1));
         modal.addEventListener('click', e => { if (e.target === modal) close(); });
-        document.addEventListener('keydown', e => { if (e.key === 'Escape' && !modal.hidden) close(); });
+        document.addEventListener('keydown', e => {
+            if (e.key === 'Escape') {
+                if (!calEl.hidden) { calEl.hidden = true; return; }
+                if (!modal.hidden) close();
+            }
+        });
         weightIn.addEventListener('input', updatePreview);
         weightIn.addEventListener('keydown', e => { if (e.key === 'Enter') trySave(); });
     })();
@@ -1162,6 +1422,7 @@
         const el      = document.getElementById('site-cursor');
         const cursors = {};
         let activeKey = 'normal';
+        let mouseInDoc = false;
 
         function processImg(src, origHotX, origHotY, removeDark, key, renderH) {
             const img = new Image();
@@ -1180,7 +1441,7 @@
                 }
                 ctx.putImageData(id, 0, 0);
                 cursors[key] = { url: cv.toDataURL(), hotX: Math.round(origHotX * scale), hotY: Math.round(origHotY * scale), w, h };
-                if (key === 'normal') { applyCursor('normal'); el.style.display = 'block'; }
+                if (key === 'normal') { applyCursor('normal'); if (mouseInDoc) el.style.display = 'block'; }
                 if (key === activeKey) applyCursor(key);
             };
             img.src = src;
@@ -1226,8 +1487,8 @@
             el.style.top  = (e.clientY - c.hotY) + 'px';
         });
 
-        document.addEventListener('mouseleave', () => { el.style.display = 'none'; });
-        document.addEventListener('mouseenter', () => { el.style.display = 'block'; });
+        document.addEventListener('mouseleave', () => { mouseInDoc = false; el.style.display = 'none'; });
+        document.addEventListener('mouseenter', () => { mouseInDoc = true;  if (cursors['normal']) el.style.display = 'block'; });
     })();
 
     /* ── Site-wide hover tooltips (matches chart tooltip style) ── */
@@ -1261,18 +1522,323 @@
         }, { passive: true });
     })();
 
-    /* ── Profile button image swap + modal ── */
+    /* ── Profile menu image swap ── */
     (() => {
-        const btn     = document.getElementById('profile-btn');
-        const img     = document.getElementById('profile-btn-img');
-        const modal   = document.getElementById('profile-modal');
-        const saveBtn = document.getElementById('profile-save');
-        const cancelBtn = document.getElementById('profile-cancel');
+        const img  = document.getElementById('profile-btn-img');
+        const menu = document.getElementById('profile-menu');
+        menu.addEventListener('mouseenter', () => { img.src = '/static/profilebuttonsmile.png'; });
+        menu.addEventListener('mouseleave', () => { img.src = '/static/profilebutton.png'; });
+    })();
 
-        btn.addEventListener('mouseover', () => { img.src = '/static/profilebuttonsmile.png'; });
-        btn.addEventListener('mouseout',  () => { img.src = '/static/profilebutton.png'; });
+    /* ── Coming Soon tip for unbuilt buttons ── */
+    (() => {
+        const tip = document.createElement('div');
+        tip.className = 'coming-soon-tip';
+        tip.textContent = 'Coming Soon';
+        document.body.appendChild(tip);
+        let hideTimer = null;
 
-        const profCustomWrap = document.getElementById('prof-custom-wrap');
+        function showComingSoon(btn) {
+            const r = btn.getBoundingClientRect();
+            tip.style.top  = (r.top + r.height / 2) + 'px';
+            tip.style.left = (r.left - 10) + 'px';
+            tip.classList.add('visible');
+            clearTimeout(hideTimer);
+            hideTimer = setTimeout(() => tip.classList.remove('visible'), 1500);
+        }
+
+        ['dumbbell-btn', 'protein-btn'].forEach(id => {
+            document.getElementById(id).addEventListener('click', () => showComingSoon(document.getElementById(id)));
+        });
+    })();
+
+    /* ── Modal coordinator: only one modal open at a time ── */
+    window.activeModal = null;
+    window.openExclusive = function(openFn) {
+        if (window.activeModal) {
+            window.activeModal.tryClose(openFn);
+        } else {
+            openFn();
+        }
+    };
+
+    /* ── Fight Card modal (profile button) ── */
+    (() => {
+        const btn       = document.getElementById('profile-btn');
+        const modal     = document.getElementById('fight-card-modal');
+        const saveBtn   = document.getElementById('fight-card-save');
+        const cancelBtn = document.getElementById('fight-card-cancel');
+        const dobIn     = document.getElementById('fight-dob');
+        const ageNumEl  = document.getElementById('fight-age-num');
+        const ftIn      = document.getElementById('fight-height-ft');
+        const inIn      = document.getElementById('fight-height-in');
+        const cmIn      = document.getElementById('fight-height-cm');
+        const usRow     = document.getElementById('fight-height-us-row');
+        const metRow    = document.getElementById('fight-height-metric-row');
+        const preview   = document.getElementById('fight-height-preview');
+
+        /* ── DOB calendar ── */
+        const calEl    = document.getElementById('fight-dob-calendar');
+        const gridEl   = document.getElementById('fight-dp-grid');
+        const monthLbl = document.getElementById('fight-dp-month-label');
+        const dayNames = calEl.querySelector('.dp-day-names');
+        const MONTHS   = ['January','February','March','April','May','June',
+                          'July','August','September','October','November','December'];
+        let viewDate       = new Date();
+        let selectedDobISO = '';
+        let calMode        = 'days';
+        let yearPage       = new Date().getFullYear() - 35;
+
+        function isoFromParts(y, m, d) {
+            return y + '-' + String(m + 1).padStart(2, '0') + '-' + String(d).padStart(2, '0');
+        }
+        function displayFromISO(iso) {
+            const [y, m, d] = iso.split('-');
+            return MONTHS[parseInt(m) - 1] + ' ' + parseInt(d) + ', ' + y;
+        }
+        function calcAge(dobISO) {
+            const [y, m, d] = dobISO.split('-').map(Number);
+            const t = new Date();
+            let age = t.getFullYear() - y;
+            if (t.getMonth() + 1 < m || (t.getMonth() + 1 === m && t.getDate() < d)) age--;
+            return age;
+        }
+        function updateAgeDisplay() {
+            ageNumEl.textContent = selectedDobISO ? calcAge(selectedDobISO) : '—';
+        }
+
+        function renderDobCalendar() {
+            calMode = 'days';
+            dayNames.style.display = '';
+            gridEl.style.gridTemplateColumns = 'repeat(7, 1fr)';
+            const today   = getTodayISO();
+            const todayD  = new Date();
+            const minDate = isoFromParts(todayD.getFullYear() - 100, todayD.getMonth(), todayD.getDate());
+            const y = viewDate.getFullYear(), m = viewDate.getMonth();
+            monthLbl.textContent = MONTHS[m] + ' ' + y;
+
+            const firstDow    = new Date(y, m, 1).getDay();
+            const daysInMonth = new Date(y, m + 1, 0).getDate();
+            const daysInPrev  = new Date(y, m, 0).getDate();
+            gridEl.innerHTML  = '';
+
+            for (let i = firstDow - 1; i >= 0; i--) {
+                const b = document.createElement('button');
+                b.type = 'button'; b.className = 'dp-day dp-other-month';
+                b.textContent = daysInPrev - i; b.disabled = true;
+                gridEl.appendChild(b);
+            }
+            for (let day = 1; day <= daysInMonth; day++) {
+                const iso = isoFromParts(y, m, day);
+                const b   = document.createElement('button');
+                b.type = 'button'; b.className = 'dp-day';
+                b.textContent = day;
+                if (iso === selectedDobISO) b.classList.add('dp-selected');
+                if (iso > today || iso < minDate) {
+                    b.disabled = true;
+                } else {
+                    b.addEventListener('click', () => {
+                        selectedDobISO = iso;
+                        dobIn.value = displayFromISO(iso);
+                        updateAgeDisplay();
+                        calEl.hidden = true;
+                    });
+                }
+                gridEl.appendChild(b);
+            }
+            const rem = (firstDow + daysInMonth) % 7;
+            if (rem > 0) {
+                for (let i = 1; i <= 7 - rem; i++) {
+                    const b = document.createElement('button');
+                    b.type = 'button'; b.className = 'dp-day dp-other-month';
+                    b.textContent = i; b.disabled = true;
+                    gridEl.appendChild(b);
+                }
+            }
+        }
+
+        function renderDobYearGrid() {
+            calMode = 'years';
+            dayNames.style.display = 'none';
+            gridEl.style.gridTemplateColumns = 'repeat(3, 1fr)';
+            const todayY = new Date().getFullYear();
+            const minY   = todayY - 100;
+            const curY   = viewDate.getFullYear();
+            monthLbl.textContent = yearPage + ' – ' + (yearPage + 11);
+            gridEl.innerHTML = '';
+            for (let i = 0; i < 12; i++) {
+                const yr  = yearPage + i;
+                const b   = document.createElement('button');
+                b.type = 'button'; b.className = 'dp-day dp-year';
+                b.textContent = yr;
+                if (yr === curY)   b.classList.add('dp-selected');
+                if (yr > todayY || yr < minY) {
+                    b.disabled = true;
+                } else {
+                    b.addEventListener('click', () => {
+                        viewDate = new Date(yr, viewDate.getMonth(), 1);
+                        renderDobCalendar();
+                    });
+                }
+                gridEl.appendChild(b);
+            }
+        }
+
+        monthLbl.addEventListener('click', () => {
+            if (calMode === 'days') { yearPage = viewDate.getFullYear() - 5; renderDobYearGrid(); }
+            else                    { renderDobCalendar(); }
+        });
+
+        dobIn.addEventListener('click', () => {
+            if (calEl.hidden) {
+                if (selectedDobISO) {
+                    viewDate = new Date(selectedDobISO + 'T12:00:00');
+                } else {
+                    const d = new Date();
+                    viewDate = new Date(d.getFullYear() - 30, d.getMonth(), 1);
+                }
+                renderDobCalendar();
+                calEl.hidden = false;
+            } else {
+                calEl.hidden = true;
+            }
+        });
+        document.getElementById('fight-dp-prev').addEventListener('click', () => {
+            if (calMode === 'years') { yearPage -= 12; renderDobYearGrid(); }
+            else { viewDate = new Date(viewDate.getFullYear(), viewDate.getMonth() - 1, 1); renderDobCalendar(); }
+        });
+        document.getElementById('fight-dp-next').addEventListener('click', () => {
+            if (calMode === 'years') { yearPage += 12; renderDobYearGrid(); }
+            else { viewDate = new Date(viewDate.getFullYear(), viewDate.getMonth() + 1, 1); renderDobCalendar(); }
+        });
+        document.addEventListener('click', e => {
+            const wrap = document.getElementById('fight-dob-wrap');
+            if (!calEl.hidden && !e.composedPath().includes(wrap)) calEl.hidden = true;
+        });
+        /* ── end DOB calendar ── */
+
+        let openState = null;
+        function heightUnit() { return localStorage.getItem('pref_height_unit') || 'us'; }
+
+        function snapshot() {
+            return { dob: selectedDobISO, ft: ftIn.value, inch: inIn.value, cm: cmIn.value };
+        }
+        function hasChanges() {
+            if (!openState) return false;
+            const s = snapshot();
+            return s.dob !== openState.dob || s.ft !== openState.ft || s.inch !== openState.inch || s.cm !== openState.cm;
+        }
+
+        function updatePreview() {
+            if (heightUnit() === 'us') {
+                const ft = parseInt(ftIn.value);
+                const i  = parseInt(inIn.value) || 0;
+                preview.textContent = (!isNaN(ft) && ft > 0)
+                    ? Math.round((ft * 30.48) + (i * 2.54)) + ' cm' : '';
+            } else {
+                const cm = parseInt(cmIn.value) || 0;
+                if (cm > 0) {
+                    const totalIn = cm / 2.54;
+                    preview.textContent = Math.floor(totalIn / 12) + ' ft ' + Math.round(totalIn % 12) + ' in';
+                } else {
+                    preview.textContent = '';
+                }
+            }
+        }
+
+        function forceClose() {
+            modal.hidden = true;
+            calEl.hidden = true;
+            openState = null;
+            window.activeModal = null;
+        }
+
+        function tryClose(onClosed) {
+            if (hasChanges()) {
+                window.showAppConfirm(
+                    'Unsaved Changes', 'Close without saving?',
+                    'Save & Close',
+                    () => { doSave(); if (onClosed) onClosed(); },
+                    () => { forceClose(); if (onClosed) onClosed(); },
+                    'Close'
+                );
+            } else {
+                forceClose();
+                if (onClosed) onClosed();
+            }
+        }
+
+        function doSave() {
+            if (selectedDobISO) localStorage.setItem('fight_dob', selectedDobISO);
+            if (heightUnit() === 'us') {
+                if (ftIn.value)        localStorage.setItem('fight_height_ft', ftIn.value);
+                if (inIn.value !== '') localStorage.setItem('fight_height_in', inIn.value);
+            } else {
+                if (cmIn.value !== '') localStorage.setItem('fight_height_cm', cmIn.value);
+            }
+            forceClose();
+        }
+
+        function openFightCard() {
+            const isUs = heightUnit() === 'us';
+            usRow.style.display  = isUs ? '' : 'none';
+            metRow.style.display = isUs ? 'none' : '';
+
+            const storedDob = localStorage.getItem('fight_dob') || '';
+            selectedDobISO  = storedDob;
+            dobIn.value     = storedDob ? displayFromISO(storedDob) : '';
+            updateAgeDisplay();
+            calEl.hidden = true;
+
+            if (isUs) {
+                ftIn.value = localStorage.getItem('fight_height_ft') || '';
+                inIn.value = localStorage.getItem('fight_height_in') || '';
+                if (!ftIn.value) {
+                    const storedCm = parseFloat(localStorage.getItem('fight_height_cm'));
+                    if (!isNaN(storedCm) && storedCm > 0) {
+                        const totalIn = storedCm / 2.54;
+                        ftIn.value = Math.floor(totalIn / 12);
+                        inIn.value = Math.round(totalIn % 12);
+                    }
+                }
+            } else {
+                cmIn.value = localStorage.getItem('fight_height_cm') || '';
+                if (!cmIn.value) {
+                    const storedFt = parseFloat(localStorage.getItem('fight_height_ft'));
+                    const storedIn = parseFloat(localStorage.getItem('fight_height_in')) || 0;
+                    if (!isNaN(storedFt) && storedFt > 0) {
+                        cmIn.value = Math.round((storedFt * 30.48) + (storedIn * 2.54));
+                    }
+                }
+            }
+            updatePreview();
+            modal.hidden = false;
+            openState = snapshot();
+            window.activeModal = { tryClose };
+        }
+
+        ftIn.addEventListener('input', updatePreview);
+        inIn.addEventListener('input', updatePreview);
+        cmIn.addEventListener('input', updatePreview);
+
+        btn.addEventListener('click',     () => window.openExclusive(openFightCard));
+        saveBtn.addEventListener('click',   doSave);
+        cancelBtn.addEventListener('click', tryClose);
+        modal.addEventListener('click', e => { if (e.target === modal) tryClose(); });
+        document.addEventListener('keydown', e => {
+            if (e.key === 'Escape') {
+                if (!calEl.hidden) { calEl.hidden = true; return; }
+                if (!modal.hidden) tryClose();
+            }
+        });
+    })();
+
+    /* ── Settings modal (settings button) ── */
+    (() => {
+        const modal       = document.getElementById('settings-modal');
+        const saveBtn     = document.getElementById('settings-save');
+        const cancelBtn   = document.getElementById('settings-cancel');
+        const settingsBtn = document.getElementById('settings-btn');
         const profCustomDays = document.getElementById('prof-custom-days');
 
         let openState = null;
@@ -1282,7 +1848,8 @@
                 unit:       document.getElementById('prof-kg-btn').classList.contains('active') ? 'kg' : 'lbs',
                 range:      document.querySelector('.profile-opt-btn[data-range].active')?.dataset.range || '7d',
                 customDays: profCustomDays.value,
-                view:       document.getElementById('prof-view-table').classList.contains('active') ? 'table' : 'chart'
+                view:       document.getElementById('prof-view-table').classList.contains('active') ? 'table' : 'chart',
+                heightUnit: document.getElementById('prof-height-metric').classList.contains('active') ? 'metric' : 'us'
             };
         }
 
@@ -1290,34 +1857,44 @@
             if (!openState) return false;
             const cur = getSelections();
             return cur.unit !== openState.unit || cur.range !== openState.range ||
-                   cur.customDays !== openState.customDays || cur.view !== openState.view;
+                   cur.customDays !== openState.customDays || cur.view !== openState.view ||
+                   cur.heightUnit !== openState.heightUnit;
         }
 
-        function tryClose() {
+        function forceClose() {
+            modal.hidden = true;
+            openState = null;
+            window.activeModal = null;
+        }
+
+        function tryClose(onClosed) {
             if (hasChanges()) {
                 window.showAppConfirm(
-                    'Unsaved Changes',
-                    'Close without saving your profile settings?',
+                    'Unsaved Changes', 'Close without saving your settings?',
                     'Save & Close',
-                    doSave,
-                    () => { modal.hidden = true; },
+                    () => { doSave(); if (onClosed) onClosed(); },
+                    () => { forceClose(); if (onClosed) onClosed(); },
                     'Close'
                 );
             } else {
-                modal.hidden = true;
+                forceClose();
+                if (onClosed) onClosed();
             }
         }
 
         function openModal() {
-            const curUnit       = localStorage.getItem('pref_unit')         || 'lbs';
-            const curRange      = localStorage.getItem('pref_range')        || '7d';
-            const curCustomDays = localStorage.getItem('pref_custom_days')  || '30';
-            const curView       = localStorage.getItem('pref_view')         || 'chart';
+            const curUnit       = localStorage.getItem('pref_unit')        || 'lbs';
+            const curRange      = localStorage.getItem('pref_range')       || '7d';
+            const curCustomDays = localStorage.getItem('pref_custom_days') || '30';
+            const curView       = localStorage.getItem('pref_view')        || 'chart';
+            const curHeightUnit = localStorage.getItem('pref_height_unit') || 'us';
 
-            document.getElementById('prof-lbs-btn').classList.toggle('active',    curUnit === 'lbs');
-            document.getElementById('prof-kg-btn').classList.toggle('active',     curUnit === 'kg');
-            document.getElementById('prof-view-chart').classList.toggle('active', curView === 'chart');
-            document.getElementById('prof-view-table').classList.toggle('active', curView === 'table');
+            document.getElementById('prof-lbs-btn').classList.toggle('active',       curUnit === 'lbs');
+            document.getElementById('prof-kg-btn').classList.toggle('active',        curUnit === 'kg');
+            document.getElementById('prof-view-chart').classList.toggle('active',    curView === 'chart');
+            document.getElementById('prof-view-table').classList.toggle('active',    curView === 'table');
+            document.getElementById('prof-height-us').classList.toggle('active',     curHeightUnit === 'us');
+            document.getElementById('prof-height-metric').classList.toggle('active', curHeightUnit === 'metric');
 
             document.querySelectorAll('.profile-opt-btn[data-range]').forEach(b => {
                 b.classList.toggle('active', b.dataset.range === curRange);
@@ -1326,9 +1903,10 @@
             profCustomDays.value = curCustomDays;
             modal.hidden = false;
             openState = getSelections();
+            window.activeModal = { tryClose };
         }
 
-        btn.addEventListener('click', openModal);
+        settingsBtn.addEventListener('click', () => window.openExclusive(openModal));
 
         document.querySelectorAll('#prof-lbs-btn, #prof-kg-btn').forEach(b => {
             b.addEventListener('click', () => {
@@ -1346,6 +1924,14 @@
             });
         });
 
+        document.querySelectorAll('#prof-height-us, #prof-height-metric').forEach(b => {
+            b.addEventListener('click', () => {
+                document.getElementById('prof-height-us').classList.remove('active');
+                document.getElementById('prof-height-metric').classList.remove('active');
+                b.classList.add('active');
+            });
+        });
+
         document.querySelectorAll('.profile-opt-btn[data-range]').forEach(b => {
             b.addEventListener('click', () => {
                 document.querySelectorAll('.profile-opt-btn[data-range]').forEach(x => x.classList.remove('active'));
@@ -1358,18 +1944,21 @@
             const newRange      = document.querySelector('.profile-opt-btn[data-range].active')?.dataset.range || '7d';
             const newCustomDays = Math.min(Math.max(parseInt(profCustomDays.value) || 30, 1), 1095);
             const newView       = document.getElementById('prof-view-table').classList.contains('active') ? 'table' : 'chart';
+            const newHeightUnit = document.getElementById('prof-height-metric').classList.contains('active') ? 'metric' : 'us';
 
             localStorage.setItem('pref_unit',        newUnit);
             localStorage.setItem('pref_range',       newRange);
             localStorage.setItem('pref_custom_days', newCustomDays);
             localStorage.setItem('pref_view',        newView);
+            localStorage.setItem('pref_height_unit', newHeightUnit);
 
             if (newUnit !== window.activeUnit) {
                 window.activeUnit = newUnit;
                 document.getElementById('unit-toggle-btn').textContent = newUnit === 'lbs' ? 'KGS' : 'LBS';
+                window.applyPlateUnit(newUnit);
             }
 
-            const days = newRange === 'custom' ? newCustomDays : undefined;
+            const days     = newRange === 'custom' ? newCustomDays : undefined;
             const rangeBtn = document.querySelector('.range-btn[data-range="' + newRange + '"]');
             document.querySelectorAll('.range-btn').forEach(b => b.classList.remove('active'));
             if (rangeBtn) rangeBtn.classList.add('active');
@@ -1381,12 +1970,11 @@
             if (window.setView) window.setView(newView, newRange, days);
             else if (window.refreshChart) window.refreshChart(newRange, days);
 
-            openState = null;
-            modal.hidden = true;
+            forceClose();
         }
 
-        cancelBtn.addEventListener('click', () => { modal.hidden = true; });
-        saveBtn.addEventListener('click', doSave);
+        cancelBtn.addEventListener('click', tryClose);
+        saveBtn.addEventListener('click',   doSave);
         modal.addEventListener('click', e => { if (e.target === modal) tryClose(); });
         document.addEventListener('keydown', e => { if (e.key === 'Escape' && !modal.hidden) tryClose(); });
     })();

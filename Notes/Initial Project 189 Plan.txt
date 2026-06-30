@@ -1,7 +1,7 @@
 Technology stack and reasoning
 
 Layer: Technology: Why
-Frontend: HTML + CSS + JavaScript:Simple and fast
+Frontend: HTML + CSS + JavaScript: Simple and fast
 Backend: Python + Flask: Easy to build and deploy
 Database: SQLite: No server setup needed
 Charts: Chart.js: Excellent line charts

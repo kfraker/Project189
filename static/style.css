@@ -6,11 +6,23 @@ html {
     cursor: none !important;
 }
 
-#profile-btn {
+.preload * {
+    transition: none !important;
+    animation: none !important;
+}
+
+#profile-menu {
     position: fixed;
     top: 20px;
     right: 110px;
     z-index: 900;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 14px;
+}
+
+#profile-btn {
     background: none;
     border: none;
     padding: 0;
@@ -39,6 +51,79 @@ html {
     object-fit: cover;
     display: block;
     border-radius: 50%;
+}
+
+.side-btn {
+    background: none;
+    border: none;
+    padding: 0;
+    width: 96px;
+    height: 96px;
+    border-radius: 50%;
+    overflow: hidden;
+    box-shadow:
+        0 22px 50px  rgba(0, 0, 0, 0.78),
+        0 44px 90px  rgba(0, 0, 0, 0.56),
+        0 75px 120px rgba(0, 0, 0, 0.34);
+    opacity: 0;
+    transform: translateY(-18px);
+    pointer-events: none;
+    transition: opacity 0.28s ease, transform 0.28s ease, box-shadow 0.25s ease;
+}
+
+.side-btn img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+    border-radius: 50%;
+}
+
+.coming-soon-tip {
+    position: fixed;
+    transform: translate(-100%, -50%);
+    background: #0d0020;
+    border: 1px solid rgba(255, 45, 120, 0.4);
+    border-radius: 20px;
+    padding: 5px 12px;
+    font-size: 11px;
+    font-family: 'Arial Black', sans-serif;
+    color: rgba(255, 45, 120, 0.9);
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    white-space: nowrap;
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 0.2s ease;
+    z-index: 1000;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.5);
+}
+.coming-soon-tip.visible { opacity: 1; }
+
+#profile-menu:hover .side-btn:hover {
+    transform: translateY(-6px);
+    box-shadow:
+        0 34px 65px  rgba(0, 0, 0, 0.84),
+        0 62px 110px rgba(0, 0, 0, 0.60),
+        0 90px 140px rgba(0, 0, 0, 0.38);
+}
+
+#profile-menu:hover .side-btn {
+    opacity: 1;
+    transform: translateY(0);
+    pointer-events: auto;
+}
+
+#profile-menu:hover #dumbbell-btn {
+    transition-delay: 0s;
+}
+
+#profile-menu:hover #protein-btn {
+    transition-delay: 0.09s;
+}
+
+#profile-menu:hover #settings-btn {
+    transition-delay: 0.18s;
 }
 
 #site-cursor {
@@ -129,7 +214,6 @@ h1 {
     aspect-ratio: 1;
     border-radius: 50%;
     overflow: hidden;
-    will-change: transform;
     box-shadow:
         0 22px 50px  rgba(0, 0, 0, 0.78),
         0 44px 90px  rgba(0, 0, 0, 0.56),
@@ -145,21 +229,17 @@ h1 {
         0 105px 150px rgba(0, 0, 0, 0.38);
 }
 
-/* Image fills the circular plate card; object-fit:cover crops the
-   1408×768 source to a perfect square centered on the plate.
-   mask-image punches a clean circle at the center so the live
-   gradient background shows through — no pixel-manipulation needed. */
-.plate-img {
+/* Plate background as ::before so it composites as a GPU texture with no
+   visible decode frame — avoids the <img> load-then-paint jitter. */
+.plate::before {
+    content: '';
     position: absolute;
     inset: 0;
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-    display: block;
-    pointer-events: none;
-    z-index: 0;
+    background: url('/static/weightplate.png') center / cover no-repeat;
     -webkit-mask-image: radial-gradient(circle, transparent 8%, black 9%);
     mask-image:         radial-gradient(circle, transparent 8%, black 9%);
+    pointer-events: none;
+    z-index: 0;
 }
 
 /* Bore depth — no background so the live gradient shows through the
@@ -216,6 +296,9 @@ h1 {
 
 .plate-lbs { left: 22.5%; }
 .plate-kg  { left: 77.5%; }
+
+.plate.kg-primary .plate-lbs { left: 77.5%; }
+.plate.kg-primary .plate-kg  { left: 22.5%; }
 
 .plate-num {
     font-family: 'Arial Black', Impact, sans-serif;
@@ -382,6 +465,57 @@ h1 {
     color: #888;
     min-height: 18px;
     margin-bottom: 26px;
+}
+
+#fight-card-modal .modal-kg-preview {
+    margin-top: 8px;
+}
+
+#fight-card-modal .date-picker-wrap {
+    margin-bottom: 0;
+}
+
+.fight-dob-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 6px;
+}
+
+.fight-dob-header .profile-setting-label {
+    margin-bottom: 0;
+}
+
+.fight-age-display {
+    display: flex;
+    align-items: baseline;
+    gap: 4px;
+}
+
+#fight-age-num {
+    font-family: 'Arial Black', sans-serif;
+    font-size: 18px;
+    color: #f4f4f4;
+    text-shadow: 0 1px 3px rgba(0, 0, 0, 0.7);
+}
+
+.fight-dob-input {
+    width: 100%;
+    box-sizing: border-box;
+    background: rgba(255, 45, 120, 0.07);
+    border: 1px solid rgba(255, 45, 120, 0.25);
+    border-radius: 8px;
+    color: #f4f4f4;
+    font-family: Arial, sans-serif;
+    font-size: 13px;
+    padding: 8px 12px;
+    cursor: pointer;
+    outline: none;
+}
+
+.fight-dob-input:focus {
+    border-color: rgba(255, 45, 120, 0.6);
+    box-shadow: 0 0 8px rgba(255, 45, 120, 0.2);
 }
 
 .modal-actions {
@@ -840,7 +974,7 @@ h1 {
 
 /* ── Profile modal ──────────────────────────────────────── */
 
-#profile-modal .modal-card {
+#settings-modal .modal-card {
     width: 640px;
 }
 
@@ -860,6 +994,7 @@ h1 {
 
 .profile-toggle-row {
     display: flex;
+    align-items: center;
     gap: 8px;
     flex-wrap: nowrap;
 }
@@ -921,6 +1056,10 @@ h1 {
     box-shadow: 0 0 8px rgba(255, 45, 120, 0.2);
 }
 
+.profile-custom-input:focus::placeholder {
+    color: transparent;
+}
+
 .profile-custom-unit {
     font-size: 11px;
     font-family: 'Arial Black', sans-serif;
@@ -977,7 +1116,13 @@ h1 {
     box-shadow: 0 0 8px rgba(255, 45, 120, 0.2);
 }
 
-/* Historical weight date input */
+/* Historical weight date picker */
+.date-picker-wrap {
+    position: relative;
+    width: 100%;
+    margin-bottom: 18px;
+}
+
 .history-date-input {
     width: 100%;
     background: #1a0035;
@@ -989,14 +1134,98 @@ h1 {
     color: #f4f4f4;
     outline: none;
     box-sizing: border-box;
-    margin-bottom: 18px;
-    color-scheme: dark;
+    cursor: pointer;
 }
 
 .history-date-input:focus {
     border-color: rgba(255, 45, 120, 0.7);
     box-shadow: 0 0 12px rgba(255, 45, 120, 0.25);
 }
+
+.date-picker-dropdown {
+    position: absolute;
+    top: calc(100% + 6px);
+    left: 0;
+    right: 0;
+    background: #0d0020;
+    border: 1px solid rgba(255, 45, 120, 0.4);
+    border-radius: 12px;
+    padding: 14px 12px 10px;
+    z-index: 200;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.7), 0 0 20px rgba(255, 45, 120, 0.1);
+}
+
+.dp-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 10px;
+}
+
+.dp-month-year {
+    font-family: Arial, sans-serif;
+    font-size: 13px;
+    font-weight: 700;
+    color: #f4f4f4;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+    cursor: pointer;
+    transition: color 0.15s;
+}
+.dp-month-year:hover { color: #ff2d78; }
+
+.dp-day.dp-year { padding: 10px 2px; }
+
+.dp-nav {
+    background: none;
+    border: none;
+    color: rgba(255, 45, 120, 0.8);
+    font-size: 24px;
+    line-height: 1;
+    cursor: pointer;
+    padding: 0 4px;
+    transition: color 0.15s;
+}
+.dp-nav:hover { color: #ff2d78; }
+
+.dp-day-names {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    margin-bottom: 4px;
+}
+.dp-day-names span {
+    text-align: center;
+    font-size: 10px;
+    font-weight: 700;
+    color: rgba(255, 45, 120, 0.6);
+    letter-spacing: 0.8px;
+    text-transform: uppercase;
+    padding: 2px 0;
+}
+
+.dp-grid {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 2px;
+}
+
+.dp-day {
+    text-align: center;
+    padding: 7px 2px;
+    border-radius: 6px;
+    font-size: 12px;
+    font-family: Arial, sans-serif;
+    color: #c8c8c8;
+    cursor: pointer;
+    border: none;
+    background: none;
+    transition: background 0.12s, color 0.12s;
+}
+.dp-day:hover:not(:disabled) { background: rgba(255, 45, 120, 0.18); color: #fff; }
+.dp-day.dp-today             { color: #ff2d78; font-weight: 700; }
+.dp-day.dp-selected          { background: rgba(255, 45, 120, 0.42); color: #fff; font-weight: 700; }
+.dp-day:disabled             { color: #2e2e2e; cursor: default; }
+.dp-day.dp-other-month       { color: #2e2e2e; }
 
 
 /* ── Miami frame overlay ─────────────────────────────────────── */
