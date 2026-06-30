@@ -1,14 +1,28 @@
 from flask import Flask, render_template, request, jsonify
 import sqlite3
 import os
+import re
 from datetime import date, timedelta
 
 app = Flask(__name__)
 DB_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'weights.db')
+app.config['DB_PATH'] = DB_PATH
+
+_DATE_RE = re.compile(r'^\d{4}-\d{2}-\d{2}$')
+
+
+def _valid_date(s: str) -> bool:
+    if not isinstance(s, str) or not _DATE_RE.match(s):
+        return False
+    try:
+        date.fromisoformat(s)
+        return True
+    except ValueError:
+        return False
 
 
 def get_db():
-    conn = sqlite3.connect(DB_PATH)
+    conn = sqlite3.connect(app.config['DB_PATH'])
     conn.row_factory = sqlite3.Row
     return conn
 
@@ -44,11 +58,25 @@ def home():
 
 @app.route("/api/weight", methods=["POST"])
 def save_weight():
-    data       = request.get_json()
-    weight_lbs = float(data["weight_lbs"])
-    weight_kg  = round(weight_lbs / 2.2046, 1)
-    entry_date = data["date"]          # ISO string from client, e.g. "2026-06-29"
+    data = request.get_json(silent=True) or {}
+
+    if "weight_lbs" not in data or "date" not in data:
+        return jsonify({"error": "Missing required fields: weight_lbs, date"}), 400
+
+    try:
+        weight_lbs = float(data["weight_lbs"])
+    except (TypeError, ValueError):
+        return jsonify({"error": "weight_lbs must be a number"}), 400
+
+    if weight_lbs <= 0:
+        return jsonify({"error": "weight_lbs must be greater than zero"}), 400
+
+    entry_date = data["date"]
+    if not _valid_date(entry_date):
+        return jsonify({"error": "date must be a valid ISO date (YYYY-MM-DD)"}), 400
+
     overwrite  = data.get("overwrite", False)
+    weight_kg  = round(weight_lbs / 2.2046, 1)
 
     conn = get_db()
     try:
@@ -123,8 +151,10 @@ def latest_weight():
 def delete_weight(entry_date):
     conn = get_db()
     try:
-        conn.execute("DELETE FROM weights WHERE date = ?", (entry_date,))
+        cursor = conn.execute("DELETE FROM weights WHERE date = ?", (entry_date,))
         conn.commit()
+        if cursor.rowcount == 0:
+            return jsonify({"error": "No entry found for that date"}), 404
         row = conn.execute(
             "SELECT weight_lbs, weight_kg FROM weights ORDER BY date DESC LIMIT 1"
         ).fetchone()
@@ -146,11 +176,22 @@ def get_settings():
 
 @app.route("/api/setting", methods=["POST"])
 def save_setting():
-    data      = request.get_json()
+    data = request.get_json(silent=True) or {}
+
+    if "key" not in data or "value_lbs" not in data:
+        return jsonify({"error": "Missing required fields: key, value_lbs"}), 400
+
+    try:
+        value_lbs = float(data["value_lbs"])
+    except (TypeError, ValueError):
+        return jsonify({"error": "value_lbs must be a number"}), 400
+
+    if value_lbs <= 0:
+        return jsonify({"error": "value_lbs must be greater than zero"}), 400
+
     key       = data["key"]
-    value_lbs = float(data["value_lbs"])
-    value_kg  = round(value_lbs / 2.2046, 1)
     overwrite = data.get("overwrite", False)
+    value_kg  = round(value_lbs / 2.2046, 1)
 
     conn = get_db()
     try:

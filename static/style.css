@@ -6,6 +6,41 @@ html {
     cursor: none !important;
 }
 
+#profile-btn {
+    position: fixed;
+    top: 20px;
+    right: 110px;
+    z-index: 900;
+    background: none;
+    border: none;
+    padding: 0;
+    width: 116px;
+    height: 116px;
+    border-radius: 50%;
+    overflow: hidden;
+    box-shadow:
+        0 22px 50px  rgba(0, 0, 0, 0.78),
+        0 44px 90px  rgba(0, 0, 0, 0.56),
+        0 75px 120px rgba(0, 0, 0, 0.34);
+    transition: transform 0.25s ease, box-shadow 0.25s ease;
+}
+
+#profile-btn:hover {
+    transform: translateY(-6px);
+    box-shadow:
+        0 34px 65px  rgba(0, 0, 0, 0.84),
+        0 62px 110px rgba(0, 0, 0, 0.60),
+        0 90px 140px rgba(0, 0, 0, 0.38);
+}
+
+#profile-btn img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+    border-radius: 50%;
+}
+
 #site-cursor {
     position: fixed;
     top: 0;
@@ -801,6 +836,97 @@ h1 {
     font-family: 'Arial Black', sans-serif;
     letter-spacing: 0.12em;
     text-transform: uppercase;
+}
+
+/* ── Profile modal ──────────────────────────────────────── */
+
+#profile-modal .modal-card {
+    width: 640px;
+}
+
+.profile-setting-group {
+    margin-bottom: 24px;
+}
+
+.profile-setting-label {
+    display: block;
+    font-size: 11px;
+    font-family: 'Arial Black', sans-serif;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: rgba(255, 45, 120, 0.7);
+    margin-bottom: 10px;
+}
+
+.profile-toggle-row {
+    display: flex;
+    gap: 8px;
+    flex-wrap: nowrap;
+}
+
+.profile-opt-btn {
+    padding: 9px 18px;
+    border-radius: 8px;
+    border: 1px solid rgba(255, 45, 120, 0.25);
+    background: rgba(255, 45, 120, 0.07);
+    color: #aaa;
+    font-family: 'Arial Black', sans-serif;
+    font-size: 12px;
+    letter-spacing: 0.05em;
+    transition: all 0.18s ease;
+}
+
+.profile-opt-btn:hover {
+    border-color: rgba(255, 45, 120, 0.55);
+    color: #fff;
+    background: rgba(255, 45, 120, 0.15);
+}
+
+.profile-opt-btn.active {
+    background: linear-gradient(135deg, #ff2d78, #c73862);
+    border-color: transparent;
+    color: #fff;
+    box-shadow: 0 0 12px rgba(255, 45, 120, 0.45);
+}
+
+.prof-custom-wrap {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.profile-custom-input {
+    width: 70px;
+    background: rgba(255, 45, 120, 0.07);
+    border: 1px solid rgba(255, 45, 120, 0.25);
+    border-radius: 8px;
+    color: #f4f4f4;
+    font-family: 'Arial Black', sans-serif;
+    font-size: 13px;
+    padding: 7px 10px;
+    text-align: center;
+    -moz-appearance: textfield;
+    appearance: textfield;
+}
+
+.profile-custom-input::-webkit-outer-spin-button,
+.profile-custom-input::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+}
+
+.profile-custom-input:focus {
+    outline: none;
+    border-color: rgba(255, 45, 120, 0.6);
+    box-shadow: 0 0 8px rgba(255, 45, 120, 0.2);
+}
+
+.profile-custom-unit {
+    font-size: 11px;
+    font-family: 'Arial Black', sans-serif;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: rgba(255, 45, 120, 0.6);
 }
 
 .table-edit-input {
