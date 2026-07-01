@@ -29,31 +29,84 @@ def get_db():
 
 def init_db():
     conn = get_db()
+
+    conn.execute('''
+        CREATE TABLE IF NOT EXISTS users (
+            id            INTEGER PRIMARY KEY AUTOINCREMENT,
+            username      TEXT    UNIQUE NOT NULL,
+            password_hash TEXT    NOT NULL DEFAULT ''
+        )
+    ''')
+
     conn.execute('''
         CREATE TABLE IF NOT EXISTS weights (
             id          INTEGER PRIMARY KEY AUTOINCREMENT,
-            date        TEXT    UNIQUE NOT NULL,
+            user_id     INTEGER NOT NULL DEFAULT 1 REFERENCES users(id),
+            date        TEXT    NOT NULL,
             weight_lbs  REAL    NOT NULL,
-            weight_kg   REAL    NOT NULL
+            weight_kg   REAL    NOT NULL,
+            UNIQUE(user_id, date)
         )
     ''')
+
     conn.execute('''
         CREATE TABLE IF NOT EXISTS settings (
-            key        TEXT PRIMARY KEY,
-            value_lbs  REAL NOT NULL,
-            value_kg   REAL NOT NULL
+            user_id   INTEGER NOT NULL DEFAULT 1 REFERENCES users(id),
+            key       TEXT    NOT NULL,
+            value_lbs REAL    NOT NULL,
+            value_kg  REAL    NOT NULL,
+            PRIMARY KEY (user_id, key)
         )
     ''')
+
+    conn.execute('''
+        CREATE TABLE IF NOT EXISTS preferences (
+            user_id INTEGER NOT NULL DEFAULT 1 REFERENCES users(id),
+            key     TEXT    NOT NULL,
+            value   TEXT    NOT NULL,
+            PRIMARY KEY (user_id, key)
+        )
+    ''')
+
+    # Seed default user
+    conn.execute(
+        "INSERT OR IGNORE INTO users (id, username, password_hash) VALUES (1, 'default', '')"
+    )
+
+    # Migrate existing tables that predate user_id
+    _migrate(conn)
+
     conn.commit()
     conn.close()
 
 
+def _migrate(conn: sqlite3.Connection) -> None:
+    """Add user_id to pre-existing tables that were created without it."""
+    for table in ('weights', 'settings'):
+        cols = {row[1] for row in conn.execute(f"PRAGMA table_info({table})")}
+        if 'user_id' not in cols:
+            conn.execute(
+                f"ALTER TABLE {table} ADD COLUMN user_id INTEGER NOT NULL DEFAULT 1"
+            )
+
+
 init_db()
+
+# Current user — hardcoded until auth is added
+_USER_ID = 1
 
 
 @app.route("/")
 def home():
-    return render_template("index.html")
+    conn = get_db()
+    try:
+        rows = conn.execute(
+            "SELECT key, value FROM preferences WHERE user_id = ?", (_USER_ID,)
+        ).fetchall()
+        prefs = {r["key"]: r["value"] for r in rows}
+    finally:
+        conn.close()
+    return render_template("index.html", prefs=prefs)
 
 
 @app.route("/api/weight", methods=["POST"])
@@ -75,13 +128,14 @@ def save_weight():
     if not _valid_date(entry_date):
         return jsonify({"error": "date must be a valid ISO date (YYYY-MM-DD)"}), 400
 
-    overwrite  = data.get("overwrite", False)
-    weight_kg  = round(weight_lbs / 2.2046, 1)
+    overwrite = data.get("overwrite", False)
+    weight_kg = round(weight_lbs / 2.2046, 1)
 
     conn = get_db()
     try:
         existing = conn.execute(
-            "SELECT id FROM weights WHERE date = ?", (entry_date,)
+            "SELECT id FROM weights WHERE user_id = ? AND date = ?",
+            (_USER_ID, entry_date),
         ).fetchone()
 
         if existing and not overwrite:
@@ -89,13 +143,13 @@ def save_weight():
 
         if existing:
             conn.execute(
-                "UPDATE weights SET weight_lbs = ?, weight_kg = ? WHERE date = ?",
-                (weight_lbs, weight_kg, entry_date),
+                "UPDATE weights SET weight_lbs = ?, weight_kg = ? WHERE user_id = ? AND date = ?",
+                (weight_lbs, weight_kg, _USER_ID, entry_date),
             )
         else:
             conn.execute(
-                "INSERT INTO weights (date, weight_lbs, weight_kg) VALUES (?, ?, ?)",
-                (entry_date, weight_lbs, weight_kg),
+                "INSERT INTO weights (user_id, date, weight_lbs, weight_kg) VALUES (?, ?, ?, ?)",
+                (_USER_ID, entry_date, weight_lbs, weight_kg),
             )
         conn.commit()
         return jsonify({"success": True})
@@ -112,7 +166,8 @@ def get_weights():
     try:
         if range_param == "all":
             rows = conn.execute(
-                "SELECT date, weight_lbs, weight_kg FROM weights ORDER BY date"
+                "SELECT date, weight_lbs, weight_kg FROM weights WHERE user_id = ? ORDER BY date",
+                (_USER_ID,),
             ).fetchall()
         else:
             if   range_param == "7d":  days = 7
@@ -123,8 +178,9 @@ def get_weights():
 
             start = (date.today() - timedelta(days=days - 1)).isoformat()
             rows = conn.execute(
-                "SELECT date, weight_lbs, weight_kg FROM weights WHERE date >= ? ORDER BY date",
-                (start,),
+                "SELECT date, weight_lbs, weight_kg FROM weights "
+                "WHERE user_id = ? AND date >= ? ORDER BY date",
+                (_USER_ID, start),
             ).fetchall()
 
         return jsonify([dict(r) for r in rows])
@@ -137,11 +193,18 @@ def latest_weight():
     conn = get_db()
     try:
         row = conn.execute(
-            "SELECT weight_lbs, weight_kg FROM weights ORDER BY date DESC LIMIT 1"
+            "SELECT weight_lbs, weight_kg FROM weights WHERE user_id = ? ORDER BY date DESC LIMIT 1",
+            (_USER_ID,),
         ).fetchone()
-        oldest = conn.execute("SELECT MIN(date) as d FROM weights").fetchone()["d"]
+        oldest = conn.execute(
+            "SELECT MIN(date) as d FROM weights WHERE user_id = ?", (_USER_ID,)
+        ).fetchone()["d"]
         if row:
-            return jsonify({"weight_lbs": row["weight_lbs"], "weight_kg": row["weight_kg"], "oldest_date": oldest})
+            return jsonify({
+                "weight_lbs": row["weight_lbs"],
+                "weight_kg":  row["weight_kg"],
+                "oldest_date": oldest,
+            })
         return jsonify({})
     finally:
         conn.close()
@@ -151,12 +214,15 @@ def latest_weight():
 def delete_weight(entry_date):
     conn = get_db()
     try:
-        cursor = conn.execute("DELETE FROM weights WHERE date = ?", (entry_date,))
+        cursor = conn.execute(
+            "DELETE FROM weights WHERE user_id = ? AND date = ?", (_USER_ID, entry_date)
+        )
         conn.commit()
         if cursor.rowcount == 0:
             return jsonify({"error": "No entry found for that date"}), 404
         row = conn.execute(
-            "SELECT weight_lbs, weight_kg FROM weights ORDER BY date DESC LIMIT 1"
+            "SELECT weight_lbs, weight_kg FROM weights WHERE user_id = ? ORDER BY date DESC LIMIT 1",
+            (_USER_ID,),
         ).fetchone()
         latest = {"weight_lbs": row["weight_lbs"], "weight_kg": row["weight_kg"]} if row else {}
         return jsonify({"success": True, "latest": latest})
@@ -168,7 +234,9 @@ def delete_weight(entry_date):
 def get_settings():
     conn = get_db()
     try:
-        rows = conn.execute("SELECT key, value_lbs, value_kg FROM settings").fetchall()
+        rows = conn.execute(
+            "SELECT key, value_lbs, value_kg FROM settings WHERE user_id = ?", (_USER_ID,)
+        ).fetchall()
         return jsonify({r["key"]: {"value_lbs": r["value_lbs"], "value_kg": r["value_kg"]} for r in rows})
     finally:
         conn.close()
@@ -196,7 +264,7 @@ def save_setting():
     conn = get_db()
     try:
         existing = conn.execute(
-            "SELECT key FROM settings WHERE key = ?", (key,)
+            "SELECT key FROM settings WHERE user_id = ? AND key = ?", (_USER_ID, key)
         ).fetchone()
 
         if existing and not overwrite:
@@ -204,14 +272,52 @@ def save_setting():
 
         if existing:
             conn.execute(
-                "UPDATE settings SET value_lbs = ?, value_kg = ? WHERE key = ?",
-                (value_lbs, value_kg, key),
+                "UPDATE settings SET value_lbs = ?, value_kg = ? WHERE user_id = ? AND key = ?",
+                (value_lbs, value_kg, _USER_ID, key),
             )
         else:
             conn.execute(
-                "INSERT INTO settings (key, value_lbs, value_kg) VALUES (?, ?, ?)",
-                (key, value_lbs, value_kg),
+                "INSERT INTO settings (user_id, key, value_lbs, value_kg) VALUES (?, ?, ?, ?)",
+                (_USER_ID, key, value_lbs, value_kg),
             )
+        conn.commit()
+        return jsonify({"success": True})
+    finally:
+        conn.close()
+
+
+@app.route("/api/preferences")
+def get_preferences():
+    conn = get_db()
+    try:
+        rows = conn.execute(
+            "SELECT key, value FROM preferences WHERE user_id = ?", (_USER_ID,)
+        ).fetchall()
+        return jsonify({r["key"]: r["value"] for r in rows})
+    finally:
+        conn.close()
+
+
+@app.route("/api/preference", methods=["POST"])
+def save_preference():
+    data = request.get_json(silent=True) or {}
+
+    if "key" not in data or "value" not in data:
+        return jsonify({"error": "Missing required fields: key, value"}), 400
+
+    key   = str(data["key"]).strip()
+    value = str(data["value"])
+
+    if not key:
+        return jsonify({"error": "key must not be empty"}), 400
+
+    conn = get_db()
+    try:
+        conn.execute(
+            "INSERT INTO preferences (user_id, key, value) VALUES (?, ?, ?) "
+            "ON CONFLICT(user_id, key) DO UPDATE SET value = excluded.value",
+            (_USER_ID, key, value),
+        )
         conn.commit()
         return jsonify({"success": True})
     finally:

@@ -20,6 +20,7 @@ html {
     flex-direction: column;
     align-items: center;
     gap: 14px;
+    pointer-events: none;
 }
 
 #profile-btn {
@@ -30,6 +31,7 @@ html {
     height: 116px;
     border-radius: 50%;
     overflow: hidden;
+    pointer-events: auto;
     box-shadow:
         0 22px 50px  rgba(0, 0, 0, 0.78),
         0 44px 90px  rgba(0, 0, 0, 0.56),
@@ -68,7 +70,7 @@ html {
     opacity: 0;
     transform: translateY(-18px);
     pointer-events: none;
-    transition: opacity 0.28s ease, transform 0.28s ease, box-shadow 0.25s ease;
+    transition: opacity 0.06s ease, transform 0.06s ease, box-shadow 0.06s ease;
 }
 
 .side-btn img {
@@ -100,7 +102,7 @@ html {
 }
 .coming-soon-tip.visible { opacity: 1; }
 
-#profile-menu:hover .side-btn:hover {
+#profile-menu.open .side-btn:hover {
     transform: translateY(-6px);
     box-shadow:
         0 34px 65px  rgba(0, 0, 0, 0.84),
@@ -108,22 +110,17 @@ html {
         0 90px 140px rgba(0, 0, 0, 0.38);
 }
 
-#profile-menu:hover .side-btn {
+#profile-menu.open .side-btn {
     opacity: 1;
     transform: translateY(0);
     pointer-events: auto;
 }
 
-#profile-menu:hover #dumbbell-btn {
+#profile-menu.open #dumbbell-btn,
+#profile-menu.open #protein-btn,
+#profile-menu.open #whistle-btn,
+#profile-menu.open #settings-btn {
     transition-delay: 0s;
-}
-
-#profile-menu:hover #protein-btn {
-    transition-delay: 0.09s;
-}
-
-#profile-menu:hover #settings-btn {
-    transition-delay: 0.18s;
 }
 
 #site-cursor {

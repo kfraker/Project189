@@ -4,7 +4,7 @@
     <title>Project 189</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link href="https://fonts.googleapis.com/css2?family=Pacifico&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}?v=92">
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}?v=96">
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 </head>
 
@@ -22,6 +22,9 @@
     </button>
     <button id="protein-btn" class="side-btn" data-tip="Nutrition">
         <img src="/static/proteinshakebutton.png" alt="Nutrition">
+    </button>
+    <button id="whistle-btn" class="side-btn" data-tip="Insights">
+        <img src="/static/insightsbutton.png" alt="Insights">
     </button>
     <button id="settings-btn" class="side-btn" data-tip="Settings">
         <img src="/static/settingsbutton.png" alt="Settings">
@@ -350,6 +353,18 @@
         <h2 class="modal-title">Fight Card</h2>
 
         <div class="profile-setting-group">
+            <label class="profile-setting-label" for="fight-name">Name</label>
+            <input type="text" id="fight-name" class="fight-dob-input" placeholder="Fighter name" maxlength="60">
+        </div>
+
+        <div class="profile-setting-group">
+            <div class="profile-toggle-row">
+                <button class="profile-opt-btn" id="fight-sex-male">Male</button>
+                <button class="profile-opt-btn" id="fight-sex-female">Female</button>
+            </div>
+        </div>
+
+        <div class="profile-setting-group">
             <div class="fight-dob-header">
                 <label class="profile-setting-label" for="fight-dob">D.O.B.</label>
                 <div class="fight-age-display">
@@ -461,6 +476,22 @@
 
 <div id="site-cursor"></div>
 <script>
+    /* Hydrate localStorage from server-rendered preferences (runs before any getItem) */
+    (function () {
+        var prefs = {{ prefs | tojson }};
+        Object.keys(prefs).forEach(function (k) { localStorage.setItem(k, prefs[k]); });
+    })();
+
+    /* Persist a preference to both localStorage and the backend */
+    window.savePref = function (key, value) {
+        localStorage.setItem(key, value);
+        fetch('/api/preference', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ key: key, value: value })
+        });
+    };
+
     /* Prevent browser scroll restoration fighting scroll-snap on reload */
     if ('scrollRestoration' in history) history.scrollRestoration = 'manual';
     window.scrollTo(0, 0);
@@ -1189,6 +1220,7 @@
         unitBtn.textContent = window.activeUnit === 'lbs' ? 'KGS' : 'LBS';
         unitBtn.addEventListener('click', () => {
             window.activeUnit = window.activeUnit === 'lbs' ? 'kg' : 'lbs';
+            window.savePref('pref_unit', window.activeUnit);
             unitBtn.textContent = window.activeUnit === 'lbs' ? 'KGS' : 'LBS';
             window.applyPlateUnit(window.activeUnit);
             if (window.refreshChart) window.refreshChart();
@@ -1359,7 +1391,7 @@
             });
             const data = await res.json();
 
-            if (data.success) { close(); window.refreshChart(); return; }
+            if (data.success) { close(); window.refreshChart(); if (window.renderTable) window.renderTable(); return; }
 
             if (data.conflict) {
                 document.getElementById('history-overwrite-message').textContent =
@@ -1522,12 +1554,32 @@
         }, { passive: true });
     })();
 
-    /* ── Profile menu image swap ── */
+    /* ── Profile menu open/close + image swap ── */
     (() => {
-        const img  = document.getElementById('profile-btn-img');
-        const menu = document.getElementById('profile-menu');
-        menu.addEventListener('mouseenter', () => { img.src = '/static/profilebuttonsmile.png'; });
-        menu.addEventListener('mouseleave', () => { img.src = '/static/profilebutton.png'; });
+        const img     = document.getElementById('profile-btn-img');
+        const menu    = document.getElementById('profile-menu');
+        const profBtn = document.getElementById('profile-btn');
+        const sideBtns = menu.querySelectorAll('.side-btn');
+        let closeTimer = null;
+
+        function openMenu() {
+            clearTimeout(closeTimer);
+            menu.classList.add('open');
+            img.src = '/static/profilebuttonsmile.png';
+        }
+        function scheduleClose() {
+            closeTimer = setTimeout(() => {
+                menu.classList.remove('open');
+                img.src = '/static/profilebutton.png';
+            }, 120);
+        }
+
+        profBtn.addEventListener('mouseenter', openMenu);
+        profBtn.addEventListener('mouseleave', scheduleClose);
+        sideBtns.forEach(btn => {
+            btn.addEventListener('mouseenter', openMenu);
+            btn.addEventListener('mouseleave', scheduleClose);
+        });
     })();
 
     /* ── Coming Soon tip for unbuilt buttons ── */
@@ -1547,7 +1599,7 @@
             hideTimer = setTimeout(() => tip.classList.remove('visible'), 1500);
         }
 
-        ['dumbbell-btn', 'protein-btn'].forEach(id => {
+        ['dumbbell-btn', 'protein-btn', 'whistle-btn'].forEach(id => {
             document.getElementById(id).addEventListener('click', () => showComingSoon(document.getElementById(id)));
         });
     })();
@@ -1576,6 +1628,9 @@
         const usRow     = document.getElementById('fight-height-us-row');
         const metRow    = document.getElementById('fight-height-metric-row');
         const preview   = document.getElementById('fight-height-preview');
+        const nameIn       = document.getElementById('fight-name');
+        const sexMaleBtn   = document.getElementById('fight-sex-male');
+        const sexFemaleBtn = document.getElementById('fight-sex-female');
 
         /* ── DOB calendar ── */
         const calEl    = document.getElementById('fight-dob-calendar');
@@ -1719,14 +1774,19 @@
 
         let openState = null;
         function heightUnit() { return localStorage.getItem('pref_height_unit') || 'us'; }
+        function getSelectedSex() {
+            return sexMaleBtn.classList.contains('active') ? 'male'
+                 : sexFemaleBtn.classList.contains('active') ? 'female'
+                 : '';
+        }
 
         function snapshot() {
-            return { dob: selectedDobISO, ft: ftIn.value, inch: inIn.value, cm: cmIn.value };
+            return { name: nameIn.value, dob: selectedDobISO, ft: ftIn.value, inch: inIn.value, cm: cmIn.value, sex: getSelectedSex() };
         }
         function hasChanges() {
             if (!openState) return false;
             const s = snapshot();
-            return s.dob !== openState.dob || s.ft !== openState.ft || s.inch !== openState.inch || s.cm !== openState.cm;
+            return s.name !== openState.name || s.dob !== openState.dob || s.ft !== openState.ft || s.inch !== openState.inch || s.cm !== openState.cm || s.sex !== openState.sex;
         }
 
         function updatePreview() {
@@ -1769,12 +1829,15 @@
         }
 
         function doSave() {
-            if (selectedDobISO) localStorage.setItem('fight_dob', selectedDobISO);
+            window.savePref('fight_name', nameIn.value.trim());
+            if (selectedDobISO) window.savePref('fight_dob', selectedDobISO);
+            const sex = getSelectedSex();
+            if (sex) window.savePref('fight_sex', sex);
             if (heightUnit() === 'us') {
-                if (ftIn.value)        localStorage.setItem('fight_height_ft', ftIn.value);
-                if (inIn.value !== '') localStorage.setItem('fight_height_in', inIn.value);
+                if (ftIn.value)        window.savePref('fight_height_ft', ftIn.value);
+                if (inIn.value !== '') window.savePref('fight_height_in', inIn.value);
             } else {
-                if (cmIn.value !== '') localStorage.setItem('fight_height_cm', cmIn.value);
+                if (cmIn.value !== '') window.savePref('fight_height_cm', cmIn.value);
             }
             forceClose();
         }
@@ -1789,6 +1852,12 @@
             dobIn.value     = storedDob ? displayFromISO(storedDob) : '';
             updateAgeDisplay();
             calEl.hidden = true;
+
+            nameIn.value = localStorage.getItem('fight_name') || '';
+
+            const storedSex = localStorage.getItem('fight_sex') || '';
+            sexMaleBtn.classList.toggle('active',   storedSex === 'male');
+            sexFemaleBtn.classList.toggle('active', storedSex === 'female');
 
             if (isUs) {
                 ftIn.value = localStorage.getItem('fight_height_ft') || '';
@@ -1816,6 +1885,14 @@
             openState = snapshot();
             window.activeModal = { tryClose };
         }
+
+        [sexMaleBtn, sexFemaleBtn].forEach(btn => {
+            btn.addEventListener('click', () => {
+                sexMaleBtn.classList.remove('active');
+                sexFemaleBtn.classList.remove('active');
+                btn.classList.add('active');
+            });
+        });
 
         ftIn.addEventListener('input', updatePreview);
         inIn.addEventListener('input', updatePreview);
@@ -1946,11 +2023,11 @@
             const newView       = document.getElementById('prof-view-table').classList.contains('active') ? 'table' : 'chart';
             const newHeightUnit = document.getElementById('prof-height-metric').classList.contains('active') ? 'metric' : 'us';
 
-            localStorage.setItem('pref_unit',        newUnit);
-            localStorage.setItem('pref_range',       newRange);
-            localStorage.setItem('pref_custom_days', newCustomDays);
-            localStorage.setItem('pref_view',        newView);
-            localStorage.setItem('pref_height_unit', newHeightUnit);
+            window.savePref('pref_unit',        newUnit);
+            window.savePref('pref_range',       newRange);
+            window.savePref('pref_custom_days', newCustomDays);
+            window.savePref('pref_view',        newView);
+            window.savePref('pref_height_unit', newHeightUnit);
 
             if (newUnit !== window.activeUnit) {
                 window.activeUnit = newUnit;
@@ -1963,7 +2040,7 @@
             document.querySelectorAll('.range-btn').forEach(b => b.classList.remove('active'));
             if (rangeBtn) rangeBtn.classList.add('active');
             if (newRange === 'custom') {
-                const ci = document.getElementById('custom-range-input');
+                const ci = document.getElementById('custom-days');
                 if (ci) ci.value = newCustomDays;
             }
 
