@@ -9,9 +9,12 @@ A personal weight tracking dashboard built with Flask and SQLite. Logs daily wei
 - **Date range controls** — 7D (default), 30D, 90D, 1Y, All, or a custom day count (capped at 1,095 days / 3 years). Custom range highlights the Custom button on change.
 - **Data table** — scrollable log of entries for the selected range, showing weight in both lbs and kg. Inline editing with overwrite and delete confirmation modals. Dates with no entry display as empty rows; a "No Earlier Data Recorded" footer marks the bottom of available history.
 - **Unit toggle** — switch between lbs and kg; all plates, chart, and table update instantly.
-- **Custom cursor** — pointer cursor for buttons and scrollbars; an alternate edit cursor for editable fields and plates.
+- **Fight Card modal** — record fighter profile info (name, sex, date of birth, height) with a themed date picker for DOB. Age is calculated automatically.
+- **Profile system** — three selectable profile pictures, each linked to its own custom pointer and edit cursor set. Selection is persisted server-side and restored on every page load.
+- **Custom cursors** — profile-linked pointer and edit cursors rendered via transparent PNGs; swap automatically when the active profile changes.
 - **Site-wide tooltips** — hover help on buttons and icons matches the chart tooltip style.
-- **Persistent storage** — all entries and settings (start/goal weights) are stored in a local SQLite database (`weights.db`).
+- **Persistent preferences** — unit choice, date range, view mode, fight card data, and profile selection are stored server-side in SQLite and hydrated into the page on load.
+- **Persistent storage** — all weight entries and goal/start weights are stored in a local SQLite database (`weights.db`).
 
 ## Stack
 
@@ -64,16 +67,38 @@ The SQLite database (`weights.db`) is created automatically on first run in the 
 
 ```
 project-189/
-├── app.py                  # Flask app and REST API routes
-├── weights.db              # SQLite database (auto-created)
+├── app.py                      # Flask app and REST API routes
+├── weights.db                  # SQLite database (auto-created)
 ├── templates/
-│   └── index.html          # Single-page UI
-└── static/
-    ├── style.css           # All styles
-    ├── pointer.png         # Custom pointer cursor
-    ├── editpointer.png     # Custom edit cursor
-    ├── weightplate.png     # Weight plate graphic
-    └── miamibackground.png # Background image
+│   └── index.html              # Single-page UI
+├── static/
+│   ├── style.css               # All styles
+│   ├── pointer.png             # Profile 1 pointer cursor
+│   ├── editpointer.png         # Profile 1 edit cursor
+│   ├── pointer2.png            # Profile 2 pointer cursor
+│   ├── editpointer2.png        # Profile 2 edit cursor
+│   ├── pointer3.png            # Profile 3 pointer cursor
+│   ├── editpointer3.png        # Profile 3 edit cursor
+│   ├── profilebutton.png       # Profile 1 avatar (default)
+│   ├── profilebuttonsmile.png  # Profile 1 avatar (hover)
+│   ├── profile2button.png      # Profile 2 avatar (default)
+│   ├── profile2buttonsmile.png # Profile 2 avatar (hover)
+│   ├── profile3button.png      # Profile 3 avatar (default)
+│   ├── profile3buttonsmile.png # Profile 3 avatar (hover)
+│   ├── weightplate.png         # Weight plate graphic
+│   └── miamibackground.png     # Background image
+└── tests/
+    ├── conftest.py
+    ├── test_home.py
+    ├── test_api_weight_post.py
+    ├── test_api_weights_get.py
+    ├── test_api_weight_delete.py
+    ├── test_api_latest_weight.py
+    ├── test_api_settings.py
+    ├── test_api_preferences.py
+    ├── test_api_weights_edge.py
+    ├── test_business_logic.py
+    └── test_db_init.py
 ```
 
 ## API Endpoints
@@ -86,3 +111,13 @@ project-189/
 | `GET` | `/api/latest-weight` | Get the most recent weight and oldest entry date |
 | `GET` | `/api/settings` | Get saved settings (start weight, goal weight) |
 | `POST` | `/api/setting` | Save or overwrite a setting |
+| `GET` | `/api/preferences` | Get all persisted user preferences |
+| `POST` | `/api/preference` | Save or update a single preference key/value |
+
+## Running Tests
+
+```bash
+python -m pytest tests/ -v
+```
+
+170 tests covering all API endpoints, business logic, date range boundaries, and UI structure.
