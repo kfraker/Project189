@@ -4,12 +4,13 @@ A personal weight tracking dashboard built with Flask and SQLite. Logs daily wei
 
 ## Features
 
-- **Weight plate cards** — displays start, current, and goal weights as styled plates; lost weight is calculated automatically. Click any plate to set or update its value with overwrite confirmation.
+- **Weight plate cards** — displays start, current, and goal weights as styled plates; lost weight is calculated automatically. Click any plate to set or update its value with overwrite confirmation. Adding a current weight immediately refreshes the chart and table.
 - **Interactive line chart** — powered by Chart.js with a floating HTML tooltip that follows the cursor. Interpolates estimated values between logged dates and marks them visually. Shows a warning icon when a selected date range exceeds available data history.
 - **Date range controls** — 7D (default), 30D, 90D, 1Y, All, or a custom day count (capped at 1,095 days / 3 years). Custom range highlights the Custom button on change.
 - **Data table** — scrollable log of entries for the selected range, showing weight in both lbs and kg. Inline editing with overwrite and delete confirmation modals. Dates with no entry display as empty rows; a "No Earlier Data Recorded" footer marks the bottom of available history.
 - **Unit toggle** — switch between lbs and kg; all plates, chart, and table update instantly.
-- **Fight Card modal** — record fighter profile info (name, sex, date of birth, height) with a themed date picker for DOB. Age is calculated automatically.
+- **Fight Card modal** — record fighter profile info (name, sex, date of birth, height, activity level) with a themed date picker for DOB. Age is calculated automatically. Activity level (Sedentary / Light / Moderate / Active) is used for BMR calculations.
+- **Insights modal** — 10 stats computed from full weight history: Predicted Goal Date (Mifflin-St. Jeor BMR simulation), Total Weigh-ins, Longest Streak, Current Streak, Current Trend, Weekly Loss Rate, Monthly Loss Rate, Lowest Weight, Largest Weekly Loss, and Avg Daily Fluctuation. Predicted Goal Date uses week-by-week metabolic adaptation; falls back to a 500 kcal/day deficit estimate when no trend is available.
 - **Profile system** — three selectable profile pictures, each linked to its own custom pointer and edit cursor set. Selection is persisted server-side and restored on every page load.
 - **Custom cursors** — profile-linked pointer and edit cursors rendered via transparent PNGs; swap automatically when the active profile changes.
 - **Site-wide tooltips** — hover help on buttons and icons matches the chart tooltip style.
@@ -85,6 +86,10 @@ project-189/
 │   ├── profile2buttonsmile.png # Profile 2 avatar (hover)
 │   ├── profile3button.png      # Profile 3 avatar (default)
 │   ├── profile3buttonsmile.png # Profile 3 avatar (hover)
+│   ├── dumbbellbutton.png      # Workouts button icon
+│   ├── proteinshakebutton.png  # Nutrition button icon
+│   ├── settingsbutton.png      # Settings button icon
+│   ├── insightsbutton.png      # Insights button icon
 │   ├── weightplate.png         # Weight plate graphic
 │   └── miamibackground.png     # Background image
 └── tests/
@@ -120,4 +125,4 @@ project-189/
 python -m pytest tests/ -v
 ```
 
-170 tests covering all API endpoints, business logic, date range boundaries, and UI structure.
+180 tests covering all API endpoints, business logic, date range boundaries, and UI structure.

@@ -1350,3 +1350,69 @@ h1 {
     background: rgba(255, 45, 120, 0.15);
     color: #ff2d78;
 }
+
+/* ── Insights modal ──────────────────────────────────────── */
+
+.insights-modal-card {
+    width: 700px;
+}
+
+.insights-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 14px;
+    margin: 4px 0 24px;
+}
+
+.insight-card {
+    background: rgba(255, 45, 120, 0.06);
+    border: 1px solid rgba(255, 45, 120, 0.18);
+    border-radius: 12px;
+    padding: 18px 14px 14px;
+    text-align: center;
+    transition: border-color 0.15s;
+}
+
+.insight-card:hover {
+    border-color: rgba(255, 45, 120, 0.45);
+}
+
+.insight-card-wide {
+    grid-column: 1 / -1;
+}
+
+.insight-label {
+    font-size: 10px;
+    font-family: 'Arial Black', sans-serif;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: rgba(255, 200, 220, 0.5);
+    margin-bottom: 10px;
+}
+
+.insight-value {
+    font-size: 20px;
+    font-weight: 700;
+    color: #ff2d78;
+    line-height: 1.2;
+    word-break: break-word;
+}
+
+.insight-sub {
+    font-size: 10px;
+    color: rgba(255, 200, 220, 0.32);
+    margin-top: 5px;
+    letter-spacing: 0.04em;
+}
+
+/* ── Fight Card width + activity buttons ─────────────────── */
+
+#fight-card-modal .modal-card {
+    width: 420px;
+}
+
+.fight-activity-row .profile-opt-btn {
+    flex: 1;
+    padding: 9px 6px;
+    font-size: 10px;
+}

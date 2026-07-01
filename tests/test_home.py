@@ -174,3 +174,61 @@ def test_change_pic_btn_inside_settings_modal(html):
     picker_pos     = html.find('id="profile-pic-picker"')
     assert settings_start < change_pic_pos
     assert change_pic_pos < picker_pos
+
+
+# ── Insights modal ────────────────────────────────────────────────────────────
+
+def test_insights_modal_present(html):
+    assert 'id="insights-modal"' in html
+
+
+def test_insights_grid_present(html):
+    assert 'id="insights-grid"' in html
+
+
+def test_insights_close_btn_present(html):
+    assert 'id="insights-close"' in html
+
+
+def test_insights_modal_before_settings_modal(html):
+    """Insights modal must appear before settings modal in document order."""
+    assert html.index('id="insights-modal"') < html.index('id="settings-modal"')
+
+
+def test_whistle_btn_not_in_coming_soon(html):
+    """whistle-btn must not appear in the coming-soon forEach list."""
+    idx = html.find("'dumbbell-btn', 'protein-btn'")
+    assert idx != -1, "Coming-soon list not found"
+    snippet = html[idx:idx + 80]
+    assert 'whistle' not in snippet
+
+
+def test_predicted_goal_date_is_wide(html):
+    """Predicted Goal Date stat must carry wide: true so it spans the full grid row."""
+    idx = html.find("'Predicted Goal Date'")
+    assert idx != -1, "Predicted Goal Date stat not found"
+    snippet = html[idx:idx + 220]
+    assert 'wide: true' in snippet
+
+
+def test_most_common_day_removed_from_insights(html):
+    """Most Common Day was removed from the insights stats array."""
+    assert "'Most Common Day'" not in html
+
+
+def test_insights_uses_open_exclusive(html):
+    """Insights button must open via openExclusive, not a manual activeModal guard."""
+    assert 'openExclusive(openInsights)' in html
+
+
+def test_insight_card_wide_class_in_render(html):
+    """render() must apply insight-card-wide class for wide stat cards."""
+    assert 'insight-card-wide' in html
+
+
+def test_fight_card_activity_buttons(html):
+    """Fight Card must contain all four activity level buttons."""
+    assert 'id="fight-act-sedentary"' in html
+    assert 'id="fight-act-light"'     in html
+    assert 'id="fight-act-moderate"'  in html
+    assert 'id="fight-act-active"'    in html

@@ -4,7 +4,7 @@
     <title>Project 189</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link href="https://fonts.googleapis.com/css2?family=Pacifico&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}?v=113">
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}?v=128">
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 </head>
 
@@ -403,9 +403,30 @@
             <div class="modal-kg-preview" id="fight-height-preview"></div>
         </div>
 
+        <div class="profile-setting-group">
+            <label class="profile-setting-label">Activity Level</label>
+            <div class="profile-toggle-row fight-activity-row">
+                <button class="profile-opt-btn" id="fight-act-sedentary" data-activity="1.2">Sedentary</button>
+                <button class="profile-opt-btn" id="fight-act-light"     data-activity="1.375">Light</button>
+                <button class="profile-opt-btn" id="fight-act-moderate"  data-activity="1.55">Moderate</button>
+                <button class="profile-opt-btn" id="fight-act-active"    data-activity="1.725">Active</button>
+            </div>
+        </div>
+
         <div class="modal-actions">
             <button class="modal-btn modal-cancel" id="fight-card-cancel">Cancel</button>
             <button class="modal-btn modal-save"   id="fight-card-save">Save</button>
+        </div>
+    </div>
+</div>
+
+<!-- Insights Modal -->
+<div id="insights-modal" class="modal-overlay" hidden>
+    <div class="modal-card insights-modal-card">
+        <h2 class="modal-title">Insights</h2>
+        <div class="insights-grid" id="insights-grid"></div>
+        <div class="modal-actions">
+            <button class="modal-btn modal-save" id="insights-close">Close</button>
         </div>
     </div>
 </div>
@@ -726,7 +747,7 @@
         stepUp: 'current-step-up', stepDown: 'current-step-down',
         screens: ['current-screen-input', 'current-screen-confirm'],
         confirmMsgId: 'current-overwrite-message', confirmBtnId: 'current-overwrite-confirm', confirmCancelId: 'current-overwrite-cancel',
-        onSave: updateLostWeight,
+        onSave: () => { updateLostWeight(); if (window.refreshChart) window.refreshChart(); if (window.renderTable) window.renderTable(); },
         apiSave: async (lbs, overwrite) => {
             const today = getTodayISO();
             const res   = await fetch('/api/weight', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ weight_lbs: lbs, date: today, overwrite }) });
@@ -1733,7 +1754,7 @@
             hideTimer = setTimeout(() => tip.classList.remove('visible'), 1500);
         }
 
-        ['dumbbell-btn', 'protein-btn', 'whistle-btn'].forEach(id => {
+        ['dumbbell-btn', 'protein-btn'].forEach(id => {
             document.getElementById(id).addEventListener('click', () => showComingSoon(document.getElementById(id)));
         });
     })();
@@ -1765,6 +1786,7 @@
         const nameIn       = document.getElementById('fight-name');
         const sexMaleBtn   = document.getElementById('fight-sex-male');
         const sexFemaleBtn = document.getElementById('fight-sex-female');
+        const actBtns      = document.querySelectorAll('.fight-activity-row .profile-opt-btn');
 
         /* ── DOB calendar ── */
         const calEl    = document.getElementById('fight-dob-calendar');
@@ -1908,6 +1930,11 @@
 
         let openState = null;
         function heightUnit() { return localStorage.getItem('pref_height_unit') || 'us'; }
+        function getSelectedActivity() {
+            for (const b of actBtns) if (b.classList.contains('active')) return b.dataset.activity;
+            return '';
+        }
+
         function getSelectedSex() {
             return sexMaleBtn.classList.contains('active') ? 'male'
                  : sexFemaleBtn.classList.contains('active') ? 'female'
@@ -1915,12 +1942,12 @@
         }
 
         function snapshot() {
-            return { name: nameIn.value, dob: selectedDobISO, ft: ftIn.value, inch: inIn.value, cm: cmIn.value, sex: getSelectedSex() };
+            return { name: nameIn.value, dob: selectedDobISO, ft: ftIn.value, inch: inIn.value, cm: cmIn.value, sex: getSelectedSex(), activity: getSelectedActivity() };
         }
         function hasChanges() {
             if (!openState) return false;
             const s = snapshot();
-            return s.name !== openState.name || s.dob !== openState.dob || s.ft !== openState.ft || s.inch !== openState.inch || s.cm !== openState.cm || s.sex !== openState.sex;
+            return s.name !== openState.name || s.dob !== openState.dob || s.ft !== openState.ft || s.inch !== openState.inch || s.cm !== openState.cm || s.sex !== openState.sex || s.activity !== openState.activity;
         }
 
         function updatePreview() {
@@ -1967,6 +1994,8 @@
             if (selectedDobISO) window.savePref('fight_dob', selectedDobISO);
             const sex = getSelectedSex();
             if (sex) window.savePref('fight_sex', sex);
+            const act = getSelectedActivity();
+            if (act) window.savePref('fight_activity', act);
             if (heightUnit() === 'us') {
                 if (ftIn.value)        window.savePref('fight_height_ft', ftIn.value);
                 if (inIn.value !== '') window.savePref('fight_height_in', inIn.value);
@@ -1992,6 +2021,9 @@
             const storedSex = localStorage.getItem('fight_sex') || '';
             sexMaleBtn.classList.toggle('active',   storedSex === 'male');
             sexFemaleBtn.classList.toggle('active', storedSex === 'female');
+
+            const storedAct = localStorage.getItem('fight_activity') || '';
+            actBtns.forEach(b => b.classList.toggle('active', b.dataset.activity === storedAct));
 
             if (isUs) {
                 ftIn.value = localStorage.getItem('fight_height_ft') || '';
@@ -2028,6 +2060,13 @@
             });
         });
 
+        actBtns.forEach(btn => {
+            btn.addEventListener('click', () => {
+                actBtns.forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+            });
+        });
+
         ftIn.addEventListener('input', updatePreview);
         inIn.addEventListener('input', updatePreview);
         cmIn.addEventListener('input', updatePreview);
@@ -2042,6 +2081,236 @@
                 if (!modal.hidden) tryClose();
             }
         });
+    })();
+
+    /* ── Insights modal ── */
+    (() => {
+        const modal    = document.getElementById('insights-modal');
+        const grid     = document.getElementById('insights-grid');
+        const closeBtn = document.getElementById('insights-close');
+        const btn      = document.getElementById('whistle-btn');
+
+        const DAY_NAMES = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+
+        function isKg() { return (localStorage.getItem('pref_unit') || 'lbs') === 'kg'; }
+        function fmt(v)  { return isKg() ? v.toFixed(1) + ' kg'  : v.toFixed(1) + ' lbs'; }
+        function fmtR(v) { return isKg() ? v.toFixed(2) + ' kg'  : v.toFixed(2) + ' lbs'; }
+        function fmtRate(v) {
+            return (v >= 0 ? '−' : '+') + fmtR(Math.abs(v));
+        }
+
+        async function compute() {
+            const [rows, settings] = await Promise.all([
+                fetch('/api/weights?range=all').then(r => r.json()),
+                fetch('/api/settings').then(r => r.json())
+            ]);
+            if (!rows.length) return null;
+
+            const kg      = isKg();
+            const weights = rows.map(r => kg ? r.weight_kg : r.weight_lbs);
+            const dates   = rows.map(r => new Date(r.date + 'T00:00:00'));
+            const n       = rows.length;
+
+            // 1. Current trend: average of last 7 entries
+            const tN    = Math.min(7, n);
+            const trend = weights.slice(-tN).reduce((a, b) => a + b, 0) / tN;
+
+            // 2 & 3. Weekly / monthly avg loss rate over full history
+            const spanDays    = (dates[n-1] - dates[0]) / 86400000;
+            const totalLoss   = weights[0] - weights[n-1];
+            const weeklyRate  = spanDays >= 7  ? (totalLoss / spanDays) * 7     : null;
+            const monthlyRate = spanDays >= 30 ? (totalLoss / spanDays) * 30.44 : null;
+
+            // 4. Most common weigh-in day
+            const dayCounts = Array(7).fill(0);
+            dates.forEach(d => dayCounts[d.getDay()]++);
+            const topDay = DAY_NAMES[dayCounts.indexOf(Math.max(...dayCounts))];
+
+            // 5. Longest streak of consecutive calendar days
+            let longest = 1, curS = 1;
+            for (let i = 1; i < n; i++) {
+                if ((dates[i] - dates[i-1]) / 86400000 === 1) { curS++; if (curS > longest) longest = curS; }
+                else curS = 1;
+            }
+
+            // 6. Current streak
+            let curStreak = 0;
+            const today = new Date(); today.setHours(0, 0, 0, 0);
+            if ((today - dates[n-1]) / 86400000 <= 1) {
+                curStreak = 1;
+                for (let i = n - 1; i > 0; i--) {
+                    if ((dates[i] - dates[i-1]) / 86400000 === 1) curStreak++;
+                    else break;
+                }
+            }
+
+            // 7. Total weigh-ins
+            const total = n;
+
+            // 8. Predicted goal date — Mifflin-St. Jeor BMR simulation
+            // BMR (kcal/day): 10W(kg) + 6.25H(cm) - 5A + 5 (male) / -161 (female)
+            // TDEE = BMR × activity. Observed deficit inferred from weekly loss rate,
+            // capped at 85% of TDEE so dailyIntake is always positive.
+            // If no rate available yet, defaults to 500 kcal/day deficit.
+            function getHeightCm() {
+                const cm = parseFloat(localStorage.getItem('fight_height_cm') || '0') || 0;
+                if (cm > 0) return cm;
+                const ft  = parseInt(localStorage.getItem('fight_height_ft') || '0') || 0;
+                const ins = parseInt(localStorage.getItem('fight_height_in') || '0') || 0;
+                return ft > 0 ? (ft * 12 + ins) * 2.54 : 0;
+            }
+            function msJeorBMR(wKg, hCm, age, sex) {
+                return 10 * wKg + 6.25 * hCm - 5 * age + (sex === 'male' ? 5 : -161);
+            }
+            function calcAgeMSJ(dobISO) {
+                const [y, m, d] = dobISO.split('-').map(Number);
+                const t = new Date();
+                let a = t.getFullYear() - y;
+                if (t.getMonth() + 1 < m || (t.getMonth() + 1 === m && t.getDate() < d)) a--;
+                return a;
+            }
+
+            let goalDateStr = 'No goal set';
+            let goalDateSub = 'at current rate';
+            const gw = settings['goal_weight'];
+            if (gw) {
+                const curW_kg    = rows[n-1].weight_kg;
+                const goalW_kg   = gw.value_kg;
+                const curW_disp  = weights[n-1];
+                const goalW_disp = kg ? goalW_kg : gw.value_lbs;
+
+                if (curW_disp <= goalW_disp) {
+                    goalDateStr = 'Goal reached!';
+                    goalDateSub = 'congrats!';
+                } else {
+                    const sex            = localStorage.getItem('fight_sex') || '';
+                    const dob            = localStorage.getItem('fight_dob') || '';
+                    const activityStored = parseFloat(localStorage.getItem('fight_activity') || '0') || 0;
+                    const activity       = activityStored > 0 ? activityStored : 1.4;
+                    const noActEst       = activityStored <= 0;
+                    const hCm            = getHeightCm();
+                    const canBMR         = !!(sex && dob && hCm > 0);
+
+                    if (canBMR) {
+                        const age0   = calcAgeMSJ(dob);
+                        const bmr0   = msJeorBMR(curW_kg, hCm, age0, sex);
+                        const tdee0  = bmr0 * activity;
+
+                        // Determine daily deficit from observed rate; fall back to 500 kcal
+                        let dailyDeficit, noRateEst = false;
+                        if (weeklyRate && weeklyRate > 0) {
+                            const weeklyKg = kg ? weeklyRate : weeklyRate / 2.2046;
+                            // Cap at 85% of TDEE so dailyIntake stays positive
+                            dailyDeficit = Math.min(weeklyKg * 7700 / 7, tdee0 * 0.85);
+                        } else {
+                            dailyDeficit = 500;
+                            noRateEst    = true;
+                        }
+
+                        const dailyIntake = tdee0 - dailyDeficit;
+                        let simW = curW_kg;
+                        const simD = new Date(dates[n-1]);
+                        let weeks = 0, plateau = false;
+
+                        while (simW > goalW_kg && weeks < 520) {
+                            const deficit = msJeorBMR(simW, hCm, age0, sex) * activity - dailyIntake;
+                            if (deficit <= 0) { plateau = true; break; }
+                            simW -= (deficit * 7) / 7700;
+                            simD.setDate(simD.getDate() + 7);
+                            weeks++;
+                        }
+
+                        if (plateau) {
+                            goalDateStr = 'Plateau ahead';
+                            goalDateSub = 'adjust intake to continue';
+                        } else if (weeks >= 520) {
+                            goalDateStr = '10+ years';
+                            goalDateSub = 'Mifflin-St. Jeor';
+                        } else {
+                            goalDateStr = simD.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+                            const msjLabel = noActEst ? 'MSJ · 1.4× activity est.' : 'Mifflin-St. Jeor';
+                            goalDateSub = noRateEst ? 'MSJ · 500 kcal/day deficit est.' : msjLabel;
+                        }
+                    } else if (weeklyRate && weeklyRate > 0) {
+                        const daysLeft = ((curW_disp - goalW_disp) / weeklyRate) * 7;
+                        const g = new Date(dates[n-1]);
+                        g.setDate(g.getDate() + Math.round(daysLeft));
+                        goalDateStr = g.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+                        goalDateSub = 'linear (complete Fight Card)';
+                    } else {
+                        goalDateStr = 'Need more data';
+                    }
+                }
+            }
+
+            // 9. Lowest recorded weight
+            const lowest = Math.min(...weights);
+
+            // 10. Largest weight loss in any 7-day window
+            let bestWeek = 0;
+            for (let i = 0; i < n; i++) {
+                const cutoff = dates[i].getTime() + 7 * 86400000;
+                for (let j = i + 1; j < n && dates[j].getTime() <= cutoff; j++) {
+                    const loss = weights[i] - weights[j];
+                    if (loss > bestWeek) bestWeek = loss;
+                }
+            }
+
+            // 11. Average daily fluctuation (entries 1-3 days apart, normalised per day)
+            let totalFluc = 0, flucCount = 0;
+            for (let i = 1; i < n; i++) {
+                const d = (dates[i] - dates[i-1]) / 86400000;
+                if (d >= 1 && d <= 3) { totalFluc += Math.abs(weights[i] - weights[i-1]) / d; flucCount++; }
+            }
+            const avgFluc = flucCount ? totalFluc / flucCount : 0;
+
+            return [
+                { label: 'Predicted Goal Date',   value: goalDateStr,                                                  sub: goalDateSub,                                                    wide: true },
+                { label: 'Total Weigh-ins',       value: String(total),                                                sub: 'all time' },
+                { label: 'Longest Streak',        value: String(longest),                                              sub: longest === 1 ? 'day' : 'consecutive days' },
+                { label: 'Current Streak',        value: String(curStreak),                                            sub: curStreak ? (curStreak === 1 ? 'day and counting' : 'consecutive days and counting') : 'inactive' },
+                { label: 'Current Trend',         value: fmt(trend),                                                   sub: 'last 7 entries' },
+                { label: 'Weekly Loss Rate',      value: weeklyRate  != null ? fmtRate(weeklyRate)  + '/wk'  : '—', sub: 'avg over history' },
+                { label: 'Monthly Loss Rate',     value: monthlyRate != null ? fmtRate(monthlyRate) + '/mo'  : '—', sub: 'avg over history' },
+                { label: 'Lowest Weight',         value: fmt(lowest),                                                  sub: 'all time' },
+                { label: 'Largest Weekly Loss',   value: bestWeek > 0 ? fmtR(bestWeek) : '—',                    sub: 'best 7-day window' },
+                { label: 'Avg Daily Fluctuation', value: avgFluc > 0 ? fmtR(avgFluc) + '/day' : '—',             sub: 'day-to-day noise' },
+            ];
+        }
+
+        function render(stats) {
+            grid.innerHTML = '';
+            if (!stats) {
+                const msg = document.createElement('p');
+                msg.style.cssText = 'color:rgba(255,200,220,0.5);text-align:center;grid-column:1/-1;padding:32px 0;margin:0';
+                msg.textContent = 'No weight data yet.';
+                grid.appendChild(msg);
+                return;
+            }
+            stats.forEach(s => {
+                const card = document.createElement('div');
+                card.className = 'insight-card' + (s.wide ? ' insight-card-wide' : '');
+                card.innerHTML =
+                    '<div class="insight-label">' + s.label + '</div>' +
+                    '<div class="insight-value">' + s.value + '</div>' +
+                    '<div class="insight-sub">'   + s.sub   + '</div>';
+                grid.appendChild(card);
+            });
+        }
+
+        function close() { modal.hidden = true; window.activeModal = null; }
+
+        async function openInsights() {
+            window.activeModal = { tryClose: cb => { close(); if (cb) cb(); } };
+            grid.innerHTML = '<p style="color:rgba(255,200,220,0.4);text-align:center;grid-column:1/-1;padding:32px 0;margin:0">Loading…</p>';
+            modal.hidden = false;
+            render(await compute());
+        }
+
+        btn.addEventListener('click', () => window.openExclusive(openInsights));
+        closeBtn.addEventListener('click', close);
+        modal.addEventListener('click', e => { if (e.target === modal) close(); });
+        document.addEventListener('keydown', e => { if (e.key === 'Escape' && !modal.hidden) close(); });
     })();
 
     /* ── Settings modal (settings button) ── */
