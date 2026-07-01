@@ -81,13 +81,16 @@ def init_db():
 
 
 def _migrate(conn: sqlite3.Connection) -> None:
-    """Add user_id to pre-existing tables that were created without it."""
+    """Add columns to pre-existing tables that were created without them."""
     for table in ('weights', 'settings'):
         cols = {row[1] for row in conn.execute(f"PRAGMA table_info({table})")}
         if 'user_id' not in cols:
             conn.execute(
                 f"ALTER TABLE {table} ADD COLUMN user_id INTEGER NOT NULL DEFAULT 1"
             )
+    cols = {row[1] for row in conn.execute("PRAGMA table_info(weights)")}
+    if 'notes' not in cols:
+        conn.execute("ALTER TABLE weights ADD COLUMN notes TEXT NOT NULL DEFAULT ''")
 
 
 init_db()
@@ -129,6 +132,7 @@ def save_weight():
         return jsonify({"error": "date must be a valid ISO date (YYYY-MM-DD)"}), 400
 
     overwrite = data.get("overwrite", False)
+    notes     = str(data.get("notes", "")).strip()[:500]
     weight_kg = round(weight_lbs / 2.2046, 1)
 
     conn = get_db()
@@ -148,8 +152,8 @@ def save_weight():
             )
         else:
             conn.execute(
-                "INSERT INTO weights (user_id, date, weight_lbs, weight_kg) VALUES (?, ?, ?, ?)",
-                (_USER_ID, entry_date, weight_lbs, weight_kg),
+                "INSERT INTO weights (user_id, date, weight_lbs, weight_kg, notes) VALUES (?, ?, ?, ?, ?)",
+                (_USER_ID, entry_date, weight_lbs, weight_kg, notes),
             )
         conn.commit()
         return jsonify({"success": True})
@@ -166,7 +170,7 @@ def get_weights():
     try:
         if range_param == "all":
             rows = conn.execute(
-                "SELECT date, weight_lbs, weight_kg FROM weights WHERE user_id = ? ORDER BY date",
+                "SELECT date, weight_lbs, weight_kg, notes FROM weights WHERE user_id = ? ORDER BY date",
                 (_USER_ID,),
             ).fetchall()
         else:
@@ -178,7 +182,7 @@ def get_weights():
 
             start = (date.today() - timedelta(days=days - 1)).isoformat()
             rows = conn.execute(
-                "SELECT date, weight_lbs, weight_kg FROM weights "
+                "SELECT date, weight_lbs, weight_kg, notes FROM weights "
                 "WHERE user_id = ? AND date >= ? ORDER BY date",
                 (_USER_ID, start),
             ).fetchall()
@@ -226,6 +230,26 @@ def delete_weight(entry_date):
         ).fetchone()
         latest = {"weight_lbs": row["weight_lbs"], "weight_kg": row["weight_kg"]} if row else {}
         return jsonify({"success": True, "latest": latest})
+    finally:
+        conn.close()
+
+
+@app.route("/api/weight/<string:entry_date>/note", methods=["PATCH"])
+def save_note(entry_date):
+    if not _valid_date(entry_date):
+        return jsonify({"error": "date must be a valid ISO date (YYYY-MM-DD)"}), 400
+    data  = request.get_json(silent=True) or {}
+    notes = str(data.get("notes", "")).strip()[:500]
+    conn  = get_db()
+    try:
+        cursor = conn.execute(
+            "UPDATE weights SET notes = ? WHERE user_id = ? AND date = ?",
+            (notes, _USER_ID, entry_date),
+        )
+        conn.commit()
+        if cursor.rowcount == 0:
+            return jsonify({"error": "No entry found for that date"}), 404
+        return jsonify({"success": True})
     finally:
         conn.close()
 

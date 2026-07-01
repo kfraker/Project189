@@ -232,3 +232,220 @@ def test_fight_card_activity_buttons(html):
     assert 'id="fight-act-light"'     in html
     assert 'id="fight-act-moderate"'  in html
     assert 'id="fight-act-active"'    in html
+
+
+# ── Goal date vertical line ────────────────────────────────────────────────────
+
+def test_compute_goal_date_iso_defined(html):
+    """computeGoalDateISO must be defined as a module-level function."""
+    assert 'function computeGoalDateISO' in html
+
+
+def test_chart_fetches_settings_alongside_rows(html):
+    """loadChart must fetch /api/settings in parallel with /api/weights."""
+    assert "fetch('/api/settings')" in html
+
+
+def test_goal_line_uses_second_dataset(html):
+    """Goal weight line must be a second Chart.js dataset, not a custom plugin."""
+    assert 'goalWeightVal' in html
+    assert 'goalData' in html
+
+
+def test_goal_line_uses_border_dash(html):
+    """Goal weight dataset must use borderDash for the dashed line style."""
+    assert 'borderDash' in html
+
+
+def test_tooltip_filters_to_weight_dataset(html):
+    """External tooltip must filter to datasetIndex 0 to skip the goal line dataset."""
+    assert 'datasetIndex === 0' in html
+
+
+# ── Notes on weigh-ins ────────────────────────────────────────────────────────
+
+def test_note_popover_present(html):
+    assert 'id="note-popover"' in html
+
+
+def test_note_popover_textarea_present(html):
+    assert 'id="note-popover-text"' in html
+
+
+def test_note_popover_date_span_present(html):
+    assert 'id="note-popover-date"' in html
+
+
+def test_note_popover_save_cancel_buttons(html):
+    assert 'id="note-popover-save"'   in html
+    assert 'id="note-popover-cancel"' in html
+
+
+def test_open_note_editor_defined(html):
+    """window.openNoteEditor must be assigned so table rows can call it."""
+    assert 'window.openNoteEditor' in html
+
+
+def test_note_btn_class_used_in_render_table(html):
+    """note-btn class must be applied inside renderTable."""
+    assert "'note-btn'" in html or '"note-btn"' in html
+
+
+def test_note_patch_endpoint_called(html):
+    """Frontend must PATCH /api/weight/.../note to save notes."""
+    assert "/api/weight/' + activeDate + '/note" in html
+
+
+def test_chart_tooltip_shows_notes(html):
+    """Chart tooltip must render the ctt-note div when a note exists."""
+    assert 'ctt-note' in html
+
+
+def test_goal_line_is_teal(html):
+    """Goal weight dataset must use a teal border color, not amber."""
+    assert 'rgba(0, 200, 175' in html
+
+
+def test_goal_label_plugin_registered(html):
+    """A Chart.js afterDraw plugin must be registered to draw y-axis labels."""
+    assert "id: 'chartAxisLabels'" in html
+    assert 'afterDraw' in html
+
+
+def test_goal_label_reads_window_goal_weight_val(html):
+    """Plugin must read window.goalWeightVal to get the goal value."""
+    assert 'window.goalWeightVal' in html
+
+
+def test_goal_label_unit_aware(html):
+    """Goal label must switch between lbs and kgs based on active unit."""
+    assert "'kgs'" in html or '"kgs"' in html
+
+
+# ── Goal line visibility toggle ───────────────────────────────────────────────
+
+def test_goal_line_toggle_buttons_present(html):
+    """Settings modal must have On/Off buttons for the goal line preference."""
+    assert 'id="prof-goal-line-on"' in html
+    assert 'id="prof-goal-line-off"' in html
+
+
+def test_goal_line_pref_key_saved(html):
+    """doSave must write pref_goal_line to preferences."""
+    assert 'pref_goal_line' in html
+
+
+def test_goal_line_gated_on_pref_in_load_chart(html):
+    """loadChart must read pref_goal_line from localStorage before drawing the line."""
+    assert "pref_goal_line" in html
+    assert "goalLineOn" in html
+
+
+# ── Moving average line ───────────────────────────────────────────────────────
+
+def test_ma_toggle_buttons_present(html):
+    """Settings modal must have On/Off buttons for the moving average preference."""
+    assert 'id="prof-ma-line-on"' in html
+    assert 'id="prof-ma-line-off"' in html
+
+
+def test_ma_pref_key_saved(html):
+    """doSave must write pref_ma_line to preferences."""
+    assert 'pref_ma_line' in html
+
+
+def test_ma_data_computed_in_load_chart(html):
+    """loadChart must compute maData and set window.maCurrentVal."""
+    assert 'maData' in html
+    assert 'window.maCurrentVal' in html
+
+
+def test_ma_is_third_dataset(html):
+    """MA must be the third Chart.js dataset (index 2)."""
+    assert 'datasets[2].data' in html
+
+
+def test_ma_label_plugin_draws_7d_avg(html):
+    """afterDraw plugin must draw the 7D AVG label."""
+    assert '7D AVG' in html
+
+
+def test_ma_color_is_amber(html):
+    """MA dataset must use an amber border color."""
+    assert 'rgba(255, 200, 50' in html
+
+
+# ── Settings section labels ───────────────────────────────────────────────────
+
+def test_settings_sections_present(html):
+    """Settings modal must have Measurements, Chart, and Profile section labels."""
+    assert 'Measurements' in html
+    assert 'Chart' in html
+
+
+def test_settings_section_label_class(html):
+    """Section dividers must use the settings-section-label class."""
+    assert 'settings-section-label' in html
+
+
+# ── Health bar HUD ────────────────────────────────────────────────────────────
+
+def test_healthbar_hud_present(html):
+    assert 'id="healthbar-hud"' in html
+
+
+def test_healthbar_wrap_present(html):
+    assert 'id="healthbar-wrap"' in html
+
+
+def test_healthbar_fill_track_present(html):
+    assert 'id="healthbar-fill-track"' in html
+
+
+def test_healthbar_fill_present(html):
+    assert 'id="healthbar-fill"' in html
+
+
+def test_healthbar_img_present(html):
+    assert 'id="healthbar-img"' in html
+    assert 'healthbar.png' in html
+
+
+def test_healthbar_tooltip_present(html):
+    assert 'id="healthbar-tooltip"' in html
+
+
+def test_healthbar_name_present(html):
+    assert 'id="healthbar-name"' in html
+
+
+def test_update_health_bar_defined(html):
+    """window.updateHealthBar must be assigned so progress can be reflected."""
+    assert 'window.updateHealthBar' in html
+
+
+def test_update_health_bar_name_defined(html):
+    """window.updateHealthBarName must be assigned to refresh name from localStorage."""
+    assert 'window.updateHealthBarName' in html
+
+
+def test_health_bar_reads_fight_name(html):
+    """updateHealthBarName must read fight_name from localStorage."""
+    assert "fight_name" in html
+    assert "healthbar-name" in html
+
+
+def test_health_bar_canvas_strip_present(html):
+    """Canvas white-removal IIFE must be present to make fill zone transparent."""
+    assert 'naturalWidth' in html
+    assert 'toDataURL' in html
+
+
+def test_health_bar_tooltip_shows_to_goal(html):
+    """Tooltip text must include 'to goal' string."""
+    assert 'to goal' in html
+
+
+def test_fight_name_maxlength(html):
+    """Fighter name input must cap at 20 characters."""
+    assert 'maxlength="20"' in html

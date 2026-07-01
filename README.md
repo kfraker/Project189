@@ -6,15 +6,19 @@ A personal weight tracking dashboard built with Flask and SQLite. Logs daily wei
 
 - **Weight plate cards** — displays start, current, and goal weights as styled plates; lost weight is calculated automatically. Click any plate to set or update its value with overwrite confirmation. Adding a current weight immediately refreshes the chart and table.
 - **Interactive line chart** — powered by Chart.js with a floating HTML tooltip that follows the cursor. Interpolates estimated values between logged dates and marks them visually. Shows a warning icon when a selected date range exceeds available data history.
+- **Goal weight line** — optional teal dashed line on the chart with a y-axis GOAL label; toggled On/Off in Settings (default off).
+- **7-day moving average line** — optional amber line on the chart with a y-axis 7D AVG label; toggled On/Off in Settings (default off).
 - **Date range controls** — 7D (default), 30D, 90D, 1Y, All, or a custom day count (capped at 1,095 days / 3 years). Custom range highlights the Custom button on change.
 - **Data table** — scrollable log of entries for the selected range, showing weight in both lbs and kg. Inline editing with overwrite and delete confirmation modals. Dates with no entry display as empty rows; a "No Earlier Data Recorded" footer marks the bottom of available history.
 - **Unit toggle** — switch between lbs and kg; all plates, chart, and table update instantly.
+- **Health bar HUD** — fixed top-left pixel-art health bar that fills red as the user progresses from start weight toward goal weight. Fighter name (set in Fight Card) is displayed above the bar in Mortal Kombat–style gold text. Hovering the bar shows remaining weight to goal.
 - **Fight Card modal** — record fighter profile info (name, sex, date of birth, height, activity level) with a themed date picker for DOB. Age is calculated automatically. Activity level (Sedentary / Light / Moderate / Active) is used for BMR calculations.
 - **Insights modal** — 10 stats computed from full weight history: Predicted Goal Date (Mifflin-St. Jeor BMR simulation), Total Weigh-ins, Longest Streak, Current Streak, Current Trend, Weekly Loss Rate, Monthly Loss Rate, Lowest Weight, Largest Weekly Loss, and Avg Daily Fluctuation. Predicted Goal Date uses week-by-week metabolic adaptation; falls back to a 500 kcal/day deficit estimate when no trend is available.
 - **Profile system** — three selectable profile pictures, each linked to its own custom pointer and edit cursor set. Selection is persisted server-side and restored on every page load.
 - **Custom cursors** — profile-linked pointer and edit cursors rendered via transparent PNGs; swap automatically when the active profile changes.
 - **Site-wide tooltips** — hover help on buttons and icons matches the chart tooltip style.
-- **Persistent preferences** — unit choice, date range, view mode, fight card data, and profile selection are stored server-side in SQLite and hydrated into the page on load.
+- **Settings sections** — settings modal organized into Measurements, Chart, and Profile sections for easier navigation.
+- **Persistent preferences** — unit choice, date range, view mode, fight card data, chart line toggles, and profile selection are stored server-side in SQLite and hydrated into the page on load.
 - **Persistent storage** — all weight entries and goal/start weights are stored in a local SQLite database (`weights.db`).
 
 ## Stack
@@ -106,6 +110,9 @@ project-189/
     └── test_db_init.py
 ```
 
+Also in `static/`:
+- `healthbar.png` — pixel-art health bar image (transparent background + fill zone)
+
 ## API Endpoints
 
 | Method | Endpoint | Description |
@@ -125,4 +132,4 @@ project-189/
 python -m pytest tests/ -v
 ```
 
-180 tests covering all API endpoints, business logic, date range boundaries, and UI structure.
+233 tests covering all API endpoints, business logic, date range boundaries, and UI structure.

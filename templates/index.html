@@ -4,7 +4,7 @@
     <title>Project 189</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link href="https://fonts.googleapis.com/css2?family=Pacifico&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}?v=128">
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}?v=146">
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 </head>
 
@@ -12,6 +12,17 @@
 
 <div class="miami-left"></div>
 <div class="miami-right"></div>
+
+<div id="healthbar-hud">
+    <div id="healthbar-name"></div>
+    <div id="healthbar-wrap">
+        <div id="healthbar-fill-track">
+            <div id="healthbar-fill"></div>
+        </div>
+        <img id="healthbar-img" src="{{ url_for('static', filename='healthbar.png') }}" alt="">
+        <div id="healthbar-tooltip"></div>
+    </div>
+</div>
 
 <div id="profile-menu">
     <button id="profile-btn" data-tip="Profile">
@@ -143,6 +154,7 @@
 
 </div>
 </section>
+
 
 <section class="page page--chart">
 <div class="container">
@@ -354,7 +366,7 @@
 
         <div class="profile-setting-group">
             <label class="profile-setting-label" for="fight-name">Name</label>
-            <input type="text" id="fight-name" class="fight-dob-input" placeholder="Fighter name" maxlength="60">
+            <input type="text" id="fight-name" class="fight-dob-input" placeholder="Fighter name" maxlength="20">
         </div>
 
         <div class="profile-setting-group">
@@ -436,13 +448,25 @@
     <div class="modal-card">
         <h2 class="modal-title">Settings</h2>
 
+        <div class="settings-section-label">Measurements</div>
+
         <div class="profile-setting-group">
-            <label class="profile-setting-label">Default Measurement</label>
+            <label class="profile-setting-label">Weight Unit</label>
             <div class="profile-toggle-row">
                 <button class="profile-opt-btn" id="prof-lbs-btn">LBS</button>
                 <button class="profile-opt-btn" id="prof-kg-btn">KGS</button>
             </div>
         </div>
+
+        <div class="profile-setting-group">
+            <label class="profile-setting-label">Height Unit</label>
+            <div class="profile-toggle-row">
+                <button class="profile-opt-btn" id="prof-height-us">US</button>
+                <button class="profile-opt-btn" id="prof-height-metric">Metric</button>
+            </div>
+        </div>
+
+        <div class="settings-section-label">Chart</div>
 
         <div class="profile-setting-group">
             <label class="profile-setting-label">Default View</label>
@@ -469,12 +493,22 @@
         </div>
 
         <div class="profile-setting-group">
-            <label class="profile-setting-label">Height Unit</label>
+            <label class="profile-setting-label">Goal Line</label>
             <div class="profile-toggle-row">
-                <button class="profile-opt-btn" id="prof-height-us">US</button>
-                <button class="profile-opt-btn" id="prof-height-metric">Metric</button>
+                <button class="profile-opt-btn" id="prof-goal-line-on">On</button>
+                <button class="profile-opt-btn" id="prof-goal-line-off">Off</button>
             </div>
         </div>
+
+        <div class="profile-setting-group">
+            <label class="profile-setting-label">Moving Average</label>
+            <div class="profile-toggle-row">
+                <button class="profile-opt-btn" id="prof-ma-line-on">On</button>
+                <button class="profile-opt-btn" id="prof-ma-line-off">Off</button>
+            </div>
+        </div>
+
+        <div class="settings-section-label">Profile</div>
 
         <button id="change-pic-btn" class="change-pic-btn">Change Profile Pic</button>
 
@@ -519,6 +553,16 @@
     </div>
 </div>
 
+<!-- Note editor popover -->
+<div id="note-popover" hidden>
+    <div class="note-popover-label">Note for <span id="note-popover-date"></span></div>
+    <textarea id="note-popover-text" maxlength="300" rows="3" placeholder="Add a note…"></textarea>
+    <div class="note-popover-actions">
+        <button id="note-popover-cancel" class="modal-btn modal-cancel">Cancel</button>
+        <button id="note-popover-save"   class="modal-btn modal-save">Save</button>
+    </div>
+</div>
+
 <div id="site-cursor"></div>
 <script>
     /* Hydrate localStorage from server-rendered preferences (runs before any getItem) */
@@ -553,7 +597,7 @@
         function update() {
             const maxScroll = document.documentElement.scrollHeight - window.innerHeight;
             const progress  = maxScroll > 0 ? Math.min(window.scrollY / maxScroll, 1) : 0;
-            const scale = 1 - progress * 0.25;
+            const scale = 0.88 - progress * 0.13;
             const t = 'scale(' + scale + ')';
             left.style.transform  = t;
             right.style.transform = t;
@@ -585,12 +629,71 @@
         if (isNaN(startLbs) || isNaN(currentLbs)) {
             document.getElementById('lost-lbs-num').textContent = '—';
             document.getElementById('lost-kg-num').textContent  = '—';
-            return;
+        } else {
+            const diff = Math.max(0, Math.round((startLbs - currentLbs) * 10) / 10);
+            document.getElementById('lost-lbs-num').textContent = fmtLbs(diff);
+            document.getElementById('lost-kg-num').textContent  = (diff / 2.2046).toFixed(1);
         }
-        const diff = Math.max(0, Math.round((startLbs - currentLbs) * 10) / 10);
-        document.getElementById('lost-lbs-num').textContent = fmtLbs(diff);
-        document.getElementById('lost-kg-num').textContent  = (diff / 2.2046).toFixed(1);
+        if (window.updateHealthBar) window.updateHealthBar();
     }
+
+    window.updateHealthBar = function () {
+        const fill = document.getElementById('healthbar-fill');
+        if (!fill) return;
+        const startLbs   = parseFloat(document.getElementById('start-lbs-num').textContent);
+        const currentLbs = parseFloat(document.getElementById('current-lbs-num').textContent);
+        const goalLbs    = parseFloat(document.getElementById('goal-lbs-num').textContent);
+        if (isNaN(startLbs) || isNaN(currentLbs) || isNaN(goalLbs) || startLbs <= goalLbs) {
+            fill.style.width = '0%';
+        } else {
+            const pct = (Math.min(1, Math.max(0, (startLbs - currentLbs) / (startLbs - goalLbs))) * 100).toFixed(1);
+            fill.style.width = pct + '%';
+        }
+        const tt = document.getElementById('healthbar-tooltip');
+        if (tt && !isNaN(currentLbs) && !isNaN(goalLbs)) {
+            const diffLbs = currentLbs - goalLbs;
+            if (diffLbs <= 0) {
+                tt.textContent = 'Goal reached!';
+            } else {
+                const useKg = window.activeUnit === 'kg';
+                const val   = useKg ? (diffLbs / 2.2046).toFixed(1) : diffLbs.toFixed(1);
+                tt.textContent = val + ' ' + (useKg ? 'kg' : 'lbs') + ' to goal';
+            }
+        }
+    };
+
+    window.updateHealthBarName = function () {
+        const el = document.getElementById('healthbar-name');
+        if (el) el.textContent = localStorage.getItem('fight_name') || '';
+    };
+
+    /* Trigger initial health bar fill + name on page load */
+    requestAnimationFrame(() => {
+        if (window.updateHealthBar)     window.updateHealthBar();
+        if (window.updateHealthBarName) window.updateHealthBarName();
+    });
+
+    /* Strip white fill zone from health bar PNG so gradient shows through */
+    (function () {
+        const img = document.getElementById('healthbar-img');
+        function strip() {
+            const c = document.createElement('canvas');
+            c.width  = img.naturalWidth;
+            c.height = img.naturalHeight;
+            const ctx = c.getContext('2d');
+            ctx.drawImage(img, 0, 0);
+            const d  = ctx.getImageData(0, 0, c.width, c.height);
+            const px = d.data;
+            for (let i = 0; i < px.length; i += 4) {
+                if (px[i] > 240 && px[i + 1] > 240 && px[i + 2] > 240) px[i + 3] = 0;
+            }
+            ctx.putImageData(d, 0, 0);
+            img.src = c.toDataURL('image/png');
+        }
+        if (img.complete && img.naturalWidth) strip();
+        else img.addEventListener('load', strip);
+    })();
+
 
     /* ── Sync all plates from DB on load ── */
     Promise.all([
@@ -716,6 +819,7 @@
         stepUp: 'goal-step-up', stepDown: 'goal-step-down',
         screens: ['goal-screen-input', 'goal-screen-confirm'],
         confirmMsgId: 'goal-overwrite-message', confirmBtnId: 'goal-overwrite-confirm', confirmCancelId: 'goal-overwrite-cancel',
+        onSave: () => window.updateHealthBar(),
         apiSave: async (lbs, overwrite) => {
             const res  = await fetch('/api/setting', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ key: 'goal_weight', value_lbs: lbs, overwrite }) });
             const data = await res.json();
@@ -773,6 +877,81 @@
     chartTtEl.id = 'chart-tooltip';
     document.body.appendChild(chartTtEl);
 
+    /* ── Goal date computation (shared between chart and Insights) ── */
+    function computeGoalDateISO(rows, settings) {
+        if (!rows.length || !settings['goal_weight']) return null;
+        const n         = rows.length;
+        const dates     = rows.map(r => new Date(r.date + 'T00:00:00'));
+        const spanDays  = (dates[n-1] - dates[0]) / 86400000;
+        const totalLoss = rows[0].weight_lbs - rows[n-1].weight_lbs;
+        const weeklyRate = spanDays >= 7 ? (totalLoss / spanDays) * 7 : null;
+        const gw        = settings['goal_weight'];
+        const curW_kg   = rows[n-1].weight_kg;
+        const goalW_kg  = gw.value_kg;
+        const curW_lbs  = rows[n-1].weight_lbs;
+        const goalW_lbs = gw.value_lbs;
+
+        if (curW_lbs <= goalW_lbs) return null;
+
+        function _hCm() {
+            const cm = parseFloat(localStorage.getItem('fight_height_cm') || '0') || 0;
+            if (cm > 0) return cm;
+            const ft  = parseInt(localStorage.getItem('fight_height_ft') || '0') || 0;
+            const ins = parseInt(localStorage.getItem('fight_height_in') || '0') || 0;
+            return ft > 0 ? (ft * 12 + ins) * 2.54 : 0;
+        }
+        function _bmr(wKg, hCm, age, sex) {
+            return 10 * wKg + 6.25 * hCm - 5 * age + (sex === 'male' ? 5 : -161);
+        }
+        function _age(dobISO) {
+            const [y, m, d] = dobISO.split('-').map(Number);
+            const t = new Date();
+            let a = t.getFullYear() - y;
+            if (t.getMonth() + 1 < m || (t.getMonth() + 1 === m && t.getDate() < d)) a--;
+            return a;
+        }
+
+        const sex      = localStorage.getItem('fight_sex') || '';
+        const dob      = localStorage.getItem('fight_dob') || '';
+        const actStored = parseFloat(localStorage.getItem('fight_activity') || '0') || 0;
+        const activity = actStored > 0 ? actStored : 1.4;
+        const hCm      = _hCm();
+        const canBMR   = !!(sex && dob && hCm > 0);
+
+        if (canBMR) {
+            const age0        = _age(dob);
+            const tdee0       = _bmr(curW_kg, hCm, age0, sex) * activity;
+            let dailyDeficit;
+            if (weeklyRate && weeklyRate > 0) {
+                dailyDeficit = Math.min((weeklyRate / 2.2046) * 7700 / 7, tdee0 * 0.85);
+            } else {
+                dailyDeficit = 500;
+            }
+            const dailyIntake = tdee0 - dailyDeficit;
+            let simW = curW_kg;
+            const simD = new Date(dates[n-1]);
+            let weeks = 0;
+            while (simW > goalW_kg && weeks < 520) {
+                const deficit = _bmr(simW, hCm, age0, sex) * activity - dailyIntake;
+                if (deficit <= 0) break;
+                simW -= (deficit * 7) / 7700;
+                simD.setDate(simD.getDate() + 7);
+                weeks++;
+            }
+            if (weeks < 520 && simW <= goalW_kg) {
+                return simD.toISOString().split('T')[0];
+            }
+            return null;
+        } else if (weeklyRate && weeklyRate > 0) {
+            const daysLeft = ((curW_lbs - goalW_lbs) / weeklyRate) * 7;
+            const g = new Date(dates[n-1]);
+            g.setDate(g.getDate() + Math.round(daysLeft));
+            return g.toISOString().split('T')[0];
+        }
+        return null;
+    }
+
+
     (function () {
         let chartInst    = null;
         let activeRange  = 'all';
@@ -792,6 +971,41 @@
                 : dt.toLocaleDateString('en-US', { month: 'short', year: '2-digit' });
         }
 
+        Chart.register({
+            id: 'chartAxisLabels',
+            afterDraw(chart) {
+                const yScale = chart.scales && chart.scales.y;
+                if (!yScale) return;
+                const { top, bottom, left } = chart.chartArea;
+                const unit = window.activeUnit === 'kg' ? 'kgs' : 'lbs';
+                const c = chart.ctx;
+                c.save();
+                c.font = 'bold 9px Arial';
+                c.textAlign = 'right';
+                c.textBaseline = 'middle';
+
+                const goalVal = window.goalWeightVal;
+                if (goalVal != null) {
+                    const y = Math.round(yScale.getPixelForValue(goalVal));
+                    if (isFinite(y) && y >= top - 1 && y <= bottom + 1) {
+                        c.fillStyle = 'rgba(0, 200, 175, 0.95)';
+                        c.fillText('GOAL ' + goalVal.toFixed(1) + ' ' + unit, left - 8, y);
+                    }
+                }
+
+                const maVal = window.maCurrentVal;
+                if (maVal != null) {
+                    const y = Math.round(yScale.getPixelForValue(maVal));
+                    if (isFinite(y) && y >= top - 1 && y <= bottom + 1) {
+                        c.fillStyle = 'rgba(255, 200, 50, 0.95)';
+                        c.fillText('7D AVG ' + maVal.toFixed(1) + ' ' + unit, left - 8, y);
+                    }
+                }
+
+                c.restore();
+            }
+        });
+
         async function loadChart(range, days) {
             if (range !== undefined) activeRange = range;
             if (days  !== undefined) activeDays  = days;
@@ -800,7 +1014,10 @@
             let url = '/api/weights?range=' + activeRange;
             if (activeRange === 'custom') url += '&days=' + activeDays;
 
-            const rows = await fetch(url).then(r => r.json());
+            const [rows, settings] = await Promise.all([
+                fetch(url).then(r => r.json()),
+                fetch('/api/settings').then(r => r.json()),
+            ]);
 
             if (!rows.length) {
                 canvas.hidden   = true;
@@ -840,6 +1057,9 @@
 
             currentDates = allDates;
 
+            // Build note map for tooltip display
+            window.noteMap = new Map(rows.map(r => [r.date, r.notes || '']));
+
             const infoIcon = document.getElementById('chart-info-icon');
             if (activeRange !== 'all') {
                 const nReq = activeRange === '7d'  ? 7  :
@@ -870,7 +1090,8 @@
                 while (hi < arr.length && arr[hi] === null) hi++;
                 if (lo >= 0 && hi < arr.length)
                     return arr[lo] + (arr[hi] - arr[lo]) * (i - lo) / (hi - lo);
-                return lo >= 0 ? arr[lo] : arr[hi];
+                if (lo < 0 && hi < arr.length) return arr[hi]; // before first real entry
+                return null; // past last real entry — no extrapolation
             });
             const minW     = Math.min(...rows.map(r => unit === 'lbs' ? r.weight_lbs : r.weight_kg));
             const maxW     = Math.max(...rows.map(r => unit === 'lbs' ? r.weight_lbs : r.weight_kg));
@@ -878,13 +1099,42 @@
             const ptRadii  = rawW.map(v => v === null ? 0 : ptRadius);
             const hoverRadii = rawW.map(v => v === null ? 0 : 6);
 
+            // Goal weight horizontal line — flat second dataset
+            const gw = settings['goal_weight'];
+            const goalLineOn    = localStorage.getItem('pref_goal_line') === '1';
+            const goalWeightVal = (goalLineOn && gw) ? (unit === 'kg' ? gw.value_kg : gw.value_lbs) : null;
+            window.goalWeightVal = goalWeightVal;
+            const goalData = allDates.map(() => goalWeightVal);
+            const yMin = Math.floor(Math.min(minW, goalWeightVal != null ? goalWeightVal : minW) - 5);
+            const yMax = Math.ceil(maxW + 5);
+
+            // 7-day trailing moving average
+            const maLineOn = localStorage.getItem('pref_ma_line') === '1';
+            const maData = allDates.map(dateStr => {
+                if (!maLineOn) return null;
+                const [yr, mo, dy] = dateStr.split('-').map(Number);
+                const endDt   = new Date(yr, mo - 1, dy);
+                const startDt = new Date(endDt);
+                startDt.setDate(startDt.getDate() - 6);
+                const startStr = startDt.toISOString().slice(0, 10);
+                const vals = rows
+                    .filter(r => r.date >= startStr && r.date <= dateStr)
+                    .map(r => unit === 'kg' ? r.weight_kg : r.weight_lbs);
+                return vals.length ? vals.reduce((s, v) => s + v, 0) / vals.length : null;
+            });
+            window.maCurrentVal = maLineOn
+                ? ([...maData].reverse().find(v => v != null) ?? null)
+                : null;
+
             if (chartInst) {
                 chartInst.data.labels                          = labels;
                 chartInst.data.datasets[0].data                = weights;
                 chartInst.data.datasets[0].pointRadius         = ptRadii;
                 chartInst.data.datasets[0].pointHoverRadius    = hoverRadii;
-                chartInst.options.scales.y.min                 = Math.floor(minW - 5);
-                chartInst.options.scales.y.max                 = Math.ceil(maxW  + 5);
+                chartInst.data.datasets[1].data                = goalData;
+                chartInst.data.datasets[2].data                = maData;
+                chartInst.options.scales.y.min                 = yMin;
+                chartInst.options.scales.y.max                 = yMax;
                 chartInst.update();
                 return;
             }
@@ -894,7 +1144,8 @@
                 type: 'line',
                 data: {
                     labels,
-                    datasets: [{
+                    datasets: [
+                    {
                         data: weights,
                         borderColor: '#ff2d78',
                         borderWidth: 2.5,
@@ -913,6 +1164,27 @@
                             return g;
                         },
                         tension: 0.35,
+                    },
+                    {
+                        data: goalData,
+                        borderColor: 'rgba(0, 200, 175, 0.8)',
+                        borderWidth: 1.5,
+                        borderDash: [6, 4],
+                        pointRadius: 0,
+                        pointHoverRadius: 0,
+                        fill: false,
+                        tension: 0,
+                        spanGaps: true,
+                    },
+                    {
+                        data: maData,
+                        borderColor: 'rgba(255, 200, 50, 0.8)',
+                        borderWidth: 1.5,
+                        pointRadius: 0,
+                        pointHoverRadius: 0,
+                        fill: false,
+                        tension: 0.3,
+                        spanGaps: false,
                     }]
                 },
                 options: {
@@ -927,19 +1199,24 @@
                             external: function(context) {
                                 const tt = context.tooltip;
                                 if (tt.opacity === 0) { chartTtEl.style.opacity = '0'; return; }
-                                const dp = tt.dataPoints?.[0];
+                                const dp = tt.dataPoints?.find(p => p.datasetIndex === 0);
                                 if (!dp) return;
                                 const idx    = dp.dataIndex;
                                 const date   = currentDates[idx];
                                 if (!date) return;
                                 const isReal = currentRawW[idx] !== null;
                                 const val    = dp.parsed.y;
+                                if (val == null) { chartTtEl.style.opacity = '0'; return; }
                                 const est    = isReal ? '' : ' <span class="ctt-est">(est.)</span>';
                                 const label  = window.activeUnit === 'kg'
                                     ? val.toFixed(1) + ' kgs' + est + '  ·  ' + (val * 2.2046).toFixed(1) + ' lbs'
                                     : Number(val.toFixed(1)) + ' lbs' + est + '  ·  ' + (val / 2.2046).toFixed(1) + ' kgs';
+                                const noteRaw = (window.noteMap && window.noteMap.get(date)) || '';
+                                const noteHtml = noteRaw
+                                    ? '<div class="ctt-note">' + noteRaw.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;') + '</div>'
+                                    : '';
                                 chartTtEl.innerHTML =
-                                    `<div class="ctt-title">${formatDateDisplay(date)}</div><div class="ctt-body">${label}</div>`;
+                                    `<div class="ctt-title">${formatDateDisplay(date)}</div><div class="ctt-body">${label}</div>${noteHtml}`;
                                 chartTtEl.style.opacity = '1';
                                 chartTtEl.style.top  = Math.round(mouseY - chartTtEl.offsetHeight / 2) + 'px';
                                 const w = chartTtEl.offsetWidth;
@@ -954,12 +1231,12 @@
                             ticks:  { color: '#666', font: { family: 'Arial', size: 11 }, maxTicksLimit: 10, maxRotation: 0 }
                         },
                         y: {
-                            min:     Math.floor(minW - 5),
-                            max:     Math.ceil(maxW  + 5),
+                            min:     yMin,
+                            max:     yMax,
                             grid:    { color: 'rgba(255,255,255,0.04)' },
                             border:  { color: 'rgba(255,255,255,0.08)' },
                             ticks:   { color: '#666', font: { family: 'Arial', size: 11 }, maxTicksLimit: 6, callback: v => v + ' ' + (window.activeUnit === 'kg' ? 'kgs' : 'lbs') },
-                            afterFit: scale => { scale.width = 75; }
+                            afterFit: scale => { scale.width = 90; }
                         }
                     }
                 }
@@ -1090,6 +1367,7 @@
                 kgTd.innerHTML = missing ? '<span class="missing-dash">—</span>' : secondaryVal;
 
                 const stTd = document.createElement('td');
+                stTd.className = 'action-cell';
                 if (missing) {
                     stTd.innerHTML = '<span class="missing-badge">Missing</span>';
                 } else {
@@ -1098,7 +1376,18 @@
                     del.dataset.tip = 'Delete this entry';
                     del.textContent = '×';
                     del.addEventListener('click', e => { e.stopPropagation(); deleteEntry(date); });
-                    stTd.appendChild(del);
+
+                    const hasNote = !!(entry.notes && entry.notes.trim());
+                    const noteBtn = document.createElement('button');
+                    noteBtn.className = 'note-btn' + (hasNote ? ' has-note' : '');
+                    noteBtn.dataset.tip = hasNote ? 'Edit note' : 'Add note';
+                    noteBtn.innerHTML = '<svg viewBox="0 0 16 16" xmlns="http://www.w3.org/2000/svg"><path d="M13 1H3C2.45 1 2 1.45 2 2v9c0 .55.45 1 1 1h1.5l2.5 2.5L9.5 12H13c.55 0 1-.45 1-1V2c0-.55-.45-1-1-1z"/></svg>';
+                    noteBtn.addEventListener('click', e => {
+                        e.stopPropagation();
+                        window.openNoteEditor(date, entry.notes || '', noteBtn);
+                    });
+
+                    stTd.append(noteBtn, del);
                 }
 
                 tr.append(dateTd, wtTd, kgTd, stTd);
@@ -1257,6 +1546,59 @@
 
         const savedView = localStorage.getItem('pref_view') || 'chart';
         if (savedView === 'table') window.setView('table');
+    })();
+
+    /* ── Note editor popover ── */
+    (() => {
+        const popover   = document.getElementById('note-popover');
+        const dateSpan  = document.getElementById('note-popover-date');
+        const textarea  = document.getElementById('note-popover-text');
+        const saveBtn   = document.getElementById('note-popover-save');
+        const cancelBtn = document.getElementById('note-popover-cancel');
+        let activeDate  = null;
+
+        function close() {
+            popover.hidden = true;
+            activeDate = null;
+        }
+
+        async function save() {
+            if (!activeDate) return;
+            const notes = textarea.value.trim().slice(0, 300);
+            await fetch('/api/weight/' + activeDate + '/note', {
+                method: 'PATCH',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ notes }),
+            });
+            if (window.noteMap) window.noteMap.set(activeDate, notes);
+            close();
+            if (window.renderTable) window.renderTable();
+        }
+
+        window.openNoteEditor = function(date, currentNote, anchorEl) {
+            activeDate = date;
+            dateSpan.textContent = formatDateDisplay(date);
+            textarea.value = currentNote || '';
+            popover.hidden = false;
+            const rect   = anchorEl.getBoundingClientRect();
+            const top    = Math.min(rect.bottom + 6, window.innerHeight - 180);
+            const left   = Math.max(8, Math.min(rect.left - 180, window.innerWidth - 300));
+            popover.style.top  = top  + 'px';
+            popover.style.left = left + 'px';
+            textarea.focus();
+        };
+
+        saveBtn.addEventListener('click', save);
+        cancelBtn.addEventListener('click', close);
+        textarea.addEventListener('keydown', e => {
+            if (e.key === 'Escape') close();
+            if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) save();
+        });
+        document.addEventListener('click', e => {
+            if (!popover.hidden && !e.composedPath().includes(popover) && !e.target.closest('.note-btn')) {
+                close();
+            }
+        });
     })();
 
     /* ── Unit toggle ── */
@@ -1650,11 +1992,8 @@
         }
 
         profBtn.addEventListener('mouseenter', openMenu);
-        profBtn.addEventListener('mouseleave', scheduleClose);
-        sideBtns.forEach(btn => {
-            btn.addEventListener('mouseenter', openMenu);
-            btn.addEventListener('mouseleave', scheduleClose);
-        });
+        menu.addEventListener('mouseenter', openMenu);
+        menu.addEventListener('mouseleave', scheduleClose);
 
         window.setProfilePic = function(n) {
             window.savePref('pref_profile_pic', String(n));
@@ -1991,6 +2330,7 @@
 
         function doSave() {
             window.savePref('fight_name', nameIn.value.trim());
+            if (window.updateHealthBarName) window.updateHealthBarName();
             if (selectedDobISO) window.savePref('fight_dob', selectedDobISO);
             const sex = getSelectedSex();
             if (sex) window.savePref('fight_sex', sex);
@@ -2329,7 +2669,9 @@
                 range:      document.querySelector('.profile-opt-btn[data-range].active')?.dataset.range || '7d',
                 customDays: profCustomDays.value,
                 view:       document.getElementById('prof-view-table').classList.contains('active') ? 'table' : 'chart',
-                heightUnit: document.getElementById('prof-height-metric').classList.contains('active') ? 'metric' : 'us'
+                heightUnit: document.getElementById('prof-height-metric').classList.contains('active') ? 'metric' : 'us',
+                goalLine:   document.getElementById('prof-goal-line-on').classList.contains('active') ? '1' : '0',
+                maLine:     document.getElementById('prof-ma-line-on').classList.contains('active')   ? '1' : '0'
             };
         }
 
@@ -2338,7 +2680,8 @@
             const cur = getSelections();
             return cur.unit !== openState.unit || cur.range !== openState.range ||
                    cur.customDays !== openState.customDays || cur.view !== openState.view ||
-                   cur.heightUnit !== openState.heightUnit;
+                   cur.heightUnit !== openState.heightUnit || cur.goalLine !== openState.goalLine ||
+                   cur.maLine !== openState.maLine;
         }
 
         function forceClose() {
@@ -2368,13 +2711,19 @@
             const curCustomDays = localStorage.getItem('pref_custom_days') || '30';
             const curView       = localStorage.getItem('pref_view')        || 'chart';
             const curHeightUnit = localStorage.getItem('pref_height_unit') || 'us';
+            const curGoalLine   = localStorage.getItem('pref_goal_line') || '0';
+            const curMaLine     = localStorage.getItem('pref_ma_line')   || '0';
 
-            document.getElementById('prof-lbs-btn').classList.toggle('active',       curUnit === 'lbs');
-            document.getElementById('prof-kg-btn').classList.toggle('active',        curUnit === 'kg');
-            document.getElementById('prof-view-chart').classList.toggle('active',    curView === 'chart');
-            document.getElementById('prof-view-table').classList.toggle('active',    curView === 'table');
-            document.getElementById('prof-height-us').classList.toggle('active',     curHeightUnit === 'us');
-            document.getElementById('prof-height-metric').classList.toggle('active', curHeightUnit === 'metric');
+            document.getElementById('prof-lbs-btn').classList.toggle('active',         curUnit === 'lbs');
+            document.getElementById('prof-kg-btn').classList.toggle('active',          curUnit === 'kg');
+            document.getElementById('prof-view-chart').classList.toggle('active',      curView === 'chart');
+            document.getElementById('prof-view-table').classList.toggle('active',      curView === 'table');
+            document.getElementById('prof-height-us').classList.toggle('active',       curHeightUnit === 'us');
+            document.getElementById('prof-height-metric').classList.toggle('active',   curHeightUnit === 'metric');
+            document.getElementById('prof-goal-line-on').classList.toggle('active',    curGoalLine === '1');
+            document.getElementById('prof-goal-line-off').classList.toggle('active',   curGoalLine !== '1');
+            document.getElementById('prof-ma-line-on').classList.toggle('active',      curMaLine === '1');
+            document.getElementById('prof-ma-line-off').classList.toggle('active',     curMaLine !== '1');
 
             document.querySelectorAll('.profile-opt-btn[data-range]').forEach(b => {
                 b.classList.toggle('active', b.dataset.range === curRange);
@@ -2412,6 +2761,22 @@
             });
         });
 
+        document.querySelectorAll('#prof-goal-line-on, #prof-goal-line-off').forEach(b => {
+            b.addEventListener('click', () => {
+                document.getElementById('prof-goal-line-on').classList.remove('active');
+                document.getElementById('prof-goal-line-off').classList.remove('active');
+                b.classList.add('active');
+            });
+        });
+
+        document.querySelectorAll('#prof-ma-line-on, #prof-ma-line-off').forEach(b => {
+            b.addEventListener('click', () => {
+                document.getElementById('prof-ma-line-on').classList.remove('active');
+                document.getElementById('prof-ma-line-off').classList.remove('active');
+                b.classList.add('active');
+            });
+        });
+
         document.querySelectorAll('.profile-opt-btn[data-range]').forEach(b => {
             b.addEventListener('click', () => {
                 document.querySelectorAll('.profile-opt-btn[data-range]').forEach(x => x.classList.remove('active'));
@@ -2426,11 +2791,16 @@
             const newView       = document.getElementById('prof-view-table').classList.contains('active') ? 'table' : 'chart';
             const newHeightUnit = document.getElementById('prof-height-metric').classList.contains('active') ? 'metric' : 'us';
 
+            const newGoalLine = document.getElementById('prof-goal-line-on').classList.contains('active') ? '1' : '0';
+            const newMaLine   = document.getElementById('prof-ma-line-on').classList.contains('active')   ? '1' : '0';
+
             window.savePref('pref_unit',        newUnit);
             window.savePref('pref_range',       newRange);
             window.savePref('pref_custom_days', newCustomDays);
             window.savePref('pref_view',        newView);
             window.savePref('pref_height_unit', newHeightUnit);
+            window.savePref('pref_goal_line',   newGoalLine);
+            window.savePref('pref_ma_line',     newMaLine);
 
             if (newUnit !== window.activeUnit) {
                 window.activeUnit = newUnit;
