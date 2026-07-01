@@ -118,3 +118,59 @@ def test_profile_sub_buttons(html):
 
 def test_unit_toggle_btn_present(html):
     assert 'id="unit-toggle-btn"' in html
+
+
+# ── Profile pic picker ────────────────────────────────────────────────────────
+
+def test_change_pic_btn_present(html):
+    assert 'id="change-pic-btn"' in html
+
+
+def test_profile_pic_picker_present(html):
+    assert 'id="profile-pic-picker"' in html
+
+
+def test_profile_pic_backdrop_present(html):
+    assert 'id="profile-pic-backdrop"' in html
+
+
+def test_profile_pic_options_present(html):
+    assert 'data-pic="1"' in html
+    assert 'data-pic="2"' in html
+    assert 'data-pic="3"' in html
+
+
+def test_profile_pic_picker_actions(html):
+    assert 'id="pic-save-btn"' in html
+    assert 'id="pic-cancel-btn"' in html
+
+
+def test_profile_pic_all_images_referenced(html):
+    assert 'profilebutton.png' in html
+    assert 'profile2button.png' in html
+    assert 'profile3button.png' in html
+
+
+# ── Cursor sets ───────────────────────────────────────────────────────────────
+
+def test_all_cursor_images_referenced(html):
+    for name in ('pointer.png', 'pointer2.png', 'pointer3.png',
+                 'editpointer.png', 'editpointer2.png', 'editpointer3.png'):
+        assert name in html, f'{name} not referenced in page'
+
+
+def test_cursor_sets_cover_all_profiles(html):
+    """CURSOR_SETS in the script must define entries for profiles 1, 2, and 3."""
+    assert "pointer2.png" in html
+    assert "pointer3.png" in html
+    assert "editpointer2.png" in html
+    assert "editpointer3.png" in html
+
+
+def test_change_pic_btn_inside_settings_modal(html):
+    """change-pic-btn must appear before the settings modal's closing tag."""
+    settings_start = html.find('id="settings-modal"')
+    change_pic_pos = html.find('id="change-pic-btn"')
+    picker_pos     = html.find('id="profile-pic-picker"')
+    assert settings_start < change_pic_pos
+    assert change_pic_pos < picker_pos

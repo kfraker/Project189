@@ -76,6 +76,13 @@ def test_preference_value_coerced_to_string(client):
     assert prefs["pref_custom_days"] == "30"
 
 
+def test_profile_pic_pref_saved_and_retrieved(client):
+    for val in ("1", "2", "3"):
+        client.post("/api/preference", json={"key": "pref_profile_pic", "value": val})
+        prefs = client.get("/api/preferences").get_json()
+        assert prefs["pref_profile_pic"] == val
+
+
 def test_all_known_prefs_survive_round_trip(client):
     known = {
         "pref_unit":        "lbs",
@@ -83,6 +90,7 @@ def test_all_known_prefs_survive_round_trip(client):
         "pref_custom_days": "14",
         "pref_view":        "chart",
         "pref_height_unit": "us",
+        "pref_profile_pic": "2",
         "fight_name":       "Test Fighter",
         "fight_sex":        "male",
         "fight_dob":        "1990-06-15",

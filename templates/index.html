@@ -4,7 +4,7 @@
     <title>Project 189</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link href="https://fonts.googleapis.com/css2?family=Pacifico&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}?v=96">
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}?v=113">
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 </head>
 
@@ -455,10 +455,34 @@
             </div>
         </div>
 
+        <button id="change-pic-btn" class="change-pic-btn">Change Profile Pic</button>
+
         <div class="modal-actions">
             <button class="modal-btn modal-cancel" id="settings-cancel">Cancel</button>
             <button class="modal-btn modal-save"   id="settings-save">Save</button>
         </div>
+    </div>
+</div>
+
+<!-- Profile pic picker backdrop (absorbs clicks so they don't reach the settings modal overlay) -->
+<div id="profile-pic-backdrop" hidden></div>
+
+<!-- Profile pic picker -->
+<div id="profile-pic-picker" hidden>
+    <div class="pic-options-row">
+        <button class="pic-option" data-pic="1">
+            <img src="/static/profilebutton.png" alt="Profile 1">
+        </button>
+        <button class="pic-option" data-pic="2">
+            <img src="/static/profile2button.png" alt="Profile 2">
+        </button>
+        <button class="pic-option" data-pic="3">
+            <img src="/static/profile3button.png" alt="Profile 3">
+        </button>
+    </div>
+    <div class="pic-picker-actions">
+        <button id="pic-cancel-btn" class="modal-btn modal-cancel">Cancel</button>
+        <button id="pic-save-btn"   class="modal-btn modal-save">Save</button>
     </div>
 </div>
 
@@ -1451,30 +1475,37 @@
     /* Custom cursor: DOM element follows the mouse so cursor: none works
        even over scrollbars (which ignore CSS cursor on pseudo-elements). */
     (function () {
-        const el      = document.getElementById('site-cursor');
-        const cursors = {};
-        let activeKey = 'normal';
-        let mouseInDoc = false;
+        const el       = document.getElementById('site-cursor');
+        const cursors  = {};
+        let activeKey      = 'normal';
+        let mouseInDoc     = false;
+        let activeCursorSet = localStorage.getItem('pref_profile_pic') || '1';
 
-        function processImg(src, origHotX, origHotY, removeDark, key, renderH) {
+        // [src, hotX, hotY, renderH]
+        const CURSOR_SETS = {
+            '1': [['/static/pointer.png',  280, 60, 48], ['/static/editpointer.png',  660, 30, 64]],
+            '2': [['/static/pointer2.png', 280, 60, 48], ['/static/editpointer2.png', 660, 30, 64]],
+            '3': [['/static/pointer3.png', 280, 60, 48], ['/static/editpointer3.png', 660, 30, 64]],
+        };
+
+        function processImg(src, origHotX, origHotY, key, renderH) {
             const img = new Image();
             img.onload = function () {
                 const h = renderH || 48, scale = h / img.height, w = Math.round(img.width * scale);
                 const cv = document.createElement('canvas');
                 cv.width = w; cv.height = h;
-                const ctx = cv.getContext('2d');
-                ctx.drawImage(img, 0, 0, w, h);
-                const id = ctx.getImageData(0, 0, w, h), d = id.data;
-                for (let i = 0; i < d.length; i += 4) {
-                    if (removeDark
-                        ? (d[i] < 25  && d[i+1] < 25  && d[i+2] < 25)
-                        : (d[i] > 230 && d[i+1] > 230 && d[i+2] > 230))
-                        d[i+3] = 0;
+                cv.getContext('2d').drawImage(img, 0, 0, w, h);
+                const entry = { url: cv.toDataURL(), hotX: Math.round(origHotX * scale), hotY: Math.round(origHotY * scale), w, h };
+                cursors[key] = entry;
+                if (key === 'normal' + activeCursorSet) {
+                    cursors['normal'] = entry;
+                    applyCursor('normal');
+                    if (mouseInDoc) el.style.display = 'block';
                 }
-                ctx.putImageData(id, 0, 0);
-                cursors[key] = { url: cv.toDataURL(), hotX: Math.round(origHotX * scale), hotY: Math.round(origHotY * scale), w, h };
-                if (key === 'normal') { applyCursor('normal'); if (mouseInDoc) el.style.display = 'block'; }
-                if (key === activeKey) applyCursor(key);
+                if (key === 'edit' + activeCursorSet) {
+                    cursors['edit'] = entry;
+                    if (activeKey === 'edit') applyCursor('edit');
+                }
             };
             img.src = src;
         }
@@ -1487,11 +1518,23 @@
             el.style.backgroundImage = `url(${c.url})`;
         }
 
-        processImg('/static/pointer.png',     280, 60,  false, 'normal', 48);
-        processImg('/static/editpointer.png', 660, 30,  true,  'edit',   64);
+        ['1', '2', '3'].forEach(n => {
+            const [nSrc, nHx, nHy, nRh] = CURSOR_SETS[n][0];
+            const [eSrc, eHx, eHy, eRh] = CURSOR_SETS[n][1];
+            processImg(nSrc, nHx, nHy, 'normal' + n, nRh);
+            processImg(eSrc, eHx, eHy, 'edit'   + n, eRh);
+        });
+
+        window.applyCursorSet = function(n) {
+            const sn = String(n);
+            activeCursorSet = sn;  // update immediately so late-loading images apply to the right set
+            if (cursors['normal' + sn]) cursors['normal'] = cursors['normal' + sn];
+            if (cursors['edit'   + sn]) cursors['edit']   = cursors['edit'   + sn];
+            applyCursor(activeKey);
+            if (cursors['normal'] && mouseInDoc) el.style.display = 'block';
+        };
 
         const EDIT_PLATES = '#start-plate, #current-plate, #goal-plate';
-
         let lastMX = 0, lastMY = 0;
 
         function evalCursor(target) {
@@ -1556,21 +1599,32 @@
 
     /* ── Profile menu open/close + image swap ── */
     (() => {
-        const img     = document.getElementById('profile-btn-img');
-        const menu    = document.getElementById('profile-menu');
-        const profBtn = document.getElementById('profile-btn');
+        const img      = document.getElementById('profile-btn-img');
+        const menu     = document.getElementById('profile-menu');
+        const profBtn  = document.getElementById('profile-btn');
         const sideBtns = menu.querySelectorAll('.side-btn');
         let closeTimer = null;
+
+        const PICS = {
+            '1': ['profilebutton.png',  'profilebuttonsmile.png'],
+            '2': ['profile2button.png', 'profile2buttonsmile.png'],
+            '3': ['profile3button.png', 'profile3buttonsmile.png'],
+        };
+        function bases() {
+            return PICS[localStorage.getItem('pref_profile_pic') || '1'] || PICS['1'];
+        }
+
+        img.src = '/static/' + bases()[0];
 
         function openMenu() {
             clearTimeout(closeTimer);
             menu.classList.add('open');
-            img.src = '/static/profilebuttonsmile.png';
+            img.src = '/static/' + bases()[1];
         }
         function scheduleClose() {
             closeTimer = setTimeout(() => {
                 menu.classList.remove('open');
-                img.src = '/static/profilebutton.png';
+                img.src = '/static/' + bases()[0];
             }, 120);
         }
 
@@ -1580,6 +1634,86 @@
             btn.addEventListener('mouseenter', openMenu);
             btn.addEventListener('mouseleave', scheduleClose);
         });
+
+        window.setProfilePic = function(n) {
+            window.savePref('pref_profile_pic', String(n));
+            img.src = '/static/' + bases()[0];
+            if (window.applyCursorSet) window.applyCursorSet(n);
+        };
+    })();
+
+    /* ── Profile pic picker ── */
+    (() => {
+        const picker    = document.getElementById('profile-pic-picker');
+        const backdrop  = document.getElementById('profile-pic-backdrop');
+        const openBtn   = document.getElementById('change-pic-btn');
+        const saveBtn   = document.getElementById('pic-save-btn');
+        const cancelBtn = document.getElementById('pic-cancel-btn');
+        const options   = picker.querySelectorAll('.pic-option');
+        let pending = null;
+        let saved   = null;
+
+        const PICS = {
+            '1': ['profilebutton.png',  'profilebuttonsmile.png'],
+            '2': ['profile2button.png', 'profile2buttonsmile.png'],
+            '3': ['profile3button.png', 'profile3buttonsmile.png'],
+        };
+
+        function showPicker() {
+            saved   = localStorage.getItem('pref_profile_pic') || '1';
+            pending = saved;
+            options.forEach(opt => opt.classList.toggle('active', opt.dataset.pic === pending));
+            backdrop.hidden = false;
+            picker.hidden   = false;
+        }
+
+        function clearState() {
+            pending = null;
+            saved   = null;
+        }
+
+        function forceClose() {
+            picker.hidden   = true;
+            backdrop.hidden = true;
+            clearState();
+        }
+
+        function tryClose() {
+            if (pending !== saved) {
+                picker.hidden   = true;
+                backdrop.hidden = true;
+                window.showAppConfirm(
+                    'Unsaved Changes', 'Close without saving your profile pic?',
+                    'Save & Close',
+                    () => { if (pending) window.setProfilePic(pending); clearState(); },
+                    () => { clearState(); },
+                    'Close'
+                );
+            } else {
+                forceClose();
+            }
+        }
+
+        openBtn.addEventListener('click', showPicker);
+
+        options.forEach(opt => {
+            const img  = opt.querySelector('img');
+            const pics = PICS[opt.dataset.pic];
+            opt.addEventListener('mouseenter', () => { img.src = '/static/' + pics[1]; });
+            opt.addEventListener('mouseleave', () => { img.src = '/static/' + pics[0]; });
+            opt.addEventListener('click', () => {
+                pending = opt.dataset.pic;
+                options.forEach(o => o.classList.toggle('active', o.dataset.pic === pending));
+            });
+        });
+
+        saveBtn.addEventListener('click', () => {
+            if (pending) window.setProfilePic(pending);
+            forceClose();
+        });
+
+        cancelBtn.addEventListener('click', tryClose);
+        backdrop.addEventListener('click', tryClose);
     })();
 
     /* ── Coming Soon tip for unbuilt buttons ── */
