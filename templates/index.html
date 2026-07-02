@@ -164,6 +164,7 @@
         <div class="chart-card">
             <!-- Slide viewport: page 0 = Weight Over Time, page 1 = Weekly Summary -->
             <div class="chart-with-nav">
+                <button class="chart-page-btn chart-page-btn--left invisible" id="chart-page-btn-left" data-tip="Weight Over Time">‹</button>
                 <div class="chart-slide-viewport" id="chart-slide-viewport">
                     <div class="chart-slide-inner" id="chart-slide-inner">
 
@@ -222,7 +223,7 @@
 
                     </div>
                 </div>
-                <button class="chart-page-btn" id="chart-page-toggle" data-tip="Weekly Summary">›</button>
+                <button class="chart-page-btn chart-page-btn--right" id="chart-page-btn-right" data-tip="Weekly Summary">›</button>
             </div>
 
             <!-- Shared: data table and footer -->
@@ -1710,34 +1711,32 @@
 
     /* ── Chart slide navigation ── */
     (function () {
-        const inner  = document.getElementById('chart-slide-inner');
-        const navBtn = document.getElementById('chart-page-toggle');
+        const inner    = document.getElementById('chart-slide-inner');
+        const leftBtn  = document.getElementById('chart-page-btn-left');
+        const rightBtn = document.getElementById('chart-page-btn-right');
 
         window.currentChartPage = 'daily';
 
-        navBtn.addEventListener('click', () => {
-            if (window.currentChartPage === 'daily') {
-                inner.classList.add('at-weekly');
-                window.currentChartPage = 'weekly';
-                navBtn.textContent = '‹';
-                navBtn.dataset.tip = 'Weight Over Time';
-                if (window.loadWeeklyChartOnce) window.loadWeeklyChartOnce();
-            } else {
-                inner.classList.remove('at-weekly');
-                window.currentChartPage = 'daily';
-                navBtn.textContent = '›';
-                navBtn.dataset.tip = 'Weekly Summary';
-            }
-        });
-
-        const defaultChart = localStorage.getItem('pref_default_chart_view') || 'daily';
-        if (defaultChart === 'weekly') {
+        function goWeekly() {
             inner.classList.add('at-weekly');
             window.currentChartPage = 'weekly';
-            navBtn.textContent = '‹';
-            navBtn.dataset.tip = 'Weight Over Time';
+            leftBtn.classList.remove('invisible');
+            rightBtn.classList.add('invisible');
             if (window.loadWeeklyChartOnce) window.loadWeeklyChartOnce();
         }
+
+        function goDaily() {
+            inner.classList.remove('at-weekly');
+            window.currentChartPage = 'daily';
+            leftBtn.classList.add('invisible');
+            rightBtn.classList.remove('invisible');
+        }
+
+        rightBtn.addEventListener('click', goWeekly);
+        leftBtn.addEventListener('click', goDaily);
+
+        const defaultChart = localStorage.getItem('pref_default_chart_view') || 'daily';
+        if (defaultChart === 'weekly') goWeekly();
     })();
 
     /* ── Data table toggle ── */

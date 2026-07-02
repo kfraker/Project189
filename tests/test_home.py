@@ -499,17 +499,27 @@ def test_chart_slide_inner_present(html):
     assert 'id="chart-slide-inner"' in html
 
 
-def test_chart_page_toggle_present(html):
-    """Single nav button for daily↔weekly slide must be present."""
-    assert 'id="chart-page-toggle"' in html
+def test_chart_page_nav_buttons_present(html):
+    """Left and right slide nav buttons must both be present."""
+    assert 'id="chart-page-btn-left"' in html
+    assert 'id="chart-page-btn-right"' in html
 
 
-def test_chart_page_toggle_not_inside_chart_header(html):
-    """The slide nav button must live outside .chart-header (as a sibling of the viewport, not in controls)."""
-    header_end = html.rfind('</div>', 0, html.find('id="chart-slide-viewport"'))
-    toggle_pos  = html.find('id="chart-page-toggle"')
+def test_chart_page_left_btn_starts_invisible(html):
+    """Left nav button must start invisible (only shows when on weekly page)."""
+    assert 'id="chart-page-btn-left"' in html
+    idx = html.find('id="chart-page-btn-left"')
+    snippet = html[max(0, idx - 80):idx + 20]
+    assert 'invisible' in snippet
+
+
+def test_chart_page_nav_outside_viewport(html):
+    """Nav buttons must be siblings of the slide viewport, not inside .chart-header."""
+    left_pos     = html.find('id="chart-page-btn-left"')
+    right_pos    = html.find('id="chart-page-btn-right"')
     viewport_pos = html.find('id="chart-slide-viewport"')
-    assert toggle_pos > viewport_pos, 'chart-page-toggle must appear after the viewport, not inside a header'
+    assert left_pos < viewport_pos, 'left nav button must precede the viewport'
+    assert right_pos > viewport_pos, 'right nav button must follow the viewport'
 
 
 def test_chart_with_nav_wrapper_present(html):

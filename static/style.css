@@ -765,6 +765,7 @@ h1 {
     width: 100%;
     box-sizing: border-box;
     overflow: hidden;
+    min-height: calc(clamp(320px, 45vh, 520px) + 220px);
 }
 
 .chart-header {
@@ -946,6 +947,11 @@ h1 {
 
 .chart-page-btn:hover {
     color: #ff2d78;
+}
+
+.chart-page-btn.invisible {
+    visibility: hidden;
+    pointer-events: none;
 }
 
 .weekly-range-btn {
