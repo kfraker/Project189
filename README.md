@@ -6,6 +6,7 @@ A personal weight tracking dashboard built with Flask and SQLite. Logs daily wei
 
 - **Weight plate cards** — displays start, current, and goal weights as styled plates; lost weight is calculated automatically. Click any plate to set or update its value with overwrite confirmation. Adding a current weight immediately refreshes the chart and table.
 - **Interactive line chart** — powered by Chart.js with a floating HTML tooltip that follows the cursor. Interpolates estimated values between logged dates and marks them visually. Shows a warning icon when a selected date range exceeds available data history.
+- **Weekly Summary chart** — second chart screen accessible via a `›` caret to the right of the daily chart; slides between views with a CSS transition. Groups entries by ISO week (Monday start), averages per week, and displays as a bar chart with optional goal and trend overlays. Range buttons: 4W, 12W, 30W, All, Custom (min 4 weeks). Default landing chart (Over Time or Weekly) is configurable in Settings.
 - **Goal weight line** — optional teal dashed line on the chart with a y-axis GOAL label; toggled On/Off in Settings (default off).
 - **7-day moving average line** — optional amber line on the chart with a y-axis 7D AVG label; toggled On/Off in Settings (default off).
 - **Date range controls** — 7D (default), 30D, 90D, 1Y, All, or a custom day count (capped at 1,095 days / 3 years). Custom range highlights the Custom button on change.
@@ -17,8 +18,8 @@ A personal weight tracking dashboard built with Flask and SQLite. Logs daily wei
 - **Profile system** — three selectable profile pictures, each linked to its own custom pointer and edit cursor set. Selection is persisted server-side and restored on every page load.
 - **Custom cursors** — profile-linked pointer and edit cursors rendered via transparent PNGs; swap automatically when the active profile changes.
 - **Site-wide tooltips** — hover help on buttons and icons matches the chart tooltip style.
-- **Settings sections** — settings modal organized into Measurements, Chart, and Profile sections for easier navigation.
-- **Persistent preferences** — unit choice, date range, view mode, fight card data, chart line toggles, and profile selection are stored server-side in SQLite and hydrated into the page on load.
+- **Settings sections** — settings modal organized into Measurements, Chart, and Profile sections for easier navigation. Chart section includes Default Chart (Over Time / Weekly), Default View (Chart / Table), Default Date Range, Goal Line, Moving Average, Trend Line, Chart Type, and Health Bar.
+- **Persistent preferences** — unit choice, date range, default chart view, view mode, fight card data, chart line toggles, and profile selection are stored server-side in SQLite and hydrated into the page on load.
 - **Persistent storage** — all weight entries and goal/start weights are stored in a local SQLite database (`weights.db`).
 
 ## Stack
@@ -132,4 +133,4 @@ Also in `static/`:
 python -m pytest tests/ -v
 ```
 
-233 tests covering all API endpoints, business logic, date range boundaries, and UI structure.
+258 tests covering all API endpoints, business logic, date range boundaries, and UI structure.
