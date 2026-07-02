@@ -724,7 +724,8 @@ h1 {
 
 /* ── Chart info icon ── */
 
-#chart-info-icon {
+#chart-info-icon,
+#weekly-info-icon {
     position: absolute;
     top: 24px;
     right: 22px;
@@ -852,8 +853,8 @@ h1 {
 
 .custom-days-label {
     font-family: Arial, sans-serif;
-    font-size: 12px;
-    color: #666;
+    font-size: 13px;
+    color: #888;
 }
 
 .chart-add-btn {
@@ -898,6 +899,92 @@ h1 {
     color: #444;
     padding: 80px 0;
     margin: 0;
+}
+
+/* ── Chart slider ── */
+
+.chart-slide-inner {
+    display: flex;
+    width: 200%;
+    transition: transform 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.chart-slide-inner.at-weekly {
+    transform: translateX(-50%);
+}
+
+.chart-slide-page {
+    width: 50%;
+    flex-shrink: 0;
+    min-width: 0;
+}
+
+.chart-with-nav {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.chart-slide-viewport {
+    flex: 1;
+    min-width: 0;
+    overflow: hidden;
+}
+
+.chart-page-btn {
+    background: none;
+    border: none;
+    color: rgba(255, 45, 120, 0.55);
+    font-size: 32px;
+    line-height: 1;
+    padding: 0 2px;
+    cursor: pointer;
+    flex-shrink: 0;
+    transition: color 0.15s;
+    user-select: none;
+}
+
+.chart-page-btn:hover {
+    color: #ff2d78;
+}
+
+.weekly-range-btn {
+    padding: 5px 12px;
+    border: none;
+    border-radius: 5px;
+    background: transparent;
+    color: #666;
+    font-family: 'Arial Black', Impact, sans-serif;
+    font-size: 11px;
+    font-weight: 900;
+    letter-spacing: 0.5px;
+    cursor: pointer;
+    transition: all 0.18s ease;
+}
+
+.weekly-range-btn:hover:not(.active) {
+    color: #bbb;
+    background: rgba(255, 255, 255, 0.05);
+}
+
+.weekly-range-btn.active {
+    background: linear-gradient(135deg, #ff2d78, #c73862);
+    color: #fff;
+    box-shadow: 0 0 10px rgba(255, 45, 120, 0.45);
+}
+
+.custom-weeks-wrap {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.table-view-title {
+    font-family: 'Pacifico', cursive;
+    font-size: 18px;
+    color: #ffe0ee;
+    text-shadow: 0 0 10px #ff80aa, 0 0 24px #ff2d78;
+    margin: 0 0 14px 0;
 }
 
 /* ── Chart footer / toggle ── */

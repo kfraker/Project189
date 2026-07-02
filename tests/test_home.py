@@ -449,3 +449,132 @@ def test_health_bar_tooltip_shows_to_goal(html):
 def test_fight_name_maxlength(html):
     """Fighter name input must cap at 20 characters."""
     assert 'maxlength="20"' in html
+
+
+# ── Weekly Summary chart ──────────────────────────────────────────────────────
+
+def test_weekly_chart_canvas_present(html):
+    assert 'id="weekly-chart"' in html
+
+
+def test_weekly_chart_empty_msg_present(html):
+    assert 'id="weekly-chart-empty"' in html
+
+
+def test_weekly_info_icon_present(html):
+    assert 'id="weekly-info-icon"' in html
+
+
+def test_weekly_add_btn_present(html):
+    assert 'id="chart-add-btn-weekly"' in html
+
+
+def test_weekly_range_btns_present(html):
+    """All five weekly range buttons must exist."""
+    for weeks in ('4', '12', '30', 'all', 'custom'):
+        assert f'data-weeks="{weeks}"' in html, f'missing data-weeks="{weeks}"'
+
+
+def test_custom_weeks_input_present(html):
+    assert 'id="custom-weeks"' in html
+
+
+def test_custom_weeks_minimum_4(html):
+    """Custom weeks input must enforce a minimum of 4."""
+    assert 'min="4"' in html
+
+
+def test_custom_weeks_maximum_156(html):
+    """Custom weeks input must cap at 156 weeks (3 years)."""
+    assert 'max="156"' in html
+
+
+# ── Chart slider structure ────────────────────────────────────────────────────
+
+def test_chart_slide_viewport_present(html):
+    assert 'id="chart-slide-viewport"' in html
+
+
+def test_chart_slide_inner_present(html):
+    assert 'id="chart-slide-inner"' in html
+
+
+def test_chart_page_toggle_present(html):
+    """Single nav button for daily↔weekly slide must be present."""
+    assert 'id="chart-page-toggle"' in html
+
+
+def test_chart_page_toggle_not_inside_chart_header(html):
+    """The slide nav button must live outside .chart-header (as a sibling of the viewport, not in controls)."""
+    header_end = html.rfind('</div>', 0, html.find('id="chart-slide-viewport"'))
+    toggle_pos  = html.find('id="chart-page-toggle"')
+    viewport_pos = html.find('id="chart-slide-viewport"')
+    assert toggle_pos > viewport_pos, 'chart-page-toggle must appear after the viewport, not inside a header'
+
+
+def test_chart_with_nav_wrapper_present(html):
+    assert 'class="chart-with-nav"' in html
+
+
+def test_at_weekly_css_class_defined(html):
+    """JS must use 'at-weekly' class to trigger the slide transition."""
+    assert 'at-weekly' in html
+
+
+def test_table_view_title_present(html):
+    """Shared table must have a title element that updates per active chart."""
+    assert 'id="table-view-title"' in html
+
+
+# ── Weekly chart JS ───────────────────────────────────────────────────────────
+
+def test_load_weekly_chart_once_defined(html):
+    """window.loadWeeklyChartOnce must be assigned so slide nav can trigger lazy load."""
+    assert 'window.loadWeeklyChartOnce' in html
+
+
+def test_refresh_weekly_chart_defined(html):
+    """window.refreshWeeklyChart must be assigned for unit-toggle and settings save."""
+    assert 'window.refreshWeeklyChart' in html
+
+
+def test_get_weekly_chart_range_defined(html):
+    assert 'window.getWeeklyChartRange' in html
+
+
+def test_current_chart_page_defined(html):
+    """window.currentChartPage must be set so view-toggle and unit-toggle can branch."""
+    assert 'window.currentChartPage' in html
+
+
+def test_weekly_chart_groups_by_iso_week(html):
+    """Weekly chart must use ISO-week Monday-start grouping."""
+    assert 'isoWeekMonday' in html or 'groupByWeek' in html
+
+
+def test_weekly_chart_reads_api_as_bare_array(html):
+    """loadWeeklyChart must treat /api/weights response as a direct array, not data.weights."""
+    assert 'filteredRows' in html
+    assert 'data.weights' not in html or html.count('data.weights') == 0
+
+
+def test_weekly_chart_tooltip_uses_shared_element(html):
+    """Weekly tooltip must reuse the existing chartTtEl div (referenced more than once — daily + weekly)."""
+    assert html.count('chartTtEl') >= 2
+
+
+def test_weekly_chart_disables_axis_labels_plugin(html):
+    """Weekly chart must set chartAxisLabels: false to skip the daily y-axis label plugin."""
+    assert 'chartAxisLabels: false' in html
+
+
+# ── Default chart view setting ────────────────────────────────────────────────
+
+def test_default_chart_view_buttons_present(html):
+    assert 'id="prof-default-chart-daily"' in html
+    assert 'id="prof-default-chart-weekly"' in html
+
+
+def test_pref_default_chart_view_saved(html):
+    """doSave must persist pref_default_chart_view to preferences."""
+    assert 'pref_default_chart_view' in html
