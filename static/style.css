@@ -642,6 +642,21 @@ h1 {
     box-shadow: 0 4px 15px rgba(255, 45, 120, 0.4);
 }
 
+.modal-reset {
+    background: transparent;
+    color: rgba(255, 45, 120, 0.45);
+    border: 1px solid rgba(255, 45, 120, 0.2);
+    margin-right: auto;
+    font-size: 11px;
+    padding: 10px 16px;
+}
+
+.modal-reset:hover {
+    color: rgba(255, 45, 120, 0.75);
+    border-color: rgba(255, 45, 120, 0.4);
+    background: rgba(255, 45, 120, 0.05);
+}
+
 .modal-save:hover {
     box-shadow: 0 6px 20px rgba(255, 45, 120, 0.6);
     transform: translateY(-1px);
@@ -936,13 +951,16 @@ h1 {
     background: none;
     border: none;
     color: rgba(255, 45, 120, 0.55);
-    font-size: 32px;
+    font-size: 44px;
     line-height: 1;
-    padding: 0 2px;
+    padding: 0 14px;
     cursor: pointer;
     flex-shrink: 0;
     transition: color 0.15s;
     user-select: none;
+    align-self: stretch;
+    display: flex;
+    align-items: center;
 }
 
 .chart-page-btn:hover {
@@ -952,6 +970,12 @@ h1 {
 .chart-page-btn.invisible {
     visibility: hidden;
     pointer-events: none;
+}
+
+/* hide only canvases (not headers) when table is active */
+.chart-slide-viewport.in-table .chart-wrap,
+.chart-slide-viewport.in-table .chart-empty {
+    display: none;
 }
 
 .weekly-range-btn {
@@ -1073,7 +1097,7 @@ h1 {
 
 .data-table thead th {
     font-family: 'Arial Black', Impact, sans-serif;
-    font-size: 11px;
+    font-size: 13px;
     font-weight: 900;
     letter-spacing: 1px;
     text-transform: uppercase;
@@ -1092,7 +1116,7 @@ h1 {
 
 .data-table td {
     padding: 10px 14px;
-    font-size: 14px;
+    font-size: 16px;
     color: #d0d0d0;
     border-bottom: 1px solid rgba(255, 255, 255, 0.03);
     transition: background 0.12s;
@@ -1173,27 +1197,105 @@ h1 {
 
 #settings-modal .modal-card {
     width: 640px;
+    height: 50vh;
+    display: flex;
+    flex-direction: column;
+}
+
+.settings-scroll-body {
+    flex: 1;
+    min-height: 0;
+    overflow-y: auto;
+    scrollbar-gutter: stable;
+}
+
+.settings-scroll-body::-webkit-scrollbar {
+    width: 4px;
+}
+
+.settings-scroll-body::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.settings-scroll-body::-webkit-scrollbar-thumb {
+    background: rgba(255, 45, 120, 0.4);
+    border-radius: 2px;
+}
+
+.settings-scroll-body::-webkit-scrollbar-thumb:hover {
+    background: rgba(255, 45, 120, 0.7);
+}
+
+#settings-modal .modal-actions {
+    padding-top: 20px;
+    flex-shrink: 0;
 }
 
 .settings-section-label {
-    font-size: 11px;
+    font-size: 13px;
     font-family: 'Arial Black', sans-serif;
     letter-spacing: 0.12em;
     text-transform: uppercase;
     color: rgba(255, 45, 120, 0.7);
-    border-top: 1px solid rgba(255, 45, 120, 0.2);
     border-bottom: 1px solid rgba(255, 45, 120, 0.2);
-    padding: 8px 0;
-    margin: 28px 0 18px;
+    padding: 8px 8px;
+    margin: 0;
     background: rgba(255, 45, 120, 0.04);
+    cursor: pointer;
+    user-select: none;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
 }
 
 .settings-section-label:first-of-type {
+    border-top: 1px solid rgba(255, 45, 120, 0.2);
     margin-top: 8px;
+}
+
+.section-caret {
+    font-size: 20px;
+    display: inline-block;
+    color: rgba(255, 45, 120, 0.7);
+    transition: transform 0.18s ease;
+    line-height: 1;
+}
+
+.settings-section-label.collapsed .section-caret {
+    transform: rotate(-90deg);
+}
+
+.settings-section-body {
+    overflow: hidden;
+    transition: height 0.25s ease;
+}
+
+.settings-section-body > :first-child {
+    margin-top: 14px;
 }
 
 .profile-setting-group {
     margin-bottom: 20px;
+}
+
+.overlay-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px 20px;
+    margin-bottom: 20px;
+}
+
+.overlay-grid-3col {
+    grid-template-columns: 1fr 1fr 1fr;
+}
+
+.overlay-item {
+    display: flex;
+    flex-direction: column;
+}
+
+.overlay-item .profile-setting-label {
+    margin-bottom: 8px;
 }
 
 .profile-setting-label {
@@ -1229,6 +1331,12 @@ h1 {
     border-color: rgba(255, 45, 120, 0.55);
     color: #fff;
     background: rgba(255, 45, 120, 0.15);
+}
+
+.profile-opt-btn:disabled {
+    opacity: 0.28;
+    cursor: not-allowed;
+    pointer-events: none;
 }
 
 .profile-opt-btn.active {
@@ -1312,10 +1420,10 @@ h1 {
     border: 1px solid rgba(255, 255, 255, 0.06);
     border-radius: 5px;
     color: #444;
-    font-size: 16px;
+    font-size: 18px;
     line-height: 1;
-    width: 26px;
-    height: 26px;
+    width: 32px;
+    height: 32px;
     padding: 0;
     display: flex;
     align-items: center;
@@ -1340,8 +1448,8 @@ h1 {
     background: none;
     border: none;
     padding: 0;
-    width: 36px;
-    height: 36px;
+    width: 40px;
+    height: 40px;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -1351,8 +1459,8 @@ h1 {
 }
 
 .note-btn svg {
-    width: 17px;
-    height: 17px;
+    width: 21px;
+    height: 21px;
     fill: currentColor;
 }
 
@@ -1382,7 +1490,7 @@ h1 {
 
 .note-popover-label {
     color: rgba(255, 200, 220, 0.5);
-    font-size: 10px;
+    font-size: 12px;
     font-family: Arial, sans-serif;
     text-transform: uppercase;
     letter-spacing: 0.06em;
@@ -1394,14 +1502,15 @@ h1 {
     box-sizing: border-box;
     background: rgba(255, 255, 255, 0.04);
     border: 1px solid rgba(255, 255, 255, 0.1);
-    border-radius: 6px;
+    border-radius: 6px 6px 0 0;
+    border-bottom: none;
     color: #eee;
     font-family: Arial, sans-serif;
-    font-size: 13px;
+    font-size: 15px;
     padding: 9px 11px;
-    resize: vertical;
+    resize: none;
     line-height: 1.55;
-    min-height: 90px;
+    min-height: 100px;
 }
 
 #note-popover-text:focus {
@@ -1409,16 +1518,60 @@ h1 {
     border-color: rgba(255, 45, 120, 0.5);
 }
 
+.note-resize-handle {
+    width: 100%;
+    box-sizing: border-box;
+    height: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: rgba(255, 45, 120, 0.35);
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-top: none;
+    border-radius: 0 0 6px 6px;
+    user-select: none;
+    transition: color 0.15s, background 0.15s;
+    margin-bottom: 10px;
+}
+
+.note-resize-handle:hover {
+    color: rgba(255, 45, 120, 0.85);
+    background: rgba(255, 45, 120, 0.07);
+}
+
 .note-popover-actions {
     display: flex;
+    align-items: center;
     gap: 8px;
-    margin-top: 10px;
     justify-content: flex-end;
 }
 
 .note-popover-actions .modal-btn {
     padding: 6px 14px;
     font-size: 11px;
+}
+
+.note-delete-btn {
+    background: transparent;
+    border: 1px solid rgba(255, 45, 120, 0.2);
+    border-radius: 6px;
+    color: rgba(255, 45, 120, 0.45);
+    width: 30px;
+    height: 28px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-right: auto;
+    transition: all 0.15s;
+    flex-shrink: 0;
+}
+
+.note-delete-btn:hover {
+    border-color: rgba(255, 45, 120, 0.7);
+    color: #ff2d78;
+    background: rgba(255, 45, 120, 0.1);
+    box-shadow: 0 0 8px rgba(255, 45, 120, 0.2);
 }
 
 /* Historical weight date picker */
@@ -1723,4 +1876,53 @@ h1 {
     flex: 1;
     padding: 9px 6px;
     font-size: 10px;
+}
+
+/* ── On/Off toggle switches ── */
+.profile-toggle-row.is-toggle {
+    display: flex;
+    width: 60px;
+    flex-shrink: 0;
+    align-self: flex-start;
+    border-radius: 6px;
+    border: 1px solid rgba(255, 45, 120, 0.25);
+    background: rgba(255, 45, 120, 0.07);
+    overflow: hidden;
+    padding: 0;
+    gap: 0;
+}
+
+.profile-toggle-row.is-toggle .profile-opt-btn {
+    flex: 1;
+    padding: 5px 0;
+    text-align: center;
+    border: none !important;
+    border-radius: 0 !important;
+    background: transparent !important;
+    box-shadow: none !important;
+    color: rgba(255, 255, 255, 0.3);
+    min-width: 0;
+    font-size: 10px;
+    letter-spacing: 0.04em;
+    transition: color 0.15s, background 0.15s !important;
+}
+
+.profile-toggle-row.is-toggle .profile-opt-btn + .profile-opt-btn {
+    border-left: 1px solid rgba(255, 45, 120, 0.2) !important;
+}
+
+.profile-toggle-row.is-toggle .profile-opt-btn.active {
+    background: linear-gradient(135deg, #ff2d78, #c73862) !important;
+    color: #fff !important;
+    box-shadow: none !important;
+}
+
+.profile-toggle-row.is-toggle .profile-opt-btn:hover:not(.active) {
+    color: rgba(255, 255, 255, 0.65) !important;
+    background: rgba(255, 45, 120, 0.15) !important;
+}
+
+.profile-toggle-row.is-toggle:has(.profile-opt-btn:disabled) {
+    opacity: 0.28;
+    pointer-events: none;
 }

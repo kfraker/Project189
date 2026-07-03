@@ -378,9 +378,24 @@ def test_ma_color_is_amber(html):
 # ── Settings section labels ───────────────────────────────────────────────────
 
 def test_settings_sections_present(html):
-    """Settings modal must have Measurements, Chart, and Profile section labels."""
-    assert 'Measurements' in html
-    assert 'Chart' in html
+    """Settings modal must have expected section labels."""
+    assert 'Default Formats' in html
+    assert 'Chart Landing' in html
+    assert 'Daily Summary' in html
+    assert 'Weekly Summary' in html
+    assert 'HUD' in html
+
+
+def test_settings_collapsible_bodies_present(html):
+    """Each section must have a collapsible body wrapper."""
+    for key in ('measurements', 'landing', 'overtime', 'weekly', 'hud'):
+        assert f'id="ssb-{key}"' in html
+
+
+def test_settings_section_data_attrs_present(html):
+    """Each section label must carry a data-section attribute."""
+    for key in ('measurements', 'landing', 'overtime', 'weekly', 'hud'):
+        assert f'data-section="{key}"' in html
 
 
 def test_settings_section_label_class(html):
@@ -573,18 +588,85 @@ def test_weekly_chart_tooltip_uses_shared_element(html):
     assert html.count('chartTtEl') >= 2
 
 
-def test_weekly_chart_disables_axis_labels_plugin(html):
-    """Weekly chart must set chartAxisLabels: false to skip the daily y-axis label plugin."""
-    assert 'chartAxisLabels: false' in html
+def test_weekly_chart_sets_axis_label_globals(html):
+    """Weekly chart must set window.goalWeightVal and window.trendCurrentVal for the label plugin."""
+    assert 'window.goalWeightVal' in html
+    assert 'window.trendCurrentVal' in html
 
 
-# ── Default chart view setting ────────────────────────────────────────────────
+# ── Default landing setting ────────────────────────────────────────────────────
 
-def test_default_chart_view_buttons_present(html):
-    assert 'id="prof-default-chart-daily"' in html
-    assert 'id="prof-default-chart-weekly"' in html
+def test_default_landing_buttons_present(html):
+    assert 'id="prof-landing-daily"' in html
+    assert 'id="prof-landing-weekly"' in html
+    assert 'id="prof-landing-table-daily"' in html
+    assert 'id="prof-landing-table-weekly"' in html
 
 
-def test_pref_default_chart_view_saved(html):
-    """doSave must persist pref_default_chart_view to preferences."""
-    assert 'pref_default_chart_view' in html
+def test_pref_default_landing_saved(html):
+    """doSave must persist pref_default_landing to preferences."""
+    assert 'pref_default_landing' in html
+
+
+# ── Weekly Summary section ────────────────────────────────────────────────────
+
+def test_settings_weekly_section_present(html):
+    assert 'Weekly Summary' in html
+
+
+def test_weekly_minmax_buttons_present(html):
+    assert 'id="prof-weekly-minmax-on"' in html
+    assert 'id="prof-weekly-minmax-off"' in html
+
+
+def test_pref_weekly_minmax_saved(html):
+    assert 'pref_weekly_minmax' in html
+
+
+def test_weekly_goal_buttons_present(html):
+    assert 'id="prof-weekly-goal-on"' in html
+    assert 'id="prof-weekly-goal-off"' in html
+
+
+def test_weekly_trend_buttons_present(html):
+    assert 'id="prof-weekly-trend-on"' in html
+    assert 'id="prof-weekly-trend-off"' in html
+
+
+def test_pref_weekly_goal_line_saved(html):
+    assert 'pref_weekly_goal_line' in html
+
+
+def test_pref_weekly_trend_line_saved(html):
+    assert 'pref_weekly_trend_line' in html
+
+
+def test_date_format_buttons_present(html):
+    assert 'id="prof-date-mdy"' in html
+    assert 'id="prof-date-dmy"' in html
+
+
+def test_date_format_button_tips(html):
+    assert 'data-tip="MM-DD-YYYY"' in html
+    assert 'data-tip="DD-MM-YYYY"' in html
+
+
+def test_pref_date_format_saved(html):
+    assert 'pref_date_format' in html
+
+
+def test_fighter_name_buttons_present(html):
+    assert 'id="prof-fighter-name-on"' in html
+    assert 'id="prof-fighter-name-off"' in html
+
+
+def test_pref_fighter_name_saved(html):
+    assert 'pref_fighter_name' in html
+
+
+def test_chart_data_only_button_present(html):
+    assert 'id="prof-chart-dots"' in html
+
+
+def test_chart_no_data_button_present(html):
+    assert 'id="prof-chart-none"' in html

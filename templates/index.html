@@ -162,16 +162,16 @@
     <!-- Weight Chart -->
     <div class="chart-section">
         <div class="chart-card">
-            <!-- Slide viewport: page 0 = Weight Over Time, page 1 = Weekly Summary -->
+            <!-- Slide viewport: page 0 = Daily Summary, page 1 = Weekly Summary -->
             <div class="chart-with-nav">
-                <button class="chart-page-btn chart-page-btn--left invisible" id="chart-page-btn-left" data-tip="Weight Over Time">‹</button>
+                <button class="chart-page-btn chart-page-btn--left invisible" id="chart-page-btn-left" data-tip="Daily Summary">‹</button>
                 <div class="chart-slide-viewport" id="chart-slide-viewport">
                     <div class="chart-slide-inner" id="chart-slide-inner">
 
-                        <!-- Page 0: Weight Over Time -->
+                        <!-- Page 0: Daily Summary -->
                         <div class="chart-slide-page">
                             <div class="chart-header">
-                                <h2 class="chart-title">Weight Over Time</h2>
+                                <h2 class="chart-title">Daily Summary</h2>
                                 <div class="chart-controls">
                                     <div class="range-btns">
                                         <button class="range-btn active" data-range="7d">7D</button>
@@ -228,7 +228,7 @@
 
             <!-- Shared: data table and footer -->
             <div class="data-table-wrap" id="data-table-wrap" hidden>
-                <h3 class="table-view-title" id="table-view-title">Weight Over Time</h3>
+                <h3 class="table-view-title" id="table-view-title" hidden>Daily Summary</h3>
                 <div class="data-table-scroll-area">
                     <div class="data-table-scroll">
                         <table class="data-table">
@@ -491,103 +491,172 @@
     <div class="modal-card">
         <h2 class="modal-title">Settings</h2>
 
-        <div class="settings-section-label">Measurements</div>
+        <div class="settings-scroll-body">
 
-        <div class="profile-setting-group">
-            <label class="profile-setting-label">Weight Unit</label>
-            <div class="profile-toggle-row">
-                <button class="profile-opt-btn" id="prof-lbs-btn">LBS</button>
-                <button class="profile-opt-btn" id="prof-kg-btn">KGS</button>
-            </div>
-        </div>
-
-        <div class="profile-setting-group">
-            <label class="profile-setting-label">Height Unit</label>
-            <div class="profile-toggle-row">
-                <button class="profile-opt-btn" id="prof-height-us">US</button>
-                <button class="profile-opt-btn" id="prof-height-metric">Metric</button>
-            </div>
-        </div>
-
-        <div class="settings-section-label">Chart</div>
-
-        <div class="profile-setting-group">
-            <label class="profile-setting-label">Default View</label>
-            <div class="profile-toggle-row">
-                <button class="profile-opt-btn" id="prof-view-chart">Chart</button>
-                <button class="profile-opt-btn" id="prof-view-table">Table</button>
-            </div>
-        </div>
-
-        <div class="profile-setting-group">
-            <label class="profile-setting-label">Default Date Range</label>
-            <div class="profile-toggle-row">
-                <button class="profile-opt-btn" id="prof-range-7d"     data-range="7d">7D</button>
-                <button class="profile-opt-btn" id="prof-range-30d"    data-range="30d">30D</button>
-                <button class="profile-opt-btn" id="prof-range-90d"    data-range="90d">90D</button>
-                <button class="profile-opt-btn" id="prof-range-1y"     data-range="1y">1Y</button>
-                <button class="profile-opt-btn" id="prof-range-all"    data-range="all">All</button>
-                <button class="profile-opt-btn" id="prof-range-custom" data-range="custom">Custom</button>
-                <div id="prof-custom-wrap" class="prof-custom-wrap">
-                    <input type="number" id="prof-custom-days" class="profile-custom-input" min="7" max="1095" placeholder="—">
-                    <span class="profile-custom-unit">days</span>
+        <div class="settings-section-label" data-section="measurements">Default Formats <span class="section-caret">▾</span></div>
+        <div class="settings-section-body" id="ssb-measurements">
+            <div class="overlay-grid overlay-grid-3col">
+                <div class="overlay-item">
+                    <label class="profile-setting-label">Weight</label>
+                    <div class="profile-toggle-row">
+                        <button class="profile-opt-btn" id="prof-lbs-btn">LBS</button>
+                        <button class="profile-opt-btn" id="prof-kg-btn">KGS</button>
+                    </div>
+                </div>
+                <div class="overlay-item">
+                    <label class="profile-setting-label">Height</label>
+                    <div class="profile-toggle-row">
+                        <button class="profile-opt-btn" id="prof-height-us">Imperial</button>
+                        <button class="profile-opt-btn" id="prof-height-metric">Metric</button>
+                    </div>
+                </div>
+                <div class="overlay-item">
+                    <label class="profile-setting-label">Dates</label>
+                    <div class="profile-toggle-row">
+                        <button class="profile-opt-btn" id="prof-date-mdy" data-tip="MM-DD-YYYY">MDY</button>
+                        <button class="profile-opt-btn" id="prof-date-dmy" data-tip="DD-MM-YYYY">DMY</button>
+                    </div>
                 </div>
             </div>
         </div>
 
-        <div class="profile-setting-group">
-            <label class="profile-setting-label">Goal Line</label>
-            <div class="profile-toggle-row">
-                <button class="profile-opt-btn" id="prof-goal-line-on">On</button>
-                <button class="profile-opt-btn" id="prof-goal-line-off">Off</button>
+        <div class="settings-section-label" data-section="landing">Chart Landing <span class="section-caret">▾</span></div>
+        <div class="settings-section-body" id="ssb-landing">
+            <div class="overlay-grid">
+                <div class="overlay-item">
+                    <label class="profile-setting-label">Daily Summary</label>
+                    <div class="profile-toggle-row">
+                        <button class="profile-opt-btn" id="prof-landing-daily">Chart</button>
+                        <button class="profile-opt-btn" id="prof-landing-table-daily">Table</button>
+                    </div>
+                </div>
+                <div class="overlay-item">
+                    <label class="profile-setting-label">Weekly Summary</label>
+                    <div class="profile-toggle-row">
+                        <button class="profile-opt-btn" id="prof-landing-weekly">Chart</button>
+                        <button class="profile-opt-btn" id="prof-landing-table-weekly">Table</button>
+                    </div>
+                </div>
             </div>
         </div>
 
-        <div class="profile-setting-group">
-            <label class="profile-setting-label">Moving Average</label>
-            <div class="profile-toggle-row">
-                <button class="profile-opt-btn" id="prof-ma-line-on">On</button>
-                <button class="profile-opt-btn" id="prof-ma-line-off">Off</button>
+        <div class="settings-section-label" data-section="overtime">Daily Summary <span class="section-caret">▾</span></div>
+        <div class="settings-section-body" id="ssb-overtime">
+            <div id="prof-range-row-daily" class="profile-setting-group">
+                <label class="profile-setting-label">Range</label>
+                <div class="profile-toggle-row">
+                    <button class="profile-opt-btn" id="prof-range-7d"     data-range="7d">7D</button>
+                    <button class="profile-opt-btn" id="prof-range-30d"    data-range="30d">30D</button>
+                    <button class="profile-opt-btn" id="prof-range-90d"    data-range="90d">90D</button>
+                    <button class="profile-opt-btn" id="prof-range-1y"     data-range="1y">1Y</button>
+                    <button class="profile-opt-btn" id="prof-range-all"    data-range="all">All</button>
+                    <button class="profile-opt-btn" id="prof-range-custom" data-range="custom">Custom</button>
+                    <div id="prof-custom-wrap" class="prof-custom-wrap">
+                        <input type="number" id="prof-custom-days" class="profile-custom-input" min="7" max="1095" placeholder="—">
+                        <span class="profile-custom-unit">days</span>
+                    </div>
+                </div>
+            </div>
+            <div class="overlay-grid overlay-grid-3col">
+                <div class="overlay-item">
+                    <label class="profile-setting-label">Trend</label>
+                    <div class="profile-toggle-row is-toggle">
+                        <button class="profile-opt-btn" id="prof-trend-line-on">On</button>
+                        <button class="profile-opt-btn" id="prof-trend-line-off">Off</button>
+                    </div>
+                </div>
+                <div class="overlay-item">
+                    <label class="profile-setting-label">Goal Line</label>
+                    <div class="profile-toggle-row is-toggle">
+                        <button class="profile-opt-btn" id="prof-goal-line-on">On</button>
+                        <button class="profile-opt-btn" id="prof-goal-line-off">Off</button>
+                    </div>
+                </div>
+                <div class="overlay-item">
+                    <label class="profile-setting-label">Moving Avg</label>
+                    <div class="profile-toggle-row is-toggle">
+                        <button class="profile-opt-btn" id="prof-ma-line-on">On</button>
+                        <button class="profile-opt-btn" id="prof-ma-line-off">Off</button>
+                    </div>
+                </div>
+            </div>
+            <div class="profile-setting-group">
+                <label class="profile-setting-label">Data</label>
+                <div class="profile-toggle-row">
+                    <button class="profile-opt-btn" id="prof-chart-interp">Interpolated</button>
+                    <button class="profile-opt-btn" id="prof-chart-actual">Actual</button>
+                    <button class="profile-opt-btn" id="prof-chart-dots">Data Only</button>
+                    <button class="profile-opt-btn" id="prof-chart-none">No Data</button>
+                </div>
             </div>
         </div>
 
-        <div class="profile-setting-group">
-            <label class="profile-setting-label">Trend Line</label>
-            <div class="profile-toggle-row">
-                <button class="profile-opt-btn" id="prof-trend-line-on">On</button>
-                <button class="profile-opt-btn" id="prof-trend-line-off">Off</button>
+        <div class="settings-section-label" data-section="weekly">Weekly Summary <span class="section-caret">▾</span></div>
+        <div class="settings-section-body" id="ssb-weekly">
+            <div id="prof-range-row-weekly" class="profile-setting-group">
+                <label class="profile-setting-label">Range</label>
+                <div class="profile-toggle-row">
+                    <button class="profile-opt-btn" id="prof-wrange-4"      data-weeks="4">4W</button>
+                    <button class="profile-opt-btn" id="prof-wrange-12"     data-weeks="12">12W</button>
+                    <button class="profile-opt-btn" id="prof-wrange-30"     data-weeks="30">30W</button>
+                    <button class="profile-opt-btn" id="prof-wrange-all"    data-weeks="all">All</button>
+                    <button class="profile-opt-btn" id="prof-wrange-custom" data-weeks="custom">Custom</button>
+                    <div id="prof-custom-wrap-weekly" class="prof-custom-wrap" hidden>
+                        <input type="number" id="prof-custom-weeks-setting" class="profile-custom-input" min="4" max="156" placeholder="—">
+                        <span class="profile-custom-unit">wks</span>
+                    </div>
+                </div>
+            </div>
+            <div class="overlay-grid overlay-grid-3col">
+                <div class="overlay-item">
+                    <label class="profile-setting-label">Trend</label>
+                    <div class="profile-toggle-row is-toggle">
+                        <button class="profile-opt-btn" id="prof-weekly-trend-on">On</button>
+                        <button class="profile-opt-btn" id="prof-weekly-trend-off">Off</button>
+                    </div>
+                </div>
+                <div class="overlay-item">
+                    <label class="profile-setting-label">Goal Line</label>
+                    <div class="profile-toggle-row is-toggle">
+                        <button class="profile-opt-btn" id="prof-weekly-goal-on">On</button>
+                        <button class="profile-opt-btn" id="prof-weekly-goal-off">Off</button>
+                    </div>
+                </div>
+                <div class="overlay-item">
+                    <label class="profile-setting-label">Min/Max Range</label>
+                    <div class="profile-toggle-row is-toggle">
+                        <button class="profile-opt-btn" id="prof-weekly-minmax-on">On</button>
+                        <button class="profile-opt-btn" id="prof-weekly-minmax-off">Off</button>
+                    </div>
+                </div>
             </div>
         </div>
 
-        <div class="profile-setting-group">
-            <label class="profile-setting-label">Chart Type</label>
-            <div class="profile-toggle-row">
-                <button class="profile-opt-btn" id="prof-chart-interp">Interpolated</button>
-                <button class="profile-opt-btn" id="prof-chart-actual">Actual Only</button>
+        <div class="settings-section-label" data-section="hud">HUD <span class="section-caret">▾</span></div>
+        <div class="settings-section-body" id="ssb-hud">
+            <div class="overlay-grid">
+                <div class="overlay-item">
+                    <label class="profile-setting-label">Health Bar</label>
+                    <div class="profile-toggle-row is-toggle">
+                        <button class="profile-opt-btn" id="prof-healthbar-on">On</button>
+                        <button class="profile-opt-btn" id="prof-healthbar-off">Off</button>
+                    </div>
+                </div>
+                <div class="overlay-item">
+                    <label class="profile-setting-label">Fighter Name</label>
+                    <div class="profile-toggle-row is-toggle">
+                        <button class="profile-opt-btn" id="prof-fighter-name-on">On</button>
+                        <button class="profile-opt-btn" id="prof-fighter-name-off">Off</button>
+                    </div>
+                </div>
             </div>
+            <button id="change-pic-btn" class="change-pic-btn">Change Profile Pic</button>
         </div>
 
-        <div class="profile-setting-group">
-            <label class="profile-setting-label">Default Chart</label>
-            <div class="profile-toggle-row">
-                <button class="profile-opt-btn" id="prof-default-chart-daily">Over Time</button>
-                <button class="profile-opt-btn" id="prof-default-chart-weekly">Weekly</button>
-            </div>
-        </div>
-
-        <div class="profile-setting-group">
-            <label class="profile-setting-label">Health Bar</label>
-            <div class="profile-toggle-row">
-                <button class="profile-opt-btn" id="prof-healthbar-on">On</button>
-                <button class="profile-opt-btn" id="prof-healthbar-off">Off</button>
-            </div>
-        </div>
-
-        <div class="settings-section-label">Profile</div>
-
-        <button id="change-pic-btn" class="change-pic-btn">Change Profile Pic</button>
+        </div><!-- /.settings-scroll-body -->
 
         <div class="modal-actions">
+            <button class="modal-btn modal-reset" id="settings-reset">Reset defaults</button>
             <button class="modal-btn modal-cancel" id="settings-cancel">Cancel</button>
             <button class="modal-btn modal-save"   id="settings-save">Save</button>
         </div>
@@ -608,6 +677,9 @@
         </button>
         <button class="pic-option" data-pic="3">
             <img src="/static/profile3button.png" alt="Profile 3">
+        </button>
+        <button class="pic-option" data-pic="4">
+            <img src="/static/profile4button.png" alt="Profile 4">
         </button>
     </div>
     <div class="pic-picker-actions">
@@ -632,7 +704,13 @@
 <div id="note-popover" hidden>
     <div class="note-popover-label">Note for <span id="note-popover-date"></span></div>
     <textarea id="note-popover-text" maxlength="300" rows="3" placeholder="Add a note…"></textarea>
+    <div class="note-resize-handle" id="note-resize-handle">
+        <svg width="22" height="8" viewBox="0 0 22 8" fill="none"><circle cx="4" cy="4" r="2" fill="currentColor"/><circle cx="11" cy="4" r="2" fill="currentColor"/><circle cx="18" cy="4" r="2" fill="currentColor"/></svg>
+    </div>
     <div class="note-popover-actions">
+        <button id="note-popover-delete" class="note-delete-btn" title="Delete note">
+            <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4h6v2"/></svg>
+        </button>
         <button id="note-popover-cancel" class="modal-btn modal-cancel">Cancel</button>
         <button id="note-popover-save"   class="modal-btn modal-save">Save</button>
     </div>
@@ -692,7 +770,22 @@
 
     function formatDateDisplay(isoDate) {
         const [y, m, d] = isoDate.split('-').map(Number);
-        return new Date(y, m - 1, d).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
+        const dt = new Date(y, m - 1, d);
+        const mon = dt.toLocaleDateString('en-US', { month: 'long' });
+        if ((localStorage.getItem('pref_date_format') || 'mdy') === 'mdy') {
+            return mon + ' ' + d + ', ' + y;
+        }
+        return d + ' ' + mon + ' ' + y;
+    }
+
+    function fmtDateShort(dt) {
+        const mon = dt.toLocaleDateString('en-US', { month: 'short' });
+        const y = dt.getFullYear();
+        const d = dt.getDate();
+        if ((localStorage.getItem('pref_date_format') || 'mdy') === 'mdy') {
+            return mon + ' ' + d + ', ' + y;
+        }
+        return d + ' ' + mon + ' ' + y;
     }
 
     function fmtLbs(n) { return n === Math.round(n) ? Math.round(n) : parseFloat(n.toFixed(1)); }
@@ -739,7 +832,11 @@
 
     window.updateHealthBarName = function () {
         const el = document.getElementById('healthbar-name');
-        if (el) el.textContent = localStorage.getItem('fight_name') || '';
+        if (!el) return;
+        el.textContent = localStorage.getItem('fight_name') || '';
+        const hudOn  = (localStorage.getItem('pref_healthbar')     ?? '1') !== '0';
+        const nameOn = (localStorage.getItem('pref_fighter_name')  ?? '1') !== '0';
+        el.style.visibility = (hudOn && nameOn) ? '' : 'hidden';
     };
 
     window.applyHealthbarPref = function () {
@@ -1048,9 +1145,13 @@
         function fmtAxisDate(iso, spanDays) {
             const [y, m, d] = iso.split('-').map(Number);
             const dt = new Date(y, m - 1, d);
-            return spanDays <= 90
-                ? dt.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
-                : dt.toLocaleDateString('en-US', { month: 'short', year: '2-digit' });
+            if (spanDays <= 90) {
+                const mon = dt.toLocaleDateString('en-US', { month: 'short' });
+                return (localStorage.getItem('pref_date_format') || 'mdy') === 'mdy'
+                    ? mon + ' ' + d
+                    : d + ' ' + mon;
+            }
+            return dt.toLocaleDateString('en-US', { month: 'short', year: '2-digit' });
         }
 
         Chart.register({
@@ -1066,20 +1167,21 @@
                 c.textAlign = 'right';
                 c.textBaseline = 'middle';
 
+                const isWeekly = chart.canvas?.id === 'weekly-chart';
                 const items = [];
-                const goalVal = window.goalWeightVal;
+                const goalVal  = isWeekly ? window.weeklyGoalVal  : window.goalWeightVal;
+                const maVal    = isWeekly ? null                  : window.maCurrentVal;
+                const trendVal = isWeekly ? window.weeklyTrendVal : window.trendCurrentVal;
                 if (goalVal != null) {
                     const y = Math.round(yScale.getPixelForValue(goalVal));
                     if (isFinite(y) && y >= top - 1 && y <= bottom + 1)
                         items.push({ text: 'GOAL ' + goalVal.toFixed(1) + ' ' + unit, y, color: 'rgba(0, 200, 175, 0.95)' });
                 }
-                const maVal = window.maCurrentVal;
                 if (maVal != null) {
                     const y = Math.round(yScale.getPixelForValue(maVal));
                     if (isFinite(y) && y >= top - 1 && y <= bottom + 1)
                         items.push({ text: '7D AVG ' + maVal.toFixed(1) + ' ' + unit, y, color: 'rgba(255, 200, 50, 0.95)' });
                 }
-                const trendVal = window.trendCurrentVal;
                 if (trendVal != null) {
                     const y = Math.round(yScale.getPixelForValue(trendVal));
                     if (isFinite(y) && y >= top - 1 && y <= bottom + 1)
@@ -1179,7 +1281,7 @@
             }
 
             const chartType = localStorage.getItem('pref_chart_type') || 'interpolated';
-            if (chartType === 'actual') {
+            if (chartType === 'actual' || chartType === 'dots-only') {
                 allDates.length = 0;
                 rows.forEach(r => allDates.push(r.date));
                 currentDates = allDates;
@@ -1205,7 +1307,7 @@
             const minW     = Math.min(...rows.map(r => unit === 'lbs' ? r.weight_lbs : r.weight_kg));
             const maxW     = Math.max(...rows.map(r => unit === 'lbs' ? r.weight_lbs : r.weight_kg));
             const ptRadius = rows.length > 60 ? 2 : 4;
-            const ptRadii  = rawW.map(v => v === null ? 0 : ptRadius);
+            const ptRadii    = chartType === 'no-data' ? rawW.map(() => 0) : rawW.map(v => v === null ? 0 : ptRadius);
             const hoverRadii = rawW.map(v => v === null ? 0 : 6);
 
             // Goal weight horizontal line — flat second dataset
@@ -1265,7 +1367,9 @@
             if (chartInst) {
                 chartInst.data.labels                          = labels;
                 chartInst.data.datasets[0].data                = weights;
-                chartInst.data.datasets[0].tension             = chartType === 'actual' ? 0 : 0.35;
+                chartInst.data.datasets[0].tension             = (chartType === 'actual' || chartType === 'dots-only') ? 0 : 0.35;
+                chartInst.data.datasets[0].borderWidth         = (chartType === 'dots-only' || chartType === 'no-data') ? 0 : 2.5;
+                chartInst.data.datasets[0].fill                = chartType !== 'dots-only' && chartType !== 'no-data';
                 chartInst.data.datasets[0].pointRadius         = ptRadii;
                 chartInst.data.datasets[0].pointHoverRadius    = hoverRadii;
                 chartInst.data.datasets[1].data                = goalData;
@@ -1286,13 +1390,13 @@
                     {
                         data: weights,
                         borderColor: '#ff2d78',
-                        borderWidth: 2.5,
+                        borderWidth: (chartType === 'dots-only' || chartType === 'no-data') ? 0 : 2.5,
                         pointBackgroundColor: '#ff2d78',
                         pointBorderColor: '#ff2d78',
                         pointRadius: ptRadii,
                         pointHoverRadius: hoverRadii,
                         pointHoverBackgroundColor: '#ffe0ee',
-                        fill: true,
+                        fill: chartType !== 'dots-only' && chartType !== 'no-data',
                         backgroundColor: function (context) {
                             const ch = context.chart;
                             if (!ch.chartArea) return 'rgba(255,45,120,0.15)';
@@ -1301,7 +1405,7 @@
                             g.addColorStop(1, 'rgba(255,45,120,0)');
                             return g;
                         },
-                        tension: chartType === 'actual' ? 0 : 0.35,
+                        tension: (chartType === 'actual' || chartType === 'dots-only') ? 0 : 0.35,
                     },
                     {
                         data: goalData,
@@ -1358,8 +1462,8 @@
                                 if (val == null) { chartTtEl.style.opacity = '0'; return; }
                                 const est    = isReal ? '' : ' <span class="ctt-est">(est.)</span>';
                                 const label  = window.activeUnit === 'kg'
-                                    ? val.toFixed(1) + ' kgs' + est + '  ·  ' + (val * 2.2046).toFixed(1) + ' lbs'
-                                    : Number(val.toFixed(1)) + ' lbs' + est + '  ·  ' + (val / 2.2046).toFixed(1) + ' kgs';
+                                    ? val.toFixed(1) + ' kgs' + est
+                                    : Number(val.toFixed(1)) + ' lbs' + est;
                                 const noteRaw = (window.noteMap && window.noteMap.get(date)) || '';
                                 const noteHtml = noteRaw
                                     ? '<div class="ctt-note">' + noteRaw.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;') + '</div>'
@@ -1449,7 +1553,9 @@
         const customIn   = document.getElementById('custom-weeks');
 
         let weeklyInst = null;
-        let activeWeeksRange = '4';
+        let activeWeeksRange = localStorage.getItem('pref_weekly_range') || '4';
+        const savedCustomWeeks = localStorage.getItem('pref_custom_weeks');
+        if (savedCustomWeeks) customIn.value = savedCustomWeeks;
         let weeklyMouseX = 0, weeklyMouseY = 0;
 
         function isoWeekMonday(dateISO) {
@@ -1474,11 +1580,36 @@
                 const sunD = new Date(monISO + 'T00:00:00');
                 sunD.setDate(sunD.getDate() + 6);
                 const sunISO = sunD.toISOString().slice(0, 10);
-                const fmt = iso => iso.slice(5).replace('-', '/');
-                result.push({ monISO, sunISO, label: fmt(monISO) + '–' + fmt(sunISO), avg, count: weights.length });
+                const dfmt = localStorage.getItem('pref_date_format') || 'mdy';
+                const fmt = iso => { const [,mm,dd] = iso.split('-'); return dfmt === 'mdy' ? mm+'/'+dd : dd+'/'+mm; };
+                result.push({ monISO, sunISO, label: fmt(monISO) + '–' + fmt(sunISO), avg, min: Math.min(...weights), max: Math.max(...weights), count: weights.length });
             }
             return result;
         }
+
+        const weeklyMinMaxPlugin = {
+            id: 'weeklyMinMax',
+            afterDatasetsDraw(chart) {
+                if (!window.weeklyMinMaxOn) return;
+                const wks = window.weeklyWeeks;
+                if (!wks || !wks.length) return;
+                const { ctx, scales: { x, y } } = chart;
+                ctx.save();
+                ctx.strokeStyle = 'rgba(255, 200, 50, 0.8)';
+                ctx.lineWidth = 1.5;
+                const cap = 4;
+                wks.forEach((w, i) => {
+                    if (w.minU == null || w.maxU == null || w.minU === w.maxU) return;
+                    const xPx  = x.getPixelForValue(i);
+                    const yTop = y.getPixelForValue(w.maxU);
+                    const yBot = y.getPixelForValue(w.minU);
+                    ctx.beginPath(); ctx.moveTo(xPx, yTop); ctx.lineTo(xPx, yBot); ctx.stroke();
+                    ctx.beginPath(); ctx.moveTo(xPx - cap, yTop); ctx.lineTo(xPx + cap, yTop); ctx.stroke();
+                    ctx.beginPath(); ctx.moveTo(xPx - cap, yBot); ctx.lineTo(xPx + cap, yBot); ctx.stroke();
+                });
+                ctx.restore();
+            }
+        };
 
         async function loadWeeklyChart(range, customWeeks) {
             let days;
@@ -1496,7 +1627,8 @@
                 fetch('/api/settings').then(r => r.json()),
             ]);
             const filteredRows = (rows || []).filter(r => r.weight_lbs != null);
-            const goalLbs = parseFloat(settings.goal_weight) || null;
+            const gw = settings['goal_weight'];
+            const goalLbs = gw ? gw.value_lbs : null;
 
             if (filteredRows.length === 0) {
                 emptyEl.hidden = false;
@@ -1526,12 +1658,15 @@
             const unit = window.activeUnit === 'kg' ? 'kgs' : 'lbs';
             const toUnit = v => window.activeUnit === 'kg' ? parseFloat((v / 2.20462).toFixed(1)) : parseFloat(v.toFixed(1));
             const avgs = weeks.map(w => toUnit(w.avg));
+            const minMaxOn = (localStorage.getItem('pref_weekly_minmax') ?? '1') !== '0';
+            const mins = weeks.map(w => toUnit(w.min));
+            const maxs = weeks.map(w => toUnit(w.max));
 
-            const goalLineOn = localStorage.getItem('pref_goal_line') === '1';
+            const goalLineOn = localStorage.getItem('pref_weekly_goal_line') === '1';
             const goalVal = goalLbs != null ? toUnit(goalLbs) : null;
             const goalData = goalLineOn && goalVal != null ? avgs.map(() => goalVal) : avgs.map(() => null);
 
-            const trendLineOn = localStorage.getItem('pref_trend_line') === '1';
+            const trendLineOn = localStorage.getItem('pref_weekly_trend_line') === '1';
             let trendData = avgs.map(() => null);
             if (trendLineOn && avgs.length >= 2) {
                 const n = avgs.length, xM = (n - 1) / 2, yM = avgs.reduce((a, b) => a + b, 0) / n;
@@ -1541,12 +1676,17 @@
                 trendData = avgs.map((_, i) => parseFloat((slope * i + intercept).toFixed(2)));
             }
 
-            const allVals = [...avgs, ...(goalVal && goalLineOn ? [goalVal] : []), ...trendData.filter(v => v != null)];
+            const allVals = [...avgs, ...(goalVal && goalLineOn ? [goalVal] : []), ...trendData.filter(v => v != null), ...(minMaxOn ? [...mins, ...maxs] : [])];
             const pad = Math.max((Math.max(...allVals) - Math.min(...allVals)) * 0.15, 2);
             const yMin = parseFloat((Math.min(...allVals) - pad).toFixed(1));
             const yMax = parseFloat((Math.max(...allVals) + pad).toFixed(1));
 
-            window.weeklyWeeks = weeks;
+            window.weeklyWeeks    = weeks.map((w, i) => ({ ...w, minU: mins[i], maxU: maxs[i] }));
+            window.weeklyMinMaxOn = minMaxOn;
+            window.weeklyGoalVal  = (goalLineOn && goalVal != null) ? goalVal : null;
+            window.weeklyTrendVal = trendLineOn && trendData.length > 0
+                ? trendData[trendData.length - 1]
+                : null;
 
             if (weeklyInst) {
                 weeklyInst.data.labels             = weeks.map(w => w.label);
@@ -1562,6 +1702,7 @@
 
             weeklyInst = new Chart(ctx, {
                 type: 'bar',
+                plugins: [weeklyMinMaxPlugin],
                 data: {
                     labels: weeks.map(w => w.label),
                     datasets: [
@@ -1615,20 +1756,22 @@
                                 if (!w) return;
                                 const val = dp.parsed.y;
                                 const unitLabel = window.activeUnit === 'kg' ? 'kgs' : 'lbs';
-                                const other = window.activeUnit === 'kg'
-                                    ? (val * 2.20462).toFixed(1) + ' lbs'
-                                    : (val / 2.20462).toFixed(1) + ' kgs';
+                                const hasRange = w.count > 1 && w.minU != null && w.maxU != null && w.minU !== w.maxU;
+                                const rangeHtml = hasRange
+                                    ? `<div class="ctt-body" style="color:#aaa;font-size:11px">Range: ${w.minU.toFixed(1)}–${w.maxU.toFixed(1)} ${unitLabel}</div>`
+                                    : '';
                                 chartTtEl.innerHTML =
                                     `<div class="ctt-title">${w.label}</div>` +
-                                    `<div class="ctt-body">${val.toFixed(1)} ${unitLabel}  ·  ${other}</div>` +
-                                    `<div class="ctt-body" style="color:#888;font-size:11px">${w.count} weigh-in${w.count !== 1 ? 's' : ''}</div>`;
+                                    `<div class="ctt-body">${val.toFixed(1)} ${unitLabel}</div>` +
+                                    rangeHtml +
+                                    `<div class="ctt-body" style="color:#aaa;font-size:11px">${w.count} weigh-in${w.count !== 1 ? 's' : ''}</div>`;
                                 chartTtEl.style.opacity = '1';
                                 chartTtEl.style.top  = Math.round(weeklyMouseY - chartTtEl.offsetHeight / 2) + 'px';
                                 const tw = chartTtEl.offsetWidth;
                                 chartTtEl.style.left = Math.max(8, Math.round(weeklyMouseX - 12 - tw)) + 'px';
                             }
                         },
-                        chartAxisLabels: false
+                        chartAxisLabels: {}
                     },
                     scales: {
                         x: {
@@ -1699,6 +1842,19 @@
             loadWeeklyChart(activeWeeksRange, cw);
         };
 
+        window.setWeeklyRange = function (range, weeks) {
+            activeWeeksRange = range;
+            document.querySelectorAll('.weekly-range-btn').forEach(b => b.classList.remove('active'));
+            const btn = document.querySelector('.weekly-range-btn[data-weeks="' + range + '"]');
+            if (btn) btn.classList.add('active');
+            if (range === 'custom') {
+                customWrap.hidden = false;
+                if (weeks) customIn.value = weeks;
+            } else {
+                customWrap.hidden = true;
+            }
+        };
+
         window.getWeeklyChartRange = () => ({ range: activeWeeksRange, weeks: parseInt(customIn.value) || 4 });
 
         window.loadWeeklyChartOnce = function () {
@@ -1715,28 +1871,52 @@
         const leftBtn  = document.getElementById('chart-page-btn-left');
         const rightBtn = document.getElementById('chart-page-btn-right');
 
-        window.currentChartPage = 'daily';
+        const defaultLanding = localStorage.getItem('pref_default_landing') || 'daily';
+        let homeIsWeekly     = defaultLanding === 'weekly' || defaultLanding === 'table-weekly';
 
-        function goWeekly() {
-            inner.classList.add('at-weekly');
-            window.currentChartPage = 'weekly';
-            leftBtn.classList.remove('invisible');
-            rightBtn.classList.add('invisible');
-            if (window.loadWeeklyChartOnce) window.loadWeeklyChartOnce();
+        function updateTips() {
+            leftBtn.dataset.tip  = homeIsWeekly ? 'Weekly Summary' : 'Daily Summary';
+            rightBtn.dataset.tip = homeIsWeekly ? 'Daily Summary'  : 'Weekly Summary';
         }
+        updateTips();
 
-        function goDaily() {
-            inner.classList.remove('at-weekly');
-            window.currentChartPage = 'daily';
+        function goHome() {
+            if (homeIsWeekly) {
+                inner.classList.add('at-weekly');
+                window.currentChartPage = 'weekly';
+                if (window.loadWeeklyChartOnce) window.loadWeeklyChartOnce();
+            } else {
+                inner.classList.remove('at-weekly');
+                window.currentChartPage = 'daily';
+            }
             leftBtn.classList.add('invisible');
             rightBtn.classList.remove('invisible');
         }
 
-        rightBtn.addEventListener('click', goWeekly);
-        leftBtn.addEventListener('click', goDaily);
+        function goAway() {
+            if (homeIsWeekly) {
+                inner.classList.remove('at-weekly');
+                window.currentChartPage = 'daily';
+            } else {
+                inner.classList.add('at-weekly');
+                window.currentChartPage = 'weekly';
+                if (window.loadWeeklyChartOnce) window.loadWeeklyChartOnce();
+            }
+            leftBtn.classList.remove('invisible');
+            rightBtn.classList.add('invisible');
+        }
 
-        const defaultChart = localStorage.getItem('pref_default_chart_view') || 'daily';
-        if (defaultChart === 'weekly') goWeekly();
+        rightBtn.addEventListener('click', goAway);
+        leftBtn.addEventListener('click', goHome);
+
+        window.applyChartNav = function () {
+            const dl = localStorage.getItem('pref_default_landing') || 'daily';
+            homeIsWeekly = dl === 'weekly' || dl === 'table-weekly';
+            updateTips();
+            goHome();
+        };
+
+        goHome();
     })();
 
     /* ── Data table toggle ── */
@@ -1746,9 +1926,19 @@
         const tableWrap     = document.getElementById('data-table-wrap');
         const tableTitle    = document.getElementById('table-view-title');
         const tableBody     = document.getElementById('data-table-body');
+        const leftNavBtn    = document.getElementById('chart-page-btn-left');
+        const rightNavBtn   = document.getElementById('chart-page-btn-right');
 
         let isTableView = false;
         let lastChart = 'daily';
+
+        function applyTableMode(on) {
+            slideViewport.classList.toggle('in-table', on);
+            tableWrap.hidden = !on;
+            // hide/show nav arrows (inline style overrides .invisible class while in table)
+            if (leftNavBtn)  leftNavBtn.style.visibility  = on ? 'hidden' : '';
+            if (rightNavBtn) rightNavBtn.style.visibility = on ? 'hidden' : '';
+        }
 
         function addDays(iso, n) {
             const d = new Date(iso + 'T00:00:00');
@@ -1940,11 +2130,10 @@
 
         toggleBtn.addEventListener('click', () => {
             isTableView = !isTableView;
-            slideViewport.hidden = isTableView;
-            tableWrap.hidden     = !isTableView;
+            applyTableMode(isTableView);
             if (isTableView) {
                 lastChart = window.currentChartPage || 'daily';
-                if (tableTitle) tableTitle.textContent = lastChart === 'weekly' ? 'Weekly Summary' : 'Weight Over Time';
+                if (tableTitle) tableTitle.textContent = lastChart === 'weekly' ? 'Weekly Summary' : 'Daily Summary';
                 toggleBtn.textContent = 'Chart';
                 renderTable();
             } else {
@@ -1999,25 +2188,30 @@
 
         window.setView = function (view, range, days) {
             isTableView = (view === 'table');
-            slideViewport.hidden = isTableView;
-            tableWrap.hidden     = !isTableView;
+            applyTableMode(isTableView);
             toggleBtn.textContent = isTableView ? 'Chart' : 'Table';
             if (window.refreshChart) window.refreshChart(range, days);
             if (isTableView) renderTable();
         };
 
-        const savedView = localStorage.getItem('pref_view') || 'chart';
-        if (savedView === 'table') window.setView('table');
+        const savedLanding = localStorage.getItem('pref_default_landing') || 'daily';
+        if (savedLanding === 'table-daily' || savedLanding === 'table-weekly') window.setView('table');
     })();
 
     /* ── Note editor popover ── */
     (() => {
-        const popover   = document.getElementById('note-popover');
-        const dateSpan  = document.getElementById('note-popover-date');
-        const textarea  = document.getElementById('note-popover-text');
-        const saveBtn   = document.getElementById('note-popover-save');
-        const cancelBtn = document.getElementById('note-popover-cancel');
-        let activeDate  = null;
+        const popover    = document.getElementById('note-popover');
+        const dateSpan   = document.getElementById('note-popover-date');
+        const textarea   = document.getElementById('note-popover-text');
+        const saveBtn    = document.getElementById('note-popover-save');
+        const cancelBtn  = document.getElementById('note-popover-cancel');
+        const deleteBtn  = document.getElementById('note-popover-delete');
+        const resizeHdl  = document.getElementById('note-resize-handle');
+        let activeDate   = null;
+        let isResizing   = false;
+        let wasDragging  = false;
+        let resizeStartY = 0;
+        let resizeStartH = 0;
 
         function close() {
             popover.hidden = true;
@@ -2037,18 +2231,69 @@
             if (window.renderTable) window.renderTable();
         }
 
+        async function deleteNote() {
+            if (!activeDate) return;
+            await fetch('/api/weight/' + activeDate + '/note', {
+                method: 'PATCH',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ notes: '' }),
+            });
+            if (window.noteMap) window.noteMap.set(activeDate, '');
+            close();
+            if (window.renderTable) window.renderTable();
+        }
+
         window.openNoteEditor = function(date, currentNote, anchorEl) {
             activeDate = date;
             dateSpan.textContent = formatDateDisplay(date);
             textarea.value = currentNote || '';
             popover.hidden = false;
             const rect   = anchorEl.getBoundingClientRect();
-            const top    = Math.min(rect.bottom + 6, window.innerHeight - 180);
-            const left   = Math.max(8, Math.min(rect.left - 180, window.innerWidth - 300));
+            const top    = Math.min(rect.bottom + 6, window.innerHeight - 220);
+            const left   = Math.max(8, Math.min(rect.left - 180, window.innerWidth - 380));
             popover.style.top  = top  + 'px';
             popover.style.left = left + 'px';
             textarea.focus();
         };
+
+        /* Custom resize handle */
+        resizeHdl.addEventListener('mousedown', e => {
+            isResizing   = true;
+            wasDragging  = false;
+            resizeStartY = e.clientY;
+            resizeStartH = textarea.offsetHeight;
+            e.preventDefault();
+            e.stopPropagation();
+        });
+
+        document.addEventListener('mousemove', e => {
+            if (!isResizing) return;
+            const newH = Math.max(80, resizeStartH + (e.clientY - resizeStartY));
+            textarea.style.height = newH + 'px';
+        });
+
+        document.addEventListener('mouseup', e => {
+            if (isResizing) {
+                isResizing  = false;
+                wasDragging = true;
+                setTimeout(() => { wasDragging = false; }, 50);
+            }
+        });
+
+        /* Delete with confirmation */
+        deleteBtn.addEventListener('click', e => {
+            e.stopPropagation();
+            if (window.showAppConfirm) {
+                window.showAppConfirm(
+                    'Delete Note',
+                    'Are you sure you want to delete this note?',
+                    'Delete',
+                    deleteNote
+                );
+            } else {
+                deleteNote();
+            }
+        });
 
         saveBtn.addEventListener('click', save);
         cancelBtn.addEventListener('click', close);
@@ -2057,6 +2302,7 @@
             if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) save();
         });
         document.addEventListener('click', e => {
+            if (wasDragging) return;
             if (!popover.hidden && !e.composedPath().includes(popover) && !e.target.closest('.note-btn')) {
                 close();
             }
@@ -2315,6 +2561,7 @@
             '1': [['/static/pointer.png',  280, 60, 48], ['/static/editpointer.png',  660, 30, 64]],
             '2': [['/static/pointer2.png', 280, 60, 48], ['/static/editpointer2.png', 660, 30, 64]],
             '3': [['/static/pointer3.png', 280, 60, 48], ['/static/editpointer3.png', 660, 30, 64]],
+            '4': [['/static/pointer4.png', 280, 60, 48], ['/static/editpointer4.png', 660, 30, 64]],
         };
 
         function processImg(src, origHotX, origHotY, key, renderH) {
@@ -2363,7 +2610,7 @@
             if (cursors['normal'] && mouseInDoc) el.style.display = 'block';
         };
 
-        const EDIT_PLATES = '#start-plate, #current-plate, #goal-plate';
+        const EDIT_PLATES = '#start-plate, #current-plate, #goal-plate, .note-resize-handle';
         let lastMX = 0, lastMY = 0;
 
         function evalCursor(target) {
@@ -2438,6 +2685,7 @@
             '1': ['profilebutton.png',  'profilebuttonsmile.png'],
             '2': ['profile2button.png', 'profile2buttonsmile.png'],
             '3': ['profile3button.png', 'profile3buttonsmile.png'],
+            '4': ['profile4button.png', 'profile4buttonsmile.png'],
         };
         function bases() {
             return PICS[localStorage.getItem('pref_profile_pic') || '1'] || PICS['1'];
@@ -2483,6 +2731,7 @@
             '1': ['profilebutton.png',  'profilebuttonsmile.png'],
             '2': ['profile2button.png', 'profile2buttonsmile.png'],
             '3': ['profile3button.png', 'profile3buttonsmile.png'],
+            '4': ['profile4button.png', 'profile4buttonsmile.png'],
         };
 
         function showPicker() {
@@ -3033,7 +3282,7 @@
                             goalDateStr = '10+ years';
                             goalDateSub = 'Mifflin-St. Jeor';
                         } else {
-                            goalDateStr = simD.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+                            goalDateStr = fmtDateShort(simD);
                             const msjLabel = noActEst ? 'MSJ · 1.4× activity est.' : 'Mifflin-St. Jeor';
                             goalDateSub = noRateEst ? 'MSJ · 500 kcal/day deficit est.' : msjLabel;
                         }
@@ -3041,7 +3290,7 @@
                         const daysLeft = ((curW_disp - goalW_disp) / weeklyRate) * 7;
                         const g = new Date(dates[n-1]);
                         g.setDate(g.getDate() + Math.round(daysLeft));
-                        goalDateStr = g.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+                        goalDateStr = fmtDateShort(g);
                         goalDateSub = 'linear (complete Fight Card)';
                     } else {
                         goalDateStr = 'Need more data';
@@ -3125,23 +3374,36 @@
         const saveBtn     = document.getElementById('settings-save');
         const cancelBtn   = document.getElementById('settings-cancel');
         const settingsBtn = document.getElementById('settings-btn');
-        const profCustomDays = document.getElementById('prof-custom-days');
+        const profCustomDays  = document.getElementById('prof-custom-days');
+        const profCustomWeeks = document.getElementById('prof-custom-weeks-setting');
 
         let openState = null;
 
         function getSelections() {
+            const landing = document.getElementById('prof-landing-table-weekly').classList.contains('active') ? 'table-weekly'
+                          : document.getElementById('prof-landing-table-daily').classList.contains('active')  ? 'table-daily'
+                          : document.getElementById('prof-landing-weekly').classList.contains('active')        ? 'weekly'
+                          : 'daily';
             return {
                 unit:       document.getElementById('prof-kg-btn').classList.contains('active') ? 'kg' : 'lbs',
                 range:      document.querySelector('.profile-opt-btn[data-range].active')?.dataset.range || '7d',
                 customDays: profCustomDays.value,
-                view:       document.getElementById('prof-view-table').classList.contains('active') ? 'table' : 'chart',
+                weeklyRange:   document.querySelector('.profile-opt-btn[data-weeks].active')?.dataset.weeks || '4',
+                customWeeks:   profCustomWeeks.value,
+                defaultLanding: landing,
                 heightUnit: document.getElementById('prof-height-metric').classList.contains('active') ? 'metric' : 'us',
-                goalLine:   document.getElementById('prof-goal-line-on').classList.contains('active')   ? '1' : '0',
-                maLine:     document.getElementById('prof-ma-line-on').classList.contains('active')     ? '1' : '0',
-                trendLine:  document.getElementById('prof-trend-line-on').classList.contains('active') ? '1' : '0',
-                chartType:    document.getElementById('prof-chart-interp').classList.contains('active')  ? 'interpolated' : 'actual',
-                defaultChart: document.getElementById('prof-default-chart-weekly').classList.contains('active') ? 'weekly' : 'daily',
-                healthBar:    document.getElementById('prof-healthbar-on').classList.contains('active')  ? '1' : '0'
+                goalLine:        document.getElementById('prof-goal-line-on').classList.contains('active')       ? '1' : '0',
+                maLine:          document.getElementById('prof-ma-line-on').classList.contains('active')         ? '1' : '0',
+                trendLine:       document.getElementById('prof-trend-line-on').classList.contains('active')      ? '1' : '0',
+                chartType:       document.getElementById('prof-chart-interp').classList.contains('active') ? 'interpolated' :
+                                 document.getElementById('prof-chart-actual').classList.contains('active') ? 'actual' :
+                                 document.getElementById('prof-chart-dots').classList.contains('active')   ? 'dots-only' : 'no-data',
+                weeklyGoalLine:  document.getElementById('prof-weekly-goal-on').classList.contains('active')     ? '1' : '0',
+                weeklyTrendLine: document.getElementById('prof-weekly-trend-on').classList.contains('active')    ? '1' : '0',
+                weeklyMinMax:    document.getElementById('prof-weekly-minmax-on').classList.contains('active')   ? '1' : '0',
+                healthBar:       document.getElementById('prof-healthbar-on').classList.contains('active')       ? '1' : '0',
+                fighterName:     document.getElementById('prof-fighter-name-on').classList.contains('active')    ? '1' : '0',
+                dateFormat:      document.getElementById('prof-date-dmy').classList.contains('active')           ? 'dmy' : 'mdy'
             };
         }
 
@@ -3149,11 +3411,14 @@
             if (!openState) return false;
             const cur = getSelections();
             return cur.unit !== openState.unit || cur.range !== openState.range ||
-                   cur.customDays !== openState.customDays || cur.view !== openState.view ||
+                   cur.customDays !== openState.customDays || cur.weeklyRange !== openState.weeklyRange ||
+                   cur.customWeeks !== openState.customWeeks || cur.defaultLanding !== openState.defaultLanding ||
                    cur.heightUnit !== openState.heightUnit || cur.goalLine !== openState.goalLine ||
                    cur.maLine !== openState.maLine || cur.trendLine !== openState.trendLine ||
-                   cur.chartType !== openState.chartType || cur.defaultChart !== openState.defaultChart ||
-               cur.healthBar !== openState.healthBar;
+                   cur.chartType !== openState.chartType ||
+                   cur.weeklyGoalLine !== openState.weeklyGoalLine || cur.weeklyTrendLine !== openState.weeklyTrendLine ||
+                   cur.weeklyMinMax !== openState.weeklyMinMax || cur.healthBar !== openState.healthBar ||
+                   cur.fighterName !== openState.fighterName || cur.dateFormat !== openState.dateFormat;
         }
 
         function forceClose() {
@@ -3178,25 +3443,36 @@
         }
 
         function openModal() {
-            const curUnit       = localStorage.getItem('pref_unit')        || 'lbs';
-            const _chartState   = window.getChartRange ? window.getChartRange() : null;
-            const curRange      = (_chartState && _chartState.range) || localStorage.getItem('pref_range') || '7d';
-            const curCustomDays = (_chartState && _chartState.range === 'custom' && _chartState.days)
+            const curUnit           = localStorage.getItem('pref_unit')             || 'lbs';
+            const _chartState       = window.getChartRange ? window.getChartRange() : null;
+            const curRange          = (_chartState && _chartState.range) || localStorage.getItem('pref_range') || '7d';
+            const curCustomDays     = (_chartState && _chartState.range === 'custom' && _chartState.days)
                 ? String(_chartState.days)
                 : (localStorage.getItem('pref_custom_days') || '');
-            const curView       = localStorage.getItem('pref_view')        || 'chart';
-            const curHeightUnit = localStorage.getItem('pref_height_unit') || 'us';
-            const curGoalLine   = localStorage.getItem('pref_goal_line')  || '0';
-            const curMaLine     = localStorage.getItem('pref_ma_line')    || '1';
-            const curTrendLine  = localStorage.getItem('pref_trend_line') || '0';
-            const curChartType    = localStorage.getItem('pref_chart_type')         || 'interpolated';
-            const curDefaultChart = localStorage.getItem('pref_default_chart_view') || 'daily';
-            const curHealthBar    = localStorage.getItem('pref_healthbar')           || '1';
+            const curWeeklyState    = window.getWeeklyChartRange ? window.getWeeklyChartRange() : null;
+            const curWeeklyRange    = (curWeeklyState && curWeeklyState.range) || localStorage.getItem('pref_weekly_range') || '4';
+            const curCustomWeeks    = (curWeeklyState && curWeeklyState.range === 'custom' && curWeeklyState.weeks)
+                ? String(curWeeklyState.weeks)
+                : (localStorage.getItem('pref_custom_weeks') || '');
+            const curDefaultLanding = localStorage.getItem('pref_default_landing') || 'daily';
+            const curHeightUnit     = localStorage.getItem('pref_height_unit')     || 'us';
+            const curGoalLine       = localStorage.getItem('pref_goal_line')       || '0';
+            const curMaLine         = localStorage.getItem('pref_ma_line')         || '1';
+            const curTrendLine      = localStorage.getItem('pref_trend_line')      || '0';
+            const curChartType      = localStorage.getItem('pref_chart_type')      || 'interpolated';
+            const curHealthBar       = localStorage.getItem('pref_healthbar')         || '1';
+            const curFighterName     = localStorage.getItem('pref_fighter_name')    || '1';
+            const curWeeklyMinMax    = localStorage.getItem('pref_weekly_minmax')   || '1';
+            const curWeeklyGoalLine  = localStorage.getItem('pref_weekly_goal_line') || '0';
+            const curWeeklyTrendLine = localStorage.getItem('pref_weekly_trend_line') || '0';
+            const curDateFormat      = localStorage.getItem('pref_date_format')      || 'mdy';
 
-            document.getElementById('prof-lbs-btn').classList.toggle('active',         curUnit === 'lbs');
-            document.getElementById('prof-kg-btn').classList.toggle('active',          curUnit === 'kg');
-            document.getElementById('prof-view-chart').classList.toggle('active',      curView === 'chart');
-            document.getElementById('prof-view-table').classList.toggle('active',      curView === 'table');
+            document.getElementById('prof-lbs-btn').classList.toggle('active',               curUnit === 'lbs');
+            document.getElementById('prof-kg-btn').classList.toggle('active',                curUnit === 'kg');
+            document.getElementById('prof-landing-daily').classList.toggle('active',         curDefaultLanding === 'daily');
+            document.getElementById('prof-landing-weekly').classList.toggle('active',        curDefaultLanding === 'weekly');
+            document.getElementById('prof-landing-table-daily').classList.toggle('active',   curDefaultLanding === 'table-daily');
+            document.getElementById('prof-landing-table-weekly').classList.toggle('active',  curDefaultLanding === 'table-weekly');
             document.getElementById('prof-height-us').classList.toggle('active',       curHeightUnit === 'us');
             document.getElementById('prof-height-metric').classList.toggle('active',   curHeightUnit === 'metric');
             document.getElementById('prof-goal-line-on').classList.toggle('active',    curGoalLine === '1');
@@ -3205,18 +3481,34 @@
             document.getElementById('prof-ma-line-off').classList.toggle('active',      curMaLine !== '1');
             document.getElementById('prof-trend-line-on').classList.toggle('active',   curTrendLine === '1');
             document.getElementById('prof-trend-line-off').classList.toggle('active',  curTrendLine !== '1');
-            document.getElementById('prof-chart-interp').classList.toggle('active',           curChartType !== 'actual');
-            document.getElementById('prof-chart-actual').classList.toggle('active',           curChartType === 'actual');
-            document.getElementById('prof-default-chart-daily').classList.toggle('active',   curDefaultChart !== 'weekly');
-            document.getElementById('prof-default-chart-weekly').classList.toggle('active',  curDefaultChart === 'weekly');
-            document.getElementById('prof-healthbar-on').classList.toggle('active',          curHealthBar !== '0');
-            document.getElementById('prof-healthbar-off').classList.toggle('active',   curHealthBar === '0');
+            document.getElementById('prof-chart-interp').classList.toggle('active', curChartType === 'interpolated');
+            document.getElementById('prof-chart-actual').classList.toggle('active', curChartType === 'actual');
+            document.getElementById('prof-chart-dots').classList.toggle('active',   curChartType === 'dots-only');
+            document.getElementById('prof-chart-none').classList.toggle('active',   curChartType === 'no-data');
+            document.getElementById('prof-healthbar-on').classList.toggle('active',        curHealthBar !== '0');
+            document.getElementById('prof-healthbar-off').classList.toggle('active',       curHealthBar === '0');
+            document.getElementById('prof-fighter-name-on').classList.toggle('active',  curFighterName !== '0');
+            document.getElementById('prof-fighter-name-off').classList.toggle('active', curFighterName === '0');
+            document.getElementById('prof-weekly-minmax-on').classList.toggle('active',   curWeeklyMinMax === '1');
+            document.getElementById('prof-weekly-minmax-off').classList.toggle('active',  curWeeklyMinMax !== '1');
+            document.getElementById('prof-weekly-goal-on').classList.toggle('active',     curWeeklyGoalLine === '1');
+            document.getElementById('prof-weekly-goal-off').classList.toggle('active',    curWeeklyGoalLine !== '1');
+            document.getElementById('prof-weekly-trend-on').classList.toggle('active',    curWeeklyTrendLine === '1');
+            document.getElementById('prof-weekly-trend-off').classList.toggle('active',   curWeeklyTrendLine !== '1');
+            document.getElementById('prof-date-mdy').classList.toggle('active', curDateFormat === 'mdy');
+            document.getElementById('prof-date-dmy').classList.toggle('active', curDateFormat === 'dmy');
 
             document.querySelectorAll('.profile-opt-btn[data-range]').forEach(b => {
                 b.classList.toggle('active', b.dataset.range === curRange);
             });
+            document.querySelectorAll('.profile-opt-btn[data-weeks]').forEach(b => {
+                b.classList.toggle('active', b.dataset.weeks === curWeeklyRange);
+            });
+            document.getElementById('prof-custom-wrap-weekly').hidden = curWeeklyRange !== 'custom';
 
-            profCustomDays.value = curCustomDays;
+            profCustomDays.value  = curCustomDays;
+            profCustomWeeks.value = curCustomWeeks;
+            syncFighterNameToHealthBar();
             modal.hidden = false;
             openState = getSelections();
             window.activeModal = { tryClose };
@@ -3232,18 +3524,42 @@
             });
         });
 
-        document.querySelectorAll('#prof-view-chart, #prof-view-table').forEach(b => {
+        document.querySelectorAll('#prof-landing-daily, #prof-landing-weekly, #prof-landing-table-daily, #prof-landing-table-weekly').forEach(b => {
             b.addEventListener('click', () => {
-                document.getElementById('prof-view-chart').classList.remove('active');
-                document.getElementById('prof-view-table').classList.remove('active');
+                ['prof-landing-daily', 'prof-landing-weekly', 'prof-landing-table-daily', 'prof-landing-table-weekly']
+                    .forEach(id => document.getElementById(id).classList.remove('active'));
                 b.classList.add('active');
             });
+        });
+
+        document.querySelectorAll('.profile-opt-btn[data-weeks]').forEach(b => {
+            b.addEventListener('click', () => {
+                document.querySelectorAll('.profile-opt-btn[data-weeks]').forEach(x => x.classList.remove('active'));
+                b.classList.add('active');
+                const isCustom = b.dataset.weeks === 'custom';
+                document.getElementById('prof-custom-wrap-weekly').hidden = !isCustom;
+                if (isCustom) { profCustomWeeks.focus(); profCustomWeeks.select(); }
+            });
+        });
+
+        profCustomWeeks.addEventListener('change', () => {
+            const v = parseInt(profCustomWeeks.value);
+            if (!v || v < 4) profCustomWeeks.value = 4;
+            else if (v > 156) profCustomWeeks.value = 156;
         });
 
         document.querySelectorAll('#prof-height-us, #prof-height-metric').forEach(b => {
             b.addEventListener('click', () => {
                 document.getElementById('prof-height-us').classList.remove('active');
                 document.getElementById('prof-height-metric').classList.remove('active');
+                b.classList.add('active');
+            });
+        });
+
+        document.querySelectorAll('#prof-date-mdy, #prof-date-dmy').forEach(b => {
+            b.addEventListener('click', () => {
+                document.getElementById('prof-date-mdy').classList.remove('active');
+                document.getElementById('prof-date-dmy').classList.remove('active');
                 b.classList.add('active');
             });
         });
@@ -3272,26 +3588,64 @@
             });
         });
 
-        document.querySelectorAll('#prof-chart-interp, #prof-chart-actual').forEach(b => {
+        document.querySelectorAll('#prof-chart-interp, #prof-chart-actual, #prof-chart-dots, #prof-chart-none').forEach(b => {
             b.addEventListener('click', () => {
-                document.getElementById('prof-chart-interp').classList.remove('active');
-                document.getElementById('prof-chart-actual').classList.remove('active');
+                ['prof-chart-interp', 'prof-chart-actual', 'prof-chart-dots', 'prof-chart-none']
+                    .forEach(id => document.getElementById(id).classList.remove('active'));
                 b.classList.add('active');
             });
         });
 
-        document.querySelectorAll('#prof-default-chart-daily, #prof-default-chart-weekly').forEach(b => {
+        document.querySelectorAll('#prof-fighter-name-on, #prof-fighter-name-off').forEach(b => {
             b.addEventListener('click', () => {
-                document.getElementById('prof-default-chart-daily').classList.remove('active');
-                document.getElementById('prof-default-chart-weekly').classList.remove('active');
+                document.getElementById('prof-fighter-name-on').classList.remove('active');
+                document.getElementById('prof-fighter-name-off').classList.remove('active');
                 b.classList.add('active');
             });
         });
+
+
+        function syncFighterNameToHealthBar() {
+            const hudOff = document.getElementById('prof-healthbar-off').classList.contains('active');
+            const fnOn  = document.getElementById('prof-fighter-name-on');
+            const fnOff = document.getElementById('prof-fighter-name-off');
+            fnOn.disabled  = hudOff;
+            fnOff.disabled = hudOff;
+            if (hudOff) {
+                fnOn.classList.remove('active');
+                fnOff.classList.add('active');
+            }
+        }
 
         document.querySelectorAll('#prof-healthbar-on, #prof-healthbar-off').forEach(b => {
             b.addEventListener('click', () => {
                 document.getElementById('prof-healthbar-on').classList.remove('active');
                 document.getElementById('prof-healthbar-off').classList.remove('active');
+                b.classList.add('active');
+                syncFighterNameToHealthBar();
+            });
+        });
+
+        document.querySelectorAll('#prof-weekly-minmax-on, #prof-weekly-minmax-off').forEach(b => {
+            b.addEventListener('click', () => {
+                document.getElementById('prof-weekly-minmax-on').classList.remove('active');
+                document.getElementById('prof-weekly-minmax-off').classList.remove('active');
+                b.classList.add('active');
+            });
+        });
+
+        document.querySelectorAll('#prof-weekly-goal-on, #prof-weekly-goal-off').forEach(b => {
+            b.addEventListener('click', () => {
+                document.getElementById('prof-weekly-goal-on').classList.remove('active');
+                document.getElementById('prof-weekly-goal-off').classList.remove('active');
+                b.classList.add('active');
+            });
+        });
+
+        document.querySelectorAll('#prof-weekly-trend-on, #prof-weekly-trend-off').forEach(b => {
+            b.addEventListener('click', () => {
+                document.getElementById('prof-weekly-trend-on').classList.remove('active');
+                document.getElementById('prof-weekly-trend-off').classList.remove('active');
                 b.classList.add('active');
             });
         });
@@ -3317,29 +3671,47 @@
             const newUnit       = document.getElementById('prof-kg-btn').classList.contains('active') ? 'kg' : 'lbs';
             const newRange      = document.querySelector('.profile-opt-btn[data-range].active')?.dataset.range || '7d';
             const newCustomDays = Math.min(Math.max(parseInt(profCustomDays.value) || 7, 7), 1095);
-            const newView       = document.getElementById('prof-view-table').classList.contains('active') ? 'table' : 'chart';
+            const newWeeklyRange  = document.querySelector('.profile-opt-btn[data-weeks].active')?.dataset.weeks || '4';
+            const newCustomWeeks  = Math.min(Math.max(parseInt(profCustomWeeks.value) || 4, 4), 156);
+            const newDefaultLanding = document.getElementById('prof-landing-table-weekly').classList.contains('active') ? 'table-weekly'
+                                    : document.getElementById('prof-landing-table-daily').classList.contains('active')  ? 'table-daily'
+                                    : document.getElementById('prof-landing-weekly').classList.contains('active')        ? 'weekly'
+                                    : 'daily';
             const newHeightUnit = document.getElementById('prof-height-metric').classList.contains('active') ? 'metric' : 'us';
 
             const newGoalLine  = document.getElementById('prof-goal-line-on').classList.contains('active')   ? '1' : '0';
             const newMaLine    = document.getElementById('prof-ma-line-on').classList.contains('active')     ? '1' : '0';
             const newTrendLine = document.getElementById('prof-trend-line-on').classList.contains('active') ? '1' : '0';
-            const newChartType    = document.getElementById('prof-chart-interp').classList.contains('active')           ? 'interpolated' : 'actual';
-            const newDefaultChart = document.getElementById('prof-default-chart-weekly').classList.contains('active') ? 'weekly' : 'daily';
-            const newHealthBar    = document.getElementById('prof-healthbar-on').classList.contains('active')          ? '1' : '0';
+            const newChartType = document.getElementById('prof-chart-interp').classList.contains('active') ? 'interpolated' :
+                                 document.getElementById('prof-chart-actual').classList.contains('active') ? 'actual' :
+                                 document.getElementById('prof-chart-dots').classList.contains('active')   ? 'dots-only' : 'no-data';
+            const newHealthBar     = document.getElementById('prof-healthbar-on').classList.contains('active')      ? '1' : '0';
+            const newFighterName   = document.getElementById('prof-fighter-name-on').classList.contains('active')  ? '1' : '0';
+            const newWeeklyMinMax  = document.getElementById('prof-weekly-minmax-on').classList.contains('active')  ? '1' : '0';
+            const newWeeklyGoal   = document.getElementById('prof-weekly-goal-on').classList.contains('active')     ? '1' : '0';
+            const newWeeklyTrend  = document.getElementById('prof-weekly-trend-on').classList.contains('active')    ? '1' : '0';
+            const newDateFormat   = document.getElementById('prof-date-dmy').classList.contains('active')           ? 'dmy' : 'mdy';
 
-            window.savePref('pref_unit',        newUnit);
-            window.savePref('pref_range',       newRange);
-            window.savePref('pref_custom_days', newCustomDays);
-            window.savePref('pref_view',        newView);
-            window.savePref('pref_height_unit', newHeightUnit);
-            window.savePref('pref_goal_line',   newGoalLine);
-            window.savePref('pref_ma_line',     newMaLine);
-            window.savePref('pref_trend_line',  newTrendLine);
-            window.savePref('pref_chart_type',          newChartType);
-            window.savePref('pref_default_chart_view', newDefaultChart);
+            window.savePref('pref_unit',             newUnit);
+            window.savePref('pref_range',            newRange);
+            window.savePref('pref_custom_days',      newCustomDays);
+            window.savePref('pref_weekly_range',     newWeeklyRange);
+            window.savePref('pref_custom_weeks',     newCustomWeeks);
+            window.savePref('pref_default_landing',  newDefaultLanding);
+            window.savePref('pref_height_unit',      newHeightUnit);
+            window.savePref('pref_goal_line',        newGoalLine);
+            window.savePref('pref_ma_line',          newMaLine);
+            window.savePref('pref_trend_line',       newTrendLine);
+            window.savePref('pref_chart_type',       newChartType);
             window.savePref('pref_healthbar',          newHealthBar);
+            window.savePref('pref_fighter_name',       newFighterName);
+            window.savePref('pref_weekly_minmax',     newWeeklyMinMax);
+            window.savePref('pref_weekly_goal_line',  newWeeklyGoal);
+            window.savePref('pref_weekly_trend_line', newWeeklyTrend);
+            window.savePref('pref_date_format',       newDateFormat);
             const hud = document.getElementById('healthbar-hud');
             if (hud) hud.style.display = newHealthBar === '1' ? '' : 'none';
+            if (window.updateHealthBarName) window.updateHealthBarName();
 
             if (newUnit !== window.activeUnit) {
                 window.activeUnit = newUnit;
@@ -3348,14 +3720,14 @@
             }
 
             const chartNeedsRefresh = !openState ||
-                newUnit      !== openState.unit      ||
-                newRange     !== openState.range     ||
+                newUnit       !== openState.unit      ||
+                newRange      !== openState.range     ||
                 String(newCustomDays) !== openState.customDays ||
-                newView      !== openState.view      ||
-                newGoalLine  !== openState.goalLine  ||
-                newMaLine    !== openState.maLine    ||
-                newTrendLine !== openState.trendLine ||
-                newChartType !== openState.chartType;
+                newGoalLine   !== openState.goalLine  ||
+                newMaLine     !== openState.maLine    ||
+                newTrendLine  !== openState.trendLine ||
+                newChartType  !== openState.chartType ||
+                newDateFormat !== openState.dateFormat;
 
             if (chartNeedsRefresh) {
                 const days     = newRange === 'custom' ? newCustomDays : undefined;
@@ -3366,23 +3738,154 @@
                     const ci = document.getElementById('custom-days');
                     if (ci) ci.value = newCustomDays;
                 }
-                if (window.setView) window.setView(newView, newRange, days);
-                else if (window.refreshChart) window.refreshChart(newRange, days);
+                if (window.refreshChart) window.refreshChart(newRange, days);
+            }
+
+            if (openState && newDefaultLanding !== openState.defaultLanding) {
+                if (window.applyChartNav) window.applyChartNav();
             }
 
             if (window.weeklyChartLoaded && openState) {
                 const weeklyNeedsRefresh = newUnit !== openState.unit ||
-                    newGoalLine !== openState.goalLine || newTrendLine !== openState.trendLine;
-                if (weeklyNeedsRefresh && window.refreshWeeklyChart) window.refreshWeeklyChart();
+                    newWeeklyRange !== openState.weeklyRange || newCustomWeeks !== String(openState.customWeeks) ||
+                    newWeeklyGoal !== openState.weeklyGoalLine || newWeeklyTrend !== openState.weeklyTrendLine ||
+                    newWeeklyMinMax !== openState.weeklyMinMax || newDateFormat !== openState.dateFormat;
+                if (weeklyNeedsRefresh) {
+                    if (window.setWeeklyRange) window.setWeeklyRange(newWeeklyRange, newCustomWeeks);
+                    if (window.refreshWeeklyChart) window.refreshWeeklyChart();
+                }
             }
 
             forceClose();
         }
 
+        // Collapsible section headers — height-animated, state persisted in localStorage
+        ['measurements', 'landing', 'overtime', 'weekly', 'hud'].forEach(key => {
+            const hdr  = document.querySelector('.settings-section-label[data-section="' + key + '"]');
+            const body = document.getElementById('ssb-' + key);
+            if (!hdr || !body) return;
+
+            // Set initial collapsed state immediately (modal is hidden, no animation needed)
+            if (localStorage.getItem('pref_section_' + key) === '0') {
+                body.style.height = '0px';
+                hdr.classList.add('collapsed');
+            }
+
+            hdr.addEventListener('click', () => {
+                const nowCollapsed = !hdr.classList.contains('collapsed');
+                hdr.classList.toggle('collapsed', nowCollapsed);
+                localStorage.setItem('pref_section_' + key, nowCollapsed ? '0' : '1');
+                if (nowCollapsed) {
+                    // Collapse: lock in current height, force reflow, then animate to 0
+                    body.style.height = body.scrollHeight + 'px';
+                    body.offsetHeight; // force reflow so transition has a defined start
+                    body.style.height = '0px';
+                } else {
+                    // Expand: animate from 0 to content height, then clear to auto
+                    body.style.height = body.scrollHeight + 'px';
+                    body.addEventListener('transitionend', () => {
+                        body.style.height = '';
+                    }, { once: true });
+                }
+            });
+        });
+
+        function resetDefaults() {
+            const activate = (onId, offId) => {
+                document.getElementById(onId).classList.add('active');
+                document.getElementById(offId).classList.remove('active');
+            };
+            // Default Formats
+            activate('prof-lbs-btn', 'prof-kg-btn');
+            activate('prof-height-us', 'prof-height-metric');
+            activate('prof-date-mdy', 'prof-date-dmy');
+            // Chart Landing
+            ['prof-landing-daily','prof-landing-weekly','prof-landing-table-daily','prof-landing-table-weekly']
+                .forEach(id => document.getElementById(id).classList.remove('active'));
+            document.getElementById('prof-landing-daily').classList.add('active');
+            // Daily Summary range
+            document.querySelectorAll('.profile-opt-btn[data-range]').forEach(b => b.classList.remove('active'));
+            document.getElementById('prof-range-7d').classList.add('active');
+            profCustomDays.value = '';
+            // Daily Summary toggles
+            activate('prof-ma-line-on',    'prof-ma-line-off');
+            activate('prof-chart-interp',  'prof-chart-actual');
+            document.getElementById('prof-chart-dots').classList.remove('active');
+            document.getElementById('prof-chart-none').classList.remove('active');
+            activate('prof-trend-line-off', 'prof-trend-line-on');
+            activate('prof-goal-line-off',  'prof-goal-line-on');
+            // Weekly Summary range
+            document.querySelectorAll('.profile-opt-btn[data-weeks]').forEach(b => b.classList.remove('active'));
+            document.getElementById('prof-wrange-4').classList.add('active');
+            document.getElementById('prof-custom-wrap-weekly').hidden = true;
+            profCustomWeeks.value = '';
+            // Weekly Summary toggles
+            activate('prof-weekly-trend-off', 'prof-weekly-trend-on');
+            activate('prof-weekly-goal-off',  'prof-weekly-goal-on');
+            activate('prof-weekly-minmax-on', 'prof-weekly-minmax-off');
+            // HUD
+            activate('prof-healthbar-on',     'prof-healthbar-off');
+            activate('prof-fighter-name-on',  'prof-fighter-name-off');
+            syncFighterNameToHealthBar();
+        }
+
+        document.getElementById('settings-reset').addEventListener('click', () => {
+            window.showAppConfirm(
+                'Reset to Defaults',
+                'All settings will be restored to their original defaults. Click Save afterwards to make the changes permanent, or Cancel to discard.',
+                'Reset',
+                resetDefaults,
+                null,
+                'Cancel'
+            );
+        });
         cancelBtn.addEventListener('click', tryClose);
         saveBtn.addEventListener('click',   doSave);
         modal.addEventListener('click', e => { if (e.target === modal) tryClose(); });
         document.addEventListener('keydown', e => { if (e.key === 'Escape' && !modal.hidden) tryClose(); });
+    })();
+
+    // Scroll lock: intercept wheel events so the page never scrolls while a modal
+    // is open (avoids any overflow/scrollbar change that would shift the background).
+    // Wheel events inside .settings-scroll-body pass through normally; all others
+    // are cancelled and redirected to that scroll body when one is present.
+    (function () {
+        const overlays = Array.from(document.querySelectorAll('.modal-overlay'));
+
+        window.addEventListener('wheel', function (e) {
+            const activeOverlay = overlays.find(el => !el.hidden);
+            if (!activeOverlay) return;
+            if (e.target.closest('.settings-scroll-body')) return; // let it scroll naturally
+            e.preventDefault();
+            const scrollEl = activeOverlay.querySelector('.settings-scroll-body');
+            if (scrollEl) scrollEl.scrollTop += e.deltaY;
+        }, { passive: false });
+    })();
+
+    // Click-anywhere-to-toggle: runs in capture phase so it fires before the button's
+    // own handler. If an inactive button was clicked, we return and let its handler run.
+    // If the active button (or track gap) was clicked, we stop propagation and fire the
+    // other button ourselves — preventing the double-fire that would cancel the change.
+    (function () {
+        document.querySelectorAll('.profile-toggle-row.is-toggle').forEach(row => {
+            let busy = false;
+            row.addEventListener('click', function (e) {
+                if (busy) return;
+                const clicked = e.target.closest('.profile-opt-btn');
+                if (clicked && !clicked.classList.contains('active')) return; // inactive → let its handler fire
+                // Active button clicked, or gap clicked: stop propagation and toggle ourselves
+                e.stopPropagation();
+                busy = true;
+                const onBtn  = row.querySelector('.profile-opt-btn:first-child');
+                const offBtn = row.querySelector('.profile-opt-btn:last-child');
+                if (onBtn.classList.contains('active')) {
+                    offBtn.click();
+                } else {
+                    onBtn.click();
+                }
+                busy = false;
+            }, true); // capture phase: fires before the button's own listeners
+        });
     })();
 </script>
 </body>
