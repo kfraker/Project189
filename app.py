@@ -43,8 +43,8 @@ def init_db():
             id          INTEGER PRIMARY KEY AUTOINCREMENT,
             user_id     INTEGER NOT NULL DEFAULT 1 REFERENCES users(id),
             date        TEXT    NOT NULL,
-            weight_lbs  REAL    NOT NULL,
-            weight_kg   REAL    NOT NULL,
+            weight_lbs  REAL,
+            weight_kg   REAL,
             UNIQUE(user_id, date)
         )
     ''')
@@ -91,6 +91,29 @@ def _migrate(conn: sqlite3.Connection) -> None:
     cols = {row[1] for row in conn.execute("PRAGMA table_info(weights)")}
     if 'notes' not in cols:
         conn.execute("ALTER TABLE weights ADD COLUMN notes TEXT NOT NULL DEFAULT ''")
+    # Make weight columns nullable so note-only entries (no weigh-in) can be stored
+    pragma = conn.execute("PRAGMA table_info(weights)").fetchall()
+    wt_col = next((r for r in pragma if r['name'] == 'weight_lbs'), None)
+    if wt_col and wt_col['notnull'] == 1:
+        conn.execute("DROP TABLE IF EXISTS weights_v1")
+        conn.execute("ALTER TABLE weights RENAME TO weights_v1")
+        conn.execute('''
+            CREATE TABLE weights (
+                id          INTEGER PRIMARY KEY AUTOINCREMENT,
+                user_id     INTEGER NOT NULL DEFAULT 1 REFERENCES users(id),
+                date        TEXT    NOT NULL,
+                weight_lbs  REAL,
+                weight_kg   REAL,
+                notes       TEXT    NOT NULL DEFAULT '',
+                UNIQUE(user_id, date)
+            )
+        ''')
+        conn.execute("""
+            INSERT INTO weights (id, user_id, date, weight_lbs, weight_kg, notes)
+            SELECT id, user_id, date, weight_lbs, weight_kg, COALESCE(notes, '')
+            FROM weights_v1
+        """)
+        conn.execute("DROP TABLE weights_v1")
 
 
 init_db()
@@ -138,11 +161,12 @@ def save_weight():
     conn = get_db()
     try:
         existing = conn.execute(
-            "SELECT id FROM weights WHERE user_id = ? AND date = ?",
+            "SELECT id, weight_lbs FROM weights WHERE user_id = ? AND date = ?",
             (_USER_ID, entry_date),
         ).fetchone()
 
-        if existing and not overwrite:
+        note_only = existing and existing['weight_lbs'] is None
+        if existing and not note_only and not overwrite:
             return jsonify({"conflict": True, "date": entry_date})
 
         if existing:
@@ -181,7 +205,8 @@ def get_weights():
             else:                      days = min(custom_days or 30, 1095)
 
             latest = conn.execute(
-                "SELECT MAX(date) as d FROM weights WHERE user_id = ?", (_USER_ID,)
+                "SELECT MAX(date) as d FROM weights WHERE user_id = ? AND weight_lbs IS NOT NULL",
+                (_USER_ID,),
             ).fetchone()["d"]
             anchor = date.fromisoformat(latest) if latest else date.today()
             start = (anchor - timedelta(days=days - 1)).isoformat()
@@ -201,7 +226,7 @@ def latest_weight():
     conn = get_db()
     try:
         row = conn.execute(
-            "SELECT weight_lbs, weight_kg FROM weights WHERE user_id = ? ORDER BY date DESC LIMIT 1",
+            "SELECT weight_lbs, weight_kg FROM weights WHERE user_id = ? AND weight_lbs IS NOT NULL ORDER BY date DESC LIMIT 1",
             (_USER_ID,),
         ).fetchone()
         oldest = conn.execute(
@@ -252,7 +277,20 @@ def save_note(entry_date):
         )
         conn.commit()
         if cursor.rowcount == 0:
-            return jsonify({"error": "No entry found for that date"}), 404
+            if notes:
+                conn.execute(
+                    "INSERT INTO weights (user_id, date, weight_lbs, weight_kg, notes) "
+                    "VALUES (?, ?, NULL, NULL, ?)",
+                    (_USER_ID, entry_date, notes),
+                )
+                conn.commit()
+            return jsonify({"success": True})
+        if not notes:
+            conn.execute(
+                "DELETE FROM weights WHERE user_id = ? AND date = ? AND weight_lbs IS NULL",
+                (_USER_ID, entry_date),
+            )
+            conn.commit()
         return jsonify({"success": True})
     finally:
         conn.close()

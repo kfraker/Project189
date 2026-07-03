@@ -165,6 +165,7 @@
             <!-- Slide viewport: page 0 = Daily Summary, page 1 = Weekly Summary -->
             <div class="chart-with-nav">
                 <button class="chart-page-btn chart-page-btn--left invisible" id="chart-page-btn-left" data-tip="Daily Summary">‹</button>
+                <div class="chart-page-area">
                 <div class="chart-slide-viewport" id="chart-slide-viewport">
                     <div class="chart-slide-inner" id="chart-slide-inner">
 
@@ -223,31 +224,32 @@
 
                     </div>
                 </div>
+                <div class="data-table-wrap" id="data-table-wrap" hidden>
+                    <h3 class="table-view-title" id="table-view-title" hidden>Daily Summary</h3>
+                    <div class="data-table-scroll-area">
+                        <div class="data-table-scroll">
+                            <table class="data-table">
+                                <thead>
+                                    <tr>
+                                        <th style="width:27%">Date</th>
+                                        <th id="th-primary"   style="width:25%">Weight (lbs)</th>
+                                        <th id="th-secondary" style="width:25%">Weight (kgs)</th>
+                                        <th style="width:9%"></th>
+                                        <th style="width:14%"></th>
+                                    </tr>
+                                </thead>
+                                <tbody id="data-table-body"></tbody>
+                            </table>
+                        </div>
+                        <div class="custom-scrollbar-track">
+                            <div class="custom-scrollbar-thumb" id="custom-scrollbar-thumb"></div>
+                        </div>
+                    </div>
+                </div>
+                </div><!-- end .chart-page-area -->
                 <button class="chart-page-btn chart-page-btn--right" id="chart-page-btn-right" data-tip="Weekly Summary">›</button>
             </div>
 
-            <!-- Shared: data table and footer -->
-            <div class="data-table-wrap" id="data-table-wrap" hidden>
-                <h3 class="table-view-title" id="table-view-title" hidden>Daily Summary</h3>
-                <div class="data-table-scroll-area">
-                    <div class="data-table-scroll">
-                        <table class="data-table">
-                            <thead>
-                                <tr>
-                                    <th style="width:30%">Date</th>
-                                    <th id="th-primary"   style="width:28%">Weight (lbs)</th>
-                                    <th id="th-secondary" style="width:28%">Weight (kgs)</th>
-                                    <th style="width:14%"></th>
-                                </tr>
-                            </thead>
-                            <tbody id="data-table-body"></tbody>
-                        </table>
-                    </div>
-                    <div class="custom-scrollbar-track">
-                        <div class="custom-scrollbar-thumb" id="custom-scrollbar-thumb"></div>
-                    </div>
-                </div>
-            </div>
             <div class="chart-footer">
                 <button class="unit-toggle-btn" id="unit-toggle-btn">KGS</button>
                 <button class="view-toggle-btn" id="view-toggle-btn">Table</button>
@@ -627,6 +629,20 @@
                     <div class="profile-toggle-row is-toggle">
                         <button class="profile-opt-btn" id="prof-weekly-minmax-on">On</button>
                         <button class="profile-opt-btn" id="prof-weekly-minmax-off">Off</button>
+                    </div>
+                </div>
+                <div class="overlay-item">
+                    <label class="profile-setting-label">Table Expanded</label>
+                    <div class="profile-toggle-row is-toggle">
+                        <button class="profile-opt-btn" id="prof-weekly-table-exp-on">On</button>
+                        <button class="profile-opt-btn" id="prof-weekly-table-exp-off">Off</button>
+                    </div>
+                </div>
+                <div class="overlay-item">
+                    <label class="profile-setting-label">Week Mode</label>
+                    <div class="profile-toggle-row is-toggle">
+                        <button class="profile-opt-btn" id="prof-weekly-mode-rolling" data-tip="7-day windows ending today">Rolling</button>
+                        <button class="profile-opt-btn" id="prof-weekly-mode-iso" data-tip="Calendar weeks (Mon–Sun)">ISO</button>
                     </div>
                 </div>
             </div>
@@ -1189,9 +1205,20 @@
                         items.push({ text: 'TREND ' + trendVal.toFixed(1) + ' ' + unit, y, color: 'rgba(160, 100, 255, 0.95)' });
                 }
 
-                // Resolve overlaps: sort top→bottom, push down, then pull up from bottom
+                // Resolve overlaps: sort top→bottom, nudge from ticks, push down, pull up from bottom
                 const minGap = 13;
                 items.sort((a, b) => a.y - b.y);
+
+                const tickYs = (yScale.ticks || [])
+                    .map(t => Math.round(yScale.getPixelForValue(t.value)))
+                    .filter(ty => isFinite(ty) && ty >= top && ty <= bottom);
+                for (const item of items) {
+                    for (const ty of tickYs) {
+                        if (Math.abs(item.y - ty) < minGap)
+                            item.y = item.y <= ty ? ty - minGap : ty + minGap;
+                    }
+                }
+
                 for (let i = 1; i < items.length; i++) {
                     if (items[i].y < items[i - 1].y + minGap)
                         items[i].y = items[i - 1].y + minGap;
@@ -1231,11 +1258,23 @@
                 return;
             }
 
+            // Build note map from all rows (includes note-only entries with null weights)
+            window.noteMap = new Map(rows.map(r => [r.date, r.notes || '']));
+
+            // Exclude note-only rows (null weights) from all chart data calculations
+            const weightRows = rows.filter(r => r.weight_lbs != null);
+            if (!weightRows.length) {
+                canvas.hidden   = true;
+                emptyMsg.hidden = false;
+                if (chartInst) { chartInst.destroy(); chartInst = null; }
+                return;
+            }
+
             canvas.hidden   = false;
             emptyMsg.hidden = true;
 
-            const last      = new Date(rows[rows.length - 1].date + 'T00:00:00');
-            const dataFirst = new Date(rows[0].date + 'T00:00:00');
+            const last      = new Date(weightRows[weightRows.length - 1].date + 'T00:00:00');
+            const dataFirst = new Date(weightRows[0].date + 'T00:00:00');
             let   first;
             if (activeRange === 'all') {
                 first = dataFirst;
@@ -1251,7 +1290,7 @@
             }
 
             const unit    = window.activeUnit || 'lbs';
-            const dataMap = new Map(rows.map(r => [r.date, r]));
+            const dataMap = new Map(weightRows.map(r => [r.date, r]));
             const allDates = [];
             const cursor = new Date(first);
             while (cursor <= last) {
@@ -1261,9 +1300,6 @@
 
             currentDates = allDates;
 
-            // Build note map for tooltip display
-            window.noteMap = new Map(rows.map(r => [r.date, r.notes || '']));
-
             const infoIcon = document.getElementById('chart-info-icon');
             if (activeRange !== 'all') {
                 const nReq = activeRange === '7d'  ? 7  :
@@ -1271,7 +1307,7 @@
                              activeRange === '90d' ? 90 :
                              activeRange === '1y'  ? 365 : (activeDays || 30);
                 if (allDates.length < nReq - 1) {
-                    infoIcon.dataset.tip = 'Showing max data - ' + rows.length + (rows.length !== 1 ? ' entries' : ' entry') + ' logged';
+                    infoIcon.dataset.tip = 'Showing max data - ' + weightRows.length + (weightRows.length !== 1 ? ' entries' : ' entry') + ' logged';
                     infoIcon.style.display = 'flex';
                 } else {
                     infoIcon.style.display = 'none';
@@ -1283,7 +1319,7 @@
             const chartType = localStorage.getItem('pref_chart_type') || 'interpolated';
             if (chartType === 'actual' || chartType === 'dots-only') {
                 allDates.length = 0;
-                rows.forEach(r => allDates.push(r.date));
+                weightRows.forEach(r => allDates.push(r.date));
                 currentDates = allDates;
             }
 
@@ -1304,9 +1340,9 @@
                 if (lo < 0 && hi < arr.length) return arr[hi]; // before first real entry
                 return null; // past last real entry — no extrapolation
             });
-            const minW     = Math.min(...rows.map(r => unit === 'lbs' ? r.weight_lbs : r.weight_kg));
-            const maxW     = Math.max(...rows.map(r => unit === 'lbs' ? r.weight_lbs : r.weight_kg));
-            const ptRadius = rows.length > 60 ? 2 : 4;
+            const minW     = Math.min(...weightRows.map(r => unit === 'lbs' ? r.weight_lbs : r.weight_kg));
+            const maxW     = Math.max(...weightRows.map(r => unit === 'lbs' ? r.weight_lbs : r.weight_kg));
+            const ptRadius = weightRows.length > 60 ? 2 : 4;
             const ptRadii    = chartType === 'no-data' ? rawW.map(() => 0) : rawW.map(v => v === null ? 0 : ptRadius);
             const hoverRadii = rawW.map(v => v === null ? 0 : 6);
 
@@ -1328,7 +1364,7 @@
                 const startDt = new Date(endDt);
                 startDt.setDate(startDt.getDate() - 6);
                 const startStr = startDt.toISOString().slice(0, 10);
-                const vals = rows
+                const vals = weightRows
                     .filter(r => r.date >= startStr && r.date <= dateStr)
                     .map(r => unit === 'kg' ? r.weight_kg : r.weight_lbs);
                 return vals.length ? vals.reduce((s, v) => s + v, 0) / vals.length : null;
@@ -1341,9 +1377,9 @@
             const trendLineOn = localStorage.getItem('pref_trend_line') === '1';
             let trendData = allDates.map(() => null);
             window.trendCurrentVal = null;
-            if (trendLineOn && rows.length >= 2) {
-                const t0 = new Date(rows[0].date + 'T00:00:00').getTime();
-                const pairs = rows.map(r => ({
+            if (trendLineOn && weightRows.length >= 2) {
+                const t0 = new Date(weightRows[0].date + 'T00:00:00').getTime();
+                const pairs = weightRows.map(r => ({
                     x: (new Date(r.date + 'T00:00:00').getTime() - t0) / 86400000,
                     y: unit === 'kg' ? r.weight_kg : r.weight_lbs
                 }));
@@ -1569,32 +1605,50 @@
 
         let weeklyMouseX = 0, weeklyMouseY = 0;
 
-        function isoWeekMonday(dateISO) {
-            const d = new Date(dateISO + 'T00:00:00');
-            const day = d.getDay();
-            const diff = day === 0 ? -6 : 1 - day;
-            const mon = new Date(d);
-            mon.setDate(d.getDate() + diff);
-            return mon.toISOString().slice(0, 10);
-        }
-
         function groupByWeek(rows) {
             const map = new Map();
+            const todayD = new Date();
+            todayD.setHours(0, 0, 0, 0);
+            const dfmt = localStorage.getItem('pref_date_format') || 'mdy';
+            const fmt = iso => { const [,mm,dd] = iso.split('-'); return dfmt === 'mdy' ? mm+'/'+dd : dd+'/'+mm; };
+            const iso = (localStorage.getItem('pref_weekly_mode') || 'rolling') === 'iso';
+
             for (const r of rows) {
-                const monISO = isoWeekMonday(r.date);
-                if (!map.has(monISO)) map.set(monISO, []);
-                map.get(monISO).push(r.weight_lbs);
+                let key;
+                if (iso) {
+                    const d = new Date(r.date + 'T00:00:00');
+                    const day = d.getDay();
+                    const mon = new Date(d);
+                    mon.setDate(d.getDate() + (day === 0 ? -6 : 1 - day));
+                    key = mon.toISOString().slice(0, 10);
+                } else {
+                    const rowD = new Date(r.date + 'T00:00:00');
+                    key = Math.floor(Math.round((todayD - rowD) / 86400000) / 7);
+                }
+                if (!map.has(key)) map.set(key, []);
+                map.get(key).push(r.weight_lbs);
             }
+
             const result = [];
-            for (const [monISO, weights] of [...map.entries()].sort()) {
+            for (const [key, weights] of map.entries()) {
                 const avg = weights.reduce((a, b) => a + b, 0) / weights.length;
-                const sunD = new Date(monISO + 'T00:00:00');
-                sunD.setDate(sunD.getDate() + 6);
-                const sunISO = sunD.toISOString().slice(0, 10);
-                const dfmt = localStorage.getItem('pref_date_format') || 'mdy';
-                const fmt = iso => { const [,mm,dd] = iso.split('-'); return dfmt === 'mdy' ? mm+'/'+dd : dd+'/'+mm; };
+                let monISO, sunISO;
+                if (iso) {
+                    monISO = key;
+                    const sunD = new Date(monISO + 'T00:00:00');
+                    sunD.setDate(sunD.getDate() + 6);
+                    sunISO = sunD.toISOString().slice(0, 10);
+                } else {
+                    const endD = new Date(todayD);
+                    endD.setDate(todayD.getDate() - key * 7);
+                    const startD = new Date(endD);
+                    startD.setDate(endD.getDate() - 6);
+                    monISO = startD.toISOString().slice(0, 10);
+                    sunISO = endD.toISOString().slice(0, 10);
+                }
                 result.push({ monISO, sunISO, label: fmt(monISO) + '–' + fmt(sunISO), avg, min: Math.min(...weights), max: Math.max(...weights), count: weights.length });
             }
+            result.sort((a, b) => a.monISO.localeCompare(b.monISO));
             return result;
         }
 
@@ -1828,6 +1882,7 @@
                     customWrap.hidden = true;
                     loadWeeklyChart(w);
                 }
+                if (window.onWeeklyRangeChange) window.onWeeklyRangeChange();
             });
         });
 
@@ -1838,6 +1893,7 @@
             document.querySelector('.weekly-range-btn[data-weeks="custom"]').classList.add('active');
             activeWeeksRange = 'custom';
             loadWeeklyChart('custom', w);
+            if (window.onWeeklyRangeChange) window.onWeeklyRangeChange();
         }
 
         customIn.addEventListener('keydown', e => { if (e.key === 'Enter') applyWeeklyCustom(); });
@@ -1951,9 +2007,6 @@
         function applyTableMode(on) {
             slideViewport.classList.toggle('in-table', on);
             tableWrap.hidden = !on;
-            // hide/show nav arrows (inline style overrides .invisible class while in table)
-            if (leftNavBtn)  leftNavBtn.style.visibility  = on ? 'hidden' : '';
-            if (rightNavBtn) rightNavBtn.style.visibility = on ? 'hidden' : '';
         }
 
         function addDays(iso, n) {
@@ -1969,7 +2022,305 @@
             return dates;
         }
 
+        function groupByWeekFull(rows) {
+            const map = new Map();
+            const todayD = new Date();
+            todayD.setHours(0, 0, 0, 0);
+            const dfmt = localStorage.getItem('pref_date_format') || 'mdy';
+            const fmt = iso => { const [,mm,dd] = iso.split('-'); return dfmt === 'mdy' ? mm+'/'+dd : dd+'/'+mm; };
+            const isoMode = (localStorage.getItem('pref_weekly_mode') || 'rolling') === 'iso';
+
+            for (const r of rows) {
+                let key;
+                if (isoMode) {
+                    const d = new Date(r.date + 'T00:00:00');
+                    const day = d.getDay();
+                    const mon = new Date(d);
+                    mon.setDate(d.getDate() + (day === 0 ? -6 : 1 - day));
+                    key = mon.toISOString().slice(0, 10);
+                } else {
+                    const rowD = new Date(r.date + 'T00:00:00');
+                    key = Math.floor(Math.round((todayD - rowD) / 86400000) / 7);
+                }
+                if (!map.has(key)) map.set(key, []);
+                map.get(key).push(r);
+            }
+
+            const result = [];
+            for (const [key, dayRows] of map.entries()) {
+                const wr     = dayRows.filter(r => r.weight_lbs != null);
+                const avgLbs = wr.length ? wr.reduce((s, r) => s + r.weight_lbs, 0) / wr.length : null;
+                const avgKg  = wr.length ? wr.reduce((s, r) => s + r.weight_kg,  0) / wr.length : null;
+                let startISO, endISO;
+                if (isoMode) {
+                    startISO = key;
+                    const sunD = new Date(startISO + 'T00:00:00');
+                    sunD.setDate(sunD.getDate() + 6);
+                    endISO = sunD.toISOString().slice(0, 10);
+                } else {
+                    const endD = new Date(todayD);
+                    endD.setDate(todayD.getDate() - key * 7);
+                    const startD = new Date(endD);
+                    startD.setDate(endD.getDate() - 6);
+                    startISO = startD.toISOString().slice(0, 10);
+                    endISO   = endD.toISOString().slice(0, 10);
+                }
+                result.push({ monISO: startISO, sunISO: endISO, label: fmt(startISO) + '–' + fmt(endISO), avg: avgLbs, avgKg, days: dayRows });
+            }
+            result.sort((a, b) => a.monISO.localeCompare(b.monISO));
+            return result;
+        }
+
+        function appendExportRow(tbody) {
+            const exportTr = document.createElement('tr');
+            exportTr.className = 'table-export-row';
+            const exportTd = document.createElement('td');
+            exportTd.colSpan = 5;
+            exportTd.className = 'table-export-cell';
+            const exportBtn = document.createElement('button');
+            exportBtn.className = 'table-export-btn';
+            exportBtn.innerHTML = '<svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg> Export CSV';
+            exportBtn.addEventListener('click', async () => {
+                const allRows = await fetch('/api/weights?range=all').then(r => r.json());
+                const lines = ['Date,Weight (lbs),Weight (kg),Notes'];
+                allRows.forEach(r => {
+                    const note = (r.notes || '').replace(/"/g, '""');
+                    lines.push(`${r.date},${r.weight_lbs},${r.weight_kg},"${note}"`);
+                });
+                const blob = new Blob([lines.join('\n')], { type: 'text/csv' });
+                const a = document.createElement('a');
+                a.href = URL.createObjectURL(blob);
+                a.download = 'weight-history.csv';
+                a.click();
+                URL.revokeObjectURL(a.href);
+            });
+            exportTd.appendChild(exportBtn);
+            exportTr.appendChild(exportTd);
+            tbody.appendChild(exportTr);
+        }
+
+        async function renderWeeklyTable() {
+            const allRows = await fetch('/api/weights?range=all').then(r => r.json());
+            const { range: wRange, weeks: wWeeks } = window.getWeeklyChartRange
+                ? window.getWeeklyChartRange() : { range: '4', weeks: null };
+
+            let weekGroups = groupByWeekFull(allRows);
+            const maxWeeks = wRange === 'all' ? null
+                : wRange === 'custom' ? (wWeeks || 4)
+                : (parseInt(wRange) || 4);
+            if (maxWeeks != null) weekGroups = weekGroups.slice(-maxWeeks);
+
+            tableBody.innerHTML = '';
+            if (!weekGroups.length) {
+                tableBody.innerHTML = '<tr><td colspan="5" class="table-empty-cell">No data yet.</td></tr>';
+                return;
+            }
+
+            const unit = window.activeUnit || 'lbs';
+            document.getElementById('th-primary').textContent   = unit === 'lbs' ? 'Avg (lbs)' : 'Avg (kgs)';
+            document.getElementById('th-secondary').textContent = unit === 'lbs' ? 'Avg (kgs)' : 'Avg (lbs)';
+
+            const defaultExpanded = localStorage.getItem('pref_weekly_table_expanded') === 'true';
+
+            weekGroups.slice().reverse().forEach(week => {
+                // Pre-compute missing dates before building header
+                const dayMap = new Map(week.days.map(r => [r.date, r]));
+                const endISO = week.sunISO <= getTodayISO() ? week.sunISO : getTodayISO();
+                const allWeekDates = dateRange(week.monISO, endISO).reverse(); // newest first
+                const missingDates = allWeekDates.filter(d => !dayMap.has(d) || dayMap.get(d).weight_lbs == null);
+                const missingRefs  = new Map(); // populated during day row loop
+
+                const primAvg = week.avg   != null ? (unit === 'lbs' ? fmtLbs(week.avg)   : fmtLbs(week.avgKg)) : '—';
+                const secAvg  = week.avgKg != null ? (unit === 'lbs' ? fmtLbs(week.avgKg) : fmtLbs(week.avg))   : '—';
+
+                // Week header row
+                const headerTr = document.createElement('tr');
+                headerTr.className = 'week-header-row';
+
+                const dateTd = document.createElement('td');
+                const dateInner = document.createElement('span');
+                dateInner.className = 'week-date-inner';
+                const icon = document.createElement('span');
+                icon.className = 'week-toggle-icon' + (defaultExpanded ? ' expanded' : '');
+                icon.textContent = '▶';
+                const lbl = document.createElement('span');
+                lbl.textContent = week.label;
+                dateInner.append(icon, lbl);
+                dateTd.appendChild(dateInner);
+
+                const primTd = document.createElement('td');
+                primTd.textContent = primAvg;
+                const secTd = document.createElement('td');
+                secTd.textContent = secAvg;
+
+                const hdrExclTd = document.createElement('td');
+                hdrExclTd.className = 'excl-col-cell';
+                let hdrExcl = null;
+                if (missingDates.length > 0) {
+                    hdrExcl = document.createElement('button');
+                    hdrExcl.className = 'missing-excl-btn';
+                    hdrExcl.textContent = '!';
+                    hdrExcl.dataset.tip = 'Missing data';
+                    hdrExclTd.appendChild(hdrExcl);
+                }
+
+                const cntTd = document.createElement('td');
+                cntTd.className = 'week-count-cell';
+                const loggedDays = week.days.filter(d => d.weight_lbs != null).length;
+                cntTd.textContent = loggedDays + (loggedDays === 1 ? ' day logged' : ' days logged');
+
+                headerTr.append(dateTd, primTd, secTd, hdrExclTd, cntTd);
+                tableBody.appendChild(headerTr);
+
+                // Collapsible body row
+                const collapseTr = document.createElement('tr');
+                collapseTr.className = 'week-collapse-row';
+                const collapseTd = document.createElement('td');
+                collapseTd.colSpan = 5;
+
+                const wrap = document.createElement('div');
+                wrap.className = 'week-days-wrap';
+
+                const innerTable = document.createElement('table');
+                innerTable.className = 'week-day-table';
+                const innerBody = document.createElement('tbody');
+
+                allWeekDates.forEach(date => {
+                    const entry = dayMap.get(date);
+                    const missing = !entry || entry.weight_lbs == null;
+                    const dayTr = document.createElement('tr');
+                    dayTr.className = 'week-day-row' + (missing ? ' row-missing' : '');
+
+                    const dayDateTd = document.createElement('td');
+                    dayDateTd.textContent = formatDateDisplay(date);
+
+                    const wtTd = document.createElement('td');
+                    wtTd.dataset.date = date;
+                    const secEntTd = document.createElement('td');
+                    if (missing) {
+                        wtTd.className = 'cell-weight cell-missing';
+                        wtTd.dataset.lbs = '';
+                        wtTd.dataset.kg  = '';
+                        wtTd.innerHTML   = '<span class="missing-dash">—</span>';
+                        secEntTd.innerHTML = '<span class="missing-dash">—</span>';
+                    } else {
+                        wtTd.className = 'cell-weight';
+                        wtTd.dataset.lbs  = entry.weight_lbs;
+                        wtTd.dataset.kg   = entry.weight_kg;
+                        wtTd.textContent  = unit === 'lbs' ? fmtLbs(entry.weight_lbs) : fmtLbs(entry.weight_kg);
+                        secEntTd.textContent = unit === 'lbs' ? fmtLbs(entry.weight_kg) : fmtLbs(entry.weight_lbs);
+                    }
+
+                    const exclTd = document.createElement('td');
+                    exclTd.className = 'excl-col-cell';
+                    if (missing) {
+                        const exclBtn = document.createElement('button');
+                        exclBtn.className = 'missing-excl-btn';
+                        exclBtn.textContent = '!';
+                        exclBtn.dataset.tip = 'Missing data';
+                        exclBtn.addEventListener('click', e => { e.stopPropagation(); startEdit(wtTd, secEntTd); });
+                        exclTd.appendChild(exclBtn);
+                        missingRefs.set(date, { wtTd, secEntTd });
+                    }
+
+                    const actTd = document.createElement('td');
+                    actTd.className = 'action-cell';
+                    if (missing) {
+                        const noteText = entry && entry.notes ? entry.notes : '';
+                        const hasNote  = !!(noteText.trim());
+                        const noteBtn = document.createElement('button');
+                        noteBtn.className = 'note-btn' + (hasNote ? ' has-note' : '');
+                        noteBtn.dataset.tip = hasNote ? 'Edit note' : 'Add note';
+                        noteBtn.innerHTML = '<svg viewBox="0 0 16 16" xmlns="http://www.w3.org/2000/svg"><path d="M13 1H3C2.45 1 2 1.45 2 2v9c0 .55.45 1 1 1h1.5l2.5 2.5L9.5 12H13c.55 0 1-.45 1-1V2c0-.55-.45-1-1-1z"/></svg>';
+                        noteBtn.addEventListener('click', e => { e.stopPropagation(); window.openNoteEditor(date, noteText, noteBtn); });
+
+                        const del = document.createElement('button');
+                        if (entry) {
+                            del.className = 'table-delete-btn';
+                            del.dataset.tip = 'Delete this entry';
+                            del.addEventListener('click', e => { e.stopPropagation(); deleteEntry(date, hasNote); });
+                        } else {
+                            del.className = 'table-delete-btn missing-del';
+                        }
+                        del.textContent = '×';
+
+                        actTd.append(noteBtn, del);
+                    } else {
+                        const del = document.createElement('button');
+                        del.className = 'table-delete-btn';
+                        del.dataset.tip = 'Delete this entry';
+                        del.textContent = '×';
+                        del.addEventListener('click', e => { e.stopPropagation(); deleteEntry(date, hasNote); });
+
+                        const hasNote = !!(entry.notes && entry.notes.trim());
+                        const noteBtn = document.createElement('button');
+                        noteBtn.className = 'note-btn' + (hasNote ? ' has-note' : '');
+                        noteBtn.dataset.tip = hasNote ? 'Edit note' : 'Add note';
+                        noteBtn.innerHTML = '<svg viewBox="0 0 16 16" xmlns="http://www.w3.org/2000/svg"><path d="M13 1H3C2.45 1 2 1.45 2 2v9c0 .55.45 1 1 1h1.5l2.5 2.5L9.5 12H13c.55 0 1-.45 1-1V2c0-.55-.45-1-1-1z"/></svg>';
+                        noteBtn.addEventListener('click', e => {
+                            e.stopPropagation();
+                            window.openNoteEditor(date, entry.notes || '', noteBtn);
+                        });
+                        actTd.append(noteBtn, del);
+                    }
+
+                    dayTr.append(dayDateTd, wtTd, secEntTd, exclTd, actTd);
+                    dayTr.addEventListener('mouseenter', () => dayTr.classList.add('row-hover'));
+                    dayTr.addEventListener('mouseleave', () => dayTr.classList.remove('row-hover'));
+                    wtTd.addEventListener('click', () => startEdit(wtTd, secEntTd));
+                    innerBody.appendChild(dayTr);
+                });
+
+                const cg = document.createElement('colgroup');
+                [27, 25, 25, 9, 14].forEach(w => {
+                    const col = document.createElement('col');
+                    col.style.width = w + '%';
+                    cg.appendChild(col);
+                });
+                innerTable.appendChild(cg);
+                innerTable.appendChild(innerBody);
+                wrap.appendChild(innerTable);
+                collapseTd.appendChild(wrap);
+                collapseTr.appendChild(collapseTd);
+                tableBody.appendChild(collapseTr);
+
+                // Wire up header ! click now that missingRefs is populated
+                if (hdrExcl) {
+                    hdrExcl.addEventListener('click', e => {
+                        e.stopPropagation();
+                        const refs = missingRefs.get(missingDates[0]);
+                        const triggerEdit = () => { if (refs) startEdit(refs.wtTd, refs.secEntTd); };
+                        if (!icon.classList.contains('expanded')) {
+                            icon.classList.add('expanded');
+                            wrap.style.maxHeight = wrap.scrollHeight + 'px';
+                            wrap.addEventListener('transitionend', triggerEdit, { once: true });
+                        } else {
+                            triggerEdit();
+                        }
+                    });
+                }
+
+                if (defaultExpanded) {
+                    requestAnimationFrame(() => { wrap.style.maxHeight = wrap.scrollHeight + 'px'; });
+                }
+
+                headerTr.addEventListener('click', () => {
+                    const open = icon.classList.contains('expanded');
+                    if (open) {
+                        icon.classList.remove('expanded');
+                        wrap.style.maxHeight = '0';
+                    } else {
+                        icon.classList.add('expanded');
+                        wrap.style.maxHeight = wrap.scrollHeight + 'px';
+                    }
+                });
+            });
+
+            appendExportRow(tableBody);
+        }
+
         async function renderTable() {
+            if (lastChart === 'weekly') { await renderWeeklyTable(); return; }
             const { range, days } = window.getChartRange();
             let url = '/api/weights?range=' + range;
             if (range === 'custom') url += '&days=' + days;
@@ -1997,7 +2348,7 @@
             tableBody.innerHTML = '';
 
             if (!allDates.length) {
-                tableBody.innerHTML = '<tr><td colspan="4" class="table-empty-cell">No data yet.</td></tr>';
+                tableBody.innerHTML = '<tr><td colspan="5" class="table-empty-cell">No data yet.</td></tr>';
                 return;
             }
 
@@ -2007,7 +2358,7 @@
 
             allDates.forEach(date => {
                 const entry = map[date];
-                const missing = !entry;
+                const missing = !entry || entry.weight_lbs == null;
                 const tr = document.createElement('tr');
                 if (missing) tr.classList.add('row-missing');
 
@@ -2017,30 +2368,54 @@
                 const wtTd = document.createElement('td');
                 wtTd.className = 'cell-weight' + (missing ? ' cell-missing' : '');
                 wtTd.dataset.date = date;
-                wtTd.dataset.lbs  = entry ? entry.weight_lbs : '';
-                wtTd.dataset.kg   = entry ? entry.weight_kg  : '';
-                const primaryVal   = entry ? (unit === 'lbs' ? fmtLbs(entry.weight_lbs) : fmtLbs(entry.weight_kg)) : null;
-                const secondaryVal = entry ? (unit === 'lbs' ? fmtLbs(entry.weight_kg) : fmtLbs(entry.weight_lbs)) : null;
+                wtTd.dataset.lbs  = (!missing && entry) ? entry.weight_lbs : '';
+                wtTd.dataset.kg   = (!missing && entry) ? entry.weight_kg  : '';
+                const primaryVal   = (!missing && entry) ? (unit === 'lbs' ? fmtLbs(entry.weight_lbs) : fmtLbs(entry.weight_kg)) : null;
+                const secondaryVal = (!missing && entry) ? (unit === 'lbs' ? fmtLbs(entry.weight_kg) : fmtLbs(entry.weight_lbs)) : null;
                 wtTd.innerHTML = missing ? '<span class="missing-dash">—</span>' : primaryVal;
 
                 const kgTd = document.createElement('td');
                 kgTd.innerHTML = missing ? '<span class="missing-dash">—</span>' : secondaryVal;
 
+                const exclTd = document.createElement('td');
+                exclTd.className = 'excl-col-cell';
+                if (missing) {
+                    const exclBtn = document.createElement('button');
+                    exclBtn.className = 'missing-excl-btn';
+                    exclBtn.textContent = '!';
+                    exclBtn.dataset.tip = 'Log weight for this day';
+                    exclBtn.addEventListener('click', e => { e.stopPropagation(); startEdit(wtTd, kgTd); });
+                    exclTd.appendChild(exclBtn);
+                }
+
                 const stTd = document.createElement('td');
                 stTd.className = 'action-cell';
                 if (missing) {
-                    const badge   = document.createElement('span');
-                    badge.className = 'missing-badge';
-                    badge.textContent = 'Missing';
-                    const spacer  = document.createElement('span');
-                    spacer.style.cssText = 'width:0;height:40px;overflow:hidden;pointer-events:none;flex-shrink:0';
-                    stTd.append(badge, spacer);
+                    const noteText = entry && entry.notes ? entry.notes : '';
+                    const hasNote  = !!(noteText.trim());
+                    const noteBtn = document.createElement('button');
+                    noteBtn.className = 'note-btn' + (hasNote ? ' has-note' : '');
+                    noteBtn.dataset.tip = hasNote ? 'Edit note' : 'Add note';
+                    noteBtn.innerHTML = '<svg viewBox="0 0 16 16" xmlns="http://www.w3.org/2000/svg"><path d="M13 1H3C2.45 1 2 1.45 2 2v9c0 .55.45 1 1 1h1.5l2.5 2.5L9.5 12H13c.55 0 1-.45 1-1V2c0-.55-.45-1-1-1z"/></svg>';
+                    noteBtn.addEventListener('click', e => { e.stopPropagation(); window.openNoteEditor(date, noteText, noteBtn); });
+
+                    const del = document.createElement('button');
+                    if (entry) {
+                        del.className = 'table-delete-btn';
+                        del.dataset.tip = 'Delete this entry';
+                        del.addEventListener('click', e => { e.stopPropagation(); deleteEntry(date, hasNote); });
+                    } else {
+                        del.className = 'table-delete-btn missing-del';
+                    }
+                    del.textContent = '×';
+
+                    stTd.append(noteBtn, del);
                 } else {
                     const del = document.createElement('button');
                     del.className = 'table-delete-btn';
                     del.dataset.tip = 'Delete this entry';
                     del.textContent = '×';
-                    del.addEventListener('click', e => { e.stopPropagation(); deleteEntry(date); });
+                    del.addEventListener('click', e => { e.stopPropagation(); deleteEntry(date, hasNote); });
 
                     const hasNote = !!(entry.notes && entry.notes.trim());
                     const noteBtn = document.createElement('button');
@@ -2055,7 +2430,7 @@
                     stTd.append(noteBtn, del);
                 }
 
-                tr.append(dateTd, wtTd, kgTd, stTd);
+                tr.append(dateTd, wtTd, kgTd, exclTd, stTd);
                 tableBody.appendChild(tr);
 
                 wtTd.addEventListener('click', () => startEdit(wtTd, kgTd));
@@ -2065,12 +2440,14 @@
                 const footerTr = document.createElement('tr');
                 footerTr.className = 'no-earlier-row';
                 const footerTd = document.createElement('td');
-                footerTd.colSpan = 4;
+                footerTd.colSpan = 5;
                 footerTd.className = 'no-earlier-cell';
                 footerTd.innerHTML = '<span class="no-earlier-inner">&#9670;&nbsp;&nbsp;No Earlier Data Recorded&nbsp;&nbsp;&#9670;</span>';
                 footerTr.appendChild(footerTd);
                 tableBody.appendChild(footerTr);
             }
+
+            appendExportRow(tableBody);
         }
 
         function showTableConfirm(title, message, okLabel, onOk, onCancel, cancelLabel) {
@@ -2130,10 +2507,13 @@
             inp.addEventListener('blur', save);
         }
 
-        function deleteEntry(date) {
+        function deleteEntry(date, hasNote) {
+            const msg = hasNote
+                ? 'Are you sure you want to delete your weight entry for ' + formatDateDisplay(date) + '? This will also delete the attached note.'
+                : 'Are you sure you want to delete your weight entry for ' + formatDateDisplay(date) + '?';
             showTableConfirm(
                 'Confirm Delete',
-                'Are you sure you want to delete your weight entry for ' + formatDateDisplay(date) + '?',
+                msg,
                 'Delete',
                 async () => {
                     const res  = await fetch('/api/weight/' + date, { method: 'DELETE' });
@@ -2147,6 +2527,12 @@
                     if (window.refreshChart) window.refreshChart();
                 }
             );
+        }
+
+        function switchTablePage(page) {
+            lastChart = page;
+            if (tableTitle) tableTitle.textContent = page === 'weekly' ? 'Weekly Summary' : 'Daily Summary';
+            renderTable();
         }
 
         toggleBtn.addEventListener('click', () => {
@@ -2165,6 +2551,13 @@
                     if (window.refreshChart) window.refreshChart();
                 }
             }
+        });
+
+        if (leftNavBtn) leftNavBtn.addEventListener('click', () => {
+            if (isTableView) switchTablePage(window.currentChartPage || 'daily');
+        });
+        if (rightNavBtn) rightNavBtn.addEventListener('click', () => {
+            if (isTableView) switchTablePage(window.currentChartPage || 'daily');
         });
 
         /* ── Custom scrollbar ── */
@@ -2186,15 +2579,28 @@
         }
 
         scrollEl.addEventListener('scroll', syncThumb);
-        new MutationObserver(syncThumb).observe(
-            document.getElementById('data-table-body'), { childList: true }
-        );
+        new ResizeObserver(syncThumb).observe(scrollEl.querySelector('.data-table'));
 
         let drag = false, dragY = 0, dragScroll = 0;
-        thumbEl.addEventListener('mousedown', e => {
+
+        function startDrag(e) {
             drag = true; dragY = e.clientY; dragScroll = scrollEl.scrollTop;
             e.preventDefault();
+        }
+
+        thumbEl.addEventListener('mousedown', startDrag);
+
+        trackEl.addEventListener('mousedown', e => {
+            if (e.target === thumbEl) return;
+            const trackRect = trackEl.getBoundingClientRect();
+            const thumbH    = parseFloat(thumbEl.style.height) || 30;
+            const maxTop    = trackEl.clientHeight - thumbH;
+            const maxScroll = scrollEl.scrollHeight - scrollEl.clientHeight;
+            const clickY    = Math.min(Math.max(e.clientY - trackRect.top - thumbH / 2, 0), maxTop);
+            scrollEl.scrollTop = (clickY / maxTop) * maxScroll;
+            startDrag(e);
         });
+
         document.addEventListener('mousemove', e => {
             if (!drag) return;
             const maxTop    = trackEl.clientHeight - parseFloat(thumbEl.style.height);
@@ -2204,8 +2610,13 @@
         });
         document.addEventListener('mouseup', () => { drag = false; });
 
-        window.onChartRangeChange = () => { if (isTableView) renderTable(); };
+        window.onChartRangeChange  = () => { if (isTableView) renderTable(); };
+        window.onWeeklyRangeChange = () => { if (isTableView && lastChart === 'weekly') renderWeeklyTable(); };
         window.renderTable = renderTable;
+        window.setTablePage = function(page) {
+            lastChart = page;
+            if (tableTitle) tableTitle.textContent = page === 'weekly' ? 'Weekly Summary' : 'Daily Summary';
+        };
 
         window.setView = function (view, range, days) {
             isTableView = (view === 'table');
@@ -2216,6 +2627,7 @@
         };
 
         const savedLanding = localStorage.getItem('pref_default_landing') || 'daily';
+        if (savedLanding === 'table-weekly') lastChart = 'weekly';
         if (savedLanding === 'table-daily' || savedLanding === 'table-weekly') window.setView('table');
     })();
 
@@ -2239,6 +2651,31 @@
             activeDate = null;
         }
 
+        function getExpandedWeeks() {
+            const s = new Set();
+            document.querySelectorAll('.week-header-row').forEach(hdr => {
+                if (hdr.querySelector('.week-toggle-icon.expanded')) {
+                    const lbl = hdr.querySelector('.week-date-inner span:last-child');
+                    if (lbl) s.add(lbl.textContent);
+                }
+            });
+            return s;
+        }
+
+        function restoreExpandedWeeks(labels) {
+            document.querySelectorAll('.week-header-row').forEach(hdr => {
+                const lbl = hdr.querySelector('.week-date-inner span:last-child');
+                if (lbl && labels.has(lbl.textContent)) {
+                    const icon = hdr.querySelector('.week-toggle-icon');
+                    const wrap = hdr.nextElementSibling && hdr.nextElementSibling.querySelector('.week-days-wrap');
+                    if (icon && wrap && !icon.classList.contains('expanded')) {
+                        icon.classList.add('expanded');
+                        wrap.style.maxHeight = wrap.scrollHeight + 'px';
+                    }
+                }
+            });
+        }
+
         async function save() {
             if (!activeDate) return;
             const notes = textarea.value.trim().slice(0, 300);
@@ -2248,11 +2685,13 @@
                 body: JSON.stringify({ notes }),
             });
             if (window.noteMap) window.noteMap.set(activeDate, notes);
+            const exp = getExpandedWeeks();
             close();
-            if (window.renderTable) window.renderTable();
+            if (window.renderTable) await window.renderTable();
+            restoreExpandedWeeks(exp);
         }
 
-        async function deleteNote() {
+        async function deleteNote(exp) {
             if (!activeDate) return;
             await fetch('/api/weight/' + activeDate + '/note', {
                 method: 'PATCH',
@@ -2261,7 +2700,8 @@
             });
             if (window.noteMap) window.noteMap.set(activeDate, '');
             close();
-            if (window.renderTable) window.renderTable();
+            if (window.renderTable) await window.renderTable();
+            if (exp) restoreExpandedWeeks(exp);
         }
 
         window.openNoteEditor = function(date, currentNote, anchorEl) {
@@ -2304,15 +2744,16 @@
         /* Delete with confirmation */
         deleteBtn.addEventListener('click', e => {
             e.stopPropagation();
+            const exp = getExpandedWeeks();
             if (window.showAppConfirm) {
                 window.showAppConfirm(
                     'Delete Note',
                     'Are you sure you want to delete this note?',
                     'Delete',
-                    deleteNote
+                    () => deleteNote(exp)
                 );
             } else {
-                deleteNote();
+                deleteNote(exp);
             }
         });
 
@@ -2579,10 +3020,10 @@
 
         // [src, hotX, hotY, renderH], optional true = soft white-edge removal for non-transparent PNGs
         const CURSOR_SETS = {
-            '1': [['/static/pointer.png',  280, 60, 48], ['/static/editpointer.png',  660, 30, 64]],
-            '2': [['/static/pointer2.png', 280, 60, 48], ['/static/editpointer2.png', 660, 30, 64]],
-            '3': [['/static/pointer3.png', 280, 60, 48], ['/static/editpointer3.png', 660, 30, 64]],
-            '4': [['/static/pointer4.png', 280, 60, 48], ['/static/editpointer4.png', 660, 30, 64]],
+            '1': [['/static/pointer.png',  240, 10, 48], ['/static/editpointer.png',  650, 30, 64]],
+            '2': [['/static/pointer2.png', 198, 10, 48], ['/static/editpointer2.png',  460, 30, 64]],
+            '3': [['/static/pointer3.png', 198, 10, 48], ['/static/editpointer3.png',  460, 30, 64]],
+            '4': [['/static/pointer4.png', 198, 10, 48], ['/static/editpointer4.png',  460, 30, 64]],
         };
 
         function processImg(src, origHotX, origHotY, key, renderH, softStrip) {
@@ -3437,6 +3878,7 @@
                 weeklyGoalLine:  document.getElementById('prof-weekly-goal-on').classList.contains('active')     ? '1' : '0',
                 weeklyTrendLine: document.getElementById('prof-weekly-trend-on').classList.contains('active')    ? '1' : '0',
                 weeklyMinMax:    document.getElementById('prof-weekly-minmax-on').classList.contains('active')   ? '1' : '0',
+                weeklyMode:      document.getElementById('prof-weekly-mode-iso').classList.contains('active')    ? 'iso' : 'rolling',
                 healthBar:       document.getElementById('prof-healthbar-on').classList.contains('active')       ? '1' : '0',
                 fighterName:     document.getElementById('prof-fighter-name-on').classList.contains('active')    ? '1' : '0',
                 dateFormat:      document.getElementById('prof-date-dmy').classList.contains('active')           ? 'dmy' : 'mdy'
@@ -3453,7 +3895,8 @@
                    cur.maLine !== openState.maLine || cur.trendLine !== openState.trendLine ||
                    cur.chartType !== openState.chartType ||
                    cur.weeklyGoalLine !== openState.weeklyGoalLine || cur.weeklyTrendLine !== openState.weeklyTrendLine ||
-                   cur.weeklyMinMax !== openState.weeklyMinMax || cur.healthBar !== openState.healthBar ||
+                   cur.weeklyMinMax !== openState.weeklyMinMax || cur.weeklyMode !== openState.weeklyMode ||
+                   cur.healthBar !== openState.healthBar ||
                    cur.fighterName !== openState.fighterName || cur.dateFormat !== openState.dateFormat;
         }
 
@@ -3482,9 +3925,7 @@
             const curUnit           = localStorage.getItem('pref_unit')             || 'lbs';
             const _chartState       = window.getChartRange ? window.getChartRange() : null;
             const curRange          = (_chartState && _chartState.range) || localStorage.getItem('pref_range') || '7d';
-            const curCustomDays     = (_chartState && _chartState.range === 'custom' && _chartState.days)
-                ? String(_chartState.days)
-                : (localStorage.getItem('pref_custom_days') || '');
+            const curCustomDays     = localStorage.getItem('pref_custom_days') || '';
             const curWeeklyState    = window.getWeeklyChartRange ? window.getWeeklyChartRange() : null;
             const curWeeklyRange    = (curWeeklyState && curWeeklyState.range) || localStorage.getItem('pref_weekly_range') || '4';
             const curCustomWeeks    = (curWeeklyState && curWeeklyState.range === 'custom' && curWeeklyState.weeks)
@@ -3499,8 +3940,10 @@
             const curHealthBar       = localStorage.getItem('pref_healthbar')         || '1';
             const curFighterName     = localStorage.getItem('pref_fighter_name')    || '1';
             const curWeeklyMinMax    = localStorage.getItem('pref_weekly_minmax')   || '1';
-            const curWeeklyGoalLine  = localStorage.getItem('pref_weekly_goal_line') || '0';
-            const curWeeklyTrendLine = localStorage.getItem('pref_weekly_trend_line') || '0';
+            const curWeeklyGoalLine      = localStorage.getItem('pref_weekly_goal_line') || '0';
+            const curWeeklyTrendLine     = localStorage.getItem('pref_weekly_trend_line') || '0';
+            const curWeeklyTableExpanded = localStorage.getItem('pref_weekly_table_expanded') === 'true';
+            const curWeeklyMode          = localStorage.getItem('pref_weekly_mode') || 'rolling';
             const curDateFormat      = localStorage.getItem('pref_date_format')      || 'mdy';
 
             document.getElementById('prof-lbs-btn').classList.toggle('active',               curUnit === 'lbs');
@@ -3529,8 +3972,12 @@
             document.getElementById('prof-weekly-minmax-off').classList.toggle('active',  curWeeklyMinMax !== '1');
             document.getElementById('prof-weekly-goal-on').classList.toggle('active',     curWeeklyGoalLine === '1');
             document.getElementById('prof-weekly-goal-off').classList.toggle('active',    curWeeklyGoalLine !== '1');
-            document.getElementById('prof-weekly-trend-on').classList.toggle('active',    curWeeklyTrendLine === '1');
-            document.getElementById('prof-weekly-trend-off').classList.toggle('active',   curWeeklyTrendLine !== '1');
+            document.getElementById('prof-weekly-trend-on').classList.toggle('active',       curWeeklyTrendLine === '1');
+            document.getElementById('prof-weekly-trend-off').classList.toggle('active',    curWeeklyTrendLine !== '1');
+            document.getElementById('prof-weekly-table-exp-on').classList.toggle('active',  curWeeklyTableExpanded);
+            document.getElementById('prof-weekly-table-exp-off').classList.toggle('active', !curWeeklyTableExpanded);
+            document.getElementById('prof-weekly-mode-rolling').classList.toggle('active',  curWeeklyMode !== 'iso');
+            document.getElementById('prof-weekly-mode-iso').classList.toggle('active',      curWeeklyMode === 'iso');
             document.getElementById('prof-date-mdy').classList.toggle('active', curDateFormat === 'mdy');
             document.getElementById('prof-date-dmy').classList.toggle('active', curDateFormat === 'dmy');
 
@@ -3686,6 +4133,22 @@
             });
         });
 
+        document.querySelectorAll('#prof-weekly-table-exp-on, #prof-weekly-table-exp-off').forEach(b => {
+            b.addEventListener('click', () => {
+                document.getElementById('prof-weekly-table-exp-on').classList.remove('active');
+                document.getElementById('prof-weekly-table-exp-off').classList.remove('active');
+                b.classList.add('active');
+            });
+        });
+
+        document.querySelectorAll('#prof-weekly-mode-rolling, #prof-weekly-mode-iso').forEach(b => {
+            b.addEventListener('click', () => {
+                document.getElementById('prof-weekly-mode-rolling').classList.remove('active');
+                document.getElementById('prof-weekly-mode-iso').classList.remove('active');
+                b.classList.add('active');
+            });
+        });
+
         document.querySelectorAll('.profile-opt-btn[data-range]').forEach(b => {
             b.addEventListener('click', () => {
                 document.querySelectorAll('.profile-opt-btn[data-range]').forEach(x => x.classList.remove('active'));
@@ -3699,15 +4162,39 @@
 
         profCustomDays.addEventListener('change', () => {
             const v = parseInt(profCustomDays.value);
-            if (!v || v < 7) profCustomDays.value = 7;
+            if (v && v < 7) profCustomDays.value = 7;
             else if (v > 1095) profCustomDays.value = 1095;
         });
 
         function doSave() {
+            const _rangeNow = document.querySelector('.profile-opt-btn[data-range].active')?.dataset.range || '7d';
+            const _weeksNow = document.querySelector('.profile-opt-btn[data-weeks].active')?.dataset.weeks || '4';
+            if (_rangeNow === 'custom' && !profCustomDays.value) {
+                window.showAppConfirm(
+                    'Missing Value',
+                    'Custom range is selected — enter a number of days to save.',
+                    'Enter Days',
+                    () => { profCustomDays.focus(); profCustomDays.select(); },
+                    null, 'Dismiss'
+                );
+                return;
+            }
+            if (_weeksNow === 'custom' && !profCustomWeeks.value) {
+                window.showAppConfirm(
+                    'Missing Value',
+                    'Custom range is selected — enter a number of weeks to save.',
+                    'Enter Weeks',
+                    () => { document.getElementById('prof-custom-wrap-weekly').hidden = false; profCustomWeeks.focus(); profCustomWeeks.select(); },
+                    null, 'Dismiss'
+                );
+                return;
+            }
+
             const newUnit       = document.getElementById('prof-kg-btn').classList.contains('active') ? 'kg' : 'lbs';
-            const newRange      = document.querySelector('.profile-opt-btn[data-range].active')?.dataset.range || '7d';
-            const newCustomDays = Math.min(Math.max(parseInt(profCustomDays.value) || 7, 7), 1095);
-            const newWeeklyRange  = document.querySelector('.profile-opt-btn[data-weeks].active')?.dataset.weeks || '4';
+            const newRange      = _rangeNow;
+            const _days = parseInt(profCustomDays.value);
+            const newCustomDays = _days ? String(Math.min(Math.max(_days, 7), 1095)) : '';
+            const newWeeklyRange  = _weeksNow;
             const _wks = parseInt(profCustomWeeks.value);
             const newCustomWeeks  = _wks ? String(Math.min(Math.max(_wks, 4), 156)) : '';
             const newDefaultLanding = document.getElementById('prof-landing-table-weekly').classList.contains('active') ? 'table-weekly'
@@ -3725,9 +4212,11 @@
             const newHealthBar     = document.getElementById('prof-healthbar-on').classList.contains('active')      ? '1' : '0';
             const newFighterName   = document.getElementById('prof-fighter-name-on').classList.contains('active')  ? '1' : '0';
             const newWeeklyMinMax  = document.getElementById('prof-weekly-minmax-on').classList.contains('active')  ? '1' : '0';
-            const newWeeklyGoal   = document.getElementById('prof-weekly-goal-on').classList.contains('active')     ? '1' : '0';
-            const newWeeklyTrend  = document.getElementById('prof-weekly-trend-on').classList.contains('active')    ? '1' : '0';
-            const newDateFormat   = document.getElementById('prof-date-dmy').classList.contains('active')           ? 'dmy' : 'mdy';
+            const newWeeklyGoal        = document.getElementById('prof-weekly-goal-on').classList.contains('active')         ? '1' : '0';
+            const newWeeklyTrend       = document.getElementById('prof-weekly-trend-on').classList.contains('active')        ? '1' : '0';
+            const newWeeklyTableExp    = document.getElementById('prof-weekly-table-exp-on').classList.contains('active')    ? 'true' : 'false';
+            const newWeeklyMode        = document.getElementById('prof-weekly-mode-iso').classList.contains('active')         ? 'iso' : 'rolling';
+            const newDateFormat        = document.getElementById('prof-date-dmy').classList.contains('active')               ? 'dmy' : 'mdy';
 
             window.savePref('pref_unit',             newUnit);
             window.savePref('pref_range',            newRange);
@@ -3743,8 +4232,10 @@
             window.savePref('pref_healthbar',          newHealthBar);
             window.savePref('pref_fighter_name',       newFighterName);
             window.savePref('pref_weekly_minmax',     newWeeklyMinMax);
-            window.savePref('pref_weekly_goal_line',  newWeeklyGoal);
-            window.savePref('pref_weekly_trend_line', newWeeklyTrend);
+            window.savePref('pref_weekly_goal_line',       newWeeklyGoal);
+            window.savePref('pref_weekly_trend_line',      newWeeklyTrend);
+            window.savePref('pref_weekly_table_expanded',  newWeeklyTableExp);
+            window.savePref('pref_weekly_mode',            newWeeklyMode);
             window.savePref('pref_date_format',       newDateFormat);
             const hud = document.getElementById('healthbar-hud');
             if (hud) hud.style.display = newHealthBar === '1' ? '' : 'none';
@@ -3767,7 +4258,7 @@
                 newDateFormat !== openState.dateFormat;
 
             if (chartNeedsRefresh) {
-                const days     = newRange === 'custom' ? newCustomDays : undefined;
+                const days     = newRange === 'custom' ? (parseInt(newCustomDays) || 30) : undefined;
                 const rangeBtn = document.querySelector('.range-btn[data-range="' + newRange + '"]');
                 document.querySelectorAll('.range-btn').forEach(b => b.classList.remove('active'));
                 if (rangeBtn) rangeBtn.classList.add('active');
@@ -3778,18 +4269,36 @@
                 if (window.refreshChart) window.refreshChart(newRange, days);
             }
 
+            if (window.applyChartNav) window.applyChartNav();
             if (openState && newDefaultLanding !== openState.defaultLanding) {
-                if (window.applyChartNav) window.applyChartNav();
+                const isTableLanding = newDefaultLanding === 'table-daily' || newDefaultLanding === 'table-weekly';
+                if (isTableLanding) {
+                    if (window.setTablePage) window.setTablePage(newDefaultLanding === 'table-weekly' ? 'weekly' : 'daily');
+                    if (window.setView) window.setView('table');
+                } else if (window.setView) {
+                    window.setView('chart');
+                }
             }
 
-            if (window.weeklyChartLoaded && openState) {
-                const weeklyNeedsRefresh = newUnit !== openState.unit ||
+            // Always sync in-memory weekly state so settings reads the right value next open
+            if (window.setWeeklyRange) window.setWeeklyRange(newWeeklyRange, newCustomWeeks);
+
+            if (openState) {
+                const weeklyNeedsRefresh = window.weeklyChartLoaded && (
+                    newUnit !== openState.unit ||
                     newWeeklyRange !== openState.weeklyRange || newCustomWeeks !== String(openState.customWeeks) ||
                     newWeeklyGoal !== openState.weeklyGoalLine || newWeeklyTrend !== openState.weeklyTrendLine ||
-                    newWeeklyMinMax !== openState.weeklyMinMax || newDateFormat !== openState.dateFormat;
+                    newWeeklyMinMax !== openState.weeklyMinMax || newWeeklyMode !== openState.weeklyMode ||
+                    newDateFormat !== openState.dateFormat);
                 if (weeklyNeedsRefresh) {
-                    if (window.setWeeklyRange) window.setWeeklyRange(newWeeklyRange, newCustomWeeks);
                     if (window.refreshWeeklyChart) window.refreshWeeklyChart();
+                }
+                if (window.renderTable) {
+                    const tableNeedsRefresh =
+                        newUnit !== openState.unit || newWeeklyMode !== openState.weeklyMode ||
+                        newDateFormat !== openState.dateFormat || newWeeklyRange !== openState.weeklyRange ||
+                        newCustomWeeks !== String(openState.customWeeks);
+                    if (tableNeedsRefresh) window.renderTable();
                 }
             }
 
@@ -3857,9 +4366,11 @@
             document.getElementById('prof-custom-wrap-weekly').hidden = true;
             profCustomWeeks.value = '';
             // Weekly Summary toggles
-            activate('prof-weekly-trend-off', 'prof-weekly-trend-on');
-            activate('prof-weekly-goal-off',  'prof-weekly-goal-on');
-            activate('prof-weekly-minmax-on', 'prof-weekly-minmax-off');
+            activate('prof-weekly-trend-off',    'prof-weekly-trend-on');
+            activate('prof-weekly-goal-off',     'prof-weekly-goal-on');
+            activate('prof-weekly-minmax-on',    'prof-weekly-minmax-off');
+            activate('prof-weekly-table-exp-off','prof-weekly-table-exp-on');
+            activate('prof-weekly-mode-rolling', 'prof-weekly-mode-iso');
             // HUD
             activate('prof-healthbar-on',     'prof-healthbar-off');
             activate('prof-fighter-name-on',  'prof-fighter-name-off');
@@ -3890,11 +4401,15 @@
     window.addEventListener('wheel', function (e) {
         const activeOverlay = document.querySelector('.modal-overlay:not([hidden])');
         const noteOpen      = !document.getElementById('note-popover').hidden;
-        if (!activeOverlay && !noteOpen) return;
-        if (e.target.closest('.settings-scroll-body')) return;
+        const tableWrap     = document.getElementById('data-table-wrap');
+        const inTable       = tableWrap && !tableWrap.hidden && !!e.target.closest('.data-table-scroll-area');
+        if (!activeOverlay && !noteOpen && !inTable) return;
         e.preventDefault();
         if (activeOverlay) {
             const scrollEl = activeOverlay.querySelector('.settings-scroll-body');
+            if (scrollEl) scrollEl.scrollTop += e.deltaY;
+        } else if (inTable) {
+            const scrollEl = document.querySelector('.data-table-scroll');
             if (scrollEl) scrollEl.scrollTop += e.deltaY;
         }
     }, { passive: false, capture: true });
