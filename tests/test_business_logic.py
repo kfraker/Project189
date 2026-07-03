@@ -49,22 +49,29 @@ class TestWeightConversion:
 
 class TestDateRangeBoundaries:
 
-    def test_7d_window_starts_6_days_ago(self, client):
-        """7D = today and 6 days back = 7 days total."""
-        seed_weight(client, _date_offset(6), 200.0)   # boundary — included
-        seed_weight(client, _date_offset(7), 201.0)   # one outside — excluded
-        rows = client.get("/api/weights?range=7d").get_json()
+    def test_7d_window_anchors_to_most_recent_entry(self, client):
+        """7D = most recent entry and 6 days back = 7 days total."""
+        anchor   = _date_offset(3)       # most recent entry — sets the anchor
+        boundary = _date_offset(3 + 6)   # exactly 6 days before anchor — included
+        outside  = _date_offset(3 + 7)   # 7 days before anchor — excluded
+        seed_weight(client, anchor,   200.0)
+        seed_weight(client, boundary, 201.0)
+        seed_weight(client, outside,  202.0)
+        rows  = client.get("/api/weights?range=7d").get_json()
         dates = [r["date"] for r in rows]
-        assert _date_offset(6) in dates
-        assert _date_offset(7) not in dates
+        assert anchor   in dates
+        assert boundary in dates
+        assert outside  not in dates
 
-    def test_1y_window_is_364_days_back_from_today(self, client):
-        """1Y = 365 days, so boundary is today − 364."""
-        boundary = _date_offset(364)
-        outside  = _date_offset(365)
-        seed_weight(client, boundary, 200.0)
-        seed_weight(client, outside,  201.0)
-        rows = client.get("/api/weights?range=1y").get_json()
+    def test_1y_window_is_364_days_back_from_most_recent(self, client):
+        """1Y = 365 days, so boundary is most recent entry − 364."""
+        anchor   = _date_offset(5)
+        boundary = _date_offset(5 + 364)
+        outside  = _date_offset(5 + 365)
+        seed_weight(client, anchor,   200.0)
+        seed_weight(client, boundary, 201.0)
+        seed_weight(client, outside,  202.0)
+        rows  = client.get("/api/weights?range=1y").get_json()
         dates = [r["date"] for r in rows]
         assert boundary in dates
         assert outside  not in dates
@@ -173,10 +180,15 @@ class TestCustomRangeCapping:
         assert r.status_code == 200
 
     def test_days_0_treated_as_30_via_or_fallback(self, client):
-        """0 or 30 == 30 in Python; default kicks in."""
-        seed_weight(client, _date_offset(29), 200.0)
-        seed_weight(client, _date_offset(31), 201.0)
-        rows = client.get("/api/weights?range=custom&days=0").get_json()
+        """0 or 30 == 30 in Python; default kicks in. Anchor = most recent entry."""
+        anchor   = _date_offset(2)
+        boundary = _date_offset(2 + 29)
+        outside  = _date_offset(2 + 30)
+        seed_weight(client, anchor,   200.0)
+        seed_weight(client, boundary, 201.0)
+        seed_weight(client, outside,  202.0)
+        rows  = client.get("/api/weights?range=custom&days=0").get_json()
         dates = [r["date"] for r in rows]
-        assert _date_offset(29) in dates
-        assert _date_offset(31) not in dates
+        assert anchor   in dates
+        assert boundary in dates
+        assert outside  not in dates

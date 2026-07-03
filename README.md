@@ -15,7 +15,7 @@ A personal weight tracking dashboard built with Flask and SQLite. Logs daily wei
 - **Health bar HUD** — fixed top-left pixel-art health bar that fills red as the user progresses from start weight toward goal weight. Fighter name (set in Fight Card) is displayed above the bar in Mortal Kombat–style gold text. Hovering the bar shows remaining weight to goal.
 - **Fight Card modal** — record fighter profile info (name, sex, date of birth, height, activity level) with a themed date picker for DOB. Age is calculated automatically. Activity level (Sedentary / Light / Moderate / Active) is used for BMR calculations.
 - **Insights modal** — 10 stats computed from full weight history: Predicted Goal Date (Mifflin-St. Jeor BMR simulation), Total Weigh-ins, Longest Streak, Current Streak, Current Trend, Weekly Loss Rate, Monthly Loss Rate, Lowest Weight, Largest Weekly Loss, and Avg Daily Fluctuation. Predicted Goal Date uses week-by-week metabolic adaptation; falls back to a 500 kcal/day deficit estimate when no trend is available.
-- **Profile system** — three selectable profile pictures, each linked to its own custom pointer and edit cursor set. Selection is persisted server-side and restored on every page load.
+- **Profile system** — four selectable profile pictures, each linked to its own custom pointer and edit cursor set. Selection is persisted server-side and restored on every page load.
 - **Custom cursors** — profile-linked pointer and edit cursors rendered via transparent PNGs; swap automatically when the active profile changes.
 - **Site-wide tooltips** — hover help on buttons and icons matches the chart tooltip style.
 - **Settings sections** — settings modal organized into Measurements, Chart, and Profile sections for easier navigation. Chart section includes Default Chart (Over Time / Weekly), Default View (Chart / Table), Default Date Range, Goal Line, Moving Average, Trend Line, Chart Type, and Health Bar.
@@ -85,12 +85,16 @@ project-189/
 │   ├── editpointer2.png        # Profile 2 edit cursor
 │   ├── pointer3.png            # Profile 3 pointer cursor
 │   ├── editpointer3.png        # Profile 3 edit cursor
+│   ├── pointer4.png            # Profile 4 pointer cursor
+│   ├── editpointer4.png        # Profile 4 edit cursor
 │   ├── profilebutton.png       # Profile 1 avatar (default)
 │   ├── profilebuttonsmile.png  # Profile 1 avatar (hover)
 │   ├── profile2button.png      # Profile 2 avatar (default)
 │   ├── profile2buttonsmile.png # Profile 2 avatar (hover)
 │   ├── profile3button.png      # Profile 3 avatar (default)
 │   ├── profile3buttonsmile.png # Profile 3 avatar (hover)
+│   ├── profile4button.png      # Profile 4 avatar (default)
+│   ├── profile4buttonsmile.png # Profile 4 avatar (hover)
 │   ├── dumbbellbutton.png      # Workouts button icon
 │   ├── proteinshakebutton.png  # Nutrition button icon
 │   ├── settingsbutton.png      # Settings button icon
@@ -133,4 +137,4 @@ Also in `static/`:
 python -m pytest tests/ -v
 ```
 
-258 tests covering all API endpoints, business logic, date range boundaries, and UI structure.
+283 tests covering all API endpoints, business logic, date range boundaries, and UI structure.

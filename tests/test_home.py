@@ -149,22 +149,25 @@ def test_profile_pic_all_images_referenced(html):
     assert 'profilebutton.png' in html
     assert 'profile2button.png' in html
     assert 'profile3button.png' in html
+    assert 'profile4button.png' in html
 
 
 # ── Cursor sets ───────────────────────────────────────────────────────────────
 
 def test_all_cursor_images_referenced(html):
-    for name in ('pointer.png', 'pointer2.png', 'pointer3.png',
-                 'editpointer.png', 'editpointer2.png', 'editpointer3.png'):
+    for name in ('pointer.png', 'pointer2.png', 'pointer3.png', 'pointer4.png',
+                 'editpointer.png', 'editpointer2.png', 'editpointer3.png', 'editpointer4.png'):
         assert name in html, f'{name} not referenced in page'
 
 
 def test_cursor_sets_cover_all_profiles(html):
-    """CURSOR_SETS in the script must define entries for profiles 1, 2, and 3."""
+    """CURSOR_SETS must define entries for all four profiles."""
     assert "pointer2.png" in html
     assert "pointer3.png" in html
+    assert "pointer4.png" in html
     assert "editpointer2.png" in html
     assert "editpointer3.png" in html
+    assert "editpointer4.png" in html
 
 
 def test_change_pic_btn_inside_settings_modal(html):
@@ -670,3 +673,56 @@ def test_chart_data_only_button_present(html):
 
 def test_chart_no_data_button_present(html):
     assert 'id="prof-chart-none"' in html
+
+
+# ── Profile 4 ─────────────────────────────────────────────────────────────────
+
+def test_profile_pic_option_4_present(html):
+    """Profile 4 must have a selectable button in the pic picker."""
+    assert 'data-pic="4"' in html
+
+
+def test_profile_4_cursor_images_in_cursor_sets(html):
+    """CURSOR_SETS must include pointer4.png and editpointer4.png."""
+    assert 'pointer4.png' in html
+    assert 'editpointer4.png' in html
+
+
+# ── Weekly chart fixes (v2.2.1) ───────────────────────────────────────────────
+
+def test_weekly_chart_slices_to_max_weeks(html):
+    """Weekly chart must trim grouped calendar weeks to exactly the requested count."""
+    assert 'maxWeeks' in html
+    assert 'weeks.slice' in html
+
+
+def test_set_weekly_range_defined(html):
+    """window.setWeeklyRange must be assigned so settings-save can update the chart."""
+    assert 'window.setWeeklyRange' in html
+
+
+def test_get_weekly_chart_range_null_when_empty(html):
+    """getWeeklyChartRange must return null (not 4) when the custom-weeks input is empty."""
+    idx = html.find('getWeeklyChartRange')
+    assert idx != -1
+    snippet = html[idx:idx + 200]
+    assert '|| null' in snippet
+
+
+def test_weekly_range_active_button_initialized(html):
+    """Weekly chart IIFE must dynamically set the active button from the saved preference."""
+    assert 'activeWeeksRange' in html
+    assert 'initWeeklyBtn' in html
+
+
+def test_missing_row_has_height_spacer(html):
+    """Missing table rows must include a zero-width spacer so they match the height of data rows."""
+    idx = html.find('missing-badge')
+    assert idx != -1
+    snippet = html[idx:idx + 400]
+    assert 'height:40px' in snippet or 'flex-shrink:0' in snippet
+
+
+def test_custom_days_default_is_30(html):
+    """When no custom-days preference is saved, the daily chart must default to 30 days."""
+    assert 'parseInt(savedCustomDaysStr) || 30' in html

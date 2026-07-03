@@ -180,7 +180,11 @@ def get_weights():
             elif range_param == "1y":  days = 365
             else:                      days = min(custom_days or 30, 1095)
 
-            start = (date.today() - timedelta(days=days - 1)).isoformat()
+            latest = conn.execute(
+                "SELECT MAX(date) as d FROM weights WHERE user_id = ?", (_USER_ID,)
+            ).fetchone()["d"]
+            anchor = date.fromisoformat(latest) if latest else date.today()
+            start = (anchor - timedelta(days=days - 1)).isoformat()
             rows = conn.execute(
                 "SELECT date, weight_lbs, weight_kg, notes FROM weights "
                 "WHERE user_id = ? AND date >= ? ORDER BY date",

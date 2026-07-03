@@ -64,7 +64,11 @@ def test_named_range_includes_boundary_entry(client, range_name, days):
     ("1y",  365),
 ])
 def test_named_range_excludes_entry_one_day_outside(client, range_name, days):
-    outside = _date_offset(days)
+    # Anchor = most recent entry. Seed anchor at offset 2 so the window is
+    # [anchor - (days-1), anchor]. Entry at anchor-(days) is one day outside.
+    anchor  = _date_offset(2)
+    outside = _date_offset(2 + days)
+    seed_weight(client, anchor,  199.0)
     seed_weight(client, outside, 200.0)
     rows = client.get(f"/api/weights?range={range_name}").get_json()
     assert not any(r["date"] == outside for r in rows)
@@ -85,13 +89,16 @@ def test_named_range_includes_today(client, range_name, days):
 # ── Custom range ──────────────────────────────────────────────────────────────
 
 def test_custom_range_returns_correct_window(client):
-    in_window  = _date_offset(6)
-    out_window = _date_offset(7)
+    # Anchor = most recent entry (offset 2). Window of 7 = [anchor-6, anchor].
+    anchor     = _date_offset(2)
+    in_window  = _date_offset(2 + 6)
+    out_window = _date_offset(2 + 7)
+    seed_weight(client, anchor,     199.0)
     seed_weight(client, in_window,  200.0)
     seed_weight(client, out_window, 201.0)
     rows = client.get("/api/weights?range=custom&days=7").get_json()
     dates = [r["date"] for r in rows]
-    assert in_window in dates
+    assert in_window  in dates
     assert out_window not in dates
 
 
@@ -102,12 +109,18 @@ def test_custom_range_days_capped_at_1095(client):
 
 
 def test_custom_range_no_days_defaults_to_30(client):
-    seed_weight(client, _date_offset(29), 200.0)
-    seed_weight(client, _date_offset(31), 201.0)
-    rows = client.get("/api/weights?range=custom").get_json()
+    # Anchor = most recent entry; 30-day window runs back from there.
+    anchor   = _date_offset(2)
+    boundary = _date_offset(2 + 29)
+    outside  = _date_offset(2 + 30)
+    seed_weight(client, anchor,   200.0)
+    seed_weight(client, boundary, 201.0)
+    seed_weight(client, outside,  202.0)
+    rows  = client.get("/api/weights?range=custom").get_json()
     dates = [r["date"] for r in rows]
-    assert _date_offset(29) in dates
-    assert _date_offset(31) not in dates
+    assert anchor   in dates
+    assert boundary in dates
+    assert outside  not in dates
 
 
 def test_custom_range_days_1_returns_only_today(client):

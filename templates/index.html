@@ -634,7 +634,7 @@
 
         <div class="settings-section-label" data-section="hud">HUD <span class="section-caret">▾</span></div>
         <div class="settings-section-body" id="ssb-hud">
-            <div class="overlay-grid">
+            <div class="overlay-grid overlay-grid-3col">
                 <div class="overlay-item">
                     <label class="profile-setting-label">Health Bar</label>
                     <div class="profile-toggle-row is-toggle">
@@ -649,6 +649,7 @@
                         <button class="profile-opt-btn" id="prof-fighter-name-off">Off</button>
                     </div>
                 </div>
+                <div class="overlay-item"></div>
             </div>
             <button id="change-pic-btn" class="change-pic-btn">Change Profile Pic</button>
         </div>
@@ -1243,9 +1244,8 @@
                           activeRange === '30d' ? 30 :
                           activeRange === '90d' ? 90 :
                           activeRange === '1y'  ? 365 : Math.min(activeDays || 30, 1095);
-                const today0 = new Date(); today0.setHours(0, 0, 0, 0);
-                first = new Date(today0);
-                first.setDate(today0.getDate() - (n - 1));
+                first = new Date(last);
+                first.setDate(last.getDate() - (n - 1));
                 if (first < dataFirst) first = dataFirst;
                 if (first > last) first = last;
             }
@@ -1556,6 +1556,17 @@
         let activeWeeksRange = localStorage.getItem('pref_weekly_range') || '4';
         const savedCustomWeeks = localStorage.getItem('pref_custom_weeks');
         if (savedCustomWeeks) customIn.value = savedCustomWeeks;
+
+        // Set correct active button and custom wrap visibility on load
+        document.querySelectorAll('.weekly-range-btn').forEach(b => b.classList.remove('active'));
+        const initWeeklyBtn = document.querySelector(`.weekly-range-btn[data-weeks="${activeWeeksRange}"]`);
+        if (initWeeklyBtn) initWeeklyBtn.classList.add('active');
+        if (activeWeeksRange === 'custom') {
+            customWrap.hidden = false;
+        } else {
+            customWrap.hidden = true;
+        }
+
         let weeklyMouseX = 0, weeklyMouseY = 0;
 
         function isoWeekMonday(dateISO) {
@@ -1654,7 +1665,11 @@
                 infoIconEl.style.display = 'none';
             }
 
-            const weeks = groupByWeek(filteredRows);
+            const maxWeeks = range === 'all' ? null
+                           : range === 'custom' ? (parseInt(customWeeks) || 4)
+                           : (parseInt(range) || 4);
+            let weeks = groupByWeek(filteredRows);
+            if (maxWeeks != null) weeks = weeks.slice(-maxWeeks);
             const unit = window.activeUnit === 'kg' ? 'kgs' : 'lbs';
             const toUnit = v => window.activeUnit === 'kg' ? parseFloat((v / 2.20462).toFixed(1)) : parseFloat(v.toFixed(1));
             const avgs = weeks.map(w => toUnit(w.avg));
@@ -1828,7 +1843,7 @@
         customIn.addEventListener('keydown', e => { if (e.key === 'Enter') applyWeeklyCustom(); });
         customIn.addEventListener('blur', () => {
             const v = parseInt(customIn.value);
-            if (!v || v < 4) customIn.value = 4;
+            if (v && v < 4) customIn.value = 4;
             else if (v > 156) customIn.value = 156;
         });
 
@@ -1849,18 +1864,19 @@
             if (btn) btn.classList.add('active');
             if (range === 'custom') {
                 customWrap.hidden = false;
-                if (weeks) customIn.value = weeks;
+                customIn.value = weeks || '';
             } else {
                 customWrap.hidden = true;
             }
         };
 
-        window.getWeeklyChartRange = () => ({ range: activeWeeksRange, weeks: parseInt(customIn.value) || 4 });
+        window.getWeeklyChartRange = () => ({ range: activeWeeksRange, weeks: parseInt(customIn.value) || null });
 
         window.loadWeeklyChartOnce = function () {
             if (!window.weeklyChartLoaded) {
                 window.weeklyChartLoaded = true;
-                loadWeeklyChart(activeWeeksRange);
+                const cw = activeWeeksRange === 'custom' ? (parseInt(customIn.value) || 4) : undefined;
+                loadWeeklyChart(activeWeeksRange, cw);
             }
         };
     })();
@@ -2013,7 +2029,12 @@
                 const stTd = document.createElement('td');
                 stTd.className = 'action-cell';
                 if (missing) {
-                    stTd.innerHTML = '<span class="missing-badge">Missing</span>';
+                    const badge   = document.createElement('span');
+                    badge.className = 'missing-badge';
+                    badge.textContent = 'Missing';
+                    const spacer  = document.createElement('span');
+                    spacer.style.cssText = 'width:0;height:40px;overflow:hidden;pointer-events:none;flex-shrink:0';
+                    stTd.append(badge, spacer);
                 } else {
                     const del = document.createElement('button');
                     del.className = 'table-delete-btn';
@@ -2556,7 +2577,7 @@
         let mouseInDoc     = false;
         let activeCursorSet = localStorage.getItem('pref_profile_pic') || '1';
 
-        // [src, hotX, hotY, renderH]
+        // [src, hotX, hotY, renderH], optional true = soft white-edge removal for non-transparent PNGs
         const CURSOR_SETS = {
             '1': [['/static/pointer.png',  280, 60, 48], ['/static/editpointer.png',  660, 30, 64]],
             '2': [['/static/pointer2.png', 280, 60, 48], ['/static/editpointer2.png', 660, 30, 64]],
@@ -2564,13 +2585,26 @@
             '4': [['/static/pointer4.png', 280, 60, 48], ['/static/editpointer4.png', 660, 30, 64]],
         };
 
-        function processImg(src, origHotX, origHotY, key, renderH) {
+        function processImg(src, origHotX, origHotY, key, renderH, softStrip) {
             const img = new Image();
             img.onload = function () {
                 const h = renderH || 48, scale = h / img.height, w = Math.round(img.width * scale);
                 const cv = document.createElement('canvas');
                 cv.width = w; cv.height = h;
-                cv.getContext('2d').drawImage(img, 0, 0, w, h);
+                const ctx = cv.getContext('2d');
+                ctx.drawImage(img, 0, 0, w, h);
+                const id = ctx.getImageData(0, 0, w, h), d = id.data;
+                for (let i = 0; i < d.length; i += 4) {
+                    const r = d[i], g = d[i+1], b = d[i+2];
+                    if (r > 240 && g > 240 && b > 240) {
+                        d[i+3] = 0;
+                    } else if (softStrip && r > 200 && g > 200 && b > 200) {
+                        // Graduated fade for anti-aliased edges baked against a white background
+                        const t = (Math.min(r, g, b) - 200) / 40;
+                        d[i+3] = Math.round(d[i+3] * (1 - t));
+                    }
+                }
+                ctx.putImageData(id, 0, 0);
                 const entry = { url: cv.toDataURL(), hotX: Math.round(origHotX * scale), hotY: Math.round(origHotY * scale), w, h };
                 cursors[key] = entry;
                 if (key === 'normal' + activeCursorSet) {
@@ -2594,11 +2628,13 @@
             el.style.backgroundImage = `url(${c.url})`;
         }
 
-        ['1', '2', '3'].forEach(n => {
-            const [nSrc, nHx, nHy, nRh] = CURSOR_SETS[n][0];
-            const [eSrc, eHx, eHy, eRh] = CURSOR_SETS[n][1];
-            processImg(nSrc, nHx, nHy, 'normal' + n, nRh);
-            processImg(eSrc, eHx, eHy, 'edit'   + n, eRh);
+        Object.keys(CURSOR_SETS).forEach(n => {
+            const set = CURSOR_SETS[n];
+            const softStrip = set[2] || false;
+            const [nSrc, nHx, nHy, nRh] = set[0];
+            const [eSrc, eHx, eHy, eRh] = set[1];
+            processImg(nSrc, nHx, nHy, 'normal' + n, nRh, softStrip);
+            processImg(eSrc, eHx, eHy, 'edit'   + n, eRh, softStrip);
         });
 
         window.applyCursorSet = function(n) {
@@ -3672,7 +3708,8 @@
             const newRange      = document.querySelector('.profile-opt-btn[data-range].active')?.dataset.range || '7d';
             const newCustomDays = Math.min(Math.max(parseInt(profCustomDays.value) || 7, 7), 1095);
             const newWeeklyRange  = document.querySelector('.profile-opt-btn[data-weeks].active')?.dataset.weeks || '4';
-            const newCustomWeeks  = Math.min(Math.max(parseInt(profCustomWeeks.value) || 4, 4), 156);
+            const _wks = parseInt(profCustomWeeks.value);
+            const newCustomWeeks  = _wks ? String(Math.min(Math.max(_wks, 4), 156)) : '';
             const newDefaultLanding = document.getElementById('prof-landing-table-weekly').classList.contains('active') ? 'table-weekly'
                                     : document.getElementById('prof-landing-table-daily').classList.contains('active')  ? 'table-daily'
                                     : document.getElementById('prof-landing-weekly').classList.contains('active')        ? 'weekly'
@@ -3847,20 +3884,20 @@
 
     // Scroll lock: intercept wheel events so the page never scrolls while a modal
     // is open (avoids any overflow/scrollbar change that would shift the background).
+    // Queries the DOM live on every event so stale snapshots can never miss a modal.
     // Wheel events inside .settings-scroll-body pass through normally; all others
     // are cancelled and redirected to that scroll body when one is present.
-    (function () {
-        const overlays = Array.from(document.querySelectorAll('.modal-overlay'));
-
-        window.addEventListener('wheel', function (e) {
-            const activeOverlay = overlays.find(el => !el.hidden);
-            if (!activeOverlay) return;
-            if (e.target.closest('.settings-scroll-body')) return; // let it scroll naturally
-            e.preventDefault();
+    window.addEventListener('wheel', function (e) {
+        const activeOverlay = document.querySelector('.modal-overlay:not([hidden])');
+        const noteOpen      = !document.getElementById('note-popover').hidden;
+        if (!activeOverlay && !noteOpen) return;
+        if (e.target.closest('.settings-scroll-body')) return;
+        e.preventDefault();
+        if (activeOverlay) {
             const scrollEl = activeOverlay.querySelector('.settings-scroll-body');
             if (scrollEl) scrollEl.scrollTop += e.deltaY;
-        }, { passive: false });
-    })();
+        }
+    }, { passive: false, capture: true });
 
     // Click-anywhere-to-toggle: runs in capture phase so it fires before the button's
     // own handler. If an inactive button was clicked, we return and let its handler run.
