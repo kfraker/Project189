@@ -263,6 +263,39 @@ def delete_weight(entry_date):
         conn.close()
 
 
+@app.route("/api/weight/<string:entry_date>/weight", methods=["DELETE"])
+def clear_weight(entry_date):
+    if not _valid_date(entry_date):
+        return jsonify({"error": "date must be a valid ISO date (YYYY-MM-DD)"}), 400
+    conn = get_db()
+    try:
+        row = conn.execute(
+            "SELECT notes FROM weights WHERE user_id = ? AND date = ?",
+            (_USER_ID, entry_date),
+        ).fetchone()
+        if not row:
+            return jsonify({"error": "No entry found for that date"}), 404
+        if row["notes"]:
+            conn.execute(
+                "UPDATE weights SET weight_lbs = NULL, weight_kg = NULL WHERE user_id = ? AND date = ?",
+                (_USER_ID, entry_date),
+            )
+        else:
+            conn.execute(
+                "DELETE FROM weights WHERE user_id = ? AND date = ?",
+                (_USER_ID, entry_date),
+            )
+        conn.commit()
+        latest_row = conn.execute(
+            "SELECT weight_lbs, weight_kg FROM weights WHERE user_id = ? AND weight_lbs IS NOT NULL ORDER BY date DESC LIMIT 1",
+            (_USER_ID,),
+        ).fetchone()
+        latest = {"weight_lbs": latest_row["weight_lbs"], "weight_kg": latest_row["weight_kg"]} if latest_row else {}
+        return jsonify({"success": True, "latest": latest})
+    finally:
+        conn.close()
+
+
 @app.route("/api/weight/<string:entry_date>/note", methods=["PATCH"])
 def save_note(entry_date):
     if not _valid_date(entry_date):

@@ -181,19 +181,23 @@
                                         <button class="range-btn" data-range="90d">90D</button>
                                         <button class="range-btn" data-range="1y">1Y</button>
                                         <button class="range-btn" data-range="all">All</button>
-                                        <button class="range-btn" data-range="custom">Custom</button>
                                     </div>
-                                    <div class="custom-days-wrap" id="custom-days-wrap" hidden>
-                                        <input type="number" id="custom-days" class="custom-days-input" min="7" max="1095" placeholder="—" data-tip="Min 7 days">
-                                        <span class="custom-days-label">days</span>
+                                    <div class="custom-range-group">
+                                        <div class="range-btns">
+                                            <button class="range-btn" data-range="custom">Custom</button>
+                                        </div>
+                                        <div class="custom-days-wrap" id="custom-days-wrap" hidden>
+                                            <input type="number" id="custom-days" class="custom-days-input" min="7" max="1095" placeholder="—" data-tip="Min 7 days">
+                                            <span class="custom-days-label">days</span>
+                                        </div>
                                     </div>
-                                    <button class="chart-add-btn" id="chart-add-btn" data-tip="Log a past weight">+</button>
                                 </div>
                             </div>
                             <div class="chart-wrap">
                                 <canvas id="weight-chart"></canvas>
                                 <div id="chart-info-icon">i</div>
                             </div>
+                            <div class="chart-legend" id="daily-chart-legend"></div>
                             <p class="chart-empty" id="chart-empty" hidden>No weight data yet — start logging!</p>
                         </div>
 
@@ -207,19 +211,23 @@
                                         <button class="weekly-range-btn" data-weeks="12">12W</button>
                                         <button class="weekly-range-btn" data-weeks="30">30W</button>
                                         <button class="weekly-range-btn" data-weeks="all">All</button>
-                                        <button class="weekly-range-btn" data-weeks="custom">Custom</button>
                                     </div>
-                                    <div class="custom-weeks-wrap" id="custom-weeks-wrap" hidden>
-                                        <input type="number" id="custom-weeks" class="custom-days-input" min="4" max="156" placeholder="—" data-tip="Min 4 weeks">
-                                        <span class="custom-days-label">weeks</span>
+                                    <div class="custom-range-group">
+                                        <div class="range-btns">
+                                            <button class="weekly-range-btn" data-weeks="custom">Custom</button>
+                                        </div>
+                                        <div class="custom-weeks-wrap" id="custom-weeks-wrap" hidden>
+                                            <input type="number" id="custom-weeks" class="custom-days-input" min="4" max="156" placeholder="—" data-tip="Min 4 weeks">
+                                            <span class="custom-days-label">weeks</span>
+                                        </div>
                                     </div>
-                                    <button class="chart-add-btn" id="chart-add-btn-weekly" data-tip="Log a past weight">+</button>
                                 </div>
                             </div>
                             <div class="chart-wrap">
                                 <canvas id="weekly-chart"></canvas>
                                 <div id="weekly-info-icon">i</div>
                             </div>
+                            <div class="chart-legend" id="weekly-chart-legend"></div>
                             <p class="chart-empty" id="weekly-chart-empty" hidden>No weight data yet — start logging!</p>
                         </div>
 
@@ -236,7 +244,7 @@
                                         <th id="th-primary"   style="width:25%">Weight (lbs)</th>
                                         <th id="th-secondary" style="width:25%">Weight (kgs)</th>
                                         <th style="width:9%"></th>
-                                        <th style="width:14%"></th>
+                                        <th id="th-days-logged" style="width:14%"></th>
                                     </tr>
                                 </thead>
                                 <tbody id="data-table-body"></tbody>
@@ -253,6 +261,7 @@
 
             <div class="chart-footer">
                 <button class="unit-toggle-btn" id="unit-toggle-btn">KGS</button>
+                <button class="chart-add-btn" id="chart-add-btn" data-tip="Log a past weight">+</button>
                 <button class="view-toggle-btn" id="view-toggle-btn">Table</button>
             </div>
         </div>
@@ -494,6 +503,7 @@
     <div class="modal-card">
         <h2 class="modal-title">Settings</h2>
 
+        <div class="settings-scroll-wrap">
         <div class="settings-scroll-body">
 
         <div class="settings-section-label" data-section="measurements">Default Formats <span class="section-caret">▾</span></div>
@@ -562,6 +572,13 @@
             </div>
             <div class="overlay-grid overlay-grid-3col">
                 <div class="overlay-item">
+                    <label class="profile-setting-label">Moving Avg</label>
+                    <div class="profile-toggle-row is-toggle">
+                        <button class="profile-opt-btn" id="prof-ma-line-on">On</button>
+                        <button class="profile-opt-btn" id="prof-ma-line-off">Off</button>
+                    </div>
+                </div>
+                <div class="overlay-item">
                     <label class="profile-setting-label">Trend</label>
                     <div class="profile-toggle-row is-toggle">
                         <button class="profile-opt-btn" id="prof-trend-line-on">On</button>
@@ -575,13 +592,6 @@
                         <button class="profile-opt-btn" id="prof-goal-line-off">Off</button>
                     </div>
                 </div>
-                <div class="overlay-item">
-                    <label class="profile-setting-label">Moving Avg</label>
-                    <div class="profile-toggle-row is-toggle">
-                        <button class="profile-opt-btn" id="prof-ma-line-on">On</button>
-                        <button class="profile-opt-btn" id="prof-ma-line-off">Off</button>
-                    </div>
-                </div>
             </div>
             <div class="profile-setting-group">
                 <label class="profile-setting-label">Data</label>
@@ -590,6 +600,15 @@
                     <button class="profile-opt-btn" id="prof-chart-actual">Actual</button>
                     <button class="profile-opt-btn" id="prof-chart-dots">Data Only</button>
                     <button class="profile-opt-btn" id="prof-chart-none">No Data</button>
+                </div>
+            </div>
+            <div class="overlay-grid overlay-grid-3col">
+                <div class="overlay-item">
+                    <label class="profile-setting-label">Legend</label>
+                    <div class="profile-toggle-row is-toggle">
+                        <button class="profile-opt-btn" id="prof-legend-on">On</button>
+                        <button class="profile-opt-btn" id="prof-legend-off">Off</button>
+                    </div>
                 </div>
             </div>
         </div>
@@ -612,6 +631,13 @@
             </div>
             <div class="overlay-grid overlay-grid-3col">
                 <div class="overlay-item">
+                    <label class="profile-setting-label">Min/Max Range</label>
+                    <div class="profile-toggle-row is-toggle">
+                        <button class="profile-opt-btn" id="prof-weekly-minmax-on">On</button>
+                        <button class="profile-opt-btn" id="prof-weekly-minmax-off">Off</button>
+                    </div>
+                </div>
+                <div class="overlay-item">
                     <label class="profile-setting-label">Trend</label>
                     <div class="profile-toggle-row is-toggle">
                         <button class="profile-opt-btn" id="prof-weekly-trend-on">On</button>
@@ -626,13 +652,6 @@
                     </div>
                 </div>
                 <div class="overlay-item">
-                    <label class="profile-setting-label">Min/Max Range</label>
-                    <div class="profile-toggle-row is-toggle">
-                        <button class="profile-opt-btn" id="prof-weekly-minmax-on">On</button>
-                        <button class="profile-opt-btn" id="prof-weekly-minmax-off">Off</button>
-                    </div>
-                </div>
-                <div class="overlay-item">
                     <label class="profile-setting-label">Table Expanded</label>
                     <div class="profile-toggle-row is-toggle">
                         <button class="profile-opt-btn" id="prof-weekly-table-exp-on">On</button>
@@ -644,6 +663,15 @@
                     <div class="profile-toggle-row is-toggle">
                         <button class="profile-opt-btn" id="prof-weekly-mode-rolling" data-tip="7-day windows ending today">Rolling</button>
                         <button class="profile-opt-btn" id="prof-weekly-mode-iso" data-tip="Calendar weeks (Mon–Sun)">ISO</button>
+                    </div>
+                </div>
+            </div>
+            <div class="overlay-grid overlay-grid-3col">
+                <div class="overlay-item">
+                    <label class="profile-setting-label">Legend</label>
+                    <div class="profile-toggle-row is-toggle">
+                        <button class="profile-opt-btn" id="prof-weekly-legend-on">On</button>
+                        <button class="profile-opt-btn" id="prof-weekly-legend-off">Off</button>
                     </div>
                 </div>
             </div>
@@ -672,6 +700,10 @@
         </div>
 
         </div><!-- /.settings-scroll-body -->
+        <div class="settings-scrollbar-track" id="settings-scrollbar-track">
+            <div class="settings-scrollbar-thumb" id="settings-scrollbar-thumb"></div>
+        </div>
+        </div><!-- /.settings-scroll-wrap -->
 
         <div class="modal-actions">
             <button class="modal-btn modal-reset" id="settings-reset">Reset defaults</button>
@@ -706,7 +738,20 @@
     </div>
 </div>
 
-<!-- Shared table confirm modal (overwrite + delete) -->
+<!-- Row delete modal with per-item checkboxes -->
+<div id="row-delete-modal" class="modal-overlay" hidden>
+    <div class="modal-card">
+        <h2 class="modal-title">Delete Entry</h2>
+        <p class="overwrite-message">Select what to remove for <span id="row-delete-date"></span>:</p>
+        <div id="row-delete-checks"></div>
+        <div class="modal-actions">
+            <button class="modal-btn modal-cancel" id="row-delete-cancel">Cancel</button>
+            <button class="modal-btn modal-save"   id="row-delete-ok">Delete selected</button>
+        </div>
+    </div>
+</div>
+
+<!-- Shared table confirm modal (overwrite / clear) -->
 <div id="table-confirm-modal" class="modal-overlay" hidden>
     <div class="modal-card">
         <h2 class="modal-title" id="table-confirm-title">Confirm</h2>
@@ -734,6 +779,9 @@
     </div>
 </div>
 
+<div id="page-scrollbar-track">
+    <div id="page-scrollbar-thumb"></div>
+</div>
 <div id="site-cursor"></div>
 <script>
     /* Hydrate localStorage from server-rendered preferences (runs before any getItem) */
@@ -794,6 +842,15 @@
             return mon + ' ' + d + ', ' + y;
         }
         return d + ' ' + mon + ' ' + y;
+    }
+
+    function formatDateShort(isoDate) {
+        const [y, m, d] = isoDate.split('-').map(Number);
+        const dt = new Date(y, m - 1, d);
+        const mon = dt.toLocaleDateString('en-US', { month: 'short' });
+        return (localStorage.getItem('pref_date_format') || 'mdy') === 'mdy'
+            ? mon + ' ' + d
+            : d + ' ' + mon;
     }
 
     function fmtDateShort(dt) {
@@ -868,6 +925,12 @@
         if (window.updateHealthBar)     window.updateHealthBar();
         if (window.updateHealthBarName) window.updateHealthBarName();
         if (window.applyHealthbarPref)  window.applyHealthbarPref();
+        const legendOn       = (localStorage.getItem('pref_legend')         ?? '1') !== '0';
+        const weeklyLegendOn = (localStorage.getItem('pref_weekly_legend')  ?? '1') !== '0';
+        const dlEl = document.getElementById('daily-chart-legend');
+        const wlEl = document.getElementById('weekly-chart-legend');
+        if (dlEl) dlEl.style.display  = legendOn       ? '' : 'none';
+        if (wlEl) wlEl.style.display  = weeklyLegendOn ? '' : 'none';
     });
 
     /* Strip white fill zone from health bar PNG so gradient shows through */
@@ -1179,63 +1242,30 @@
                 if (!yScale) return;
                 const { top, bottom, left } = chart.chartArea;
                 const unit = window.activeUnit === 'kg' ? 'kgs' : 'lbs';
-                const c = chart.ctx;
-                c.save();
-                c.font = 'bold 11px Arial';
-                c.textAlign = 'right';
-                c.textBaseline = 'middle';
 
                 const isWeekly = chart.canvas?.id === 'weekly-chart';
-                const items = [];
                 const goalVal  = isWeekly ? window.weeklyGoalVal  : window.goalWeightVal;
                 const maVal    = isWeekly ? null                  : window.maCurrentVal;
                 const trendVal = isWeekly ? window.weeklyTrendVal : window.trendCurrentVal;
-                if (goalVal != null) {
-                    const y = Math.round(yScale.getPixelForValue(goalVal));
-                    if (isFinite(y) && y >= top - 1 && y <= bottom + 1)
-                        items.push({ text: 'GOAL ' + goalVal.toFixed(1) + ' ' + unit, y, color: 'rgba(0, 200, 175, 0.95)' });
-                }
-                if (maVal != null) {
-                    const y = Math.round(yScale.getPixelForValue(maVal));
-                    if (isFinite(y) && y >= top - 1 && y <= bottom + 1)
-                        items.push({ text: '7D AVG ' + maVal.toFixed(1) + ' ' + unit, y, color: 'rgba(255, 200, 50, 0.95)' });
-                }
-                if (trendVal != null) {
-                    const y = Math.round(yScale.getPixelForValue(trendVal));
-                    if (isFinite(y) && y >= top - 1 && y <= bottom + 1)
-                        items.push({ text: 'TREND ' + trendVal.toFixed(1) + ' ' + unit, y, color: 'rgba(160, 100, 255, 0.95)' });
-                }
 
-                // Resolve overlaps: sort top→bottom, nudge from ticks, push down, pull up from bottom
-                const minGap = 13;
-                items.sort((a, b) => a.y - b.y);
-
-                const tickYs = (yScale.ticks || [])
-                    .map(t => Math.round(yScale.getPixelForValue(t.value)))
-                    .filter(ty => isFinite(ty) && ty >= top && ty <= bottom);
-                for (const item of items) {
-                    for (const ty of tickYs) {
-                        if (Math.abs(item.y - ty) < minGap)
-                            item.y = item.y <= ty ? ty - minGap : ty + minGap;
+                // Update DOM legend
+                const legendEl = document.getElementById(isWeekly ? 'weekly-chart-legend' : 'daily-chart-legend');
+                if (legendEl) {
+                    const parts = [];
+                    if (isWeekly) {
+                        if (window.weeklyMinMaxOn)  parts.push({ label: 'MIN/MAX RANGE',                                   color: 'rgba(255, 200, 50, 0.8)'  });
+                        if (trendVal != null)        parts.push({ label: 'TREND '  + trendVal.toFixed(1) + ' ' + unit,    color: 'rgba(160, 100, 255, 0.95)' });
+                        if (goalVal  != null)        parts.push({ label: 'GOAL '   + goalVal.toFixed(1)  + ' ' + unit,    color: 'rgba(0, 200, 175, 0.95)'   });
+                    } else {
+                        if (maVal    != null)        parts.push({ label: '7D AVG ' + maVal.toFixed(1)    + ' ' + unit,    color: 'rgba(255, 200, 50, 0.95)'  });
+                        if (trendVal != null)        parts.push({ label: 'TREND '  + trendVal.toFixed(1) + ' ' + unit,    color: 'rgba(160, 100, 255, 0.95)' });
+                        if (goalVal  != null)        parts.push({ label: 'GOAL '   + goalVal.toFixed(1)  + ' ' + unit,    color: 'rgba(0, 200, 175, 0.95)'   });
                     }
+                    const html = parts.map(p =>
+                        `<span class="chart-legend-item"><span class="chart-legend-dot" style="background:${p.color}"></span><span style="color:${p.color}">${p.label}</span></span>`
+                    ).join('');
+                    if (legendEl.innerHTML !== html) legendEl.innerHTML = html;
                 }
-
-                for (let i = 1; i < items.length; i++) {
-                    if (items[i].y < items[i - 1].y + minGap)
-                        items[i].y = items[i - 1].y + minGap;
-                }
-                for (let i = items.length - 2; i >= 0; i--) {
-                    if (items[i + 1].y > bottom) items[i + 1].y = bottom;
-                    if (items[i].y > items[i + 1].y - minGap)
-                        items[i].y = items[i + 1].y - minGap;
-                }
-
-                for (const { text, y, color } of items) {
-                    c.fillStyle = color;
-                    c.fillText(text, left - 8, y);
-                }
-
-                c.restore();
             }
         });
 
@@ -1526,7 +1556,7 @@
                             grid:    { color: 'rgba(255,255,255,0.04)' },
                             border:  { color: 'rgba(255,255,255,0.08)' },
                             ticks:   { color: '#888', font: { family: 'Arial', size: 13 }, maxTicksLimit: 6, callback: v => v + ' ' + (window.activeUnit === 'kg' ? 'kgs' : 'lbs') },
-                            afterFit: scale => { scale.width = 120; }
+                            afterFit: scale => { scale.width = scale.chart.width < 480 ? 64 : 80; }
                         }
                     }
                 }
@@ -1858,7 +1888,7 @@
                                 callback: v => v + ' ' + unit
                             },
                             grid: { color: 'rgba(255,255,255,0.05)' },
-                            afterFit: scale => { scale.width = 80; }
+                            afterFit: scale => { scale.width = scale.chart.width < 480 ? 48 : 64; }
                         }
                     }
                 }
@@ -1904,9 +1934,6 @@
             else if (v > 156) customIn.value = 156;
         });
 
-        document.getElementById('chart-add-btn-weekly').addEventListener('click', () => {
-            document.getElementById('chart-add-btn').click();
-        });
 
         window.refreshWeeklyChart = function () {
             if (!window.weeklyChartLoaded) return;
@@ -2072,7 +2099,7 @@
             return result;
         }
 
-        function appendExportRow(tbody) {
+        function appendExportRow(tbody, rows) {
             const exportTr = document.createElement('tr');
             exportTr.className = 'table-export-row';
             const exportTd = document.createElement('td');
@@ -2082,11 +2109,11 @@
             exportBtn.className = 'table-export-btn';
             exportBtn.innerHTML = '<svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg> Export CSV';
             exportBtn.addEventListener('click', async () => {
-                const allRows = await fetch('/api/weights?range=all').then(r => r.json());
+                const exportRows = rows || await fetch('/api/weights?range=all').then(r => r.json());
                 const lines = ['Date,Weight (lbs),Weight (kg),Notes'];
-                allRows.forEach(r => {
+                exportRows.forEach(r => {
                     const note = (r.notes || '').replace(/"/g, '""');
-                    lines.push(`${r.date},${r.weight_lbs},${r.weight_kg},"${note}"`);
+                    lines.push(`${r.date},${r.weight_lbs ?? ''},${r.weight_kg ?? ''},"${note}"`);
                 });
                 const blob = new Blob([lines.join('\n')], { type: 'text/csv' });
                 const a = document.createElement('a');
@@ -2110,6 +2137,7 @@
                 : wRange === 'custom' ? (wWeeks || 4)
                 : (parseInt(wRange) || 4);
             if (maxWeeks != null) weekGroups = weekGroups.slice(-maxWeeks);
+            const weekExportRows = weekGroups.flatMap(w => w.days).sort((a, b) => a.date.localeCompare(b.date));
 
             tableBody.innerHTML = '';
             if (!weekGroups.length) {
@@ -2118,8 +2146,9 @@
             }
 
             const unit = window.activeUnit || 'lbs';
-            document.getElementById('th-primary').textContent   = unit === 'lbs' ? 'Avg (lbs)' : 'Avg (kgs)';
-            document.getElementById('th-secondary').textContent = unit === 'lbs' ? 'Avg (kgs)' : 'Avg (lbs)';
+            document.getElementById('th-primary').textContent     = unit === 'lbs' ? 'Avg (lbs)' : 'Avg (kgs)';
+            document.getElementById('th-secondary').textContent   = unit === 'lbs' ? 'Avg (kgs)' : 'Avg (lbs)';
+            document.getElementById('th-days-logged').textContent = 'Days Logged';
 
             const defaultExpanded = localStorage.getItem('pref_weekly_table_expanded') === 'true';
 
@@ -2152,6 +2181,7 @@
                 const primTd = document.createElement('td');
                 primTd.textContent = primAvg;
                 const secTd = document.createElement('td');
+                secTd.className = 'sec-col-cell';
                 secTd.textContent = secAvg;
 
                 const hdrExclTd = document.createElement('td');
@@ -2168,7 +2198,7 @@
                 const cntTd = document.createElement('td');
                 cntTd.className = 'week-count-cell';
                 const loggedDays = week.days.filter(d => d.weight_lbs != null).length;
-                cntTd.textContent = loggedDays + (loggedDays === 1 ? ' day logged' : ' days logged');
+                cntTd.textContent = String(loggedDays);
 
                 headerTr.append(dateTd, primTd, secTd, hdrExclTd, cntTd);
                 tableBody.appendChild(headerTr);
@@ -2193,11 +2223,12 @@
                     dayTr.className = 'week-day-row' + (missing ? ' row-missing' : '');
 
                     const dayDateTd = document.createElement('td');
-                    dayDateTd.textContent = formatDateDisplay(date);
+                    dayDateTd.innerHTML = '<span class="date-full">' + formatDateDisplay(date) + '</span><span class="date-short">' + formatDateShort(date) + '</span>';
 
                     const wtTd = document.createElement('td');
                     wtTd.dataset.date = date;
                     const secEntTd = document.createElement('td');
+                    secEntTd.className = 'sec-col-cell';
                     if (missing) {
                         wtTd.className = 'cell-weight cell-missing';
                         wtTd.dataset.lbs = '';
@@ -2239,7 +2270,7 @@
                         if (entry) {
                             del.className = 'table-delete-btn';
                             del.dataset.tip = 'Delete this entry';
-                            del.addEventListener('click', e => { e.stopPropagation(); deleteEntry(date, hasNote); });
+                            del.addEventListener('click', e => { e.stopPropagation(); showRowDeleteModal(date, entry); });
                         } else {
                             del.className = 'table-delete-btn missing-del';
                         }
@@ -2251,7 +2282,7 @@
                         del.className = 'table-delete-btn';
                         del.dataset.tip = 'Delete this entry';
                         del.textContent = '×';
-                        del.addEventListener('click', e => { e.stopPropagation(); deleteEntry(date, hasNote); });
+                        del.addEventListener('click', e => { e.stopPropagation(); showRowDeleteModal(date, entry); });
 
                         const hasNote = !!(entry.notes && entry.notes.trim());
                         const noteBtn = document.createElement('button');
@@ -2273,9 +2304,10 @@
                 });
 
                 const cg = document.createElement('colgroup');
-                [27, 25, 25, 9, 14].forEach(w => {
+                [27, 25, 25, 9, 14].forEach((w, i) => {
                     const col = document.createElement('col');
                     col.style.width = w + '%';
+                    if (i === 2) col.className = 'col-secondary';
                     cg.appendChild(col);
                 });
                 innerTable.appendChild(cg);
@@ -2317,7 +2349,7 @@
                 });
             });
 
-            appendExportRow(tableBody);
+            appendExportRow(tableBody, weekExportRows);
         }
 
         async function renderTable() {
@@ -2354,8 +2386,9 @@
             }
 
             const unit = window.activeUnit || 'lbs';
-            document.getElementById('th-primary').textContent   = unit === 'lbs' ? 'Weight (lbs)' : 'Weight (kgs)';
-            document.getElementById('th-secondary').textContent = unit === 'lbs' ? 'Weight (kgs)' : 'Weight (lbs)';
+            document.getElementById('th-primary').textContent     = unit === 'lbs' ? 'Weight (lbs)' : 'Weight (kgs)';
+            document.getElementById('th-secondary').textContent   = unit === 'lbs' ? 'Weight (kgs)' : 'Weight (lbs)';
+            document.getElementById('th-days-logged').textContent = '';
 
             allDates.forEach(date => {
                 const entry = map[date];
@@ -2364,7 +2397,7 @@
                 if (missing) tr.classList.add('row-missing');
 
                 const dateTd = document.createElement('td');
-                dateTd.textContent = formatDateDisplay(date);
+                dateTd.innerHTML = '<span class="date-full">' + formatDateDisplay(date) + '</span><span class="date-short">' + formatDateShort(date) + '</span>';
 
                 const wtTd = document.createElement('td');
                 wtTd.className = 'cell-weight' + (missing ? ' cell-missing' : '');
@@ -2376,6 +2409,7 @@
                 wtTd.innerHTML = missing ? '<span class="missing-dash">—</span>' : primaryVal;
 
                 const kgTd = document.createElement('td');
+                kgTd.className = 'sec-col-cell';
                 kgTd.innerHTML = missing ? '<span class="missing-dash">—</span>' : secondaryVal;
 
                 const exclTd = document.createElement('td');
@@ -2404,7 +2438,7 @@
                     if (entry) {
                         del.className = 'table-delete-btn';
                         del.dataset.tip = 'Delete this entry';
-                        del.addEventListener('click', e => { e.stopPropagation(); deleteEntry(date, hasNote); });
+                        del.addEventListener('click', e => { e.stopPropagation(); showRowDeleteModal(date, entry); });
                     } else {
                         del.className = 'table-delete-btn missing-del';
                     }
@@ -2416,7 +2450,7 @@
                     del.className = 'table-delete-btn';
                     del.dataset.tip = 'Delete this entry';
                     del.textContent = '×';
-                    del.addEventListener('click', e => { e.stopPropagation(); deleteEntry(date, hasNote); });
+                    del.addEventListener('click', e => { e.stopPropagation(); showRowDeleteModal(date, entry); });
 
                     const hasNote = !!(entry.notes && entry.notes.trim());
                     const noteBtn = document.createElement('button');
@@ -2448,7 +2482,7 @@
                 tableBody.appendChild(footerTr);
             }
 
-            appendExportRow(tableBody);
+            appendExportRow(tableBody, rows);
         }
 
         function showTableConfirm(title, message, okLabel, onOk, onCancel, cancelLabel) {
@@ -2488,11 +2522,33 @@
             async function save() {
                 if (done) return; done = true;
                 inp.removeEventListener('blur', save);
-                const val = parseFloat(inp.value);
+                const raw = inp.value.trim();
+                if (raw === '' && wtTd.dataset.lbs) {
+                    showTableConfirm(
+                        'Confirm Clear Weight',
+                        'Are you sure you want to remove your weight for ' + formatDateDisplay(date) + '?',
+                        'Clear',
+                        async () => {
+                            const res  = await fetch('/api/weight/' + date + '/weight', { method: 'DELETE' });
+                            const data = await res.json();
+                            if (data.latest && data.latest.weight_lbs !== undefined) {
+                                document.getElementById('current-lbs-num').textContent = fmtLbs(data.latest.weight_lbs);
+                                document.getElementById('current-kg-num').textContent  = data.latest.weight_kg.toFixed(1);
+                                updateLostWeight();
+                            }
+                            await renderTable();
+                            if (window.refreshChart) window.refreshChart();
+                        }
+                    );
+                    return;
+                }
+                const val = parseFloat(raw);
                 if (isNaN(val) || val <= 0) { renderTable(); return; }
                 const lbs = unit === 'lbs' ? val : parseFloat((val * 2.2046).toFixed(1));
                 if (!wtTd.dataset.lbs) {
                     await commitSave(lbs);
+                } else if (Math.abs(val - parseFloat(cur)) < 0.001) {
+                    renderTable();
                 } else {
                     showTableConfirm(
                         'Confirm Overwrite',
@@ -2508,26 +2564,93 @@
             inp.addEventListener('blur', save);
         }
 
-        function deleteEntry(date, hasNote) {
-            const msg = hasNote
-                ? 'Are you sure you want to delete your weight entry for ' + formatDateDisplay(date) + '? This will also delete the attached note.'
-                : 'Are you sure you want to delete your weight entry for ' + formatDateDisplay(date) + '?';
-            showTableConfirm(
-                'Confirm Delete',
-                msg,
-                'Delete',
-                async () => {
-                    const res  = await fetch('/api/weight/' + date, { method: 'DELETE' });
-                    const data = await res.json();
-                    if (data.latest && data.latest.weight_lbs !== undefined) {
-                        document.getElementById('current-lbs-num').textContent = fmtLbs(data.latest.weight_lbs);
-                        document.getElementById('current-kg-num').textContent  = data.latest.weight_kg.toFixed(1);
-                        updateLostWeight();
-                    }
-                    await renderTable();
-                    if (window.refreshChart) window.refreshChart();
-                }
-            );
+        async function applyDelete(date) {
+            const res  = await fetch('/api/weight/' + date, { method: 'DELETE' });
+            const data = await res.json();
+            if (data.latest && data.latest.weight_lbs !== undefined) {
+                document.getElementById('current-lbs-num').textContent = fmtLbs(data.latest.weight_lbs);
+                document.getElementById('current-kg-num').textContent  = data.latest.weight_kg.toFixed(1);
+                updateLostWeight();
+            }
+            await renderTable();
+            if (window.refreshChart) window.refreshChart();
+        }
+
+        async function clearWeightEntry(date) {
+            const res  = await fetch('/api/weight/' + date + '/weight', { method: 'DELETE' });
+            const data = await res.json();
+            if (data.latest && data.latest.weight_lbs !== undefined) {
+                document.getElementById('current-lbs-num').textContent = fmtLbs(data.latest.weight_lbs);
+                document.getElementById('current-kg-num').textContent  = data.latest.weight_kg.toFixed(1);
+                updateLostWeight();
+            }
+            await renderTable();
+            if (window.refreshChart) window.refreshChart();
+        }
+
+        async function deleteNoteOnly(date) {
+            await fetch('/api/weight/' + date + '/note', {
+                method: 'PATCH',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ notes: '' }),
+            });
+            if (window.noteMap) window.noteMap.set(date, '');
+            await renderTable();
+            if (window.refreshChart) window.refreshChart();
+        }
+
+        function showRowDeleteModal(date, entry) {
+            const hasWeight = !!(entry && entry.weight_lbs != null);
+            const hasNote   = !!(entry && entry.notes && entry.notes.trim());
+            const unit      = window.activeUnit || 'lbs';
+            const modal     = document.getElementById('row-delete-modal');
+            const checks    = document.getElementById('row-delete-checks');
+
+            document.getElementById('row-delete-date').textContent = formatDateDisplay(date);
+            checks.innerHTML = '';
+
+            if (hasWeight) {
+                const weightVal = unit === 'lbs'
+                    ? fmtLbs(entry.weight_lbs) + ' lbs'
+                    : fmtLbs(entry.weight_kg)  + ' kg';
+                const lbl = document.createElement('label');
+                lbl.className = 'row-delete-check-label';
+                const cb = document.createElement('input');
+                cb.type = 'checkbox'; cb.checked = true; cb.dataset.key = 'weight';
+                lbl.append(cb, document.createTextNode('Weight: ' + weightVal));
+                checks.appendChild(lbl);
+            }
+            if (hasNote) {
+                const snippet = entry.notes.trim().length > 48
+                    ? entry.notes.trim().slice(0, 48) + '…'
+                    : entry.notes.trim();
+                const lbl = document.createElement('label');
+                lbl.className = 'row-delete-check-label';
+                const cb = document.createElement('input');
+                cb.type = 'checkbox'; cb.checked = true; cb.dataset.key = 'note';
+                lbl.append(cb, document.createTextNode('Note: “' + snippet + '”'));
+                checks.appendChild(lbl);
+            }
+
+            const okBtn = document.getElementById('row-delete-ok');
+            function syncOk() {
+                okBtn.disabled = checks.querySelectorAll('input:checked').length === 0;
+            }
+            checks.querySelectorAll('input[type="checkbox"]').forEach(cb => cb.addEventListener('change', syncOk));
+            okBtn.disabled = false;
+            modal.hidden   = false;
+
+            document.getElementById('row-delete-cancel').onclick = () => { modal.hidden = true; };
+            okBtn.onclick = async () => {
+                modal.hidden = true;
+                const weightCb = checks.querySelector('[data-key="weight"]');
+                const noteCb   = checks.querySelector('[data-key="note"]');
+                const delWeight = !!(weightCb && weightCb.checked);
+                const delNote   = !!(noteCb   && noteCb.checked);
+                if      (delWeight && delNote) await applyDelete(date);
+                else if (delWeight)            await clearWeightEntry(date);
+                else if (delNote)              await deleteNoteOnly(date);
+            };
         }
 
         function switchTablePage(page) {
@@ -3880,6 +4003,8 @@
                 weeklyTrendLine: document.getElementById('prof-weekly-trend-on').classList.contains('active')    ? '1' : '0',
                 weeklyMinMax:    document.getElementById('prof-weekly-minmax-on').classList.contains('active')   ? '1' : '0',
                 weeklyMode:      document.getElementById('prof-weekly-mode-iso').classList.contains('active')    ? 'iso' : 'rolling',
+                legend:          document.getElementById('prof-legend-on').classList.contains('active')          ? '1' : '0',
+                weeklyLegend:    document.getElementById('prof-weekly-legend-on').classList.contains('active')   ? '1' : '0',
                 healthBar:       document.getElementById('prof-healthbar-on').classList.contains('active')       ? '1' : '0',
                 fighterName:     document.getElementById('prof-fighter-name-on').classList.contains('active')    ? '1' : '0',
                 dateFormat:      document.getElementById('prof-date-dmy').classList.contains('active')           ? 'dmy' : 'mdy'
@@ -3897,6 +4022,7 @@
                    cur.chartType !== openState.chartType ||
                    cur.weeklyGoalLine !== openState.weeklyGoalLine || cur.weeklyTrendLine !== openState.weeklyTrendLine ||
                    cur.weeklyMinMax !== openState.weeklyMinMax || cur.weeklyMode !== openState.weeklyMode ||
+                   cur.legend !== openState.legend || cur.weeklyLegend !== openState.weeklyLegend ||
                    cur.healthBar !== openState.healthBar ||
                    cur.fighterName !== openState.fighterName || cur.dateFormat !== openState.dateFormat;
         }
@@ -3945,6 +4071,8 @@
             const curWeeklyTrendLine     = localStorage.getItem('pref_weekly_trend_line') || '0';
             const curWeeklyTableExpanded = localStorage.getItem('pref_weekly_table_expanded') === 'true';
             const curWeeklyMode          = localStorage.getItem('pref_weekly_mode') || 'rolling';
+            const curLegend              = localStorage.getItem('pref_legend')              || '1';
+            const curWeeklyLegend        = localStorage.getItem('pref_weekly_legend')        || '1';
             const curDateFormat      = localStorage.getItem('pref_date_format')      || 'mdy';
 
             document.getElementById('prof-lbs-btn').classList.toggle('active',               curUnit === 'lbs');
@@ -3981,6 +4109,10 @@
             document.getElementById('prof-weekly-mode-iso').classList.toggle('active',      curWeeklyMode === 'iso');
             document.getElementById('prof-date-mdy').classList.toggle('active', curDateFormat === 'mdy');
             document.getElementById('prof-date-dmy').classList.toggle('active', curDateFormat === 'dmy');
+            document.getElementById('prof-legend-on').classList.toggle('active',         curLegend === '1');
+            document.getElementById('prof-legend-off').classList.toggle('active',        curLegend !== '1');
+            document.getElementById('prof-weekly-legend-on').classList.toggle('active',  curWeeklyLegend === '1');
+            document.getElementById('prof-weekly-legend-off').classList.toggle('active', curWeeklyLegend !== '1');
 
             document.querySelectorAll('.profile-opt-btn[data-range]').forEach(b => {
                 b.classList.toggle('active', b.dataset.range === curRange);
@@ -4151,6 +4283,22 @@
             });
         });
 
+        document.querySelectorAll('#prof-legend-on, #prof-legend-off').forEach(b => {
+            b.addEventListener('click', () => {
+                document.getElementById('prof-legend-on').classList.remove('active');
+                document.getElementById('prof-legend-off').classList.remove('active');
+                b.classList.add('active');
+            });
+        });
+
+        document.querySelectorAll('#prof-weekly-legend-on, #prof-weekly-legend-off').forEach(b => {
+            b.addEventListener('click', () => {
+                document.getElementById('prof-weekly-legend-on').classList.remove('active');
+                document.getElementById('prof-weekly-legend-off').classList.remove('active');
+                b.classList.add('active');
+            });
+        });
+
         document.querySelectorAll('.profile-opt-btn[data-range]').forEach(b => {
             b.addEventListener('click', () => {
                 document.querySelectorAll('.profile-opt-btn[data-range]').forEach(x => x.classList.remove('active'));
@@ -4218,6 +4366,8 @@
             const newWeeklyTrend       = document.getElementById('prof-weekly-trend-on').classList.contains('active')        ? '1' : '0';
             const newWeeklyTableExp    = document.getElementById('prof-weekly-table-exp-on').classList.contains('active')    ? 'true' : 'false';
             const newWeeklyMode        = document.getElementById('prof-weekly-mode-iso').classList.contains('active')         ? 'iso' : 'rolling';
+            const newLegend            = document.getElementById('prof-legend-on').classList.contains('active')              ? '1' : '0';
+            const newWeeklyLegend      = document.getElementById('prof-weekly-legend-on').classList.contains('active')       ? '1' : '0';
             const newDateFormat        = document.getElementById('prof-date-dmy').classList.contains('active')               ? 'dmy' : 'mdy';
 
             window.savePref('pref_unit',             newUnit);
@@ -4238,7 +4388,11 @@
             window.savePref('pref_weekly_trend_line',      newWeeklyTrend);
             window.savePref('pref_weekly_table_expanded',  newWeeklyTableExp);
             window.savePref('pref_weekly_mode',            newWeeklyMode);
+            window.savePref('pref_legend',               newLegend);
+            window.savePref('pref_weekly_legend',        newWeeklyLegend);
             window.savePref('pref_date_format',       newDateFormat);
+            document.getElementById('daily-chart-legend').style.display  = newLegend        === '1' ? '' : 'none';
+            document.getElementById('weekly-chart-legend').style.display = newWeeklyLegend  === '1' ? '' : 'none';
             const hud = document.getElementById('healthbar-hud');
             if (hud) hud.style.display = newHealthBar === '1' ? '' : 'none';
             if (window.updateHealthBarName) window.updateHealthBarName();
@@ -4415,6 +4569,119 @@
             if (scrollEl) scrollEl.scrollTop += e.deltaY;
         }
     }, { passive: false, capture: true });
+
+    /* ── Settings custom scrollbar ── */
+    (function () {
+        const scrollBody = document.querySelector('.settings-scroll-body');
+        const track      = document.getElementById('settings-scrollbar-track');
+        const thumb      = document.getElementById('settings-scrollbar-thumb');
+        const modal      = document.getElementById('settings-modal');
+
+        function syncThumb() {
+            if (scrollBody.scrollHeight <= scrollBody.clientHeight) {
+                thumb.style.display = 'none';
+                return;
+            }
+            const thumbH    = Math.max((scrollBody.clientHeight / scrollBody.scrollHeight) * track.clientHeight, 30);
+            const maxTop    = track.clientHeight - thumbH;
+            const maxScroll = scrollBody.scrollHeight - scrollBody.clientHeight;
+            thumb.style.display = 'block';
+            thumb.style.height  = thumbH + 'px';
+            thumb.style.top     = (scrollBody.scrollTop / maxScroll) * maxTop + 'px';
+        }
+
+        scrollBody.addEventListener('scroll', syncThumb, { passive: true });
+        new ResizeObserver(syncThumb).observe(scrollBody);
+
+        new MutationObserver(() => { if (!modal.hidden) syncThumb(); })
+            .observe(modal, { attributes: true, attributeFilter: ['hidden'] });
+
+        let drag = false, dragY = 0, dragScroll = 0;
+
+        function startDrag(e) {
+            drag = true; dragY = e.clientY; dragScroll = scrollBody.scrollTop;
+            e.preventDefault();
+        }
+
+        thumb.addEventListener('mousedown', startDrag);
+
+        track.addEventListener('mousedown', e => {
+            if (e.target === thumb) return;
+            const rect     = track.getBoundingClientRect();
+            const thumbH   = parseFloat(thumb.style.height) || 30;
+            const maxTop   = track.clientHeight - thumbH;
+            const maxScroll = scrollBody.scrollHeight - scrollBody.clientHeight;
+            const clickY   = Math.min(Math.max(e.clientY - rect.top - thumbH / 2, 0), maxTop);
+            scrollBody.scrollTop = (clickY / maxTop) * maxScroll;
+            startDrag(e);
+        });
+
+        document.addEventListener('mousemove', e => {
+            if (!drag) return;
+            const maxTop    = track.clientHeight - parseFloat(thumb.style.height);
+            const maxScroll = scrollBody.scrollHeight - scrollBody.clientHeight;
+            scrollBody.scrollTop = Math.max(0, Math.min(maxScroll,
+                dragScroll + (e.clientY - dragY) * (maxScroll / maxTop)));
+        });
+        document.addEventListener('mouseup', () => { drag = false; });
+    })();
+
+    /* ── Page custom scrollbar ── */
+    (function () {
+        const track = document.getElementById('page-scrollbar-track');
+        const thumb = document.getElementById('page-scrollbar-thumb');
+        const htmlEl = document.documentElement;
+
+        function syncThumb() {
+            const docH = htmlEl.scrollHeight;
+            const winH = window.innerHeight;
+            if (docH <= winH) { thumb.style.display = 'none'; return; }
+            const thumbH    = Math.max((winH / docH) * track.clientHeight, 40);
+            const maxTop    = track.clientHeight - thumbH;
+            const maxScroll = docH - winH;
+            thumb.style.display = 'block';
+            thumb.style.height  = thumbH + 'px';
+            thumb.style.top     = (window.scrollY / maxScroll) * maxTop + 'px';
+        }
+
+        window.addEventListener('scroll', syncThumb, { passive: true });
+        window.addEventListener('resize', syncThumb);
+        syncThumb();
+
+        let drag = false, dragY = 0, dragScroll = 0;
+
+        function startDrag(e) {
+            drag = true; dragY = e.clientY; dragScroll = window.scrollY;
+            htmlEl.style.scrollSnapType = 'none';
+            e.preventDefault();
+        }
+
+        thumb.addEventListener('mousedown', startDrag);
+
+        track.addEventListener('mousedown', e => {
+            if (e.target === thumb) return;
+            const rect      = track.getBoundingClientRect();
+            const thumbH    = parseFloat(thumb.style.height) || 40;
+            const maxTop    = track.clientHeight - thumbH;
+            const maxScroll = htmlEl.scrollHeight - window.innerHeight;
+            const clickY    = Math.min(Math.max(e.clientY - rect.top - thumbH / 2, 0), maxTop);
+            window.scrollTo({ top: (clickY / maxTop) * maxScroll, behavior: 'smooth' });
+        });
+
+        document.addEventListener('mousemove', e => {
+            if (!drag) return;
+            const maxTop    = track.clientHeight - parseFloat(thumb.style.height);
+            const maxScroll = htmlEl.scrollHeight - window.innerHeight;
+            window.scrollTo({ top: Math.max(0, Math.min(maxScroll,
+                dragScroll + (e.clientY - dragY) * (maxScroll / maxTop))), behavior: 'instant' });
+        });
+
+        document.addEventListener('mouseup', () => {
+            if (!drag) return;
+            drag = false;
+            htmlEl.style.scrollSnapType = '';
+        });
+    })();
 
     // Click-anywhere-to-toggle: runs in capture phase so it fires before the button's
     // own handler. If an inactive button was clicked, we return and let its handler run.
