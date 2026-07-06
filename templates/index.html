@@ -1015,6 +1015,13 @@
         if (opener && opener.focus) opener.focus();
     }
 
+    function announce(msg) {
+        const el = document.getElementById('status-announce');
+        if (!el) return;
+        el.textContent = '';
+        requestAnimationFrame(() => { el.textContent = msg; });
+    }
+
     /* ── Weight edit modal — shared by all editable weight cards ──
        apiSave(lbs, overwrite) must return:
          true             — saved, proceed with DOM update + close
@@ -1049,6 +1056,7 @@
             kgNum.textContent  = toKg(lbs);
             close();
             if (cfg.onSave) cfg.onSave();
+            announce('Weight saved.');
         }
 
         function showConfirmScreen(v, message) {
@@ -2204,6 +2212,10 @@
                 // Week header row
                 const headerTr = document.createElement('tr');
                 headerTr.className = 'week-header-row';
+                headerTr.setAttribute('tabindex', '0');
+                headerTr.setAttribute('role', 'button');
+                headerTr.setAttribute('aria-expanded', defaultExpanded ? 'true' : 'false');
+                headerTr.setAttribute('aria-label', 'Week of ' + week.label);
 
                 const dateTd = document.createElement('td');
                 const dateInner = document.createElement('span');
@@ -2382,10 +2394,15 @@
                     if (open) {
                         icon.classList.remove('expanded');
                         wrap.style.maxHeight = '0';
+                        headerTr.setAttribute('aria-expanded', 'false');
                     } else {
                         icon.classList.add('expanded');
                         wrap.style.maxHeight = wrap.scrollHeight + 'px';
+                        headerTr.setAttribute('aria-expanded', 'true');
                     }
+                });
+                headerTr.addEventListener('keydown', e => {
+                    if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); headerTr.click(); }
                 });
             });
 
@@ -2693,6 +2710,7 @@
                 if      (delWeight && delNote) await applyDelete(date);
                 else if (delWeight)            await clearWeightEntry(date);
                 else if (delNote)              await deleteNoteOnly(date);
+                announce('Entry deleted.');
             };
         }
 
@@ -2853,6 +2871,7 @@
                 body: JSON.stringify({ notes }),
             });
             if (window.noteMap) window.noteMap.set(activeDate, notes);
+            announce('Note saved.');
             const exp = getExpandedWeeks();
             close();
             if (window.renderTable) await window.renderTable();
@@ -3290,6 +3309,43 @@
         document.addEventListener('mouseenter', () => { mouseInDoc = true;  if (cursors['normal']) el.style.display = 'block'; });
     })();
 
+    /* ── Accessibility: toggle-group roles + aria-pressed sync ── */
+    (function () {
+        // Wire role="group" + aria-labelledby on every .profile-toggle-row that has a sibling label
+        document.querySelectorAll('.profile-setting-group, .overlay-item').forEach((container, i) => {
+            const lbl = container.querySelector('.profile-setting-label');
+            const row = container.querySelector('.profile-toggle-row');
+            if (!lbl || !row) return;
+            if (!lbl.id) lbl.id = 'ptlbl-' + i;
+            row.setAttribute('role', 'group');
+            row.setAttribute('aria-labelledby', lbl.id);
+        });
+        // Fight card sex row has no label element — label it directly
+        const sexMale = document.getElementById('fight-sex-male');
+        if (sexMale) {
+            const sexRow = sexMale.closest('.profile-toggle-row');
+            if (sexRow) { sexRow.setAttribute('role', 'group'); sexRow.setAttribute('aria-label', 'Sex'); }
+        }
+        // Height inputs
+        const ftEl = document.getElementById('fight-height-ft');
+        const inEl = document.getElementById('fight-height-in');
+        const cmEl = document.getElementById('fight-height-cm');
+        if (ftEl) ftEl.setAttribute('aria-label', 'Feet');
+        if (inEl) inEl.setAttribute('aria-label', 'Inches');
+        if (cmEl) cmEl.setAttribute('aria-label', 'Centimeters');
+        // Sync aria-pressed on all toggle-button groups, then watch for class changes
+        const pressedBtns = document.querySelectorAll('.profile-opt-btn, .range-btn, .weekly-range-btn');
+        pressedBtns.forEach(btn => btn.setAttribute('aria-pressed', String(btn.classList.contains('active'))));
+        const obs = new MutationObserver(muts => {
+            muts.forEach(m => {
+                const btn = m.target;
+                if (btn.hasAttribute('aria-pressed'))
+                    btn.setAttribute('aria-pressed', String(btn.classList.contains('active')));
+            });
+        });
+        pressedBtns.forEach(btn => obs.observe(btn, { attributes: true, attributeFilter: ['class'] }));
+    })();
+
     /* ── Site-wide hover tooltips (matches chart tooltip style) ── */
     (function () {
         const ttEl = document.createElement('div');
@@ -3307,6 +3363,17 @@
             if (t) { ttEl.textContent = t.dataset.tip; ttEl.style.opacity = '1'; }
             else   { ttEl.style.opacity = '0'; }
         });
+
+        document.addEventListener('focusin', e => {
+            const t = e.target.closest('[data-tip]');
+            if (!t) return;
+            ttEl.textContent = t.dataset.tip;
+            ttEl.style.opacity = '1';
+            const r = t.getBoundingClientRect();
+            position(r.right, r.top + r.height / 2);
+        });
+
+        document.addEventListener('focusout', () => { ttEl.style.opacity = '0'; });
 
         document.addEventListener('mousemove', e => {
             if (ttEl.style.opacity === '1') position(e.clientX, e.clientY);
