@@ -97,14 +97,20 @@ def test_patch_note_can_clear_note(client):
     assert rows[0]["notes"] == ""
 
 
-def test_patch_note_missing_entry_returns_404(client):
+def test_patch_note_creates_note_only_row_when_entry_missing(client):
+    """PATCH with a non-empty note on a date with no entry creates a note-only row."""
     r = client.patch(
         "/api/weight/2026-06-15/note",
         json={"notes": "ghost note"},
         content_type="application/json",
     )
-    assert r.status_code == 404
-    assert "error" in r.get_json()
+    assert r.status_code == 200
+    assert r.get_json()["success"] is True
+    rows = client.get("/api/weights?range=all").get_json()
+    created = next((row for row in rows if row["date"] == "2026-06-15"), None)
+    assert created is not None
+    assert created["notes"] == "ghost note"
+    assert created["weight_lbs"] is None
 
 
 def test_patch_note_invalid_date_returns_400(client):

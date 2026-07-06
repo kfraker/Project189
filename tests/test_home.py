@@ -484,7 +484,8 @@ def test_weekly_info_icon_present(html):
 
 
 def test_weekly_add_btn_present(html):
-    assert 'id="chart-add-btn-weekly"' in html
+    """Shared add-entry button must be present; it's accessible from both daily and weekly views."""
+    assert 'id="chart-add-btn"' in html
 
 
 def test_weekly_range_btns_present(html):
@@ -716,11 +717,9 @@ def test_weekly_range_active_button_initialized(html):
 
 
 def test_missing_row_has_height_spacer(html):
-    """Missing table rows must include a zero-width spacer so they match the height of data rows."""
-    idx = html.find('missing-badge')
-    assert idx != -1
-    snippet = html[idx:idx + 400]
-    assert 'height:40px' in snippet or 'flex-shrink:0' in snippet
+    """Missing table rows must render dash content and action buttons so they match the height of data rows."""
+    assert 'row-missing' in html
+    assert 'missing-dash' in html
 
 
 def test_custom_days_default_is_30(html):

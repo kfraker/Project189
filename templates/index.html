@@ -1888,7 +1888,7 @@
                                 callback: v => v + ' ' + unit
                             },
                             grid: { color: 'rgba(255,255,255,0.05)' },
-                            afterFit: scale => { scale.width = scale.chart.width < 480 ? 48 : 64; }
+                            afterFit: scale => { scale.width = scale.chart.width < 480 ? 64 : 80; }
                         }
                     }
                 }
@@ -2303,14 +2303,16 @@
                     innerBody.appendChild(dayTr);
                 });
 
-                const cg = document.createElement('colgroup');
+                const innerHead = document.createElement('thead');
+                const innerHeadTr = document.createElement('tr');
                 [27, 25, 25, 9, 14].forEach((w, i) => {
-                    const col = document.createElement('col');
-                    col.style.width = w + '%';
-                    if (i === 2) col.className = 'col-secondary';
-                    cg.appendChild(col);
+                    const th = document.createElement('th');
+                    th.style.width = w + '%';
+                    if (i === 2) th.className = 'sec-col-cell';
+                    innerHeadTr.appendChild(th);
                 });
-                innerTable.appendChild(cg);
+                innerHead.appendChild(innerHeadTr);
+                innerTable.appendChild(innerHead);
                 innerTable.appendChild(innerBody);
                 wrap.appendChild(innerTable);
                 collapseTd.appendChild(wrap);

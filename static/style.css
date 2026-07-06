@@ -1164,7 +1164,7 @@ h1 {
 
 @media (max-width: 640px) {
     .chart-card {
-        padding: 24px 14px 32px;
+        padding: 24px 48px 32px;
     }
 
     .chart-wrap {
@@ -1253,20 +1253,34 @@ h1 {
     display: flex;
     overflow: hidden;
 }
+.data-table-scroll-area::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    right: 0;
+    width: 14px;
+    height: 41px; /* matches thead height: 12px padding + ~17px line + 12px padding */
+    background: #0a001a;
+    z-index: 3;
+    pointer-events: none;
+}
 
 .data-table-scroll {
     flex: 1;
     overflow-y: scroll;
     scrollbar-width: none;
     box-sizing: border-box;
+    padding-right: 28px;
 }
 
 .data-table-scroll::-webkit-scrollbar { display: none; }
 
 .custom-scrollbar-track {
     width: 14px;
-    flex-shrink: 0;
-    position: relative;
+    position: absolute;
+    right: 0;
+    top: 0;
+    bottom: 0;
     cursor: pointer;
 }
 
@@ -1311,7 +1325,7 @@ h1 {
     position: sticky;
     top: 0;
     background: #0a001a;
-    z-index: 1;
+    z-index: 2;
 }
 
 .data-table thead th:first-child { padding-left: 0; }
@@ -1490,6 +1504,37 @@ h1 {
     .sec-col-cell,
     #th-secondary  { display: none; }
     .col-secondary { visibility: collapse; }
+
+    .week-day-table .date-full  { display: none; }
+    .week-day-table .date-short { display: inline; }
+
+    .action-cell { gap: 4px; }
+    .data-table td.action-cell,
+    .week-day-row td.action-cell { padding-left: 6px; }
+    .note-btn { width: 34px; height: 34px; }
+    .note-btn svg { width: 19px; height: 19px; }
+    .table-delete-btn { width: 28px; height: 28px; font-size: 16px; }
+
+    /* Widen action column so buttons never clip into excl column;
+       set all 4 visible columns explicitly so inner and outer tables align */
+    .data-table thead th:first-child { width: 32% !important; }
+    #th-primary                      { width: 28% !important; }
+    .data-table thead th:nth-child(4) { width: 9% !important; }
+    #th-days-logged                  { width: 31% !important; }
+
+    .week-day-table thead th:first-child  { width: 32% !important; }
+    .week-day-table thead th:nth-child(2) { width: 28% !important; }
+    .week-day-table thead th:nth-child(4) { width: 9%  !important; }
+    .week-day-table thead th:nth-child(5) { width: 31% !important; }
+}
+
+@media (max-width: 720px) {
+    .action-cell { gap: 2px; }
+    .data-table td.action-cell,
+    .week-day-row td.action-cell { padding-left: 2px; }
+    .note-btn { width: 28px; height: 28px; }
+    .note-btn svg { width: 16px; height: 16px; }
+    .table-delete-btn { width: 24px; height: 24px; font-size: 14px; }
 }
 
 @media (max-width: 560px) {
@@ -1509,6 +1554,14 @@ h1 {
     width: 100%;
     table-layout: fixed;
     border-collapse: collapse;
+}
+.week-day-table thead tr { visibility: hidden; }
+.week-day-table thead th {
+    height: 0;
+    padding: 0;
+    border: 0;
+    position: static; /* cancel sticky from .data-table thead th */
+    pointer-events: none;
 }
 .week-day-row td {
     padding: 10px 14px;
@@ -1779,6 +1832,7 @@ h1 {
     align-items: center;
     justify-content: center;
     transition: all 0.15s ease;
+    flex-shrink: 0;
 }
 
 .table-delete-btn:hover {
@@ -1791,6 +1845,7 @@ h1 {
 .action-cell {
     display: flex;
     align-items: center;
+    justify-content: flex-end;
     gap: 6px;
     line-height: normal;
 }

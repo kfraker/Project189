@@ -6,11 +6,12 @@ A personal weight tracking dashboard built with Flask and SQLite. Logs daily wei
 
 - **Weight plate cards** — displays start, current, and goal weights as styled plates; lost weight is calculated automatically. Click any plate to set or update its value with overwrite confirmation. Adding a current weight immediately refreshes the chart and table.
 - **Interactive line chart** — powered by Chart.js with a floating HTML tooltip that follows the cursor. Interpolates estimated values between logged dates and marks them visually. Shows a warning icon when a selected date range exceeds available data history.
-- **Weekly Summary chart** — second chart screen accessible via a `›` caret to the right of the daily chart; slides between views with a CSS transition. Groups entries by ISO week (Monday start), averages per week, and displays as a bar chart with optional goal and trend overlays. Range buttons: 4W, 12W, 30W, All, Custom (min 4 weeks). Default landing chart (Over Time or Weekly) is configurable in Settings.
+- **Weekly Summary chart** — second chart screen accessible via a `›` caret to the right of the daily chart; slides between views with a CSS transition. Groups entries into rolling 7-day windows, averages per window, and displays as a bar chart with optional goal and trend overlays. Range buttons: 4W, 12W, 30W, All, Custom (min 4 weeks). Default landing chart (Over Time or Weekly) is configurable in Settings.
 - **Goal weight line** — optional teal dashed line on the chart with a y-axis GOAL label; toggled On/Off in Settings (default off).
 - **7-day moving average line** — optional amber line on the chart with a y-axis 7D AVG label; toggled On/Off in Settings (default off).
 - **Date range controls** — 7D (default), 30D, 90D, 1Y, All, or a custom day count (capped at 1,095 days / 3 years). Custom range highlights the Custom button on change.
-- **Data table** — scrollable log of entries for the selected range, showing weight in both lbs and kg. Inline editing with overwrite and delete confirmation modals. Dates with no entry display as empty rows; a "No Earlier Data Recorded" footer marks the bottom of available history.
+- **Data table** — scrollable log of entries for the selected range, showing weight in both lbs and kg. Inline editing with overwrite and delete confirmation modals. Dates with no entry display as empty rows; a "No Earlier Data Recorded" footer marks the bottom of available history. Each row has a note button to add, edit, or delete a text note; note-only rows (no weight logged) appear with a blank weight cell. The delete confirmation modal has independent checkboxes to remove the weight value, the note, or both — deleting just the weight on a note row nulls the weight without removing the note.
+- **Responsive tables** — both the daily and weekly summary tables adapt cleanly across screen widths: the secondary column (kg) collapses at ≤ 800px, date labels switch from full to short at ≤ 560px, action buttons scale down at ≤ 720px, and column widths are pinned so inner weekly rows stay aligned with outer summary headers at all sizes. A `::before` mask on the scroll container prevents the scrollbar from overlapping sticky column headers.
 - **Unit toggle** — switch between lbs and kg; all plates, chart, and table update instantly.
 - **Health bar HUD** — fixed top-left pixel-art health bar that fills red as the user progresses from start weight toward goal weight. Fighter name (set in Fight Card) is displayed above the bar in Mortal Kombat–style gold text. Hovering the bar shows remaining weight to goal.
 - **Fight Card modal** — record fighter profile info (name, sex, date of birth, height, activity level) with a themed date picker for DOB. Age is calculated automatically. Activity level (Sedentary / Light / Moderate / Active) is used for BMR calculations.
@@ -111,6 +112,7 @@ project-189/
     ├── test_api_settings.py
     ├── test_api_preferences.py
     ├── test_api_weights_edge.py
+    ├── test_api_weight_notes.py
     ├── test_business_logic.py
     └── test_db_init.py
 ```
@@ -124,7 +126,9 @@ Also in `static/`:
 |---|---|---|
 | `GET` | `/api/weights?range=7d` | Fetch weight entries for a range (`7d`, `30d`, `90d`, `1y`, `all`, or `custom&days=N`) |
 | `POST` | `/api/weight` | Log or overwrite a weight entry |
-| `DELETE` | `/api/weight/<date>` | Delete an entry by date (`YYYY-MM-DD`) |
+| `DELETE` | `/api/weight/<date>` | Delete an entire entry (weight + note) by date |
+| `DELETE` | `/api/weight/<date>/weight` | Null out only the weight for a date, keeping its note |
+| `PATCH` | `/api/weight/<date>/note` | Save or create a note for a date (creates note-only row if no entry exists) |
 | `GET` | `/api/latest-weight` | Get the most recent weight and oldest entry date |
 | `GET` | `/api/settings` | Get saved settings (start weight, goal weight) |
 | `POST` | `/api/setting` | Save or overwrite a setting |
@@ -137,4 +141,4 @@ Also in `static/`:
 python -m pytest tests/ -v
 ```
 
-283 tests covering all API endpoints, business logic, date range boundaries, and UI structure.
+283 tests covering all API endpoints (including notes and weight-nulling), business logic, date range boundaries, and UI structure.
