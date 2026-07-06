@@ -284,6 +284,21 @@ def test_note_popover_save_cancel_buttons(html):
     assert 'id="note-popover-cancel"' in html
 
 
+def test_note_textarea_wrap_present(html):
+    """Textarea must be wrapped in note-textarea-wrap for custom scrollbar overlay."""
+    assert 'class="note-textarea-wrap"' in html
+
+
+def test_note_custom_scrollbar_track_present(html):
+    """Custom scrollbar track div must exist inside note-textarea-wrap."""
+    assert 'class="note-scrollbar-track"' in html
+
+
+def test_note_custom_scrollbar_thumb_present(html):
+    """Custom scrollbar thumb div must exist inside the track."""
+    assert 'class="note-scrollbar-thumb"' in html
+
+
 def test_open_note_editor_defined(html):
     """window.openNoteEditor must be assigned so table rows can call it."""
     assert 'window.openNoteEditor' in html

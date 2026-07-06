@@ -1942,6 +1942,10 @@ h1 {
     margin-bottom: 8px;
 }
 
+.note-textarea-wrap {
+    position: relative;
+}
+
 #note-popover-text {
     width: 100%;
     box-sizing: border-box;
@@ -1952,10 +1956,88 @@ h1 {
     color: #eee;
     font-family: Arial, sans-serif;
     font-size: 15px;
-    padding: 9px 11px;
+    padding: 9px 18px 9px 11px;
     resize: none;
     line-height: 1.55;
     min-height: 100px;
+    scrollbar-width: none;
+    overflow-y: auto;
+}
+
+#note-popover-text::-webkit-scrollbar {
+    display: none;
+}
+
+.note-scrollbar-track {
+    position: absolute;
+    right: 3px;
+    top: 6px;
+    bottom: 6px;
+    width: 4px;
+    background: rgba(255, 255, 255, 0.06);
+    border-radius: 2px;
+    pointer-events: none;
+}
+
+.note-scrollbar-thumb {
+    position: absolute;
+    right: 0;
+    width: 4px;
+    background: rgba(255, 45, 120, 0.5);
+    border-radius: 2px;
+    min-height: 16px;
+    display: none;
+    transition: background 0.15s;
+    pointer-events: auto;
+    cursor: none !important;
+}
+
+.note-scrollbar-thumb:hover {
+    background: rgba(255, 45, 120, 0.8);
+}
+
+/* Arrow pointer toward the anchor note button */
+.note-popover-arrow {
+    position: absolute;
+    width: 0;
+    height: 0;
+    pointer-events: none;
+}
+
+/* Popover is BELOW the button → arrow at top, points up */
+.note-popover-arrow--below {
+    top: -9px;
+    border-left: 9px solid transparent;
+    border-right: 9px solid transparent;
+    border-bottom: 9px solid rgba(255, 45, 120, 0.5);
+}
+
+.note-popover-arrow--below::after {
+    content: '';
+    position: absolute;
+    top: 2px;
+    left: -8px;
+    border-left: 8px solid transparent;
+    border-right: 8px solid transparent;
+    border-bottom: 8px solid #0d0020;
+}
+
+/* Popover is ABOVE the button → arrow at bottom, points down */
+.note-popover-arrow--above {
+    bottom: -9px;
+    border-left: 9px solid transparent;
+    border-right: 9px solid transparent;
+    border-top: 9px solid rgba(255, 45, 120, 0.5);
+}
+
+.note-popover-arrow--above::after {
+    content: '';
+    position: absolute;
+    bottom: 2px;
+    left: -8px;
+    border-left: 8px solid transparent;
+    border-right: 8px solid transparent;
+    border-top: 8px solid #0d0020;
 }
 
 #note-popover-text:focus {
@@ -1995,6 +2077,10 @@ h1 {
 .note-popover-actions .modal-btn {
     padding: 6px 14px;
     font-size: 11px;
+}
+
+body.note-open .custom-scrollbar-track {
+    pointer-events: none;
 }
 
 .note-delete-btn {

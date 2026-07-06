@@ -485,6 +485,7 @@
             </div>
         </div>
 
+
         <div class="modal-actions">
             <button class="modal-btn modal-cancel" id="fight-card-cancel">Cancel</button>
             <button class="modal-btn modal-save"   id="fight-card-save">Save</button>
@@ -770,8 +771,12 @@
 
 <!-- Note editor popover -->
 <div id="note-popover" hidden role="dialog" aria-modal="true" aria-labelledby="note-popover-heading">
+    <div class="note-popover-arrow"></div>
     <div class="note-popover-label" id="note-popover-heading">Note for <span id="note-popover-date"></span></div>
-    <textarea id="note-popover-text" maxlength="300" rows="3" placeholder="Add a note…"></textarea>
+    <div class="note-textarea-wrap">
+        <textarea id="note-popover-text" maxlength="300" rows="3" placeholder="Add a note…"></textarea>
+        <div class="note-scrollbar-track"><div class="note-scrollbar-thumb"></div></div>
+    </div>
     <div class="note-resize-handle" id="note-resize-handle">
         <svg width="22" height="8" viewBox="0 0 22 8" fill="none"><circle cx="4" cy="4" r="2" fill="currentColor"/><circle cx="11" cy="4" r="2" fill="currentColor"/><circle cx="18" cy="4" r="2" fill="currentColor"/></svg>
     </div>
@@ -891,12 +896,12 @@
         const startLbs   = parseFloat(document.getElementById('start-lbs-num').textContent);
         const currentLbs = parseFloat(document.getElementById('current-lbs-num').textContent);
         const goalLbs    = parseFloat(document.getElementById('goal-lbs-num').textContent);
-        if (isNaN(startLbs) || isNaN(currentLbs) || isNaN(goalLbs) || startLbs <= goalLbs) {
-            fill.style.width = '0%';
-        } else {
-            const pct = (Math.min(1, Math.max(0, (startLbs - currentLbs) / (startLbs - goalLbs))) * 100).toFixed(1);
-            fill.style.width = pct + '%';
-        }
+        let pct = 0;
+        if (!isNaN(startLbs) && !isNaN(currentLbs) && !isNaN(goalLbs) && startLbs > goalLbs)
+            pct = Math.min(1, Math.max(0, (startLbs - currentLbs) / (startLbs - goalLbs))) * 100;
+        fill.style.width = pct.toFixed(1) + '%';
+        const track = document.getElementById('healthbar-fill-track');
+        if (track) track.setAttribute('aria-valuenow', pct.toFixed(1));
         const tt = document.getElementById('healthbar-tooltip');
         if (tt && !isNaN(currentLbs) && !isNaN(goalLbs)) {
             const diffLbs = currentLbs - goalLbs;
@@ -2825,14 +2830,88 @@
         const cancelBtn  = document.getElementById('note-popover-cancel');
         const deleteBtn  = document.getElementById('note-popover-delete');
         const resizeHdl  = document.getElementById('note-resize-handle');
+        const sbThumb    = popover.querySelector('.note-scrollbar-thumb');
+        const arrowEl    = popover.querySelector('.note-popover-arrow');
         let activeDate   = null;
+        let _anchorEl    = null;
         let isResizing   = false;
         let wasDragging  = false;
         let resizeStartY = 0;
         let resizeStartH = 0;
+        let sbDrag = false, sbDragY = 0, sbDragScrollTop = 0;
+
+        function syncNoteScrollbar() {
+            if (!sbThumb) return;
+            const track = sbThumb.parentElement;
+            if (textarea.scrollHeight <= textarea.clientHeight) {
+                sbThumb.style.display = 'none';
+                return;
+            }
+            sbThumb.style.display = 'block';
+            const ratio  = textarea.clientHeight / textarea.scrollHeight;
+            const thumbH = Math.max(16, ratio * track.clientHeight);
+            const maxTop = track.clientHeight - thumbH;
+            const pct    = textarea.scrollTop / (textarea.scrollHeight - textarea.clientHeight);
+            sbThumb.style.height = thumbH + 'px';
+            sbThumb.style.top    = (pct * maxTop) + 'px';
+        }
+
+        textarea.addEventListener('scroll', syncNoteScrollbar);
+        new ResizeObserver(syncNoteScrollbar).observe(textarea);
+
+        // Scrollbar thumb drag
+        sbThumb.addEventListener('mousedown', e => {
+            sbDrag = true;
+            sbDragY = e.clientY;
+            sbDragScrollTop = textarea.scrollTop;
+            e.preventDefault();
+            e.stopPropagation();
+        });
+        document.addEventListener('mousemove', e => {
+            if (!sbDrag) return;
+            const track     = sbThumb.parentElement;
+            const thumbH    = parseFloat(sbThumb.style.height) || 16;
+            const maxTop    = track.clientHeight - thumbH;
+            const maxScroll = textarea.scrollHeight - textarea.clientHeight;
+            const ratio     = maxTop > 0 ? (e.clientY - sbDragY) / maxTop : 0;
+            textarea.scrollTop = Math.max(0, Math.min(sbDragScrollTop + ratio * maxScroll, maxScroll));
+        });
+        document.addEventListener('mouseup', () => { sbDrag = false; });
+
+        function positionPopover() {
+            if (!_anchorEl) return;
+            const rect   = _anchorEl.getBoundingClientRect();
+            const pw     = popover.offsetWidth  || 320;
+            const ph     = popover.offsetHeight || 200;
+            const gap    = 8, margin = 8;
+            const idealLeft = rect.left + rect.width / 2 - pw / 2;
+            const left      = Math.max(margin, Math.min(idealLeft, window.innerWidth - pw - margin));
+            let top, side;
+            if (rect.bottom + gap + ph + margin <= window.innerHeight) {
+                top  = rect.bottom + gap;
+                side = 'below';
+            } else {
+                top  = Math.max(margin, rect.top - gap - ph);
+                side = 'above';
+            }
+            popover.style.top  = top  + 'px';
+            popover.style.left = left + 'px';
+            if (arrowEl) {
+                arrowEl.className = 'note-popover-arrow note-popover-arrow--' + side;
+                const btnCx     = rect.left + rect.width / 2;
+                const arrowLeft = Math.max(16, Math.min(btnCx - left - 9, pw - 24));
+                arrowEl.style.left = arrowLeft + 'px';
+            }
+        }
+
+        window.addEventListener('resize', () => {
+            if (popover.hidden) return;
+            positionPopover();
+        });
 
         function close() {
             popover.hidden = true;
+            document.body.classList.remove('note-open');
             activeDate = null;
             modalClose(popover);
         }
@@ -2893,16 +2972,15 @@
 
         window.openNoteEditor = function(date, currentNote, anchorEl) {
             activeDate = date;
+            _anchorEl  = anchorEl;
             dateSpan.textContent = formatDateDisplay(date);
             textarea.value = currentNote || '';
             popover.hidden = false;
+            document.body.classList.add('note-open');
             modalOpen(popover);
-            const rect   = anchorEl.getBoundingClientRect();
-            const top    = Math.min(rect.bottom + 6, window.innerHeight - 220);
-            const left   = Math.max(8, Math.min(rect.left - 180, window.innerWidth - 380));
-            popover.style.top  = top  + 'px';
-            popover.style.left = left + 'px';
+            positionPopover();
             textarea.focus();
+            syncNoteScrollbar();
         };
 
         /* Custom resize handle */
@@ -3564,10 +3642,10 @@
         const usRow     = document.getElementById('fight-height-us-row');
         const metRow    = document.getElementById('fight-height-metric-row');
         const preview   = document.getElementById('fight-height-preview');
-        const nameIn       = document.getElementById('fight-name');
-        const sexMaleBtn   = document.getElementById('fight-sex-male');
-        const sexFemaleBtn = document.getElementById('fight-sex-female');
-        const actBtns      = document.querySelectorAll('.fight-activity-row .profile-opt-btn');
+        const nameIn        = document.getElementById('fight-name');
+        const sexMaleBtn    = document.getElementById('fight-sex-male');
+        const sexFemaleBtn  = document.getElementById('fight-sex-female');
+        const actBtns       = document.querySelectorAll('.fight-activity-row .profile-opt-btn');
 
         /* ── DOB calendar ── */
         const calEl    = document.getElementById('fight-dob-calendar');
@@ -3779,6 +3857,7 @@
             if (sex) window.savePref('fight_sex', sex);
             const act = getSelectedActivity();
             if (act) window.savePref('fight_activity', act);
+            updateLostWeight();
             if (heightUnit() === 'us') {
                 if (ftIn.value)        window.savePref('fight_height_ft', ftIn.value);
                 if (inIn.value !== '') window.savePref('fight_height_in', inIn.value);
@@ -3805,7 +3884,7 @@
             sexMaleBtn.classList.toggle('active',   storedSex === 'male');
             sexFemaleBtn.classList.toggle('active', storedSex === 'female');
 
-            const storedAct = localStorage.getItem('fight_activity') || '';
+            const storedAct  = localStorage.getItem('fight_activity')  || '';
             actBtns.forEach(b => b.classList.toggle('active', b.dataset.activity === storedAct));
 
             if (isUs) {
@@ -4699,15 +4778,18 @@
     // are cancelled and redirected to that scroll body when one is present.
     window.addEventListener('wheel', function (e) {
         const activeOverlay = document.querySelector('.modal-overlay:not([hidden])');
-        const noteOpen      = !document.getElementById('note-popover').hidden;
+        const noteEl        = document.getElementById('note-popover');
+        const noteOpen      = !noteEl.hidden;
         const tableWrap     = document.getElementById('data-table-wrap');
         const inTable       = tableWrap && !tableWrap.hidden && !!e.target.closest('.data-table-scroll-area');
+        const inNote        = noteOpen && !!e.target.closest('#note-popover');
         if (!activeOverlay && !noteOpen && !inTable) return;
+        if (inNote) return; // let the textarea scroll via wheel normally
         e.preventDefault();
         if (activeOverlay) {
             const scrollEl = activeOverlay.querySelector('.settings-scroll-body');
             if (scrollEl) scrollEl.scrollTop += e.deltaY;
-        } else if (inTable) {
+        } else if (inTable && !noteOpen) {
             const scrollEl = document.querySelector('.data-table-scroll');
             if (scrollEl) scrollEl.scrollTop += e.deltaY;
         }
