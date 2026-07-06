@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
     <title>Project 189</title>
     <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -11,13 +11,16 @@
 
 <body class="preload">
 
+<a href="#main-content" class="sr-only skip-link">Skip to main content</a>
+<div id="status-announce" aria-live="polite" aria-atomic="true" class="sr-only"></div>
+
 <div class="miami-left"></div>
 <div class="miami-right"></div>
 
 <div id="healthbar-hud">
     <div id="healthbar-name"></div>
     <div id="healthbar-wrap">
-        <div id="healthbar-fill-track">
+        <div id="healthbar-fill-track" role="progressbar" aria-label="Weight loss progress" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0">
             <div id="healthbar-fill"></div>
         </div>
         <img id="healthbar-img" src="{{ url_for('static', filename='healthbar.png') }}" alt="">
@@ -43,7 +46,8 @@
     </button>
 </div>
 
-<section class="page page--plates">
+<main id="main-content">
+<section class="page page--plates" aria-label="Weight plate goals">
 <div class="container">
 
     <h1>Project 189</h1>
@@ -157,7 +161,7 @@
 </section>
 
 
-<section class="page page--chart">
+<section class="page page--chart" aria-label="Weight chart and data table">
 <div class="container">
 
     <!-- Weight Chart -->
@@ -165,7 +169,7 @@
         <div class="chart-card">
             <!-- Slide viewport: page 0 = Daily Summary, page 1 = Weekly Summary -->
             <div class="chart-with-nav">
-                <button class="chart-page-btn chart-page-btn--left invisible" id="chart-page-btn-left" data-tip="Daily Summary">‹</button>
+                <button class="chart-page-btn chart-page-btn--left invisible" id="chart-page-btn-left" aria-label="Go to Daily Summary">‹</button>
                 <div class="chart-page-area">
                 <div class="chart-slide-viewport" id="chart-slide-viewport">
                     <div class="chart-slide-inner" id="chart-slide-inner">
@@ -194,7 +198,7 @@
                                 </div>
                             </div>
                             <div class="chart-wrap">
-                                <canvas id="weight-chart"></canvas>
+                                <canvas id="weight-chart" role="img" aria-label="Daily weight chart. Switch to Table view for accessible data."></canvas>
                                 <div id="chart-info-icon">i</div>
                             </div>
                             <div class="chart-legend" id="daily-chart-legend"></div>
@@ -224,7 +228,7 @@
                                 </div>
                             </div>
                             <div class="chart-wrap">
-                                <canvas id="weekly-chart"></canvas>
+                                <canvas id="weekly-chart" role="img" aria-label="Weekly weight chart. Switch to Table view for accessible data."></canvas>
                                 <div id="weekly-info-icon">i</div>
                             </div>
                             <div class="chart-legend" id="weekly-chart-legend"></div>
@@ -256,12 +260,12 @@
                     </div>
                 </div>
                 </div><!-- end .chart-page-area -->
-                <button class="chart-page-btn chart-page-btn--right" id="chart-page-btn-right" data-tip="Weekly Summary">›</button>
+                <button class="chart-page-btn chart-page-btn--right" id="chart-page-btn-right" aria-label="Go to Weekly Summary">›</button>
             </div>
 
             <div class="chart-footer">
                 <button class="unit-toggle-btn" id="unit-toggle-btn">KGS</button>
-                <button class="chart-add-btn" id="chart-add-btn" data-tip="Log a past weight">+</button>
+                <button class="chart-add-btn" id="chart-add-btn" aria-label="Log a past weight">+</button>
                 <button class="view-toggle-btn" id="view-toggle-btn">Table</button>
             </div>
         </div>
@@ -269,6 +273,7 @@
 
 </div>
 </section>
+</main>
 
 <!-- Historical Weight Modal -->
 <div id="history-modal" class="modal-overlay" hidden>
