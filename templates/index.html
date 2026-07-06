@@ -277,9 +277,9 @@
 
 <!-- Historical Weight Modal -->
 <div id="history-modal" class="modal-overlay" hidden>
-    <div class="modal-card">
+    <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="history-modal-title">
         <div id="history-screen-input">
-            <h2 class="modal-title">Log Past Weight</h2>
+            <h2 class="modal-title" id="history-modal-title">Log Past Weight</h2>
             <label class="modal-label" for="history-date">Date</label>
             <div class="date-picker-wrap" id="history-date-wrap">
                 <input type="text" id="history-date" class="history-date-input" placeholder="Select a date" readonly>
@@ -323,9 +323,9 @@
 
 <!-- Goal Weight Modal -->
 <div id="goal-modal" class="modal-overlay" hidden>
-    <div class="modal-card">
+    <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="goal-modal-title">
         <div id="goal-screen-input">
-            <h2 class="modal-title">Goal Weight</h2>
+            <h2 class="modal-title" id="goal-modal-title">Goal Weight</h2>
             <label class="modal-label" for="goal-input">New goal (lbs)</label>
             <div class="modal-input-row">
                 <input type="number" class="weight-input" id="goal-input" min="50" max="999" step="0.1" placeholder="189">
@@ -354,11 +354,11 @@
 
 <!-- Current Weight Modal (two-screen card) -->
 <div id="current-modal" class="modal-overlay" hidden>
-    <div class="modal-card">
+    <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="current-modal-title">
 
         <!-- Screen 1: weight input -->
         <div id="current-screen-input">
-            <h2 class="modal-title">Current Weight</h2>
+            <h2 class="modal-title" id="current-modal-title">Current Weight</h2>
             <label class="modal-label" for="current-input">New current weight (lbs)</label>
             <div class="modal-input-row">
                 <input type="number" class="weight-input" id="current-input" min="50" max="999" step="0.1" placeholder="226.2">
@@ -390,9 +390,9 @@
 
 <!-- Starting Weight Modal -->
 <div id="start-modal" class="modal-overlay" hidden>
-    <div class="modal-card">
+    <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="start-modal-title">
         <div id="start-screen-input">
-            <h2 class="modal-title">Starting Weight</h2>
+            <h2 class="modal-title" id="start-modal-title">Starting Weight</h2>
             <label class="modal-label" for="start-input">New starting weight (lbs)</label>
             <div class="modal-input-row">
                 <input type="number" class="weight-input" id="start-input" min="50" max="999" step="0.1" placeholder="238">
@@ -421,8 +421,8 @@
 
 <!-- Fight Card Modal -->
 <div id="fight-card-modal" class="modal-overlay" hidden>
-    <div class="modal-card">
-        <h2 class="modal-title">Fight Card</h2>
+    <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="fight-card-modal-title">
+        <h2 class="modal-title" id="fight-card-modal-title">Fight Card</h2>
 
         <div class="profile-setting-group">
             <label class="profile-setting-label" for="fight-name">Name</label>
@@ -494,8 +494,8 @@
 
 <!-- Insights Modal -->
 <div id="insights-modal" class="modal-overlay" hidden>
-    <div class="modal-card insights-modal-card">
-        <h2 class="modal-title">Insights</h2>
+    <div class="modal-card insights-modal-card" role="dialog" aria-modal="true" aria-labelledby="insights-modal-title">
+        <h2 class="modal-title" id="insights-modal-title">Insights</h2>
         <div class="insights-grid" id="insights-grid"></div>
         <div class="modal-actions">
             <button class="modal-btn modal-save" id="insights-close">Close</button>
@@ -505,8 +505,8 @@
 
 <!-- Settings Modal -->
 <div id="settings-modal" class="modal-overlay" hidden>
-    <div class="modal-card">
-        <h2 class="modal-title">Settings</h2>
+    <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="settings-modal-title">
+        <h2 class="modal-title" id="settings-modal-title">Settings</h2>
 
         <div class="settings-scroll-wrap">
         <div class="settings-scroll-body">
@@ -745,8 +745,8 @@
 
 <!-- Row delete modal with per-item checkboxes -->
 <div id="row-delete-modal" class="modal-overlay" hidden>
-    <div class="modal-card">
-        <h2 class="modal-title">Delete Entry</h2>
+    <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="row-delete-modal-title">
+        <h2 class="modal-title" id="row-delete-modal-title">Delete Entry</h2>
         <p class="overwrite-message">Select what to remove for <span id="row-delete-date"></span>:</p>
         <div id="row-delete-checks"></div>
         <div class="modal-actions">
@@ -758,7 +758,7 @@
 
 <!-- Shared table confirm modal (overwrite / clear) -->
 <div id="table-confirm-modal" class="modal-overlay" hidden>
-    <div class="modal-card">
+    <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="table-confirm-title">
         <h2 class="modal-title" id="table-confirm-title">Confirm</h2>
         <p id="table-confirm-message" class="overwrite-message"></p>
         <div class="modal-actions">
@@ -769,8 +769,8 @@
 </div>
 
 <!-- Note editor popover -->
-<div id="note-popover" hidden>
-    <div class="note-popover-label">Note for <span id="note-popover-date"></span></div>
+<div id="note-popover" hidden role="dialog" aria-modal="true" aria-labelledby="note-popover-heading">
+    <div class="note-popover-label" id="note-popover-heading">Note for <span id="note-popover-date"></span></div>
     <textarea id="note-popover-text" maxlength="300" rows="3" placeholder="Add a note…"></textarea>
     <div class="note-resize-handle" id="note-resize-handle">
         <svg width="22" height="8" viewBox="0 0 22 8" fill="none"><circle cx="4" cy="4" r="2" fill="currentColor"/><circle cx="11" cy="4" r="2" fill="currentColor"/><circle cx="18" cy="4" r="2" fill="currentColor"/></svg>
@@ -983,6 +983,38 @@
         updateLostWeight();
     });
 
+    /* ── Accessibility: focus trap + opener restore for modals ── */
+    function makeFocusTrap(card) {
+        return function(e) {
+            if (e.key !== 'Tab') return;
+            const focusable = [...card.querySelectorAll(
+                'button:not([disabled]), [href], input:not([disabled]), select, textarea, [tabindex]:not([tabindex="-1"])'
+            )].filter(el => !el.closest('[hidden]') && el.offsetParent !== null);
+            if (!focusable.length) return;
+            const first = focusable[0], last = focusable[focusable.length - 1];
+            if (e.shiftKey && document.activeElement === first) {
+                e.preventDefault(); last.focus();
+            } else if (!e.shiftKey && document.activeElement === last) {
+                e.preventDefault(); first.focus();
+            }
+        };
+    }
+    const _modalOpeners = new WeakMap();
+    const _modalTraps   = new WeakMap();
+    function modalOpen(overlay) {
+        _modalOpeners.set(overlay, document.activeElement);
+        const card = overlay.querySelector('[role="dialog"]') || overlay;
+        const trap = makeFocusTrap(card);
+        _modalTraps.set(overlay, trap);
+        overlay.addEventListener('keydown', trap);
+    }
+    function modalClose(overlay) {
+        const trap = _modalTraps.get(overlay);
+        if (trap) overlay.removeEventListener('keydown', trap);
+        const opener = _modalOpeners.get(overlay);
+        if (opener && opener.focus) opener.focus();
+    }
+
     /* ── Weight edit modal — shared by all editable weight cards ──
        apiSave(lbs, overwrite) must return:
          true             — saved, proceed with DOM update + close
@@ -1010,7 +1042,7 @@
                 : '';
         }
 
-        function close() { modal.hidden = true; }
+        function close() { modal.hidden = true; modalClose(modal); }
 
         function commitSave(lbs) {
             lbsNum.textContent = fmtLbs(lbs);
@@ -1052,6 +1084,7 @@
             input.value = kg ? kgNum.textContent : lbsNum.textContent;
             updatePreview();
             modal.hidden = false;
+            modalOpen(modal);
             setTimeout(() => { input.focus(); input.select(); }, 50);
         }
 
@@ -2499,8 +2532,9 @@
             document.getElementById('table-confirm-cancel').textContent       = cancelLabel || 'Cancel';
             const modal = document.getElementById('table-confirm-modal');
             modal.hidden = false;
-            document.getElementById('table-confirm-ok').onclick     = () => { modal.hidden = true; onOk(); };
-            document.getElementById('table-confirm-cancel').onclick  = () => { modal.hidden = true; if (onCancel) onCancel(); else renderTable(); };
+            modalOpen(modal);
+            document.getElementById('table-confirm-ok').onclick     = () => { modal.hidden = true; modalClose(modal); onOk(); };
+            document.getElementById('table-confirm-cancel').onclick  = () => { modal.hidden = true; modalClose(modal); if (onCancel) onCancel(); else renderTable(); };
         }
         window.showAppConfirm = showTableConfirm;
 
@@ -2646,10 +2680,12 @@
             checks.querySelectorAll('input[type="checkbox"]').forEach(cb => cb.addEventListener('change', syncOk));
             okBtn.disabled = false;
             modal.hidden   = false;
+            modalOpen(modal);
 
-            document.getElementById('row-delete-cancel').onclick = () => { modal.hidden = true; };
+            document.getElementById('row-delete-cancel').onclick = () => { modal.hidden = true; modalClose(modal); };
             okBtn.onclick = async () => {
                 modal.hidden = true;
+                modalClose(modal);
                 const weightCb = checks.querySelector('[data-key="weight"]');
                 const noteCb   = checks.querySelector('[data-key="note"]');
                 const delWeight = !!(weightCb && weightCb.checked);
@@ -2780,6 +2816,7 @@
         function close() {
             popover.hidden = true;
             activeDate = null;
+            modalClose(popover);
         }
 
         function getExpandedWeeks() {
@@ -2840,6 +2877,7 @@
             dateSpan.textContent = formatDateDisplay(date);
             textarea.value = currentNote || '';
             popover.hidden = false;
+            modalOpen(popover);
             const rect   = anchorEl.getBoundingClientRect();
             const top    = Math.min(rect.bottom + 6, window.innerHeight - 220);
             const left   = Math.max(8, Math.min(rect.left - 180, window.innerWidth - 380));
@@ -3066,6 +3104,7 @@
             calEl.hidden = true;
             document.getElementById('history-screen-input').hidden   = false;
             document.getElementById('history-screen-confirm').hidden = true;
+            modalClose(modal);
         }
 
         function updatePreview() {
@@ -3122,6 +3161,7 @@
             selectedDateISO = ''; dateIn.value = ''; weightIn.value = ''; preview.textContent = '';
             close();
             modal.hidden = false;
+            modalOpen(modal);
             setTimeout(() => dateIn.focus(), 50);
         });
 
@@ -3305,17 +3345,29 @@
             clearTimeout(closeTimer);
             menu.classList.add('open');
             img.src = '/static/' + bases()[1];
+            profBtn.setAttribute('aria-expanded', 'true');
         }
         function scheduleClose() {
             closeTimer = setTimeout(() => {
                 menu.classList.remove('open');
                 img.src = '/static/' + bases()[0];
+                profBtn.setAttribute('aria-expanded', 'false');
             }, 120);
         }
 
+        profBtn.setAttribute('aria-haspopup', 'true');
+        profBtn.setAttribute('aria-expanded', 'false');
+
         profBtn.addEventListener('mouseenter', openMenu);
+        profBtn.addEventListener('focus',      openMenu);
+        profBtn.addEventListener('blur', e => { if (!menu.contains(e.relatedTarget)) scheduleClose(); });
+
         menu.addEventListener('mouseenter', openMenu);
         menu.addEventListener('mouseleave', scheduleClose);
+
+        sideBtns.forEach(btn => {
+            btn.addEventListener('blur', e => { if (!menu.contains(e.relatedTarget)) scheduleClose(); });
+        });
 
         window.setProfilePic = function(n) {
             window.savePref('pref_profile_pic', String(n));
@@ -3634,6 +3686,7 @@
             calEl.hidden = true;
             openState = null;
             window.activeModal = null;
+            modalClose(modal);
         }
 
         function tryClose(onClosed) {
@@ -3711,6 +3764,7 @@
             }
             updatePreview();
             modal.hidden = false;
+            modalOpen(modal);
             openState = snapshot();
             window.activeModal = { tryClose };
         }
@@ -3961,12 +4015,13 @@
             });
         }
 
-        function close() { modal.hidden = true; window.activeModal = null; }
+        function close() { modal.hidden = true; window.activeModal = null; modalClose(modal); }
 
         async function openInsights() {
             window.activeModal = { tryClose: cb => { close(); if (cb) cb(); } };
             grid.innerHTML = '<p style="color:rgba(255,200,220,0.4);text-align:center;grid-column:1/-1;padding:32px 0;margin:0">Loading…</p>';
             modal.hidden = false;
+            modalOpen(modal);
             render(await compute());
         }
 
@@ -4038,6 +4093,7 @@
             modal.hidden = true;
             openState = null;
             window.activeModal = null;
+            modalClose(modal);
         }
 
         function tryClose(onClosed) {
@@ -4133,6 +4189,7 @@
             profCustomWeeks.value = curCustomWeeks;
             syncFighterNameToHealthBar();
             modal.hidden = false;
+            modalOpen(modal);
             modal.querySelector('.settings-scroll-body').scrollTop = 0;
             openState = getSelections();
             window.activeModal = { tryClose };
@@ -4474,15 +4531,23 @@
             const body = document.getElementById('ssb-' + key);
             if (!hdr || !body) return;
 
+            // Keyboard accessibility
+            hdr.setAttribute('role', 'button');
+            hdr.setAttribute('tabindex', '0');
+            hdr.setAttribute('aria-controls', 'ssb-' + key);
+
             // Set initial collapsed state immediately (modal is hidden, no animation needed)
-            if (localStorage.getItem('pref_section_' + key) === '0') {
+            const initCollapsed = localStorage.getItem('pref_section_' + key) === '0';
+            if (initCollapsed) {
                 body.style.height = '0px';
                 hdr.classList.add('collapsed');
             }
+            hdr.setAttribute('aria-expanded', initCollapsed ? 'false' : 'true');
 
             hdr.addEventListener('click', () => {
                 const nowCollapsed = !hdr.classList.contains('collapsed');
                 hdr.classList.toggle('collapsed', nowCollapsed);
+                hdr.setAttribute('aria-expanded', nowCollapsed ? 'false' : 'true');
                 localStorage.setItem('pref_section_' + key, nowCollapsed ? '0' : '1');
                 if (nowCollapsed) {
                     // Collapse: lock in current height, force reflow, then animate to 0
@@ -4496,6 +4561,10 @@
                         body.style.height = '';
                     }, { once: true });
                 }
+            });
+
+            hdr.addEventListener('keydown', e => {
+                if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); hdr.click(); }
             });
         });
 
