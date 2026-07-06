@@ -2083,6 +2083,11 @@ body.note-open .custom-scrollbar-track {
     pointer-events: none;
 }
 
+.fight-goal-row .profile-opt-btn {
+    flex: 1;
+    padding: 9px 10px;
+}
+
 .note-delete-btn {
     background: transparent;
     border: 1px solid rgba(255, 45, 120, 0.2);

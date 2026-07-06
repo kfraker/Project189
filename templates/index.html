@@ -115,7 +115,7 @@
                     <path id="b3" d="M 13,50 A 37,37 0 0,0 87,50"/>
                 </defs>
                 <text font-family="'Arial Black', Impact, sans-serif" font-weight="900" font-size="5.5" fill="#f2f2f2" letter-spacing="0.5" text-anchor="middle">
-                    <textPath href="#t3" startOffset="50%">LOST</textPath>
+                    <textPath href="#t3" startOffset="50%" id="lost-plate-label">LOST</textPath>
                 </text>
                 <text font-family="'Arial Black', Impact, sans-serif" font-weight="900" font-size="5.5" fill="#f2f2f2" letter-spacing="0.5" text-anchor="middle">
                     <textPath href="#b3" startOffset="50%">WEIGHT</textPath>
@@ -485,6 +485,13 @@
             </div>
         </div>
 
+        <div class="profile-setting-group">
+            <label class="profile-setting-label">Goal</label>
+            <div class="profile-toggle-row fight-goal-row">
+                <button class="profile-opt-btn" id="fight-goal-lean"   data-tip="Lose weight">Lean Machine</button>
+                <button class="profile-opt-btn" id="fight-goal-muscle" data-tip="Gain weight">Muscle Monster</button>
+            </div>
+        </div>
 
         <div class="modal-actions">
             <button class="modal-btn modal-cancel" id="fight-card-cancel">Cancel</button>
@@ -875,15 +882,20 @@
 
     function fmtLbs(n) { return n === Math.round(n) ? Math.round(n) : parseFloat(n.toFixed(1)); }
 
-    /* ── Recompute Lost Weight whenever Starting or Current changes ── */
+    /* ── Recompute Lost/Gained Weight whenever Starting or Current changes ── */
     function updateLostWeight() {
+        const mode       = localStorage.getItem('fight_goal_mode') || 'lean';
         const startLbs   = parseFloat(document.getElementById('start-lbs-num').textContent);
         const currentLbs = parseFloat(document.getElementById('current-lbs-num').textContent);
+        const labelEl    = document.getElementById('lost-plate-label');
+        if (labelEl) labelEl.textContent = mode === 'muscle' ? 'GAINED' : 'LOST';
         if (isNaN(startLbs) || isNaN(currentLbs)) {
             document.getElementById('lost-lbs-num').textContent = '—';
             document.getElementById('lost-kg-num').textContent  = '—';
         } else {
-            const diff = Math.max(0, Math.round((startLbs - currentLbs) * 10) / 10);
+            const diff = mode === 'muscle'
+                ? Math.max(0, Math.round((currentLbs - startLbs) * 10) / 10)
+                : Math.max(0, Math.round((startLbs - currentLbs) * 10) / 10);
             document.getElementById('lost-lbs-num').textContent = fmtLbs(diff);
             document.getElementById('lost-kg-num').textContent  = (diff / 2.2046).toFixed(1);
         }
@@ -893,18 +905,24 @@
     window.updateHealthBar = function () {
         const fill = document.getElementById('healthbar-fill');
         if (!fill) return;
+        const mode       = localStorage.getItem('fight_goal_mode') || 'lean';
         const startLbs   = parseFloat(document.getElementById('start-lbs-num').textContent);
         const currentLbs = parseFloat(document.getElementById('current-lbs-num').textContent);
         const goalLbs    = parseFloat(document.getElementById('goal-lbs-num').textContent);
         let pct = 0;
-        if (!isNaN(startLbs) && !isNaN(currentLbs) && !isNaN(goalLbs) && startLbs > goalLbs)
-            pct = Math.min(1, Math.max(0, (startLbs - currentLbs) / (startLbs - goalLbs))) * 100;
+        if (mode === 'muscle') {
+            if (!isNaN(startLbs) && !isNaN(currentLbs) && !isNaN(goalLbs) && goalLbs > startLbs)
+                pct = Math.min(1, Math.max(0, (currentLbs - startLbs) / (goalLbs - startLbs))) * 100;
+        } else {
+            if (!isNaN(startLbs) && !isNaN(currentLbs) && !isNaN(goalLbs) && startLbs > goalLbs)
+                pct = Math.min(1, Math.max(0, (startLbs - currentLbs) / (startLbs - goalLbs))) * 100;
+        }
         fill.style.width = pct.toFixed(1) + '%';
         const track = document.getElementById('healthbar-fill-track');
         if (track) track.setAttribute('aria-valuenow', pct.toFixed(1));
         const tt = document.getElementById('healthbar-tooltip');
         if (tt && !isNaN(currentLbs) && !isNaN(goalLbs)) {
-            const diffLbs = currentLbs - goalLbs;
+            const diffLbs = mode === 'muscle' ? goalLbs - currentLbs : currentLbs - goalLbs;
             if (diffLbs <= 0) {
                 tt.textContent = 'Goal reached!';
             } else {
@@ -1132,6 +1150,19 @@
         confirmMsgId: 'goal-overwrite-message', confirmBtnId: 'goal-overwrite-confirm', confirmCancelId: 'goal-overwrite-cancel',
         onSave: () => window.updateHealthBar(),
         apiSave: async (lbs, overwrite) => {
+            const mode     = localStorage.getItem('fight_goal_mode') || 'lean';
+            const startLbs = parseFloat(document.getElementById('start-lbs-num').textContent);
+            const preview  = document.getElementById('goal-kg-preview');
+            if (!isNaN(startLbs) && startLbs > 0) {
+                if (mode === 'muscle' && lbs <= startLbs) {
+                    if (preview) preview.textContent = '↑ Must exceed starting weight';
+                    return false;
+                }
+                if (mode === 'lean' && lbs >= startLbs) {
+                    if (preview) preview.textContent = '↓ Must be below starting weight';
+                    return false;
+                }
+            }
             const res  = await fetch('/api/setting', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ key: 'goal_weight', value_lbs: lbs, overwrite }) });
             const data = await res.json();
             if (data.success)  return true;
@@ -3646,6 +3677,8 @@
         const sexMaleBtn    = document.getElementById('fight-sex-male');
         const sexFemaleBtn  = document.getElementById('fight-sex-female');
         const actBtns       = document.querySelectorAll('.fight-activity-row .profile-opt-btn');
+        const goalLeanBtn   = document.getElementById('fight-goal-lean');
+        const goalMuscleBtn = document.getElementById('fight-goal-muscle');
 
         /* ── DOB calendar ── */
         const calEl    = document.getElementById('fight-dob-calendar');
@@ -3800,13 +3833,17 @@
                  : '';
         }
 
+        function getSelectedGoal() {
+            return goalMuscleBtn.classList.contains('active') ? 'muscle' : 'lean';
+        }
+
         function snapshot() {
-            return { name: nameIn.value, dob: selectedDobISO, ft: ftIn.value, inch: inIn.value, cm: cmIn.value, sex: getSelectedSex(), activity: getSelectedActivity() };
+            return { name: nameIn.value, dob: selectedDobISO, ft: ftIn.value, inch: inIn.value, cm: cmIn.value, sex: getSelectedSex(), activity: getSelectedActivity(), goal: getSelectedGoal() };
         }
         function hasChanges() {
             if (!openState) return false;
             const s = snapshot();
-            return s.name !== openState.name || s.dob !== openState.dob || s.ft !== openState.ft || s.inch !== openState.inch || s.cm !== openState.cm || s.sex !== openState.sex || s.activity !== openState.activity;
+            return s.name !== openState.name || s.dob !== openState.dob || s.ft !== openState.ft || s.inch !== openState.inch || s.cm !== openState.cm || s.sex !== openState.sex || s.activity !== openState.activity || s.goal !== openState.goal;
         }
 
         function updatePreview() {
@@ -3857,6 +3894,7 @@
             if (sex) window.savePref('fight_sex', sex);
             const act = getSelectedActivity();
             if (act) window.savePref('fight_activity', act);
+            window.savePref('fight_goal_mode', getSelectedGoal());
             updateLostWeight();
             if (heightUnit() === 'us') {
                 if (ftIn.value)        window.savePref('fight_height_ft', ftIn.value);
@@ -3886,6 +3924,10 @@
 
             const storedAct  = localStorage.getItem('fight_activity')  || '';
             actBtns.forEach(b => b.classList.toggle('active', b.dataset.activity === storedAct));
+
+            const storedGoal = localStorage.getItem('fight_goal_mode') || 'lean';
+            goalLeanBtn.classList.toggle('active',   storedGoal === 'lean');
+            goalMuscleBtn.classList.toggle('active', storedGoal === 'muscle');
 
             if (isUs) {
                 ftIn.value = localStorage.getItem('fight_height_ft') || '';
@@ -3926,6 +3968,14 @@
         actBtns.forEach(btn => {
             btn.addEventListener('click', () => {
                 actBtns.forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+            });
+        });
+
+        [goalLeanBtn, goalMuscleBtn].forEach(btn => {
+            btn.addEventListener('click', () => {
+                goalLeanBtn.classList.remove('active');
+                goalMuscleBtn.classList.remove('active');
                 btn.classList.add('active');
             });
         });

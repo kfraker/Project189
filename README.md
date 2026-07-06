@@ -14,7 +14,7 @@ A personal weight tracking dashboard built with Flask and SQLite. Logs daily wei
 - **Responsive tables** — both the daily and weekly summary tables adapt cleanly across screen widths: the secondary column (kg) collapses at ≤ 800px, date labels switch from full to short at ≤ 560px, action buttons scale down at ≤ 720px, and column widths are pinned so inner weekly rows stay aligned with outer summary headers at all sizes. A `::before` mask on the scroll container prevents the scrollbar from overlapping sticky column headers.
 - **Unit toggle** — switch between lbs and kg; all plates, chart, and table update instantly.
 - **Health bar HUD** — fixed top-left pixel-art health bar that fills red as the user progresses from start weight toward goal weight. Fighter name (set in Fight Card) is displayed above the bar in Mortal Kombat–style gold text. Hovering the bar shows remaining weight to goal.
-- **Fight Card modal** — record fighter profile info (name, sex, date of birth, height, activity level) with a themed date picker for DOB. Age is calculated automatically. Activity level (Sedentary / Light / Moderate / Active) is used for BMR calculations.
+- **Fight Card modal** — record fighter profile info (name, sex, date of birth, height, activity level) with a themed date picker for DOB. Age is calculated automatically. Activity level (Sedentary / Light / Moderate / Active) is used for BMR calculations. Includes a **Goal Mode** toggle: **Lean Machine** (lose weight) or **Muscle Monster** (gain weight). Goal mode dynamically updates the lost/gained plate label, health bar fill direction, and goal weight validation (lean restricts goal below starting weight; muscle restricts goal above starting weight).
 - **Insights modal** — 10 stats computed from full weight history: Predicted Goal Date (Mifflin-St. Jeor BMR simulation), Total Weigh-ins, Longest Streak, Current Streak, Current Trend, Weekly Loss Rate, Monthly Loss Rate, Lowest Weight, Largest Weekly Loss, and Avg Daily Fluctuation. Predicted Goal Date uses week-by-week metabolic adaptation; falls back to a 500 kcal/day deficit estimate when no trend is available.
 - **Profile system** — four selectable profile pictures, each linked to its own custom pointer and edit cursor set. Selection is persisted server-side and restored on every page load.
 - **Custom cursors** — profile-linked pointer and edit cursors rendered via transparent PNGs; swap automatically when the active profile changes.
@@ -141,4 +141,4 @@ Also in `static/`:
 python -m pytest tests/ -v
 ```
 
-286 tests covering all API endpoints (including notes and weight-nulling), business logic, date range boundaries, and UI structure.
+293 tests covering all API endpoints (including notes and weight-nulling), business logic, date range boundaries, and UI structure.

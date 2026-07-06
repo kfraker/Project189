@@ -740,3 +740,39 @@ def test_missing_row_has_height_spacer(html):
 def test_custom_days_default_is_30(html):
     """When no custom-days preference is saved, the daily chart must default to 30 days."""
     assert 'parseInt(savedCustomDaysStr) || 30' in html
+
+
+def test_fight_goal_lean_button_present(html):
+    """Fight card must have a Lean Machine goal button."""
+    assert 'id="fight-goal-lean"' in html
+
+
+def test_fight_goal_muscle_button_present(html):
+    """Fight card must have a Muscle Monster goal button."""
+    assert 'id="fight-goal-muscle"' in html
+
+
+def test_fight_goal_row_present(html):
+    """Fight card must have a goal toggle row."""
+    assert 'fight-goal-row' in html
+
+
+def test_lost_plate_label_has_id(html):
+    """Lost plate textPath must have an id so goal mode can update its label."""
+    assert 'id="lost-plate-label"' in html
+
+
+def test_goal_mode_updates_lost_label(html):
+    """updateLostWeight must swap label between LOST and GAINED based on goal mode."""
+    assert 'fight_goal_mode' in html
+    assert "'GAINED'" in html or '"GAINED"' in html
+
+
+def test_goal_weight_apiSave_validates_lean(html):
+    """apiSave for goal weight must reject equal/higher weights in lean mode."""
+    assert 'Must be below starting weight' in html
+
+
+def test_goal_weight_apiSave_validates_muscle(html):
+    """apiSave for goal weight must reject equal/lower weights in muscle mode."""
+    assert 'Must exceed starting weight' in html
