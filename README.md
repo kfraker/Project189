@@ -15,6 +15,7 @@ A personal weight tracking dashboard built with Flask and SQLite. Logs daily wei
 - **Unit toggle** — switch between lbs and kg; all plates, chart, and table update instantly.
 - **Health bar HUD** — fixed top-left pixel-art health bar that fills red as the user progresses from start weight toward goal weight. Fighter name (set in Fight Card) is displayed above the bar in Mortal Kombat–style gold text. Hovering the bar shows remaining weight to goal.
 - **Fight Card modal** — record fighter profile info (name, sex, date of birth, height, activity level) with a themed date picker for DOB. Age is calculated automatically. Activity level (Sedentary / Light / Moderate / Active) is used for BMR calculations. Includes a **Goal Mode** toggle: **Lean Machine** (lose weight) or **Muscle Monster** (gain weight). Goal mode dynamically updates the lost/gained plate label, health bar fill direction, and goal weight validation (lean restricts goal below starting weight; muscle restricts goal above starting weight).
+- **Workout page** (`/workouts`) — a dedicated full-screen experience opened via the dumbbell button. Displays all logged workouts grouped by date in a scrollable table; each row shows a MET-based tier badge, duration, and kcal. Clicking any activity in a date group opens that day's Log Workout modal; a floating "+" opens the modal for today. The modal uses a **staging workflow**: add multiple activities before committing — the duration stepper and "+ Add Activity" button are grayed until a type is selected, the selected-activity chip swaps the search input in-place so the modal never resizes, and the logged-activities area is a fixed-height scrollable region (custom pink scrollbar, `cursor: none` — no system-cursor bleed) showing ~3 rows before scrolling. **Day-level notes** — one note per calendar day stored in a dedicated `workout_day_notes` table and displayed as a pink italic accent below each date group. Cancelling with unsaved staged activities, pending deletes, or an edited note triggers a discard-changes warning. Removing an existing activity from the modal stages the deletion; on Save a **checkbox confirmation modal** (matching the Delete Entry UX) lists each activity to delete — unchecking rescues it from the batch. The workouts-page X button deletes immediately with a simple confirm. Header shows stats: workouts this week, kcal burned, and current streak.
 - **Insights modal** — 10 stats computed from full weight history: Predicted Goal Date (Mifflin-St. Jeor BMR simulation), Total Weigh-ins, Longest Streak, Current Streak, Current Trend, Weekly Loss Rate, Monthly Loss Rate, Lowest Weight, Largest Weekly Loss, and Avg Daily Fluctuation. Predicted Goal Date uses week-by-week metabolic adaptation; falls back to a 500 kcal/day deficit estimate when no trend is available.
 - **Profile system** — four selectable profile pictures, each linked to its own custom pointer and edit cursor set. Selection is persisted server-side and restored on every page load.
 - **Custom cursors** — profile-linked pointer and edit cursors rendered via transparent PNGs; swap automatically when the active profile changes.
@@ -77,7 +78,8 @@ project-189/
 ├── app.py                      # Flask app and REST API routes
 ├── weights.db                  # SQLite database (auto-created)
 ├── templates/
-│   └── index.html              # Single-page UI
+│   ├── index.html              # Main dashboard UI
+│   └── workouts.html           # Standalone workout tracking page
 ├── static/
 │   ├── style.css               # All styles
 │   ├── pointer.png             # Profile 1 pointer cursor
@@ -96,7 +98,8 @@ project-189/
 │   ├── profile3buttonsmile.png # Profile 3 avatar (hover)
 │   ├── profile4button.png      # Profile 4 avatar (default)
 │   ├── profile4buttonsmile.png # Profile 4 avatar (hover)
-│   ├── dumbbellbutton.png      # Workouts button icon
+│   ├── dumbbellbutton.png      # Workouts nav button icon
+│   ├── workoutbackground.png   # Workout page background
 │   ├── proteinshakebutton.png  # Nutrition button icon
 │   ├── settingsbutton.png      # Settings button icon
 │   ├── insightsbutton.png      # Insights button icon
@@ -113,6 +116,8 @@ project-189/
     ├── test_api_preferences.py
     ├── test_api_weights_edge.py
     ├── test_api_weight_notes.py
+    ├── test_api_workouts.py
+    ├── test_workouts_page.py
     ├── test_business_logic.py
     └── test_db_init.py
 ```
@@ -134,6 +139,13 @@ Also in `static/`:
 | `POST` | `/api/setting` | Save or overwrite a setting |
 | `GET` | `/api/preferences` | Get all persisted user preferences |
 | `POST` | `/api/preference` | Save or update a single preference key/value |
+| `GET` | `/workouts` | Standalone workout tracking page |
+| `GET` | `/api/workouts` | Get all logged workouts, ordered newest first (optional `?date=YYYY-MM-DD` filter) |
+| `POST` | `/api/workout` | Log a workout (date, type, duration_min, kcal, note) |
+| `DELETE` | `/api/workout/<id>` | Delete a workout by ID |
+| `GET` | `/api/workout-day-note?date=YYYY-MM-DD` | Get the day note for a date (returns `{"note": ""}` if none) |
+| `POST` | `/api/workout-day-note` | Upsert the day note for a date |
+| `GET` | `/api/workout-day-notes` | Get all non-empty day notes as a `{date: note}` map |
 
 ## Running Tests
 
@@ -141,4 +153,4 @@ Also in `static/`:
 python -m pytest tests/ -v
 ```
 
-293 tests covering all API endpoints (including notes and weight-nulling), business logic, date range boundaries, and UI structure.
+345 tests covering all API endpoints (including workout day notes), business logic, date range boundaries, and UI structure.

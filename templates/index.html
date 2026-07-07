@@ -32,9 +32,9 @@
     <button id="profile-btn" data-tip="Profile">
         <img id="profile-btn-img" src="/static/profilebutton.png" alt="Profile">
     </button>
-    <button id="dumbbell-btn" class="side-btn" data-tip="Workouts">
+    <a id="dumbbell-btn" class="side-btn" data-tip="Workouts" href="/workouts">
         <img src="/static/dumbbellbutton.png" alt="Workouts">
-    </button>
+    </a>
     <button id="protein-btn" class="side-btn" data-tip="Nutrition">
         <img src="/static/proteinshakebutton.png" alt="Nutrition">
     </button>
@@ -3644,7 +3644,7 @@
             hideTimer = setTimeout(() => tip.classList.remove('visible'), 1500);
         }
 
-        ['dumbbell-btn', 'protein-btn'].forEach(id => {
+        ['protein-btn'].forEach(id => {
             document.getElementById(id).addEventListener('click', () => showComingSoon(document.getElementById(id)));
         });
     })();

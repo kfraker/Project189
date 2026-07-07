@@ -200,10 +200,25 @@ def test_insights_modal_before_settings_modal(html):
 
 def test_whistle_btn_not_in_coming_soon(html):
     """whistle-btn must not appear in the coming-soon forEach list."""
-    idx = html.find("'dumbbell-btn', 'protein-btn'")
-    assert idx != -1, "Coming-soon list not found"
-    snippet = html[idx:idx + 80]
-    assert 'whistle' not in snippet
+    assert "'protein-btn'" in html
+    assert 'whistle' not in html[html.find("'protein-btn'"):html.find("'protein-btn'") + 60]
+
+
+def test_dumbbell_btn_not_in_coming_soon(html):
+    """dumbbell-btn must not be in the coming-soon list — it opens the workout modal."""
+    protein_idx = html.find("'protein-btn'")
+    cs_snippet  = html[max(0, protein_idx - 20):protein_idx + 20]
+    assert 'dumbbell' not in cs_snippet
+
+
+def test_dumbbell_links_to_workouts_page(html):
+    """Dumbbell button must now be an <a> linking to /workouts."""
+    assert 'href="/workouts"' in html
+
+
+def test_workout_modal_not_on_home(html):
+    """Workout modal moved to /workouts page — should not be in index.html."""
+    assert 'id="workout-modal"' not in html
 
 
 def test_predicted_goal_date_is_wide(html):
@@ -776,3 +791,7 @@ def test_goal_weight_apiSave_validates_lean(html):
 def test_goal_weight_apiSave_validates_muscle(html):
     """apiSave for goal weight must reject equal/lower weights in muscle mode."""
     assert 'Must exceed starting weight' in html
+
+
+# ── Workout UI moved to /workouts ─────────────────────────────────────────────
+# Tests for autocomplete, compendium, chip, etc. are in test_workouts_page.py

@@ -68,6 +68,27 @@ def init_db():
         )
     ''')
 
+    conn.execute('''
+        CREATE TABLE IF NOT EXISTS workouts (
+            id           INTEGER PRIMARY KEY AUTOINCREMENT,
+            user_id      INTEGER NOT NULL DEFAULT 1 REFERENCES users(id),
+            date         TEXT    NOT NULL,
+            type         TEXT    NOT NULL,
+            duration_min INTEGER NOT NULL,
+            kcal         INTEGER NOT NULL,
+            note         TEXT    NOT NULL DEFAULT ''
+        )
+    ''')
+
+    conn.execute('''
+        CREATE TABLE IF NOT EXISTS workout_day_notes (
+            user_id INTEGER NOT NULL DEFAULT 1 REFERENCES users(id),
+            date    TEXT    NOT NULL,
+            note    TEXT    NOT NULL DEFAULT '',
+            PRIMARY KEY (user_id, date)
+        )
+    ''')
+
     # Seed default user
     conn.execute(
         "INSERT OR IGNORE INTO users (id, username, password_hash) VALUES (1, 'default', '')"
@@ -133,6 +154,19 @@ def home():
     finally:
         conn.close()
     return render_template("index.html", prefs=prefs)
+
+
+@app.route("/workouts")
+def workouts_page():
+    conn = get_db()
+    try:
+        rows = conn.execute(
+            "SELECT key, value FROM preferences WHERE user_id = ?", (_USER_ID,)
+        ).fetchall()
+        prefs = {r["key"]: r["value"] for r in rows}
+    finally:
+        conn.close()
+    return render_template("workouts.html", prefs=prefs)
 
 
 @app.route("/api/weight", methods=["POST"])
@@ -419,6 +453,122 @@ def save_preference():
         )
         conn.commit()
         return jsonify({"success": True})
+    finally:
+        conn.close()
+
+
+@app.route("/api/workouts")
+def get_workouts():
+    date_filter = request.args.get("date", "").strip()
+    conn = get_db()
+    try:
+        if date_filter and _valid_date(date_filter):
+            rows = conn.execute(
+                "SELECT id, date, type, duration_min, kcal, note FROM workouts "
+                "WHERE user_id = ? AND date = ? ORDER BY id DESC",
+                (_USER_ID, date_filter)
+            ).fetchall()
+        else:
+            rows = conn.execute(
+                "SELECT id, date, type, duration_min, kcal, note FROM workouts "
+                "WHERE user_id = ? ORDER BY date DESC, id DESC",
+                (_USER_ID,)
+            ).fetchall()
+        return jsonify([dict(r) for r in rows])
+    finally:
+        conn.close()
+
+
+@app.route("/api/workout", methods=["POST"])
+def save_workout():
+    data = request.get_json(silent=True) or {}
+    date_val     = data.get("date", "")
+    workout_type = str(data.get("type", "")).strip()[:100]
+    duration     = data.get("duration_min")
+    kcal         = data.get("kcal")
+    note         = str(data.get("note", "")).strip()
+
+    if not _valid_date(date_val):
+        return jsonify({"error": "Invalid date"}), 400
+    if not workout_type:
+        return jsonify({"error": "Invalid workout type"}), 400
+    if not isinstance(duration, int) or duration < 1 or duration > 600:
+        return jsonify({"error": "Invalid duration"}), 400
+    if not isinstance(kcal, int) or kcal < 0:
+        return jsonify({"error": "Invalid kcal"}), 400
+
+    conn = get_db()
+    try:
+        cur = conn.execute(
+            "INSERT INTO workouts (user_id, date, type, duration_min, kcal, note) "
+            "VALUES (?, ?, ?, ?, ?, ?)",
+            (_USER_ID, date_val, workout_type, duration, kcal, note)
+        )
+        conn.commit()
+        return jsonify({"success": True, "id": cur.lastrowid})
+    finally:
+        conn.close()
+
+
+@app.route("/api/workout/<int:workout_id>", methods=["DELETE"])
+def delete_workout(workout_id):
+    conn = get_db()
+    try:
+        conn.execute(
+            "DELETE FROM workouts WHERE id = ? AND user_id = ?",
+            (workout_id, _USER_ID)
+        )
+        conn.commit()
+        return jsonify({"success": True})
+    finally:
+        conn.close()
+
+
+@app.route("/api/workout-day-note")
+def get_workout_day_note():
+    date_str = request.args.get("date", "").strip()
+    if not date_str or not _valid_date(date_str):
+        return jsonify({"error": "invalid date"}), 400
+    conn = get_db()
+    try:
+        row = conn.execute(
+            "SELECT note FROM workout_day_notes WHERE user_id = ? AND date = ?",
+            (_USER_ID, date_str)
+        ).fetchone()
+        return jsonify({"note": row["note"] if row else ""})
+    finally:
+        conn.close()
+
+
+@app.route("/api/workout-day-note", methods=["POST"])
+def save_workout_day_note():
+    data = request.get_json(silent=True) or {}
+    date_str = data.get("date", "").strip()
+    note = str(data.get("note", "")).strip()[:500]
+    if not date_str or not _valid_date(date_str):
+        return jsonify({"error": "invalid date"}), 400
+    conn = get_db()
+    try:
+        conn.execute(
+            "INSERT INTO workout_day_notes (user_id, date, note) VALUES (?, ?, ?) "
+            "ON CONFLICT(user_id, date) DO UPDATE SET note = excluded.note",
+            (_USER_ID, date_str, note)
+        )
+        conn.commit()
+        return jsonify({"success": True})
+    finally:
+        conn.close()
+
+
+@app.route("/api/workout-day-notes")
+def get_workout_day_notes():
+    conn = get_db()
+    try:
+        rows = conn.execute(
+            "SELECT date, note FROM workout_day_notes WHERE user_id = ? AND note != ''",
+            (_USER_ID,)
+        ).fetchall()
+        return jsonify({r["date"]: r["note"] for r in rows})
     finally:
         conn.close()
 
