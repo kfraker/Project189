@@ -122,3 +122,53 @@ def test_workouts_page_has_confirm_modal(html):
 
 def test_workouts_page_has_day_heading(html):
     assert 'id="wpm-day-heading"' in html
+
+
+# ── v2.7.0 UI structure — filter menu + custom range modal ───────────────────
+
+def test_workouts_page_has_filter_btn(html):
+    assert 'id="wp-filter-btn"' in html
+
+
+def test_workouts_page_has_range_menu(html):
+    assert 'id="wp-range-menu"' in html
+
+
+def test_workouts_page_has_all_range_buttons(html):
+    for label in ('all', '1y', '90d', '30d', '7d', 'custom'):
+        assert f'data-range="{label}"' in html
+
+
+def test_workouts_page_has_custom_modal(html):
+    assert 'id="wp-custom-modal"' in html
+
+
+def test_workouts_page_has_custom_range_start_input(html):
+    assert 'id="wp-cr-start-input"' in html
+
+
+def test_workouts_page_has_custom_range_end_input(html):
+    assert 'id="wp-cr-end-input"' in html
+
+
+def test_workouts_page_has_custom_range_calendars(html):
+    assert 'id="wp-cr-start-cal"' in html
+    assert 'id="wp-cr-end-cal"' in html
+
+
+def test_workouts_page_has_custom_modal_actions(html):
+    assert 'id="wp-custom-cancel"' in html
+    assert 'id="wp-custom-apply"' in html
+
+
+def test_workouts_page_custom_modal_is_dialog(html):
+    assert 'role="dialog"' in html
+    assert 'aria-modal="true"' in html
+
+
+def test_workouts_page_has_make_range_picker(html):
+    assert 'makeRangePicker' in html
+
+
+def test_workouts_page_filter_btn_has_aria_label(html):
+    assert 'aria-label="Filter by date range"' in html
