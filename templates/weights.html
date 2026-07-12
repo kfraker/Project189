@@ -1,0 +1,2130 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <title>Weights — Project 189</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Pacifico&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/static/style.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <style>
+        :root {
+            --wt-hdr: 62px;
+            --wt-ftr: 72px;
+        }
+        html, body { height: 100%; margin: 0; overflow: hidden; }
+
+        /* ── Background ── */
+        .wt-bg {
+            position: fixed;
+            inset: 0;
+            background: url('/static/workoutbackground4.png') center / cover no-repeat;
+            z-index: -1;
+        }
+        .wt-bg::after {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: rgba(8, 0, 18, 0.68);
+        }
+
+        /* ── Header ── */
+        .wt-header {
+            position: fixed;
+            top: 0; left: 0; right: 0;
+            height: var(--wt-hdr);
+            z-index: 700;
+            display: grid;
+            grid-template-columns: 1fr auto 1fr;
+            align-items: center;
+            padding: 0 24px;
+            background: rgba(8, 0, 20, 0.75);
+            border-bottom: 1px solid rgba(255, 45, 120, 0.2);
+            backdrop-filter: blur(10px);
+        }
+        .wt-back {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            padding: 6px 16px;
+            border: 1px solid rgba(255, 45, 120, 0.45);
+            border-radius: 8px;
+            background: transparent;
+            color: #ff2d78;
+            font-family: 'Arial Black', Impact, sans-serif;
+            font-size: 11px;
+            font-weight: 900;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            text-decoration: none;
+            transition: all 0.18s ease;
+            justify-self: start;
+        }
+        .wt-back:hover {
+            background: rgba(255, 45, 120, 0.12);
+            border-color: rgba(255, 45, 120, 0.8);
+            box-shadow: 0 0 14px rgba(255, 45, 120, 0.3);
+        }
+        .wt-title {
+            margin: 0;
+            text-align: center;
+            font-family: 'Pacifico', cursive;
+            font-size: 26px;
+            color: #ffe0ee;
+            text-shadow: 0 0 10px #ff80aa, 0 0 28px #ff2d78;
+        }
+        .wt-stats {
+            display: flex;
+            gap: 24px;
+            justify-self: end;
+        }
+        .wt-stat { text-align: center; }
+        .wt-stat-num {
+            font-family: Impact, 'Arial Black', sans-serif;
+            font-size: 20px;
+            color: #fff;
+            line-height: 1;
+        }
+        .wt-stat-label {
+            font-size: 11px;
+            color: #fff;
+            font-family: Arial, sans-serif;
+            letter-spacing: 0.8px;
+            text-transform: uppercase;
+            margin-top: 2px;
+        }
+
+        /* ── Main content area ── */
+        .wt-main {
+            position: fixed;
+            top: var(--wt-hdr);
+            bottom: var(--wt-ftr);
+            left: 0; right: 0;
+            overflow: hidden;
+            display: flex;
+            align-items: stretch;
+            padding: 20px 24px;
+            box-sizing: border-box;
+        }
+
+        /* ── Footer ── */
+        .wt-footer {
+            position: fixed;
+            bottom: 0; left: 0; right: 0;
+            height: var(--wt-ftr);
+            z-index: 700;
+            display: grid;
+            grid-template-columns: 1fr auto 1fr;
+            align-items: center;
+            padding: 0 16px;
+            background: rgba(8, 0, 20, 0.6);
+            border-top: 1px solid rgba(255, 45, 120, 0.12);
+            backdrop-filter: blur(8px);
+        }
+
+        /* ── Filter button ── */
+        .mp-filter-wrap { position: relative; }
+        .mp-filter-btn {
+            width: 44px; height: 44px; border-radius: 12px;
+            background: rgba(255,45,120,0.1);
+            border: 1px solid rgba(255,45,120,0.4);
+            color: #ff2d78; font-size: 20px;
+            display: flex; align-items: center; justify-content: center;
+            transition: all 0.2s;
+        }
+        .mp-filter-btn:hover, .mp-filter-btn.open {
+            background: rgba(255,45,120,0.22);
+            border-color: rgba(255,45,120,0.75);
+            box-shadow: 0 4px 20px rgba(255,45,120,0.3);
+        }
+        .mp-range-menu {
+            position: absolute; bottom: calc(100% + 10px); left: 0;
+            background: rgba(8,0,20,0.97);
+            border: 1px solid rgba(255,45,120,0.3); border-radius: 10px;
+            padding: 10px; min-width: 90px;
+            opacity: 0; transform: translateY(10px); pointer-events: none;
+            transition: opacity 0.18s ease, transform 0.18s ease;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.6);
+        }
+        .mp-range-menu.open { opacity: 1; transform: translateY(0); pointer-events: auto; }
+        .mp-range-menu .range-btn,
+        .mp-range-menu .weekly-range-btn {
+            display: block; width: 100%; margin-bottom: 5px;
+            padding: 7px 14px; background: transparent;
+            border: 1px solid rgba(255,45,120,0.2); border-radius: 6px;
+            color: rgba(255,255,255,0.7); font-family: Arial, sans-serif;
+            font-size: 12px; letter-spacing: 0.5px; text-transform: uppercase;
+            text-align: center; transition: all 0.15s;
+        }
+        .mp-range-menu .range-btn:last-child,
+        .mp-range-menu .weekly-range-btn:last-child { margin-bottom: 0; }
+        .mp-range-menu .range-btn:hover,
+        .mp-range-menu .weekly-range-btn:hover {
+            background: rgba(255,45,120,0.12); color: #fff;
+            border-color: rgba(255,45,120,0.45);
+        }
+        .mp-range-menu .range-btn.active,
+        .mp-range-menu .weekly-range-btn.active {
+            background: rgba(255,45,120,0.2);
+            border-color: rgba(255,45,120,0.7); color: #ff2d78;
+        }
+        .mp-custom-days-wrap {
+            padding: 6px 4px 2px;
+            display: flex; align-items: center; gap: 6px;
+        }
+        .mp-custom-days-wrap input {
+            width: 52px; background: rgba(255,255,255,0.08);
+            border: 1px solid rgba(255,45,120,0.3); border-radius: 6px;
+            color: #fff; font-family: Arial, sans-serif; font-size: 12px;
+            padding: 4px 6px; text-align: center;
+        }
+        .mp-custom-days-wrap span {
+            font-family: Arial, sans-serif; font-size: 11px;
+            color: rgba(255,255,255,0.5);
+        }
+
+        /* ── + button ── */
+        .mp-add-btn {
+            width: 44px; height: 44px; border-radius: 12px;
+            background: linear-gradient(135deg, #ff2d78, #c73862);
+            border: none;
+            color: #fff; font-size: 30px; line-height: 1;
+            display: flex; align-items: center; justify-content: center;
+            box-shadow: 0 4px 20px rgba(255, 45, 120, 0.4);
+            transition: all 0.2s; justify-self: center;
+        }
+        .mp-add-btn:hover {
+            box-shadow: 0 4px 28px rgba(255, 45, 120, 0.85);
+            transform: scale(1.06);
+        }
+
+        /* ── Right footer group (chart-type toggle + view toggle) ── */
+        .mp-right-group {
+            display: flex; align-items: center; gap: 8px; justify-self: end;
+        }
+        #chart-type-btn {
+            width: 44px; height: 44px; border-radius: 12px;
+            background: rgba(255,45,120,0.1);
+            border: 1px solid rgba(255,45,120,0.4); color: #ff2d78;
+            display: flex; align-items: center; justify-content: center;
+            transition: all 0.2s;
+        }
+        #chart-type-btn:hover, #chart-type-btn.in-weekly {
+            background: rgba(255,45,120,0.22);
+            border-color: rgba(255,45,120,0.75);
+            box-shadow: 0 4px 20px rgba(255,45,120,0.3);
+        }
+        /* ── View toggle button ── */
+        .mp-view-toggle-btn {
+            width: 44px; height: 44px; border-radius: 12px;
+            background: rgba(255,45,120,0.1);
+            border: 1px solid rgba(255,45,120,0.4); color: #ff2d78;
+            display: flex; align-items: center; justify-content: center;
+            transition: all 0.2s;
+        }
+        .mp-view-toggle-btn:hover, .mp-view-toggle-btn.in-table {
+            background: rgba(255,45,120,0.22);
+            border-color: rgba(255,45,120,0.75);
+            box-shadow: 0 4px 20px rgba(255,45,120,0.3);
+        }
+
+        /* ── Chart sizing inside wt-main ── */
+        .wt-main .chart-with-nav {
+            flex: 1;
+            min-width: 0;
+            min-height: 0;
+            width: 100%;
+            max-width: 860px;
+            margin: 0 auto;
+            display: flex;
+        }
+        .wt-main .chart-page-area {
+            flex: 1;
+            min-height: 0;
+            display: flex;
+            flex-direction: column;
+        }
+        .wt-main .chart-slide-viewport {
+            flex: 1;
+            min-height: 0;
+        }
+        /* Completely remove chart viewport from layout in table mode */
+        .wt-main .chart-slide-viewport.in-table {
+            display: none;
+        }
+        .wt-main .chart-slide-inner,
+        .wt-main .chart-slide-page {
+            height: 100%;
+        }
+        .wt-main .chart-wrap {
+            flex: 1;
+            min-height: 0 !important;
+        }
+        .wt-main .chart-wrap canvas {
+            height: 100% !important;
+        }
+        .wt-main .data-table-wrap:not([hidden]) {
+            flex: 1;
+            min-height: 0 !important;
+            height: auto !important;
+        }
+        /* Table mode: mirrors workouts layout —
+           wp-table-wrap (full-width, 24px side padding) + wp-table-inner (max-width 860px, margin auto) */
+        .wt-main.wt-table-mode {
+            padding: 0;
+        }
+        .wt-main.wt-table-mode .chart-with-nav {
+            max-width: none;
+        }
+        .wt-main.wt-table-mode .data-table-scroll {
+            padding-top: 20px !important;
+            padding-left: 24px !important;
+            padding-right: 24px !important;
+        }
+        .wt-main.wt-table-mode .data-table {
+            max-width: 860px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        /* ── Scrollbar: pin to right edge of page, match workouts look ── */
+        .custom-scrollbar-track {
+            position: fixed !important;
+            right: 0 !important;
+            top: var(--wt-hdr) !important;
+            bottom: var(--wt-ftr) !important;
+            width: 8px !important;
+            background: transparent !important;
+        }
+        .custom-scrollbar-thumb {
+            width: 8px !important;
+            left: 0 !important;
+            transform: none !important;
+            background: rgba(255, 45, 120, 0.45) !important;
+            border-radius: 4px !important;
+        }
+        /* Remove inset padding that was reserving space for the old inline scrollbar */
+        .data-table-scroll { padding-right: 0 !important; }
+
+        /* ── Table overrides — match Workouts page style ── */
+        .data-table-wrap { background: transparent; }
+        .data-table-scroll-area::before { display: none; }
+        .data-table-scroll-area { border-radius: 0; background: transparent; }
+        .data-table {
+            background: transparent; border-radius: 0;
+            /* separate + 0 spacing is required for border-radius on <td> to render */
+            border-collapse: separate !important;
+            border-spacing: 0 !important;
+        }
+        /* Collapse row: tight to header above, 18px gap before next group (matches wp-date-group margin-bottom) */
+        /* Use .data-table .week-collapse-row td so it beats .data-table td (same !important, higher specificity wins) */
+        .data-table .week-collapse-row td { padding: 4px 0 18px !important; line-height: normal !important; }
+
+        /* Hide thead — no column-label headers, matching workouts */
+        .data-table thead th {
+            display: none !important;
+        }
+
+        /* All body cells: no border, clean padding */
+        .data-table td {
+            border: none !important;
+            background: transparent !important;
+            padding: 7px 10px !important;
+            font-size: 14px !important;
+            color: rgba(255,255,255,0.75) !important;
+            line-height: normal !important;
+            vertical-align: middle !important;
+        }
+
+        /* No default row background */
+        .data-table tbody tr { background: transparent; }
+        .data-table tbody tr:last-child td { border: none !important; }
+
+        /* ── Week group header rows: match wp-date-header-row ── */
+        .week-header-row td {
+            background: rgba(8, 0, 20, 0.55) !important;
+            border-top: 1px solid rgba(255, 45, 120, 0.4) !important;
+            border-bottom: 1px solid rgba(255, 45, 120, 0.4) !important;
+            border-left: none !important;
+            border-right: none !important;
+            padding: 7px 10px !important;
+            font-family: Impact, 'Arial Black', sans-serif !important;
+            font-size: 13px !important;
+            letter-spacing: 2px !important;
+            text-transform: uppercase !important;
+            color: #fff !important;
+            text-shadow: 0 0 16px rgba(255, 45, 120, 0.55) !important;
+            line-height: normal !important;
+        }
+        .week-header-row td:first-child {
+            border-left: 1px solid rgba(255, 45, 120, 0.6) !important;
+            border-radius: 7px 0 0 7px !important;
+        }
+        .week-header-row td:last-child {
+            border-right: 1px solid rgba(255, 45, 120, 0.6) !important;
+            border-radius: 0 7px 7px 0 !important;
+        }
+        .week-header-row:hover td {
+            background: rgba(8, 0, 20, 0.85) !important;
+            border-color: rgba(255, 45, 120, 0.85) !important;
+        }
+
+        /* Avg weight in header: Impact, larger, dimmer like wp-header-kcal */
+        .week-header-row td:nth-child(2) {
+            font-size: 17px !important;
+            color: rgba(255,255,255,0.75) !important;
+            text-shadow: none !important;
+            text-align: right !important;
+            letter-spacing: 0 !important;
+        }
+        /* Secondary (kg) and count cells: dimmer Arial */
+        .week-header-row td.sec-col-cell,
+        .week-header-row td.week-count-cell {
+            font-family: Arial, sans-serif !important;
+            font-size: 12px !important;
+            color: rgba(255,255,255,0.45) !important;
+            text-shadow: none !important;
+            letter-spacing: 0 !important;
+            text-transform: none !important;
+        }
+        .week-header-row td.week-count-cell { text-align: right !important; }
+        .week-count-cell .week-count-outer { display: inline-flex; align-items: center; gap: 6px; }
+        .week-count-inner { display: inline-flex; align-items: center; justify-content: flex-end; gap: 6px; min-width: 70px; }
+
+        /* ── Toggle icon: ▾ default points right (collapsed), expanded points down ── */
+        .week-toggle-icon { transform: rotate(-90deg) !important; transition: transform 0.25s !important; font-size: 15px !important; }
+        .week-toggle-icon.expanded { transform: rotate(0deg) !important; }
+
+        /* ── Day inner table: border-collapse separate required for border-radius ── */
+        .week-day-table { border-spacing: 0 3px; width: 100%; border-collapse: separate !important; }
+
+        /* ── Week day rows: transparent background, pink border ── */
+        .week-day-row td {
+            padding: 7px 10px !important;
+            font-size: 14px !important;
+            line-height: normal !important;
+            color: rgba(255,255,255,0.7) !important;
+            background: transparent !important;
+            border-top: 1px solid rgba(255, 45, 120, 0.55) !important;
+            border-bottom: 1px solid rgba(255, 45, 120, 0.55) !important;
+        }
+        .week-day-row td:first-child {
+            padding-left: 14px !important;
+            border-left: 1px solid rgba(255, 45, 120, 0.55) !important;
+            border-radius: 7px 0 0 7px !important;
+        }
+        .week-day-row td:last-child {
+            border-right: 1px solid rgba(255, 45, 120, 0.55) !important;
+            border-radius: 0 7px 7px 0 !important;
+        }
+        .week-day-row.row-hover td,
+        .week-day-row:hover td {
+            background: rgba(255, 255, 255, 0.05) !important;
+            border-color: rgba(255, 45, 120, 0.8) !important;
+        }
+        .week-day-row.row-missing td {
+            border-color: rgba(240, 165, 0, 0.7) !important;
+        }
+        .week-day-row.row-missing.row-hover td {
+            border-color: rgba(240, 165, 0, 0.9) !important;
+        }
+
+        /* Buttons: pink border on delete, matching border+size on note */
+        .week-day-row .table-delete-btn {
+            border-color: rgba(255, 45, 120, 0.75) !important;
+            color: rgba(255, 255, 255, 0.5) !important;
+        }
+        .week-day-row .note-btn {
+            border: 1px solid rgba(255, 45, 120, 0.65) !important;
+            border-radius: 5px !important;
+            width: 32px !important; height: 32px !important;
+            padding: 0 !important;
+            display: flex !important; align-items: center !important; justify-content: center !important;
+        }
+        .week-day-row.row-missing .table-delete-btn {
+            border-color: rgba(240, 165, 0, 0.7) !important;
+        }
+        .week-day-row.row-missing .note-btn {
+            border-color: rgba(240, 165, 0, 0.65) !important;
+        }
+
+        /* Weight values in day rows: Impact, brighter */
+        .week-day-row td.cell-weight:not(.cell-missing) {
+            font-family: Impact, 'Arial Black', sans-serif !important;
+            font-size: 17px !important;
+            color: #fff !important;
+        }
+
+        /* ── Daily summary rows: same wp-row treatment ── */
+        .data-table tbody tr:not(.week-header-row):not(.week-collapse-row):not(.table-export-row):not(.no-earlier-row) td {
+            padding: 7px 10px !important;
+        }
+        .data-table tbody tr:not(.week-header-row):not(.week-collapse-row):not(.table-export-row):not(.no-earlier-row):hover > td {
+            background: rgba(255,255,255,0.06) !important;
+        }
+        .data-table tbody tr.row-missing:hover > td { background: rgba(240,165,0,0.13) !important; }
+
+        /* Date column: Impact uppercase, matches wp-date-heading */
+        .data-table tbody tr:not(.week-header-row):not(.week-collapse-row):not(.table-export-row):not(.no-earlier-row) td:first-child {
+            font-family: Impact, 'Arial Black', sans-serif !important;
+            font-size: 13px !important;
+            letter-spacing: 2px !important;
+            text-transform: uppercase !important;
+            color: #fff !important;
+            text-shadow: 0 0 16px rgba(255, 45, 120, 0.55) !important;
+        }
+        /* Weight column always right-aligned (missing dash + entered value both align consistently) */
+        .data-table td.cell-weight { text-align: right !important; }
+        /* Weight value: Impact, large, bright */
+        .data-table td.cell-weight:not(.cell-missing) {
+            font-family: Impact, 'Arial Black', sans-serif !important;
+            font-size: 17px !important;
+            color: #fff !important;
+        }
+        /* Secondary kg value: dimmer */
+        .data-table td.sec-col-cell {
+            font-size: 12px !important;
+            color: rgba(255,255,255,0.45) !important;
+        }
+
+        /* ── Daily rows: bordered cards matching weekly day row style ── */
+        .data-table.daily-mode { border-spacing: 0 3px !important; }
+        .data-table tbody .daily-row td {
+            border-top: 1px solid rgba(255, 45, 120, 0.55) !important;
+            border-bottom: 1px solid rgba(255, 45, 120, 0.55) !important;
+        }
+        .data-table tbody .daily-row td:first-child {
+            border-left: 1px solid rgba(255, 45, 120, 0.55) !important;
+            border-radius: 7px 0 0 7px !important;
+        }
+        .data-table tbody .daily-row td:last-child {
+            border-right: 1px solid rgba(255, 45, 120, 0.55) !important;
+            border-radius: 0 7px 7px 0 !important;
+        }
+        .data-table tbody .daily-row:hover td { border-color: rgba(255, 45, 120, 0.8) !important; }
+        .data-table tbody .daily-row.row-missing td { border-color: rgba(240, 165, 0, 0.7) !important; }
+        .data-table tbody .daily-row.row-missing:hover td { border-color: rgba(240, 165, 0, 0.9) !important; }
+        .data-table tbody .daily-row .table-delete-btn {
+            border-color: rgba(255, 45, 120, 0.75) !important;
+            color: rgba(255, 255, 255, 0.5) !important;
+        }
+        .data-table tbody .daily-row .note-btn {
+            border: 1px solid rgba(255, 45, 120, 0.65) !important;
+            border-radius: 5px !important;
+            width: 32px !important; height: 32px !important;
+            padding: 0 !important;
+            display: flex !important; align-items: center !important; justify-content: center !important;
+        }
+        .data-table tbody .daily-row.row-missing .table-delete-btn { border-color: rgba(240, 165, 0, 0.7) !important; }
+        .data-table tbody .daily-row.row-missing .note-btn { border-color: rgba(240, 165, 0, 0.65) !important; }
+
+        /* ── Export row: darker border and button ── */
+        .table-export-cell { border-top-color: rgba(255, 45, 120, 0.55) !important; }
+        .table-export-btn { border-color: rgba(255, 45, 120, 0.75) !important; color: rgba(255, 45, 120, 0.8) !important; }
+
+        /* ── Always show full date format in weights tables ── */
+        .data-table tbody .daily-row td:first-child,
+        .week-day-row td:first-child { white-space: nowrap; }
+        @media (max-width: 800px) {
+            .week-day-table .date-full { display: inline !important; }
+            /* Re-assert 3-column widths (style.css @800px targets stale old values) */
+            .data-table thead th:first-child      { width: 38% !important; }
+            #th-primary                           { width: 33% !important; }
+            #th-days-logged                       { width: 29% !important; }
+            .week-day-table thead th:first-child  { width: 38% !important; }
+            .week-day-table thead th:nth-child(2) { width: 33% !important; }
+            .week-day-table thead th:nth-child(3) { width: 29% !important; }
+        }
+        @media (max-width: 560px) {
+            .data-table .date-full,
+            .week-day-table .date-full { display: inline !important; }
+            .data-table .date-short,
+            .week-day-table .date-short { display: none !important; }
+        }
+
+        /* ── Clickable daily rows ── */
+        .data-table tbody .daily-row { cursor: pointer; }
+        .week-day-row { cursor: pointer; }
+
+        /* ── Mobile breakpoints ── */
+        @media (max-width: 560px) {
+            :root { --wt-hdr: 90px; }
+            .wt-header {
+                display: flex;
+                flex-wrap: wrap;
+                align-content: flex-start;
+                align-items: center;
+                padding: 0 16px;
+                gap: 0;
+                height: var(--wt-hdr);
+            }
+            .wt-title {
+                flex: 1;
+                font-size: 20px;
+                padding: 10px 0 8px;
+                align-self: flex-start;
+            }
+            .wt-stats {
+                width: 100%;
+                justify-self: auto;
+                justify-content: space-around;
+                gap: 0;
+                padding: 6px 0 2px;
+                border-top: 1px solid rgba(255, 45, 120, 0.15);
+            }
+            .wt-stat-num { font-size: 17px; }
+            .wt-stat-label { font-size: 10px; }
+            .wt-main { padding: 12px 16px; }
+        }
+    </style>
+</head>
+<body class="preload">
+
+<a href="#main-content" class="sr-only skip-link">Skip to main content</a>
+<div id="status-announce" aria-live="polite" aria-atomic="true" class="sr-only"></div>
+
+<div class="wt-bg"></div>
+
+<header class="wt-header" role="banner">
+    <a href="/" class="wt-back" aria-label="Back to dashboard">← Dashboard</a>
+    <h1 class="wt-title">Weights</h1>
+    <div class="wt-stats" aria-label="Weekly stats">
+        <div class="wt-stat">
+            <div class="wt-stat-num" id="wt-logged-week">—</div>
+            <div class="wt-stat-label">This Week</div>
+        </div>
+        <div class="wt-stat">
+            <div class="wt-stat-num" id="wt-7d-avg">—</div>
+            <div class="wt-stat-label">7D Avg</div>
+        </div>
+        <div class="wt-stat">
+            <div class="wt-stat-num" id="wt-streak">—</div>
+            <div class="wt-stat-label">Day Streak</div>
+        </div>
+    </div>
+</header>
+
+<main id="main-content" class="wt-main">
+    <div class="chart-with-nav">
+        <div class="chart-page-area">
+            <div class="chart-slide-viewport" id="chart-slide-viewport">
+                <div class="chart-slide-inner" id="chart-slide-inner">
+
+                    <!-- Page 0: Daily Summary -->
+                    <div class="chart-slide-page">
+                        <div class="chart-header">
+                            <h2 class="chart-title">Daily Summary</h2>
+                        </div>
+                        <div class="chart-wrap">
+                            <canvas id="weight-chart" role="img" aria-label="Daily weight chart. Switch to Table view for accessible data."></canvas>
+                            <div id="chart-info-icon">i</div>
+                        </div>
+                        <div class="chart-legend" id="daily-chart-legend"></div>
+                        <p class="chart-empty" id="chart-empty" hidden>No weight data yet — start logging!</p>
+                    </div>
+
+                    <!-- Page 1: Weekly Summary -->
+                    <div class="chart-slide-page">
+                        <div class="chart-header">
+                            <h2 class="chart-title">Weekly Summary</h2>
+                        </div>
+                        <div class="chart-wrap">
+                            <canvas id="weekly-chart" role="img" aria-label="Weekly weight chart. Switch to Table view for accessible data."></canvas>
+                            <div id="weekly-info-icon">i</div>
+                        </div>
+                        <div class="chart-legend" id="weekly-chart-legend"></div>
+                        <p class="chart-empty" id="weekly-chart-empty" hidden>No weight data yet — start logging!</p>
+                    </div>
+
+                </div>
+            </div>
+            <div class="data-table-wrap" id="data-table-wrap" hidden>
+                <h3 class="table-view-title" id="table-view-title" hidden>Daily Summary</h3>
+                <div class="data-table-scroll-area">
+                    <div class="data-table-scroll">
+                        <table class="data-table">
+                            <thead>
+                                <tr>
+                                    <th style="width:38%">Date</th>
+                                    <th id="th-primary"   style="width:33%">Weight (lbs)</th>
+                                    <th id="th-days-logged" style="width:29%"></th>
+                                </tr>
+                            </thead>
+                            <tbody id="data-table-body"></tbody>
+                        </table>
+                    </div>
+                    <div class="custom-scrollbar-track">
+                        <div class="custom-scrollbar-thumb" id="custom-scrollbar-thumb"></div>
+                    </div>
+                </div>
+            </div>
+        </div><!-- end .chart-page-area -->
+    </div>
+</main>
+
+<footer class="wt-footer">
+    <div class="mp-filter-wrap">
+        <button class="mp-filter-btn" id="mp-filter-btn" aria-label="Filter by date range" data-tip="Filter by date range">
+            <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <path d="M22 3H2l8 9.46V19l4 2V12.46L22 3z"/>
+            </svg>
+        </button>
+        <div class="mp-range-menu" id="mp-range-menu">
+            <div id="mp-daily-ranges">
+                <button class="range-btn active" data-range="7d">7D</button>
+                <button class="range-btn" data-range="30d">30D</button>
+                <button class="range-btn" data-range="90d">90D</button>
+                <button class="range-btn" data-range="1y">1Y</button>
+                <button class="range-btn" data-range="all">All</button>
+                <button class="range-btn" data-range="custom">Custom</button>
+                <div class="mp-custom-days-wrap" id="custom-days-wrap" hidden>
+                    <input type="number" id="custom-days" class="custom-days-input" min="7" max="1095" placeholder="—" data-tip="Min 7 days">
+                    <span>days</span>
+                </div>
+            </div>
+            <div id="mp-weekly-ranges" hidden>
+                <button class="weekly-range-btn active" data-weeks="4">4W</button>
+                <button class="weekly-range-btn" data-weeks="12">12W</button>
+                <button class="weekly-range-btn" data-weeks="30">30W</button>
+                <button class="weekly-range-btn" data-weeks="all">All</button>
+                <button class="weekly-range-btn" data-weeks="custom">Custom</button>
+                <div class="mp-custom-days-wrap" id="custom-weeks-wrap" hidden>
+                    <input type="number" id="custom-weeks" class="custom-days-input" min="4" max="156" placeholder="—" data-tip="Min 4 weeks">
+                    <span>weeks</span>
+                </div>
+            </div>
+        </div>
+    </div>
+    <button class="mp-add-btn" id="chart-add-btn" aria-label="Log a past weight" data-tip="Log a past weight">+</button>
+    <div class="mp-right-group">
+        <button id="chart-type-btn" aria-label="Switch to weekly chart" data-tip="Switch to weekly chart">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/>
+                <line x1="16" y1="2" x2="16" y2="6"/>
+                <line x1="8" y1="2" x2="8" y2="6"/>
+                <line x1="3" y1="10" x2="21" y2="10"/>
+            </svg>
+        </button>
+        <button class="mp-view-toggle-btn" id="view-toggle-btn" aria-label="Toggle chart or table view" data-tip="Toggle chart / table">
+            <svg id="mp-view-icon-chart" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/>
+            </svg>
+            <svg id="mp-view-icon-table" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" hidden>
+                <rect x="3" y="3" width="18" height="18" rx="2"/>
+                <line x1="3" y1="9" x2="21" y2="9"/>
+                <line x1="3" y1="15" x2="21" y2="15"/>
+                <line x1="9" y1="9" x2="9" y2="21"/>
+            </svg>
+        </button>
+    </div>
+</footer>
+
+<!-- Historical Weight Modal -->
+<div id="history-modal" class="modal-overlay" hidden>
+    <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="history-modal-title">
+        <div id="history-screen-input">
+            <h2 class="modal-title" id="history-modal-title">Log Past Weight</h2>
+            <label class="modal-label" for="history-date">Date</label>
+            <div class="date-picker-wrap" id="history-date-wrap">
+                <input type="text" id="history-date" class="history-date-input" placeholder="Select a date" readonly>
+                <div class="date-picker-dropdown" id="history-calendar" hidden>
+                    <div class="dp-header">
+                        <button type="button" class="dp-nav" id="dp-prev">&#8249;</button>
+                        <span class="dp-month-year" id="dp-month-label"></span>
+                        <button type="button" class="dp-nav" id="dp-next">&#8250;</button>
+                    </div>
+                    <div class="dp-day-names">
+                        <span>Su</span><span>Mo</span><span>Tu</span><span>We</span><span>Th</span><span>Fr</span><span>Sa</span>
+                    </div>
+                    <div class="dp-grid" id="dp-grid"></div>
+                </div>
+            </div>
+            <label class="modal-label" for="history-weight">Weight (lbs)</label>
+            <div class="modal-input-row">
+                <input type="number" class="weight-input" id="history-weight" min="50" max="999" step="0.1" placeholder="0.0">
+                <span class="modal-unit-tag">lbs</span>
+                <div class="goal-stepper">
+                    <button type="button" class="stepper-btn stepper-up"   id="history-step-up"   aria-label="Increase weight"></button>
+                    <button type="button" class="stepper-btn stepper-down" id="history-step-down" aria-label="Decrease weight"></button>
+                </div>
+            </div>
+            <div class="modal-kg-preview" id="history-kg-preview"></div>
+            <div class="modal-actions">
+                <button class="modal-btn modal-cancel" id="history-cancel">Cancel</button>
+                <button class="modal-btn modal-save"   id="history-save">Save</button>
+            </div>
+        </div>
+        <div id="history-screen-confirm" hidden>
+            <h2 class="modal-title">Confirm Overwrite</h2>
+            <p id="history-overwrite-message" class="overwrite-message"></p>
+            <div class="modal-actions">
+                <button class="modal-btn modal-cancel" id="history-overwrite-cancel">Cancel</button>
+                <button class="modal-btn modal-save"   id="history-overwrite-confirm">Overwrite</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Row delete modal -->
+<div id="row-delete-modal" class="modal-overlay" hidden>
+    <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="row-delete-modal-title">
+        <h2 class="modal-title" id="row-delete-modal-title">Delete Entry</h2>
+        <p class="overwrite-message">Select what to remove for <span id="row-delete-date"></span>:</p>
+        <div id="row-delete-checks"></div>
+        <div class="modal-actions">
+            <button class="modal-btn modal-cancel" id="row-delete-cancel">Cancel</button>
+            <button class="modal-btn modal-save"   id="row-delete-ok">Delete selected</button>
+        </div>
+    </div>
+</div>
+
+<!-- Shared table confirm modal -->
+<div id="table-confirm-modal" class="modal-overlay" hidden>
+    <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="table-confirm-title">
+        <h2 class="modal-title" id="table-confirm-title">Confirm</h2>
+        <p id="table-confirm-message" class="overwrite-message"></p>
+        <div class="modal-actions">
+            <button class="modal-btn modal-cancel" id="table-confirm-cancel">Cancel</button>
+            <button class="modal-btn modal-save"   id="table-confirm-ok">Confirm</button>
+        </div>
+    </div>
+</div>
+
+<!-- Note editor popover -->
+<div id="note-popover" hidden role="dialog" aria-modal="true" aria-labelledby="note-popover-heading">
+    <div class="note-popover-arrow"></div>
+    <div class="note-popover-label" id="note-popover-heading">Note for <span id="note-popover-date"></span></div>
+    <div class="note-textarea-wrap">
+        <textarea id="note-popover-text" maxlength="300" rows="3" placeholder="Add a note…"></textarea>
+        <div class="note-scrollbar-track"><div class="note-scrollbar-thumb"></div></div>
+    </div>
+    <div class="note-resize-handle" id="note-resize-handle">
+        <svg width="22" height="8" viewBox="0 0 22 8" fill="none"><circle cx="4" cy="4" r="2" fill="currentColor"/><circle cx="11" cy="4" r="2" fill="currentColor"/><circle cx="18" cy="4" r="2" fill="currentColor"/></svg>
+    </div>
+    <div class="note-popover-actions">
+        <button id="note-popover-delete" class="note-delete-btn" title="Delete note">
+            <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4h6v2"/></svg>
+        </button>
+        <button id="note-popover-cancel" class="modal-btn modal-cancel">Cancel</button>
+        <button id="note-popover-save"   class="modal-btn modal-save">Save</button>
+    </div>
+</div>
+
+<div id="site-cursor"></div>
+
+<script>
+    /* Hydrate localStorage from server-rendered preferences */
+    (function () {
+        var prefs = {{ prefs | tojson }};
+        Object.keys(prefs).forEach(function (k) { localStorage.setItem(k, prefs[k]); });
+    })();
+
+    /* ── Streak temperature glow ── */
+    var STREAK_STOPS = [
+        [ 60, 120, 255],
+        [100, 175, 255],
+        [155, 215, 255],
+        [255, 245, 110],
+        [255, 225,  40],
+        [255, 155,  30],
+        [255,  90,  30],
+        [255,  60,  60],
+    ];
+    function applyStreakGlow(numEl, labelEl, val) {
+        numEl.classList.remove('streak-flame-num');
+        if (labelEl) labelEl.classList.remove('streak-flame-label');
+        if (val >= 7) {
+            numEl.style.color = '';
+            numEl.style.textShadow = '';
+            numEl.classList.add('streak-flame-num');
+            if (labelEl) {
+                labelEl.style.color = '';
+                labelEl.style.textShadow = '';
+                labelEl.classList.add('streak-flame-label');
+            }
+        } else {
+            var s = STREAK_STOPS[Math.min(Math.max(Math.round(val), 0), 7)];
+            var color = 'rgb(' + s[0] + ',' + s[1] + ',' + s[2] + ')';
+            var fade  = 'rgba(' + s[0] + ',' + s[1] + ',' + s[2] + ',0.35)';
+            numEl.style.color = color;
+            numEl.style.textShadow = '0 0 6px ' + color + ', 0 0 18px ' + color + ', 0 0 36px ' + fade;
+            if (labelEl) {
+                labelEl.style.color = color;
+                labelEl.style.textShadow = '0 0 5px ' + color + ', 0 0 14px ' + fade;
+            }
+        }
+    }
+
+    window.savePref = function (key, value) {
+        localStorage.setItem(key, value);
+        fetch('/api/preference', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ key: key, value: value })
+        });
+    };
+
+    if ('scrollRestoration' in history) history.scrollRestoration = 'manual';
+
+    requestAnimationFrame(() => requestAnimationFrame(() => {
+        document.body.classList.remove('preload');
+    }));
+
+    /* ── Helpers ── */
+    function getTodayISO() {
+        const d = new Date();
+        return d.getFullYear() + '-' +
+            String(d.getMonth() + 1).padStart(2, '0') + '-' +
+            String(d.getDate()).padStart(2, '0');
+    }
+
+    function formatDateDisplay(isoDate) {
+        const [y, m, d] = isoDate.split('-').map(Number);
+        const dt = new Date(y, m - 1, d);
+        const mon = dt.toLocaleDateString('en-US', { month: 'long' });
+        if ((localStorage.getItem('pref_date_format') || 'mdy') === 'mdy') {
+            return mon + ' ' + d + ', ' + y;
+        }
+        return d + ' ' + mon + ' ' + y;
+    }
+
+    function formatDateShort(isoDate) {
+        const [y, m, d] = isoDate.split('-').map(Number);
+        const dt = new Date(y, m - 1, d);
+        const mon = dt.toLocaleDateString('en-US', { month: 'short' });
+        return (localStorage.getItem('pref_date_format') || 'mdy') === 'mdy'
+            ? mon + ' ' + d
+            : d + ' ' + mon;
+    }
+
+    function fmtDateShort(dt) {
+        const mon = dt.toLocaleDateString('en-US', { month: 'short' });
+        const y = dt.getFullYear(), d = dt.getDate();
+        return (localStorage.getItem('pref_date_format') || 'mdy') === 'mdy'
+            ? mon + ' ' + d + ', ' + y
+            : d + ' ' + mon + ' ' + y;
+    }
+
+    function fmtLbs(n) { return n === Math.round(n) ? Math.round(n) : parseFloat(n.toFixed(1)); }
+
+    /* No-op — plate cards live on the main page, not here */
+    function updateLostWeight() {}
+
+    /* Unit state */
+    window.activeUnit = localStorage.getItem('pref_unit') || 'lbs';
+    window.applyPlateUnit = function() {};
+
+    /* Fetch oldest entry date for table footer */
+    fetch('/api/latest-weight').then(r => r.json()).then(d => {
+        window.oldestEntryDate = d.oldest_date || null;
+    });
+
+    /* ── Focus trap + modal open/close ── */
+    function makeFocusTrap(card) {
+        return function(e) {
+            if (e.key !== 'Tab') return;
+            const focusable = [...card.querySelectorAll(
+                'button:not([disabled]), [href], input:not([disabled]), select, textarea, [tabindex]:not([tabindex="-1"])'
+            )].filter(el => !el.closest('[hidden]') && el.offsetParent !== null);
+            if (!focusable.length) return;
+            const first = focusable[0], last = focusable[focusable.length - 1];
+            if (e.shiftKey && document.activeElement === first) {
+                e.preventDefault(); last.focus();
+            } else if (!e.shiftKey && document.activeElement === last) {
+                e.preventDefault(); first.focus();
+            }
+        };
+    }
+    const _modalOpeners = new WeakMap();
+    const _modalTraps   = new WeakMap();
+    function modalOpen(overlay) {
+        _modalOpeners.set(overlay, document.activeElement);
+        const card = overlay.querySelector('[role="dialog"]') || overlay;
+        const trap = makeFocusTrap(card);
+        _modalTraps.set(overlay, trap);
+        overlay.addEventListener('keydown', trap);
+    }
+    function modalClose(overlay) {
+        const trap = _modalTraps.get(overlay);
+        if (trap) overlay.removeEventListener('keydown', trap);
+        const opener = _modalOpeners.get(overlay);
+        if (opener && opener.focus) opener.focus();
+    }
+
+    function announce(msg) {
+        const el = document.getElementById('status-announce');
+        if (!el) return;
+        el.textContent = '';
+        requestAnimationFrame(() => { el.textContent = msg; });
+    }
+
+    /* ── Chart tooltip element ── */
+    const chartTtEl = document.createElement('div');
+    chartTtEl.id = 'chart-tooltip';
+    document.body.appendChild(chartTtEl);
+
+    /* ── Shared axis-label plugin (registers once for both charts) ── */
+    Chart.register({
+        id: 'chartAxisLabels',
+        afterDraw(chart) {
+            const yScale = chart.scales && chart.scales.y;
+            if (!yScale) return;
+            const unit = window.activeUnit === 'kg' ? 'kgs' : 'lbs';
+            const isWeekly = chart.canvas?.id === 'weekly-chart';
+            const goalVal  = isWeekly ? window.weeklyGoalVal  : window.goalWeightVal;
+            const maVal    = isWeekly ? null                  : window.maCurrentVal;
+            const trendVal = isWeekly ? window.weeklyTrendVal : window.trendCurrentVal;
+            const legendEl = document.getElementById(isWeekly ? 'weekly-chart-legend' : 'daily-chart-legend');
+            if (legendEl) {
+                const parts = [];
+                if (isWeekly) {
+                    if (window.weeklyMinMaxOn) parts.push({ label: 'MIN/MAX RANGE', color: 'rgba(255,200,50,0.8)' });
+                    if (trendVal != null)      parts.push({ label: 'TREND '  + trendVal.toFixed(1) + ' ' + unit, color: 'rgba(160,100,255,0.95)' });
+                    if (goalVal  != null)      parts.push({ label: 'GOAL '   + goalVal.toFixed(1)  + ' ' + unit, color: 'rgba(0,200,175,0.95)'   });
+                } else {
+                    if (maVal    != null)      parts.push({ label: '7D AVG ' + maVal.toFixed(1)    + ' ' + unit, color: 'rgba(255,200,50,0.95)'  });
+                    if (trendVal != null)      parts.push({ label: 'TREND '  + trendVal.toFixed(1) + ' ' + unit, color: 'rgba(160,100,255,0.95)' });
+                    if (goalVal  != null)      parts.push({ label: 'GOAL '   + goalVal.toFixed(1)  + ' ' + unit, color: 'rgba(0,200,175,0.95)'   });
+                }
+                const html = parts.map(p =>
+                    `<span class="chart-legend-item"><span class="chart-legend-dot" style="background:${p.color}"></span><span style="color:${p.color}">${p.label}</span></span>`
+                ).join('');
+                if (legendEl.innerHTML !== html) legendEl.innerHTML = html;
+            }
+        }
+    });
+
+    /* ── Daily chart ── */
+    (function () {
+        let chartInst = null, activeRange = 'all', activeDays = 30;
+        let currentDates = [], currentRawW = [];
+        let mouseX = 0, mouseY = 0;
+
+        const canvas   = document.getElementById('weight-chart');
+        const emptyMsg = document.getElementById('chart-empty');
+
+        function fmtAxisDate(iso, spanDays) {
+            const [y, m, d] = iso.split('-').map(Number);
+            const dt = new Date(y, m - 1, d);
+            if (spanDays <= 90) {
+                const mon = dt.toLocaleDateString('en-US', { month: 'short' });
+                return (localStorage.getItem('pref_date_format') || 'mdy') === 'mdy' ? mon + ' ' + d : d + ' ' + mon;
+            }
+            return dt.toLocaleDateString('en-US', { month: 'short', year: '2-digit' });
+        }
+
+        async function loadChart(range, days) {
+            if (range !== undefined) activeRange = range;
+            if (days  !== undefined) activeDays  = days;
+            if (window.onChartRangeChange) window.onChartRangeChange();
+
+            let url = '/api/weights?range=' + activeRange;
+            if (activeRange === 'custom') url += '&days=' + activeDays;
+
+            const [rows, settings] = await Promise.all([
+                fetch(url).then(r => r.json()),
+                fetch('/api/settings').then(r => r.json()),
+            ]);
+
+            window.noteMap = new Map(rows.map(r => [r.date, r.notes || '']));
+            const weightRows = rows.filter(r => r.weight_lbs != null);
+
+            if (!weightRows.length) {
+                canvas.hidden = true; emptyMsg.hidden = false;
+                if (chartInst) { chartInst.destroy(); chartInst = null; }
+                return;
+            }
+            canvas.hidden = false; emptyMsg.hidden = true;
+
+            const last = new Date(weightRows[weightRows.length - 1].date + 'T00:00:00');
+            const dataFirst = new Date(weightRows[0].date + 'T00:00:00');
+            let first;
+            if (activeRange === 'all') {
+                first = dataFirst;
+            } else {
+                const n = activeRange === '7d' ? 7 : activeRange === '30d' ? 30 :
+                          activeRange === '90d' ? 90 : activeRange === '1y' ? 365 : Math.min(activeDays || 30, 1095);
+                first = new Date(last);
+                first.setDate(last.getDate() - (n - 1));
+                if (first < dataFirst) first = dataFirst;
+                if (first > last) first = last;
+            }
+
+            const unit = window.activeUnit || 'lbs';
+            const dataMap = new Map(weightRows.map(r => [r.date, r]));
+            const allDates = [];
+            const cursor = new Date(first);
+            while (cursor <= last) { allDates.push(cursor.toISOString().split('T')[0]); cursor.setDate(cursor.getDate() + 1); }
+            currentDates = allDates;
+
+            const infoIcon = document.getElementById('chart-info-icon');
+            if (activeRange !== 'all') {
+                const nReq = activeRange === '7d' ? 7 : activeRange === '30d' ? 30 :
+                             activeRange === '90d' ? 90 : activeRange === '1y' ? 365 : (activeDays || 30);
+                if (allDates.length < nReq - 1) {
+                    infoIcon.dataset.tip = 'Showing max data - ' + weightRows.length + (weightRows.length !== 1 ? ' entries' : ' entry') + ' logged';
+                    infoIcon.style.display = 'flex';
+                } else { infoIcon.style.display = 'none'; }
+            } else { infoIcon.style.display = 'none'; }
+
+            const chartType = localStorage.getItem('pref_chart_type') || 'interpolated';
+            if (chartType === 'actual' || chartType === 'dots-only') {
+                allDates.length = 0;
+                weightRows.forEach(r => allDates.push(r.date));
+                currentDates = allDates;
+            }
+
+            const spanDays = allDates.length;
+            const labels = allDates.map(d => fmtAxisDate(d, spanDays));
+            const rawW = allDates.map(d => { const r = dataMap.get(d); return r ? (unit === 'lbs' ? r.weight_lbs : r.weight_kg) : null; });
+            currentRawW = rawW;
+            const weights = rawW.map((v, i, arr) => {
+                if (v !== null) return v;
+                let lo = i - 1, hi = i + 1;
+                while (lo >= 0 && arr[lo] === null) lo--;
+                while (hi < arr.length && arr[hi] === null) hi++;
+                if (lo >= 0 && hi < arr.length) return arr[lo] + (arr[hi] - arr[lo]) * (i - lo) / (hi - lo);
+                if (lo < 0 && hi < arr.length) return arr[hi];
+                return null;
+            });
+            const minW = Math.min(...weightRows.map(r => unit === 'lbs' ? r.weight_lbs : r.weight_kg));
+            const maxW = Math.max(...weightRows.map(r => unit === 'lbs' ? r.weight_lbs : r.weight_kg));
+            const ptRadius = weightRows.length > 60 ? 2 : 4;
+            const ptRadii    = chartType === 'no-data' ? rawW.map(() => 0) : rawW.map(v => v === null ? 0 : ptRadius);
+            const hoverRadii = rawW.map(v => v === null ? 0 : 6);
+
+            const gw = settings['goal_weight'];
+            const goalLineOn = localStorage.getItem('pref_goal_line') === '1';
+            const goalWeightVal = (goalLineOn && gw) ? (unit === 'kg' ? gw.value_kg : gw.value_lbs) : null;
+            window.goalWeightVal = goalWeightVal;
+            const goalData = allDates.map(() => goalWeightVal);
+            const yMin = Math.floor(Math.min(minW, goalWeightVal != null ? goalWeightVal : minW) - 5);
+            const yMax = Math.ceil(maxW + 5);
+
+            const maLineOn = localStorage.getItem('pref_ma_line') !== '0';
+            const maData = allDates.map(dateStr => {
+                if (!maLineOn) return null;
+                const [yr, mo, dy] = dateStr.split('-').map(Number);
+                const endDt = new Date(yr, mo - 1, dy);
+                const startDt = new Date(endDt); startDt.setDate(startDt.getDate() - 6);
+                const startStr = startDt.toISOString().slice(0, 10);
+                const vals = weightRows.filter(r => r.date >= startStr && r.date <= dateStr)
+                    .map(r => unit === 'kg' ? r.weight_kg : r.weight_lbs);
+                return vals.length ? vals.reduce((s, v) => s + v, 0) / vals.length : null;
+            });
+            window.maCurrentVal = maLineOn ? ([...maData].reverse().find(v => v != null) ?? null) : null;
+
+            const trendLineOn = localStorage.getItem('pref_trend_line') === '1';
+            let trendData = allDates.map(() => null);
+            window.trendCurrentVal = null;
+            if (trendLineOn && weightRows.length >= 2) {
+                const t0 = new Date(weightRows[0].date + 'T00:00:00').getTime();
+                const pairs = weightRows.map(r => ({ x: (new Date(r.date + 'T00:00:00').getTime() - t0) / 86400000, y: unit === 'kg' ? r.weight_kg : r.weight_lbs }));
+                const n = pairs.length, sumX = pairs.reduce((s,p) => s+p.x,0), sumY = pairs.reduce((s,p) => s+p.y,0);
+                const sumXY = pairs.reduce((s,p) => s+p.x*p.y,0), sumX2 = pairs.reduce((s,p) => s+p.x*p.x,0);
+                const denom = n*sumX2 - sumX*sumX;
+                if (denom !== 0) {
+                    const slope = (n*sumXY - sumX*sumY)/denom, intercept = (sumY - slope*sumX)/n;
+                    trendData = allDates.map(dateStr => parseFloat((intercept + slope*(new Date(dateStr+'T00:00:00').getTime()-t0)/86400000).toFixed(2)));
+                    window.trendCurrentVal = trendData[trendData.length-1] ?? null;
+                }
+            }
+
+            if (chartInst) {
+                chartInst.data.labels = labels;
+                chartInst.data.datasets[0].data = weights;
+                chartInst.data.datasets[0].tension = (chartType==='actual'||chartType==='dots-only') ? 0 : 0.35;
+                chartInst.data.datasets[0].borderWidth = (chartType==='dots-only'||chartType==='no-data') ? 0 : 2.5;
+                chartInst.data.datasets[0].fill = chartType!=='dots-only' && chartType!=='no-data';
+                chartInst.data.datasets[0].pointRadius = ptRadii;
+                chartInst.data.datasets[0].pointHoverRadius = hoverRadii;
+                chartInst.data.datasets[1].data = goalData;
+                chartInst.data.datasets[2].data = maData;
+                chartInst.data.datasets[3].data = trendData;
+                chartInst.options.scales.y.min = yMin;
+                chartInst.options.scales.y.max = yMax;
+                chartInst.update();
+                return;
+            }
+
+            const ctx = canvas.getContext('2d');
+            chartInst = new Chart(ctx, {
+                type: 'line',
+                data: { labels, datasets: [
+                    { data: weights, borderColor: '#ff2d78', borderWidth: (chartType==='dots-only'||chartType==='no-data')?0:2.5,
+                      pointBackgroundColor:'#ff2d78', pointBorderColor:'#ff2d78', pointRadius:ptRadii, pointHoverRadius:hoverRadii,
+                      pointHoverBackgroundColor:'#ffe0ee', fill:chartType!=='dots-only'&&chartType!=='no-data',
+                      backgroundColor: function(ctx) { const c=ctx.chart; if(!c.chartArea) return 'rgba(255,45,120,0.15)'; const g=c.ctx.createLinearGradient(0,c.chartArea.top,0,c.chartArea.bottom); g.addColorStop(0,'rgba(255,45,120,0.35)'); g.addColorStop(1,'rgba(255,45,120,0)'); return g; },
+                      tension:(chartType==='actual'||chartType==='dots-only')?0:0.35 },
+                    { data:goalData, borderColor:'rgba(0,200,175,0.8)', borderWidth:1.5, borderDash:[6,4], pointRadius:0, pointHoverRadius:0, fill:false, tension:0, spanGaps:true },
+                    { data:maData,   borderColor:'rgba(255,200,50,0.8)', borderWidth:1.5, pointRadius:0, pointHoverRadius:0, fill:false, tension:0.3, spanGaps:false },
+                    { data:trendData,borderColor:'rgba(160,100,255,0.8)',borderWidth:1.5, borderDash:[4,3], pointRadius:0, pointHoverRadius:0, fill:false, tension:0, spanGaps:false }
+                ]},
+                options: {
+                    responsive:true, maintainAspectRatio:false, animation:{duration:400},
+                    interaction:{mode:'index',intersect:false,axis:'x'},
+                    plugins: { legend:{display:false}, chartAxisLabels:{},
+                        tooltip:{ enabled:false, external:function(context) {
+                            const tt=context.tooltip;
+                            if(tt.opacity===0){chartTtEl.style.opacity='0';return;}
+                            const dp=tt.dataPoints?.find(p=>p.datasetIndex===0); if(!dp) return;
+                            const idx=dp.dataIndex, date=currentDates[idx]; if(!date) return;
+                            const isReal=currentRawW[idx]!==null, val=dp.parsed.y;
+                            if(val==null){chartTtEl.style.opacity='0';return;}
+                            const est=isReal?'':' <span class="ctt-est">(est.)</span>';
+                            const label=window.activeUnit==='kg'?val.toFixed(1)+' kgs'+est:Number(val.toFixed(1))+' lbs'+est;
+                            const noteRaw=(window.noteMap&&window.noteMap.get(date))||'';
+                            const noteHtml=noteRaw?'<div class="ctt-note">'+noteRaw.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')+'</div>':'';
+                            chartTtEl.innerHTML=`<div class="ctt-title">${formatDateDisplay(date)}</div><div class="ctt-body">${label}</div>${noteHtml}`;
+                            chartTtEl.style.opacity='1';
+                            chartTtEl.style.top=Math.round(mouseY-chartTtEl.offsetHeight/2)+'px';
+                            chartTtEl.style.left=Math.max(8,Math.round(mouseX-12-chartTtEl.offsetWidth))+'px';
+                        }}
+                    },
+                    scales: {
+                        x:{ grid:{color:'rgba(255,255,255,0.04)'}, border:{color:'rgba(255,255,255,0.08)'}, ticks:{color:'#888',font:{family:'Arial',size:13},maxTicksLimit:10,maxRotation:0} },
+                        y:{ min:yMin, max:yMax, grid:{color:'rgba(255,255,255,0.04)'}, border:{color:'rgba(255,255,255,0.08)'},
+                            ticks:{color:'#888',font:{family:'Arial',size:13},maxTicksLimit:6,callback:v=>v+' '+(window.activeUnit==='kg'?'kgs':'lbs')},
+                            afterFit:scale=>{scale.width=scale.chart.width<480?64:80;} }
+                    }
+                }
+            });
+        }
+
+        document.querySelectorAll('.range-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                document.querySelectorAll('.range-btn').forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+                const wrap = document.getElementById('custom-days-wrap');
+                if (btn.dataset.range === 'custom') {
+                    wrap.hidden = false;
+                    customIn.focus(); customIn.select();
+                    loadChart('custom', parseInt(document.getElementById('custom-days').value) || 7);
+                } else { wrap.hidden = true; loadChart(btn.dataset.range); }
+            });
+        });
+
+        const customIn = document.getElementById('custom-days');
+        function applyCustom() {
+            const d = Math.min(Math.max(parseInt(customIn.value) || 7, 7), 1095);
+            customIn.value = d;
+            document.querySelectorAll('.range-btn').forEach(b => b.classList.remove('active'));
+            document.querySelector('.range-btn[data-range="custom"]').classList.add('active');
+            loadChart('custom', d);
+        }
+        customIn.addEventListener('keydown', e => { if (e.key === 'Enter') applyCustom(); });
+        customIn.addEventListener('change', applyCustom);
+
+        canvas.addEventListener('mousemove',  e => { mouseX = e.clientX; mouseY = e.clientY; });
+        canvas.addEventListener('mouseleave', () => { chartTtEl.style.opacity = '0'; });
+
+        window.refreshChart  = loadChart;
+        window.getChartRange = () => ({ range: activeRange, days: activeDays });
+
+        const savedRange    = localStorage.getItem('pref_range') || '7d';
+        const savedCustomDaysStr = localStorage.getItem('pref_custom_days');
+        const savedCustomDays    = parseInt(savedCustomDaysStr) || 30;
+        const savedRangeBtn = document.querySelector(`.range-btn[data-range="${savedRange}"]`);
+        if (savedRangeBtn) { document.querySelectorAll('.range-btn').forEach(b => b.classList.remove('active')); savedRangeBtn.classList.add('active'); }
+        if (savedRange === 'custom') customIn.value = savedCustomDaysStr || '';
+        loadChart(savedRange, savedRange === 'custom' ? savedCustomDays : undefined);
+    })();
+
+    /* ── Weekly chart ── */
+    (function () {
+        const canvas    = document.getElementById('weekly-chart');
+        if (!canvas) return;
+        const ctx        = canvas.getContext('2d');
+        const emptyEl    = document.getElementById('weekly-chart-empty');
+        const infoIconEl = document.getElementById('weekly-info-icon');
+        const customWrap = document.getElementById('custom-weeks-wrap');
+        const customIn   = document.getElementById('custom-weeks');
+
+        let weeklyInst = null;
+        let activeWeeksRange = localStorage.getItem('pref_weekly_range') || '4';
+        const savedCustomWeeks = localStorage.getItem('pref_custom_weeks');
+        if (savedCustomWeeks) customIn.value = savedCustomWeeks;
+
+        document.querySelectorAll('.weekly-range-btn').forEach(b => b.classList.remove('active'));
+        const initBtn = document.querySelector(`.weekly-range-btn[data-weeks="${activeWeeksRange}"]`);
+        if (initBtn) initBtn.classList.add('active');
+        customWrap.hidden = activeWeeksRange !== 'custom';
+
+        let weeklyMouseX = 0, weeklyMouseY = 0;
+
+        function groupByWeek(rows) {
+            const map = new Map();
+            const todayD = new Date(); todayD.setHours(0,0,0,0);
+            const dfmt = localStorage.getItem('pref_date_format') || 'mdy';
+            const fmt = iso => { const [,mm,dd] = iso.split('-'); return dfmt==='mdy' ? mm+'/'+dd : dd+'/'+mm; };
+            const iso = (localStorage.getItem('pref_weekly_mode') || 'rolling') === 'iso';
+            for (const r of rows) {
+                let key;
+                if (iso) {
+                    const d = new Date(r.date+'T00:00:00'), day = d.getDay();
+                    const mon = new Date(d); mon.setDate(d.getDate()+(day===0?-6:1-day));
+                    key = mon.toISOString().slice(0,10);
+                } else {
+                    key = Math.floor(Math.round((todayD - new Date(r.date+'T00:00:00'))/86400000)/7);
+                }
+                if (!map.has(key)) map.set(key, []);
+                map.get(key).push(r.weight_lbs);
+            }
+            const result = [];
+            for (const [key, weights] of map.entries()) {
+                const avg = weights.reduce((a,b)=>a+b,0)/weights.length;
+                let monISO, sunISO;
+                if (iso) {
+                    monISO = key;
+                    const sunD = new Date(monISO+'T00:00:00'); sunD.setDate(sunD.getDate()+6);
+                    sunISO = sunD.toISOString().slice(0,10);
+                } else {
+                    const endD = new Date(todayD); endD.setDate(todayD.getDate()-key*7);
+                    const startD = new Date(endD); startD.setDate(endD.getDate()-6);
+                    monISO = startD.toISOString().slice(0,10);
+                    sunISO = endD.toISOString().slice(0,10);
+                }
+                result.push({ monISO, sunISO, label:fmt(monISO)+'–'+fmt(sunISO), avg, min:Math.min(...weights), max:Math.max(...weights), count:weights.length });
+            }
+            result.sort((a,b)=>a.monISO.localeCompare(b.monISO));
+            return result;
+        }
+
+        const weeklyMinMaxPlugin = {
+            id: 'weeklyMinMax',
+            afterDatasetsDraw(chart) {
+                if (!window.weeklyMinMaxOn) return;
+                const wks = window.weeklyWeeks; if (!wks||!wks.length) return;
+                const { ctx, scales:{ x, y } } = chart;
+                ctx.save(); ctx.strokeStyle='rgba(255,200,50,0.8)'; ctx.lineWidth=1.5;
+                const cap=4;
+                wks.forEach((w,i) => {
+                    if (w.minU==null||w.maxU==null||w.minU===w.maxU) return;
+                    const xPx=x.getPixelForValue(i), yTop=y.getPixelForValue(w.maxU), yBot=y.getPixelForValue(w.minU);
+                    ctx.beginPath(); ctx.moveTo(xPx,yTop); ctx.lineTo(xPx,yBot); ctx.stroke();
+                    ctx.beginPath(); ctx.moveTo(xPx-cap,yTop); ctx.lineTo(xPx+cap,yTop); ctx.stroke();
+                    ctx.beginPath(); ctx.moveTo(xPx-cap,yBot); ctx.lineTo(xPx+cap,yBot); ctx.stroke();
+                });
+                ctx.restore();
+            }
+        };
+
+        async function loadWeeklyChart(range, customWeeks) {
+            let days = range==='all' ? null : range==='custom' ? (parseInt(customWeeks)||4)*7 : (parseInt(range)||4)*7;
+            const url = days==null ? '/api/weights?range=all' : '/api/weights?range=custom&days='+days;
+            const [rows, settings] = await Promise.all([fetch(url).then(r=>r.json()), fetch('/api/settings').then(r=>r.json())]);
+            const filteredRows = (rows||[]).filter(r=>r.weight_lbs!=null);
+            const gw = settings['goal_weight'], goalLbs = gw?gw.value_lbs:null;
+
+            if (!filteredRows.length) {
+                emptyEl.hidden=false; canvas.style.display='none'; infoIconEl.style.display='none';
+                if (weeklyInst) { weeklyInst.destroy(); weeklyInst=null; } return;
+            }
+            emptyEl.hidden=true; canvas.style.display='';
+
+            if (days!=null) {
+                const cutoff=new Date(); cutoff.setDate(cutoff.getDate()-days);
+                const oldestD=new Date(filteredRows[0].date+'T00:00:00');
+                if (oldestD>cutoff) { infoIconEl.dataset.tip='Showing max data — '+filteredRows.length+' entries logged'; infoIconEl.style.display='flex'; }
+                else infoIconEl.style.display='none';
+            } else infoIconEl.style.display='none';
+
+            const maxWeeks = range==='all'?null:range==='custom'?(parseInt(customWeeks)||4):(parseInt(range)||4);
+            let weeks = groupByWeek(filteredRows);
+            if (maxWeeks!=null) weeks=weeks.slice(-maxWeeks);
+            const unit = window.activeUnit==='kg'?'kgs':'lbs';
+            const toUnit = v => window.activeUnit==='kg'?parseFloat((v/2.20462).toFixed(1)):parseFloat(v.toFixed(1));
+            const avgs=weeks.map(w=>toUnit(w.avg)), mins=weeks.map(w=>toUnit(w.min)), maxs=weeks.map(w=>toUnit(w.max));
+            const minMaxOn=(localStorage.getItem('pref_weekly_minmax')??(1))!=='0';
+            const goalLineOn=localStorage.getItem('pref_weekly_goal_line')==='1';
+            const goalVal=goalLbs!=null?toUnit(goalLbs):null;
+            const goalData=goalLineOn&&goalVal!=null?avgs.map(()=>goalVal):avgs.map(()=>null);
+            const trendLineOn=localStorage.getItem('pref_weekly_trend_line')==='1';
+            let trendData=avgs.map(()=>null);
+            if (trendLineOn&&avgs.length>=2) {
+                const n=avgs.length,xM=(n-1)/2,yM=avgs.reduce((a,b)=>a+b,0)/n;
+                let num=0,den=0;
+                for(let i=0;i<n;i++){num+=(i-xM)*(avgs[i]-yM);den+=(i-xM)**2;}
+                const slope=den?num/den:0,intercept=yM-slope*xM;
+                trendData=avgs.map((_,i)=>parseFloat((slope*i+intercept).toFixed(2)));
+            }
+            const allVals=[...avgs,...(goalVal&&goalLineOn?[goalVal]:[]),...trendData.filter(v=>v!=null),...(minMaxOn?[...mins,...maxs]:[])];
+            const pad=Math.max((Math.max(...allVals)-Math.min(...allVals))*0.15,2);
+            const yMin=parseFloat((Math.min(...allVals)-pad).toFixed(1)), yMax=parseFloat((Math.max(...allVals)+pad).toFixed(1));
+            window.weeklyWeeks=weeks.map((w,i)=>({...w,minU:mins[i],maxU:maxs[i]}));
+            window.weeklyMinMaxOn=minMaxOn;
+            window.weeklyGoalVal=(goalLineOn&&goalVal!=null)?goalVal:null;
+            window.weeklyTrendVal=trendLineOn&&trendData.length>0?trendData[trendData.length-1]:null;
+
+            if (weeklyInst) {
+                weeklyInst.data.labels=weeks.map(w=>w.label);
+                weeklyInst.data.datasets[0].data=avgs;
+                weeklyInst.data.datasets[1].data=goalData;
+                weeklyInst.data.datasets[2].data=trendData;
+                weeklyInst.options.scales.y.min=yMin; weeklyInst.options.scales.y.max=yMax;
+                weeklyInst.options.scales.y.ticks.callback=v=>v+' '+unit;
+                weeklyInst.update(); return;
+            }
+
+            weeklyInst = new Chart(ctx, {
+                type:'bar', plugins:[weeklyMinMaxPlugin],
+                data:{ labels:weeks.map(w=>w.label), datasets:[
+                    { label:'Weekly Avg', data:avgs, backgroundColor:'rgba(255,45,120,0.5)', borderColor:'#ff2d78', borderWidth:1, borderRadius:3, type:'bar' },
+                    { label:'Goal', data:goalData, borderColor:'rgba(0,200,175,0.85)', borderWidth:2, borderDash:[6,3], pointRadius:0, tension:0, type:'line', fill:false },
+                    { label:'Trend', data:trendData, borderColor:'rgba(160,100,255,0.85)', borderWidth:2, pointRadius:0, tension:0, type:'line', fill:false }
+                ]},
+                options:{
+                    responsive:true, maintainAspectRatio:false, animation:{duration:300},
+                    interaction:{mode:'index',intersect:false},
+                    plugins:{ legend:{display:false}, chartAxisLabels:{},
+                        tooltip:{ enabled:false, external:function(context) {
+                            const tt=context.tooltip;
+                            if(tt.opacity===0){chartTtEl.style.opacity='0';return;}
+                            const dp=tt.dataPoints?.find(p=>p.datasetIndex===0); if(!dp) return;
+                            const w=window.weeklyWeeks&&window.weeklyWeeks[dp.dataIndex]; if(!w) return;
+                            const val=dp.parsed.y, unitLabel=window.activeUnit==='kg'?'kgs':'lbs';
+                            const hasRange=w.count>1&&w.minU!=null&&w.maxU!=null&&w.minU!==w.maxU;
+                            const rangeHtml=hasRange?`<div class="ctt-body" style="color:#aaa;font-size:11px">Range: ${w.minU.toFixed(1)}–${w.maxU.toFixed(1)} ${unitLabel}</div>`:'';
+                            chartTtEl.innerHTML=`<div class="ctt-title">${w.label}</div><div class="ctt-body">${val.toFixed(1)} ${unitLabel}</div>${rangeHtml}<div class="ctt-body" style="color:#aaa;font-size:11px">${w.count} weigh-in${w.count!==1?'s':''}</div>`;
+                            chartTtEl.style.opacity='1';
+                            chartTtEl.style.top=Math.round(weeklyMouseY-chartTtEl.offsetHeight/2)+'px';
+                            chartTtEl.style.left=Math.max(8,Math.round(weeklyMouseX-12-chartTtEl.offsetWidth))+'px';
+                        }}
+                    },
+                    scales:{
+                        x:{ ticks:{color:'#888',font:{family:'Arial',size:11},maxRotation:30,maxTicksLimit:8}, grid:{color:'rgba(255,255,255,0.05)'} },
+                        y:{ min:yMin, max:yMax, ticks:{color:'#888',font:{family:'Arial',size:13},maxTicksLimit:6,callback:v=>v+' '+unit},
+                            grid:{color:'rgba(255,255,255,0.05)'}, afterFit:scale=>{scale.width=scale.chart.width<480?64:80;} }
+                    }
+                }
+            });
+
+            canvas.addEventListener('mousemove', e=>{weeklyMouseX=e.clientX;weeklyMouseY=e.clientY;});
+            canvas.addEventListener('mouseleave', ()=>{chartTtEl.style.opacity='0';});
+        }
+
+        document.querySelectorAll('.weekly-range-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                document.querySelectorAll('.weekly-range-btn').forEach(b=>b.classList.remove('active'));
+                btn.classList.add('active');
+                const w=btn.dataset.weeks; activeWeeksRange=w;
+                if (w==='custom') { customWrap.hidden=false; customIn.focus(); customIn.select(); loadWeeklyChart('custom',parseInt(customIn.value)||4); }
+                else { customWrap.hidden=true; loadWeeklyChart(w); }
+                if (window.onWeeklyRangeChange) window.onWeeklyRangeChange();
+            });
+        });
+
+        function applyWeeklyCustom() {
+            const w=Math.min(Math.max(parseInt(customIn.value)||4,4),156);
+            customIn.value=w;
+            document.querySelectorAll('.weekly-range-btn').forEach(b=>b.classList.remove('active'));
+            document.querySelector('.weekly-range-btn[data-weeks="custom"]').classList.add('active');
+            activeWeeksRange='custom'; loadWeeklyChart('custom',w);
+            if (window.onWeeklyRangeChange) window.onWeeklyRangeChange();
+        }
+        customIn.addEventListener('keydown', e=>{if(e.key==='Enter')applyWeeklyCustom();});
+        customIn.addEventListener('blur', ()=>{const v=parseInt(customIn.value);if(v&&v<4)customIn.value=4;else if(v>156)customIn.value=156;});
+
+        window.refreshWeeklyChart = function() {
+            if (!window.weeklyChartLoaded) return;
+            loadWeeklyChart(activeWeeksRange, activeWeeksRange==='custom'?(parseInt(customIn.value)||4):undefined);
+        };
+        window.setWeeklyRange = function(range, weeks) {
+            activeWeeksRange=range;
+            document.querySelectorAll('.weekly-range-btn').forEach(b=>b.classList.remove('active'));
+            const btn=document.querySelector('.weekly-range-btn[data-weeks="'+range+'"]');
+            if (btn) btn.classList.add('active');
+            customWrap.hidden=range!=='custom';
+            if (range==='custom') customIn.value=weeks||'';
+        };
+        window.getWeeklyChartRange = ()=>({range:activeWeeksRange, weeks:parseInt(customIn.value)||null});
+        window.loadWeeklyChartOnce = function() {
+            if (!window.weeklyChartLoaded) { window.weeklyChartLoaded=true; loadWeeklyChart(activeWeeksRange, activeWeeksRange==='custom'?(parseInt(customIn.value)||4):undefined); }
+        };
+    })();
+
+    /* ── Chart slide navigation ── */
+    (function () {
+        const inner  = document.getElementById('chart-slide-inner');
+        const typeBtn = document.getElementById('chart-type-btn');
+
+        function setChart(weekly) {
+            inner.classList.toggle('at-weekly', weekly);
+            window.currentChartPage = weekly ? 'weekly' : 'daily';
+            if (weekly && window.loadWeeklyChartOnce) window.loadWeeklyChartOnce();
+            typeBtn.classList.toggle('in-weekly', weekly);
+            typeBtn.dataset.tip = weekly ? 'Switch to daily chart' : 'Switch to weekly chart';
+            typeBtn.setAttribute('aria-label', weekly ? 'Switch to daily chart' : 'Switch to weekly chart');
+        }
+
+        typeBtn.addEventListener('click', () => setChart(window.currentChartPage !== 'weekly'));
+
+        window.applyChartNav = function() {
+            const dl = localStorage.getItem('pref_default_landing') || 'daily';
+            setChart(dl === 'weekly' || dl === 'table-weekly');
+        };
+        window.applyChartNav();
+    })();
+
+    /* ── Data table ── */
+    (function () {
+        const toggleBtn     = document.getElementById('view-toggle-btn');
+        const slideViewport = document.getElementById('chart-slide-viewport');
+        const tableWrap     = document.getElementById('data-table-wrap');
+        const tableTitle    = document.getElementById('table-view-title');
+        const tableBody     = document.getElementById('data-table-body');
+        const chartTypeBtn  = document.getElementById('chart-type-btn');
+        let isTableView = false, lastChart = 'daily';
+
+        function applyTableMode(on) { slideViewport.classList.toggle('in-table', on); tableWrap.hidden=!on; document.getElementById('main-content').classList.toggle('wt-table-mode', on); }
+
+        function addDays(iso, n) { const d=new Date(iso+'T00:00:00'); d.setDate(d.getDate()+n); return d.toISOString().split('T')[0]; }
+        function dateRange(start, end) { const dates=[]; let cur=start; while(cur<=end){dates.push(cur);cur=addDays(cur,1);} return dates; }
+
+        function groupByWeekFull(rows) {
+            const map=new Map(), todayD=new Date(); todayD.setHours(0,0,0,0);
+            const dfmt=localStorage.getItem('pref_date_format')||'mdy';
+            const fmt=iso=>{const[,mm,dd]=iso.split('-');return dfmt==='mdy'?mm+'/'+dd:dd+'/'+mm;};
+            const isoMode=(localStorage.getItem('pref_weekly_mode')||'rolling')==='iso';
+            for (const r of rows) {
+                let key;
+                if (isoMode) { const d=new Date(r.date+'T00:00:00'),day=d.getDay(),mon=new Date(d); mon.setDate(d.getDate()+(day===0?-6:1-day)); key=mon.toISOString().slice(0,10); }
+                else { key=Math.floor(Math.round((todayD-new Date(r.date+'T00:00:00'))/86400000)/7); }
+                if (!map.has(key)) map.set(key,[]);
+                map.get(key).push(r);
+            }
+            const result=[];
+            for (const [key,dayRows] of map.entries()) {
+                const wr=dayRows.filter(r=>r.weight_lbs!=null);
+                const avgLbs=wr.length?wr.reduce((s,r)=>s+r.weight_lbs,0)/wr.length:null;
+                const avgKg=wr.length?wr.reduce((s,r)=>s+r.weight_kg,0)/wr.length:null;
+                let startISO,endISO;
+                if (isoMode){startISO=key;const sunD=new Date(startISO+'T00:00:00');sunD.setDate(sunD.getDate()+6);endISO=sunD.toISOString().slice(0,10);}
+                else{const endD=new Date(todayD);endD.setDate(todayD.getDate()-key*7);const startD=new Date(endD);startD.setDate(endD.getDate()-6);startISO=startD.toISOString().slice(0,10);endISO=endD.toISOString().slice(0,10);}
+                result.push({monISO:startISO,sunISO:endISO,label:fmt(startISO)+'–'+fmt(endISO),avg:avgLbs,avgKg,days:dayRows});
+            }
+            result.sort((a,b)=>a.monISO.localeCompare(b.monISO));
+            return result;
+        }
+
+        function appendExportRow(tbody, rows) {
+            const tr=document.createElement('tr'); tr.className='table-export-row';
+            const td=document.createElement('td'); td.colSpan=3; td.className='table-export-cell';
+            const btn=document.createElement('button'); btn.className='table-export-btn';
+            btn.innerHTML='<svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg> Export CSV';
+            btn.addEventListener('click', async () => {
+                const exportRows=rows||await fetch('/api/weights?range=all').then(r=>r.json());
+                const lines=['Date,Weight (lbs),Weight (kg),Notes'];
+                exportRows.forEach(r=>{const note=(r.notes||'').replace(/"/g,'""');lines.push(`${r.date},${r.weight_lbs??''},${r.weight_kg??''},"${note}"`);});
+                const blob=new Blob([lines.join('\n')],{type:'text/csv'});
+                const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download='weight-history.csv'; a.click(); URL.revokeObjectURL(a.href);
+            });
+            td.appendChild(btn); tr.appendChild(td); tbody.appendChild(tr);
+        }
+
+        async function renderWeeklyTable() {
+            const allRows=await fetch('/api/weights?range=all').then(r=>r.json());
+            const {range:wRange,weeks:wWeeks}=window.getWeeklyChartRange?window.getWeeklyChartRange():{range:'4',weeks:null};
+            let weekGroups=groupByWeekFull(allRows);
+            const maxWeeks=wRange==='all'?null:wRange==='custom'?(wWeeks||4):(parseInt(wRange)||4);
+            if (maxWeeks!=null) weekGroups=weekGroups.slice(-maxWeeks);
+            const weekExportRows=weekGroups.flatMap(w=>w.days).sort((a,b)=>a.date.localeCompare(b.date));
+            tableBody.innerHTML='';
+            tableBody.closest('table').classList.remove('daily-mode');
+            if (!weekGroups.length){tableBody.innerHTML='<tr><td colspan="3" class="table-empty-cell">No data yet.</td></tr>';return;}
+            const unit=window.activeUnit||'lbs';
+            document.getElementById('th-primary').textContent=unit==='lbs'?'Avg (lbs)':'Avg (kgs)';
+            document.getElementById('th-days-logged').textContent='Days Logged';
+            const defaultExpanded=localStorage.getItem('pref_weekly_table_expanded')==='true';
+
+            weekGroups.slice().reverse().forEach(week => {
+                const dayMap=new Map(week.days.map(r=>[r.date,r]));
+                const endISO=week.sunISO<=getTodayISO()?week.sunISO:getTodayISO();
+                const allWeekDates=dateRange(week.monISO,endISO).reverse();
+                const missingDates=allWeekDates.filter(d=>!dayMap.has(d)||dayMap.get(d).weight_lbs==null);
+                const missingRefs=new Map();
+                const primAvg=week.avg!=null?(unit==='lbs'?fmtLbs(week.avg)+' '+unit:fmtLbs(week.avgKg)+' '+unit):'—';
+
+                const headerTr=document.createElement('tr'); headerTr.className='week-header-row';
+                headerTr.setAttribute('tabindex','0'); headerTr.setAttribute('role','button');
+                headerTr.setAttribute('aria-expanded',defaultExpanded?'true':'false');
+                headerTr.setAttribute('aria-label','Week of '+week.label);
+                const dateTd=document.createElement('td');
+                const dateInner=document.createElement('span'); dateInner.className='week-date-inner';
+                const icon=document.createElement('span'); icon.className='week-toggle-icon'+(defaultExpanded?' expanded':''); icon.textContent='▾';
+                const lbl=document.createElement('span'); lbl.textContent=week.label;
+                dateInner.append(lbl); dateTd.appendChild(dateInner);
+                const primTd=document.createElement('td'); primTd.textContent=primAvg;
+                let hdrExcl=null;
+                if (missingDates.length>0){hdrExcl=document.createElement('button');hdrExcl.className='missing-excl-btn';hdrExcl.textContent='!';hdrExcl.dataset.tip='Missing data';}
+                const cntTd=document.createElement('td'); cntTd.className='week-count-cell';
+                const cntInner=document.createElement('span'); cntInner.className='week-count-inner';
+                const cntSpan=document.createElement('span'); cntSpan.textContent=String(week.days.filter(d=>d.weight_lbs!=null).length);
+                const cntOuter=document.createElement('span');cntOuter.className='week-count-outer';if(hdrExcl)cntOuter.appendChild(hdrExcl); cntInner.append(cntSpan,icon); cntOuter.appendChild(cntInner); cntTd.appendChild(cntOuter);
+                headerTr.append(dateTd,primTd,cntTd); tableBody.appendChild(headerTr);
+
+                const collapseTr=document.createElement('tr'); collapseTr.className='week-collapse-row';
+                const collapseTd=document.createElement('td'); collapseTd.colSpan=3;
+                const wrap=document.createElement('div'); wrap.className='week-days-wrap';
+                const innerTable=document.createElement('table'); innerTable.className='week-day-table';
+                const innerBody=document.createElement('tbody');
+
+                allWeekDates.forEach(date => {
+                    const entry=dayMap.get(date), missing=!entry||entry.weight_lbs==null;
+                    const dayTr=document.createElement('tr'); dayTr.className='week-day-row'+(missing?' row-missing':'');
+                    const dayDateTd=document.createElement('td');
+                    dayDateTd.innerHTML='<span class="date-full">'+formatDateDisplay(date)+'</span><span class="date-short">'+formatDateShort(date)+'</span>';
+                    const wtTd=document.createElement('td'); wtTd.dataset.date=date;
+                    if (missing){
+                        wtTd.className='cell-weight cell-missing'; wtTd.dataset.lbs=''; wtTd.dataset.kg='';
+                        wtTd.innerHTML='<span class="missing-dash">—</span>';
+                    } else {
+                        wtTd.className='cell-weight'; wtTd.dataset.lbs=entry.weight_lbs; wtTd.dataset.kg=entry.weight_kg;
+                        wtTd.textContent=(unit==='lbs'?fmtLbs(entry.weight_lbs):fmtLbs(entry.weight_kg))+' '+unit;
+                    }
+                    const actTd=document.createElement('td'); actTd.className='action-cell';
+                    if(missing){const eb=document.createElement('button');eb.className='missing-excl-btn';eb.textContent='!';eb.dataset.tip='Missing data';eb.addEventListener('click',e=>{e.stopPropagation();if(window.openWeightModal)window.openWeightModal(date,null);});actTd.appendChild(eb);}
+                    const noteText=entry&&entry.notes?entry.notes:'', hasNote=!!(noteText.trim());
+                    const noteBtn=document.createElement('button'); noteBtn.className='note-btn'+(hasNote?' has-note':''); noteBtn.dataset.tip=hasNote?'Edit note':'Add note';
+                    noteBtn.innerHTML='<svg viewBox="0 0 16 16" xmlns="http://www.w3.org/2000/svg"><path d="M13 1H3C2.45 1 2 1.45 2 2v9c0 .55.45 1 1 1h1.5l2.5 2.5L9.5 12H13c.55 0 1-.45 1-1V2c0-.55-.45-1-1-1z"/></svg>';
+                    noteBtn.addEventListener('click',e=>{e.stopPropagation();window.openNoteEditor(date,noteText,noteBtn);});
+                    const del=document.createElement('button');
+                    if (!missing||entry){del.className='table-delete-btn';del.dataset.tip='Delete this entry';del.addEventListener('click',e=>{e.stopPropagation();showRowDeleteModal(date,entry);});}
+                    else{del.className='table-delete-btn missing-del';}
+                    del.textContent='✕';
+                    actTd.append(noteBtn,del); dayTr.append(dayDateTd,wtTd,actTd);
+                    dayTr.addEventListener('mouseenter',()=>dayTr.classList.add('row-hover'));
+                    dayTr.addEventListener('mouseleave',()=>dayTr.classList.remove('row-hover'));
+                    dayTr.addEventListener('click',e=>{if(e.target.closest('button,input'))return;if(window.openWeightModal)window.openWeightModal(date,entry&&entry.weight_lbs!=null?entry.weight_lbs:null);});
+                    innerBody.appendChild(dayTr);
+                });
+
+                const innerHead=document.createElement('thead'),innerHeadTr=document.createElement('tr');
+                [38,33,29].forEach(w=>{const th=document.createElement('th');th.style.width=w+'%';innerHeadTr.appendChild(th);});
+                innerHead.appendChild(innerHeadTr); innerTable.appendChild(innerHead); innerTable.appendChild(innerBody);
+                wrap.appendChild(innerTable); collapseTd.appendChild(wrap); collapseTr.appendChild(collapseTd); tableBody.appendChild(collapseTr);
+
+                if (hdrExcl){hdrExcl.addEventListener('click',e=>{e.stopPropagation();if(window.openWeightModal)window.openWeightModal(missingDates[0],null);});}
+                if (defaultExpanded) requestAnimationFrame(()=>{wrap.style.maxHeight=wrap.scrollHeight+'px';});
+                headerTr.addEventListener('click',()=>{const open=icon.classList.contains('expanded');if(open){icon.classList.remove('expanded');wrap.style.maxHeight='0';headerTr.setAttribute('aria-expanded','false');}else{icon.classList.add('expanded');wrap.style.maxHeight=wrap.scrollHeight+'px';headerTr.setAttribute('aria-expanded','true');}});
+                headerTr.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();headerTr.click();}});
+            });
+            appendExportRow(tableBody, weekExportRows);
+        }
+
+        async function renderTable() {
+            if (lastChart==='weekly'){await renderWeeklyTable();return;}
+            const {range,days}=window.getChartRange();
+            let url='/api/weights?range='+range; if(range==='custom')url+='&days='+days;
+            const rows=await fetch(url).then(r=>r.json());
+            const map={}; rows.forEach(r=>{map[r.date]=r;});
+            const today=getTodayISO();
+            let startDate;
+            if(range==='all'){startDate=rows.length?rows[0].date:today;}
+            else{let n=days||30;if(range==='7d')n=7;if(range==='30d')n=30;if(range==='90d')n=90;if(range==='1y')n=365;n=Math.min(n,1095);startDate=addDays(today,-(n-1));if(rows.length&&startDate<rows[0].date)startDate=rows[0].date;}
+            const allDates=dateRange(startDate,today).reverse();
+            tableBody.innerHTML='';
+            tableBody.closest('table').classList.add('daily-mode');
+            if(!allDates.length){tableBody.innerHTML='<tr><td colspan="3" class="table-empty-cell">No data yet.</td></tr>';return;}
+            const unit=window.activeUnit||'lbs';
+            document.getElementById('th-primary').textContent=unit==='lbs'?'Weight (lbs)':'Weight (kgs)';
+            document.getElementById('th-days-logged').textContent='';
+
+            allDates.forEach(date=>{
+                const entry=map[date],missing=!entry||entry.weight_lbs==null;
+                const tr=document.createElement('tr'); tr.classList.add('daily-row'); if(missing)tr.classList.add('row-missing');
+                const dateTd=document.createElement('td');
+                dateTd.innerHTML='<span class="date-full">'+formatDateDisplay(date)+'</span><span class="date-short">'+formatDateShort(date)+'</span>';
+                const wtTd=document.createElement('td'); wtTd.className='cell-weight'+(missing?' cell-missing':''); wtTd.dataset.date=date;
+                wtTd.dataset.lbs=(!missing&&entry)?entry.weight_lbs:''; wtTd.dataset.kg=(!missing&&entry)?entry.weight_kg:'';
+                const primaryVal=(!missing&&entry)?(unit==='lbs'?fmtLbs(entry.weight_lbs)+' '+unit:fmtLbs(entry.weight_kg)+' '+unit):null;
+                wtTd.innerHTML=missing?'<span class="missing-dash">—</span>':primaryVal;
+                const stTd=document.createElement('td'); stTd.className='action-cell';
+                if(missing){const eb=document.createElement('button');eb.className='missing-excl-btn';eb.textContent='!';eb.dataset.tip='Log weight for this day';eb.addEventListener('click',e=>{e.stopPropagation();if(window.openWeightModal)window.openWeightModal(date,null);});stTd.appendChild(eb);}
+                const noteText=entry&&entry.notes?entry.notes:'',hasNote=!!(noteText.trim());
+                const noteBtn=document.createElement('button'); noteBtn.className='note-btn'+(hasNote?' has-note':''); noteBtn.dataset.tip=hasNote?'Edit note':'Add note';
+                noteBtn.innerHTML='<svg viewBox="0 0 16 16" xmlns="http://www.w3.org/2000/svg"><path d="M13 1H3C2.45 1 2 1.45 2 2v9c0 .55.45 1 1 1h1.5l2.5 2.5L9.5 12H13c.55 0 1-.45 1-1V2c0-.55-.45-1-1-1z"/></svg>';
+                noteBtn.addEventListener('click',e=>{e.stopPropagation();window.openNoteEditor(date,noteText,noteBtn);});
+                const del=document.createElement('button'); del.className=missing&&!entry?'table-delete-btn missing-del':'table-delete-btn';
+                del.dataset.tip='Delete this entry'; del.textContent='✕';
+                if(!missing||entry)del.addEventListener('click',e=>{e.stopPropagation();showRowDeleteModal(date,entry);});
+                stTd.append(noteBtn,del); tr.append(dateTd,wtTd,stTd); tableBody.appendChild(tr);
+                tr.addEventListener('click',e=>{if(e.target.closest('button,input'))return;if(window.openWeightModal)window.openWeightModal(date,entry&&entry.weight_lbs!=null?entry.weight_lbs:null);});
+            });
+
+            if(rows.length&&window.oldestEntryDate&&startDate<=window.oldestEntryDate){
+                const footerTr=document.createElement('tr'); footerTr.className='no-earlier-row';
+                const footerTd=document.createElement('td'); footerTd.colSpan=3; footerTd.className='no-earlier-cell';
+                footerTd.innerHTML='<span class="no-earlier-inner">&#9670;&nbsp;&nbsp;No Earlier Data Recorded&nbsp;&nbsp;&#9670;</span>';
+                footerTr.appendChild(footerTd); tableBody.appendChild(footerTr);
+            }
+            appendExportRow(tableBody, rows);
+        }
+
+        function showTableConfirm(title,message,okLabel,onOk,onCancel,cancelLabel){
+            document.getElementById('table-confirm-title').textContent=title;
+            document.getElementById('table-confirm-message').textContent=message;
+            document.getElementById('table-confirm-ok').textContent=okLabel;
+            document.getElementById('table-confirm-cancel').textContent=cancelLabel||'Cancel';
+            const modal=document.getElementById('table-confirm-modal'); modal.hidden=false; modalOpen(modal);
+            document.getElementById('table-confirm-ok').onclick=()=>{modal.hidden=true;modalClose(modal);onOk();};
+            document.getElementById('table-confirm-cancel').onclick=()=>{modal.hidden=true;modalClose(modal);if(onCancel)onCancel();else renderTable();};
+        }
+        window.showAppConfirm=showTableConfirm;
+
+        async function startEdit(wtTd) {
+            if (wtTd.querySelector('input')) return;
+            const date=wtTd.dataset.date, unit=window.activeUnit||'lbs', cur=unit==='lbs'?wtTd.dataset.lbs:wtTd.dataset.kg;
+            const inp=document.createElement('input'); inp.type='number'; inp.min='1'; inp.max='999'; inp.step='0.1';
+            inp.value=cur; inp.className='table-edit-input'; wtTd.innerHTML=''; wtTd.appendChild(inp);
+            inp.focus(); if(cur)inp.select();
+            let done=false;
+            async function commitSave(lbs){
+                await fetch('/api/weight',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({weight_lbs:lbs,date,overwrite:true})});
+                await renderTable(); if(window.refreshChart)window.refreshChart(); if(window.refreshHeaderStats)window.refreshHeaderStats();
+            }
+            async function save(){
+                if(done)return; done=true; inp.removeEventListener('blur',save);
+                const raw=inp.value.trim();
+                if(raw===''&&wtTd.dataset.lbs){
+                    showTableConfirm('Confirm Clear Weight','Are you sure you want to remove your weight for '+formatDateDisplay(date)+'?','Clear',
+                        async()=>{await fetch('/api/weight/'+date+'/weight',{method:'DELETE'});await renderTable();if(window.refreshChart)window.refreshChart();if(window.refreshHeaderStats)window.refreshHeaderStats();});
+                    return;
+                }
+                const val=parseFloat(raw); if(isNaN(val)||val<=0){renderTable();return;}
+                const lbs=unit==='lbs'?val:parseFloat((val*2.2046).toFixed(1));
+                if(!wtTd.dataset.lbs){await commitSave(lbs);}
+                else if(Math.abs(val-parseFloat(cur))<0.001){renderTable();}
+                else{showTableConfirm('Confirm Overwrite','Are you sure you want to overwrite your weight for '+formatDateDisplay(date)+'?','Overwrite',()=>commitSave(lbs));}
+            }
+            function cancel(){if(done)return;done=true;renderTable();}
+            inp.addEventListener('keydown',e=>{if(e.key==='Enter')save();if(e.key==='Escape')cancel();});
+            inp.addEventListener('blur',save);
+        }
+
+        async function applyDelete(date){
+            await fetch('/api/weight/'+date,{method:'DELETE'});
+            await renderTable(); if(window.refreshChart)window.refreshChart(); if(window.refreshHeaderStats)window.refreshHeaderStats();
+        }
+        async function clearWeightEntry(date){
+            await fetch('/api/weight/'+date+'/weight',{method:'DELETE'});
+            await renderTable(); if(window.refreshChart)window.refreshChart(); if(window.refreshHeaderStats)window.refreshHeaderStats();
+        }
+        async function deleteNoteOnly(date){
+            await fetch('/api/weight/'+date+'/note',{method:'PATCH',headers:{'Content-Type':'application/json'},body:JSON.stringify({notes:''})});
+            if(window.noteMap)window.noteMap.set(date,'');
+            await renderTable(); if(window.refreshChart)window.refreshChart();
+        }
+
+        function showRowDeleteModal(date, entry){
+            const hasWeight=!!(entry&&entry.weight_lbs!=null), hasNote=!!(entry&&entry.notes&&entry.notes.trim());
+            const unit=window.activeUnit||'lbs';
+            const modal=document.getElementById('row-delete-modal'), checks=document.getElementById('row-delete-checks');
+            document.getElementById('row-delete-date').textContent=formatDateDisplay(date);
+            checks.innerHTML='';
+            if(hasWeight){const weightVal=unit==='lbs'?fmtLbs(entry.weight_lbs)+' lbs':fmtLbs(entry.weight_kg)+' kg';const lbl=document.createElement('label');lbl.className='row-delete-check-label';const cb=document.createElement('input');cb.type='checkbox';cb.checked=true;cb.dataset.key='weight';lbl.append(cb,document.createTextNode('Weight: '+weightVal));checks.appendChild(lbl);}
+            if(hasNote){const snippet=entry.notes.trim().length>48?entry.notes.trim().slice(0,48)+'…':entry.notes.trim();const lbl=document.createElement('label');lbl.className='row-delete-check-label';const cb=document.createElement('input');cb.type='checkbox';cb.checked=true;cb.dataset.key='note';lbl.append(cb,document.createTextNode('Note: "'+snippet+'"'));checks.appendChild(lbl);}
+            const okBtn=document.getElementById('row-delete-ok');
+            function syncOk(){okBtn.disabled=checks.querySelectorAll('input:checked').length===0;}
+            checks.querySelectorAll('input[type="checkbox"]').forEach(cb=>cb.addEventListener('change',syncOk));
+            okBtn.disabled=false; modal.hidden=false; modalOpen(modal);
+            document.getElementById('row-delete-cancel').onclick=()=>{modal.hidden=true;modalClose(modal);};
+            okBtn.onclick=async()=>{
+                modal.hidden=true; modalClose(modal);
+                const weightCb=checks.querySelector('[data-key="weight"]'), noteCb=checks.querySelector('[data-key="note"]');
+                const delWeight=!!(weightCb&&weightCb.checked), delNote=!!(noteCb&&noteCb.checked);
+                if(delWeight&&delNote)await applyDelete(date);
+                else if(delWeight)await clearWeightEntry(date);
+                else if(delNote)await deleteNoteOnly(date);
+                announce('Entry deleted.');
+            };
+        }
+
+        /* ── Custom scrollbar ── */
+        const scrollEl=document.querySelector('.data-table-scroll');
+        const thumbEl=document.getElementById('custom-scrollbar-thumb');
+        const trackEl=thumbEl.parentElement;
+        function syncThumb(){
+            if(scrollEl.scrollHeight<=scrollEl.clientHeight){thumbEl.style.display='none';return;}
+            const thumbH=Math.max((scrollEl.clientHeight/scrollEl.scrollHeight)*trackEl.clientHeight,30);
+            const maxTop=trackEl.clientHeight-thumbH, maxScroll=scrollEl.scrollHeight-scrollEl.clientHeight;
+            thumbEl.style.display='block'; thumbEl.style.height=thumbH+'px';
+            thumbEl.style.top=(scrollEl.scrollTop/maxScroll)*maxTop+'px';
+        }
+        scrollEl.addEventListener('scroll',syncThumb);
+        new ResizeObserver(syncThumb).observe(scrollEl.querySelector('.data-table'));
+        let drag=false,dragY=0,dragScroll=0;
+        function startDrag(e){drag=true;dragY=e.clientY;dragScroll=scrollEl.scrollTop;e.preventDefault();}
+        thumbEl.addEventListener('mousedown',startDrag);
+        trackEl.addEventListener('mousedown',e=>{if(e.target===thumbEl)return;const tr=trackEl.getBoundingClientRect(),th=parseFloat(thumbEl.style.height)||30,mt=trackEl.clientHeight-th,ms=scrollEl.scrollHeight-scrollEl.clientHeight,cy=Math.min(Math.max(e.clientY-tr.top-th/2,0),mt);scrollEl.scrollTop=(cy/mt)*ms;startDrag(e);});
+        document.addEventListener('mousemove',e=>{if(!drag)return;const mt=trackEl.clientHeight-parseFloat(thumbEl.style.height),ms=scrollEl.scrollHeight-scrollEl.clientHeight;scrollEl.scrollTop=Math.max(0,Math.min(ms,dragScroll+(e.clientY-dragY)*(ms/mt)));});
+        document.addEventListener('mouseup',()=>{drag=false;});
+
+        /* Keep scrollbar top flush with the actual header — header grows at narrow widths */
+        const wtHeaderEl=document.querySelector('.wt-header');
+        function syncTrackTop(){trackEl.style.top=wtHeaderEl.offsetHeight+'px';}
+        new ResizeObserver(syncTrackTop).observe(wtHeaderEl);
+        syncTrackTop();
+
+        /* Scroll table from anywhere on the page when no modal/popover is open */
+        window.addEventListener('wheel',function(e){
+            if(e.target.closest&&e.target.closest('.data-table-scroll'))return;
+            if(document.body.classList.contains('note-open'))return;
+            if(document.querySelector('.modal-overlay:not([hidden])'))return;
+            if(scrollEl.scrollHeight<=scrollEl.clientHeight)return;
+            scrollEl.scrollTop+=e.deltaY;
+            e.preventDefault();
+        },{passive:false});
+
+        toggleBtn.addEventListener('click',()=>{
+            isTableView=!isTableView; applyTableMode(isTableView);
+            if(isTableView){lastChart=window.currentChartPage||'daily';if(tableTitle)tableTitle.textContent=lastChart==='weekly'?'Weekly Summary':'Daily Summary';renderTable();}
+            else{if(lastChart==='weekly'){if(window.refreshWeeklyChart)window.refreshWeeklyChart();}else{if(window.refreshChart)window.refreshChart();}}
+        });
+        if(chartTypeBtn)chartTypeBtn.addEventListener('click',()=>{if(isTableView){lastChart=window.currentChartPage||'daily';if(tableTitle)tableTitle.textContent=lastChart==='weekly'?'Weekly Summary':'Daily Summary';renderTable();}});
+
+        window.onChartRangeChange=()=>{if(isTableView)renderTable();};
+        window.onWeeklyRangeChange=()=>{if(isTableView&&lastChart==='weekly')renderWeeklyTable();};
+        window.renderTable=renderTable;
+        window.setTablePage=function(page){lastChart=page;if(tableTitle)tableTitle.textContent=page==='weekly'?'Weekly Summary':'Daily Summary';};
+        window.setView=function(view,range,days){isTableView=(view==='table');applyTableMode(isTableView);if(window.refreshChart)window.refreshChart(range,days);if(isTableView)renderTable();};
+
+        const savedLanding=localStorage.getItem('pref_default_landing')||'daily';
+        if(savedLanding==='table-weekly')lastChart='weekly';
+        if(savedLanding==='table-daily'||savedLanding==='table-weekly')window.setView('table');
+    })();
+
+    /* ── Note editor popover ── */
+    (() => {
+        const popover   = document.getElementById('note-popover');
+        const dateSpan  = document.getElementById('note-popover-date');
+        const textarea  = document.getElementById('note-popover-text');
+        const saveBtn   = document.getElementById('note-popover-save');
+        const cancelBtn = document.getElementById('note-popover-cancel');
+        const deleteBtn = document.getElementById('note-popover-delete');
+        const resizeHdl = document.getElementById('note-resize-handle');
+        const sbThumb   = popover.querySelector('.note-scrollbar-thumb');
+        const arrowEl   = popover.querySelector('.note-popover-arrow');
+        let activeDate=null,_anchorEl=null,isResizing=false,wasDragging=false;
+        let resizeStartY=0,resizeStartH=0,sbDrag=false,sbDragY=0,sbDragScrollTop=0;
+
+        function syncNoteScrollbar(){
+            if(!sbThumb)return;
+            const track=sbThumb.parentElement;
+            if(textarea.scrollHeight<=textarea.clientHeight){sbThumb.style.display='none';return;}
+            sbThumb.style.display='block';
+            const ratio=textarea.clientHeight/textarea.scrollHeight;
+            const thumbH=Math.max(16,ratio*track.clientHeight);
+            const maxTop=track.clientHeight-thumbH;
+            const pct=textarea.scrollTop/(textarea.scrollHeight-textarea.clientHeight);
+            sbThumb.style.height=thumbH+'px'; sbThumb.style.top=(pct*maxTop)+'px';
+        }
+        textarea.addEventListener('scroll',syncNoteScrollbar);
+        new ResizeObserver(syncNoteScrollbar).observe(textarea);
+
+        sbThumb.addEventListener('mousedown',e=>{sbDrag=true;sbDragY=e.clientY;sbDragScrollTop=textarea.scrollTop;e.preventDefault();e.stopPropagation();});
+        document.addEventListener('mousemove',e=>{
+            if(!sbDrag)return;
+            const track=sbThumb.parentElement,thumbH=parseFloat(sbThumb.style.height)||16;
+            const maxTop=track.clientHeight-thumbH,maxScroll=textarea.scrollHeight-textarea.clientHeight;
+            const ratio=maxTop>0?(e.clientY-sbDragY)/maxTop:0;
+            textarea.scrollTop=Math.max(0,Math.min(sbDragScrollTop+ratio*maxScroll,maxScroll));
+        });
+        document.addEventListener('mouseup',()=>{sbDrag=false;});
+
+        function positionPopover(){
+            if(!_anchorEl)return;
+            const rect=_anchorEl.getBoundingClientRect(),pw=popover.offsetWidth||320,ph=popover.offsetHeight||200,gap=8,margin=8;
+            const idealLeft=rect.left+rect.width/2-pw/2;
+            const left=Math.max(margin,Math.min(idealLeft,window.innerWidth-pw-margin));
+            let top,side;
+            if(rect.bottom+gap+ph+margin<=window.innerHeight){top=rect.bottom+gap;side='below';}
+            else{top=Math.max(margin,rect.top-gap-ph);side='above';}
+            popover.style.top=top+'px'; popover.style.left=left+'px';
+            if(arrowEl){
+                arrowEl.className='note-popover-arrow note-popover-arrow--'+side;
+                const btnCx=rect.left+rect.width/2,arrowLeft=Math.max(16,Math.min(btnCx-left-9,pw-24));
+                arrowEl.style.left=arrowLeft+'px';
+            }
+        }
+        window.addEventListener('resize',()=>{if(!popover.hidden)positionPopover();});
+
+        function close(){popover.hidden=true;document.body.classList.remove('note-open');activeDate=null;modalClose(popover);}
+
+        function getExpandedWeeks(){const s=new Set();document.querySelectorAll('.week-header-row').forEach(hdr=>{if(hdr.querySelector('.week-toggle-icon.expanded')){const lbl=hdr.querySelector('.week-date-inner span:last-child');if(lbl)s.add(lbl.textContent);}});return s;}
+        function restoreExpandedWeeks(labels){document.querySelectorAll('.week-header-row').forEach(hdr=>{const lbl=hdr.querySelector('.week-date-inner span:last-child');if(lbl&&labels.has(lbl.textContent)){const icon=hdr.querySelector('.week-toggle-icon'),wrap=hdr.nextElementSibling&&hdr.nextElementSibling.querySelector('.week-days-wrap');if(icon&&wrap&&!icon.classList.contains('expanded')){icon.classList.add('expanded');wrap.style.maxHeight=wrap.scrollHeight+'px';}}});}
+
+        async function save(){
+            if(!activeDate)return;
+            const notes=textarea.value.trim().slice(0,300);
+            await fetch('/api/weight/'+activeDate+'/note',{method:'PATCH',headers:{'Content-Type':'application/json'},body:JSON.stringify({notes})});
+            if(window.noteMap)window.noteMap.set(activeDate,notes);
+            announce('Note saved.');
+            const exp=getExpandedWeeks(); close();
+            if(window.renderTable)await window.renderTable();
+            restoreExpandedWeeks(exp);
+        }
+        async function deleteNote(exp){
+            if(!activeDate)return;
+            await fetch('/api/weight/'+activeDate+'/note',{method:'PATCH',headers:{'Content-Type':'application/json'},body:JSON.stringify({notes:''})});
+            if(window.noteMap)window.noteMap.set(activeDate,'');
+            close(); if(window.renderTable)await window.renderTable(); if(exp)restoreExpandedWeeks(exp);
+        }
+
+        window.openNoteEditor=function(date,currentNote,anchorEl){
+            activeDate=date; _anchorEl=anchorEl;
+            dateSpan.textContent=formatDateDisplay(date);
+            textarea.value=currentNote||''; popover.hidden=false;
+            document.body.classList.add('note-open'); modalOpen(popover);
+            positionPopover(); textarea.focus(); syncNoteScrollbar();
+        };
+
+        resizeHdl.addEventListener('mousedown',e=>{isResizing=true;wasDragging=false;resizeStartY=e.clientY;resizeStartH=textarea.offsetHeight;e.preventDefault();e.stopPropagation();});
+        document.addEventListener('mousemove',e=>{if(!isResizing)return;const newH=Math.max(80,resizeStartH+(e.clientY-resizeStartY));textarea.style.height=newH+'px';});
+        document.addEventListener('mouseup',e=>{if(isResizing){isResizing=false;wasDragging=true;setTimeout(()=>{wasDragging=false;},50);}});
+
+        deleteBtn.addEventListener('click',e=>{
+            e.stopPropagation();
+            const exp=getExpandedWeeks();
+            if(window.showAppConfirm){window.showAppConfirm('Delete Note','Are you sure you want to delete this note?','Delete',()=>deleteNote(exp));}
+            else{deleteNote(exp);}
+        });
+        saveBtn.addEventListener('click',save);
+        cancelBtn.addEventListener('click',close);
+        textarea.addEventListener('keydown',e=>{if(e.key==='Escape')close();if(e.key==='Enter'&&(e.ctrlKey||e.metaKey))save();});
+        document.addEventListener('click',e=>{if(wasDragging)return;if(!popover.hidden&&!e.composedPath().includes(popover)&&!e.target.closest('.note-btn'))close();});
+    })();
+
+    /* ── Historical weight modal ── */
+    (function () {
+        const modal    = document.getElementById('history-modal');
+        const dateIn   = document.getElementById('history-date');
+        const weightIn = document.getElementById('history-weight');
+        const preview  = document.getElementById('history-kg-preview');
+        const screenEl = document.getElementById('history-screen-input');
+        const labelEl  = screenEl ? screenEl.querySelector('label[for="history-weight"]') : null;
+        const unitTag  = screenEl ? screenEl.querySelector('.modal-unit-tag') : null;
+        const baseLabel = labelEl ? labelEl.textContent.replace(/\s*\((lbs|kgs)\)$/,'') : '';
+
+        const calEl    = document.getElementById('history-calendar');
+        const gridEl   = document.getElementById('dp-grid');
+        const monthLbl = document.getElementById('dp-month-label');
+        const dayNames = calEl ? calEl.querySelector('.dp-day-names') : null;
+        const MONTHS   = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+        let viewDate=new Date(), selectedDateISO='', calMode='days', yearPage=new Date().getFullYear()-5;
+
+        function isoFromParts(y,m,d){return y+'-'+String(m+1).padStart(2,'0')+'-'+String(d).padStart(2,'0');}
+        function displayFromISO(iso){const[y,m,d]=iso.split('-');return MONTHS[parseInt(m)-1]+' '+parseInt(d)+', '+y;}
+
+        function renderCalendar(){
+            if(!gridEl)return; calMode='days'; if(dayNames)dayNames.style.display=''; gridEl.style.gridTemplateColumns='repeat(7, 1fr)';
+            const today=getTodayISO(),todayD=new Date();
+            const minDate=isoFromParts(todayD.getFullYear()-10,todayD.getMonth(),todayD.getDate());
+            const y=viewDate.getFullYear(),m=viewDate.getMonth();
+            if(monthLbl)monthLbl.textContent=MONTHS[m]+' '+y;
+            const firstDow=new Date(y,m,1).getDay(),daysInMonth=new Date(y,m+1,0).getDate(),daysInPrev=new Date(y,m,0).getDate();
+            gridEl.innerHTML='';
+            for(let i=firstDow-1;i>=0;i--){const btn=document.createElement('button');btn.type='button';btn.className='dp-day dp-other-month';btn.textContent=daysInPrev-i;btn.disabled=true;gridEl.appendChild(btn);}
+            for(let day=1;day<=daysInMonth;day++){
+                const iso=isoFromParts(y,m,day),btn=document.createElement('button');
+                btn.type='button';btn.className='dp-day';btn.textContent=day;
+                if(iso===today)btn.classList.add('dp-today');if(iso===selectedDateISO)btn.classList.add('dp-selected');
+                if(iso>today||iso<minDate){btn.disabled=true;}else{btn.addEventListener('click',()=>{selectedDateISO=iso;if(dateIn)dateIn.value=displayFromISO(iso);if(calEl)calEl.hidden=true;});}
+                gridEl.appendChild(btn);
+            }
+            const rem=(firstDow+daysInMonth)%7;
+            if(rem>0){for(let i=1;i<=7-rem;i++){const btn=document.createElement('button');btn.type='button';btn.className='dp-day dp-other-month';btn.textContent=i;btn.disabled=true;gridEl.appendChild(btn);}}
+        }
+        function renderYearGrid(){
+            if(!gridEl)return; calMode='years'; if(dayNames)dayNames.style.display='none'; gridEl.style.gridTemplateColumns='repeat(3, 1fr)';
+            const todayY=new Date().getFullYear(),minY=todayY-10,curY=viewDate.getFullYear();
+            if(monthLbl)monthLbl.textContent=yearPage+' – '+(yearPage+11); gridEl.innerHTML='';
+            for(let i=0;i<12;i++){
+                const yr=yearPage+i,btn=document.createElement('button');
+                btn.type='button';btn.className='dp-day dp-year';btn.textContent=yr;
+                if(yr===todayY)btn.classList.add('dp-today');if(yr===curY)btn.classList.add('dp-selected');
+                if(yr>todayY||yr<minY){btn.disabled=true;}else{btn.addEventListener('click',()=>{viewDate=new Date(yr,viewDate.getMonth(),1);renderCalendar();});}
+                gridEl.appendChild(btn);
+            }
+        }
+        if(monthLbl)monthLbl.addEventListener('click',()=>{if(calMode==='days'){yearPage=viewDate.getFullYear()-5;renderYearGrid();}else{renderCalendar();}});
+        if(dateIn)dateIn.addEventListener('click',()=>{if(calEl.hidden){viewDate=selectedDateISO?new Date(selectedDateISO+'T12:00:00'):new Date();renderCalendar();calEl.hidden=false;}else{calEl.hidden=true;}});
+        const dpPrev=document.getElementById('dp-prev'),dpNext=document.getElementById('dp-next');
+        if(dpPrev)dpPrev.addEventListener('click',()=>{if(calMode==='years'){yearPage-=12;renderYearGrid();}else{viewDate=new Date(viewDate.getFullYear(),viewDate.getMonth()-1,1);renderCalendar();}});
+        if(dpNext)dpNext.addEventListener('click',()=>{if(calMode==='years'){yearPage+=12;renderYearGrid();}else{viewDate=new Date(viewDate.getFullYear(),viewDate.getMonth()+1,1);renderCalendar();}});
+        document.addEventListener('click',e=>{const wrap=document.getElementById('history-date-wrap');if(calEl&&!calEl.hidden&&!e.composedPath().includes(wrap))calEl.hidden=true;});
+
+        function isKgMode(){return window.activeUnit==='kg';}
+        function close(){modal.hidden=true;if(calEl)calEl.hidden=true;const si=document.getElementById('history-screen-input'),sc=document.getElementById('history-screen-confirm');if(si)si.hidden=false;if(sc)sc.hidden=true;modalClose(modal);}
+        function updatePreview(){const v=parseFloat(weightIn.value);preview.textContent=(!isNaN(v)&&v>0)?(isKgMode()?(v*2.2046).toFixed(1)+' lbs':(v/2.2046).toFixed(1)+' kgs'):'';}
+
+        async function doSave(dt,lbs,overwrite){
+            const res=await fetch('/api/weight',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({weight_lbs:lbs,date:dt,overwrite})});
+            const data=await res.json();
+            if(data.success){close();if(window.refreshChart)window.refreshChart();if(window.renderTable)window.renderTable();if(window.refreshHeaderStats)window.refreshHeaderStats();return;}
+            if(data.conflict){
+                const om=document.getElementById('history-overwrite-message');if(om)om.textContent='Are you sure you want to overwrite your weight for '+formatDateDisplay(dt)+'?';
+                const si=document.getElementById('history-screen-input'),sc=document.getElementById('history-screen-confirm');
+                if(si)si.hidden=true;if(sc)sc.hidden=false;
+                const oc=document.getElementById('history-overwrite-cancel'),ocf=document.getElementById('history-overwrite-confirm');
+                if(oc)oc.onclick=close; if(ocf)ocf.onclick=()=>doSave(dt,lbs,true);
+            }
+        }
+        function trySave(){const dt=selectedDateISO,raw=parseFloat(weightIn.value);if(!dt){if(dateIn)dateIn.focus();return;}if(isNaN(raw)||raw<=0){weightIn.focus();return;}const lbs=isKgMode()?parseFloat((raw*2.2046).toFixed(1)):raw;doSave(dt,lbs,false);}
+        function step(amount){const kg=isKgMode(),min=kg?20:50,max=kg?450:999,cur=parseFloat(weightIn.value)||0;weightIn.value=Math.min(max,Math.max(min,Math.round((cur+amount)*10)/10));updatePreview();}
+
+        const addBtn=document.getElementById('chart-add-btn');
+        if(addBtn)addBtn.addEventListener('click',()=>{
+            const kg=isKgMode();
+            if(labelEl)labelEl.textContent=baseLabel+(kg?' (kgs)':' (lbs)');
+            if(unitTag)unitTag.textContent=kg?'kgs':'lbs';
+            weightIn.min=kg?'20':'50'; weightIn.max=kg?'450':'999';
+            selectedDateISO=''; if(dateIn)dateIn.value=''; weightIn.value=''; preview.textContent='';
+            close(); modal.hidden=false; modalOpen(modal);
+            setTimeout(()=>{if(dateIn)dateIn.focus();},50);
+        });
+
+        const hCancel=document.getElementById('history-cancel'),hSave=document.getElementById('history-save');
+        const hStepUp=document.getElementById('history-step-up'),hStepDown=document.getElementById('history-step-down');
+        if(hCancel)hCancel.addEventListener('click',close);
+        if(hSave)hSave.addEventListener('click',trySave);
+        if(hStepUp)hStepUp.addEventListener('click',()=>step(1));
+        if(hStepDown)hStepDown.addEventListener('click',()=>step(-1));
+        modal.addEventListener('click',e=>{if(e.target===modal)close();});
+        document.addEventListener('keydown',e=>{if(e.key==='Escape'){if(calEl&&!calEl.hidden){calEl.hidden=true;return;}if(!modal.hidden)close();}});
+        weightIn.addEventListener('input',updatePreview);
+        weightIn.addEventListener('keydown',e=>{if(e.key==='Enter')trySave();});
+
+        window.openWeightModal=function(date,currentLbs){
+            const kg=isKgMode();
+            if(labelEl)labelEl.textContent=baseLabel+(kg?' (kgs)':' (lbs)');
+            if(unitTag)unitTag.textContent=kg?'kgs':'lbs';
+            weightIn.min=kg?'20':'50'; weightIn.max=kg?'450':'999';
+            selectedDateISO=date||'';
+            if(dateIn)dateIn.value=date?displayFromISO(date):'';
+            const raw=currentLbs!=null?(kg?parseFloat((currentLbs/2.2046).toFixed(1)):currentLbs):null;
+            weightIn.value=raw!=null?raw:''; preview.textContent='';
+            if(weightIn.value)updatePreview();
+            const si=document.getElementById('history-screen-input'),sc=document.getElementById('history-screen-confirm');
+            if(si)si.hidden=false;if(sc)sc.hidden=true;
+            if(calEl)calEl.hidden=true;
+            modal.hidden=false; modalOpen(modal);
+            setTimeout(()=>{weightIn.focus();if(weightIn.value)weightIn.select();},50);
+        };
+    })();
+
+    /* ── Custom cursor ── */
+    (function () {
+        const el=document.getElementById('site-cursor');
+        const cursors={};
+        let activeKey='normal',mouseInDoc=false,activeCursorSet=localStorage.getItem('pref_profile_pic')||'1';
+        const CURSOR_SETS={
+            '1':[['/static/pointer.png',240,10,48],['/static/editpointer.png',650,30,64]],
+            '2':[['/static/pointer2.png',198,10,48],['/static/editpointer2.png',460,30,64]],
+            '3':[['/static/pointer3.png',198,10,48],['/static/editpointer3.png',460,30,64]],
+            '4':[['/static/pointer4.png',198,10,48],['/static/editpointer4.png',460,30,64]],
+        };
+        function processImg(src,origHotX,origHotY,key,renderH){
+            const img=new Image();
+            img.onload=function(){
+                const h=renderH||48,scale=h/img.height,w=Math.round(img.width*scale);
+                const cv=document.createElement('canvas');cv.width=w;cv.height=h;
+                const ctx=cv.getContext('2d');ctx.drawImage(img,0,0,w,h);
+                const id=ctx.getImageData(0,0,w,h),d=id.data;
+                for(let i=0;i<d.length;i+=4){if(d[i]>240&&d[i+1]>240&&d[i+2]>240)d[i+3]=0;}
+                ctx.putImageData(id,0,0);
+                const entry={url:cv.toDataURL(),hotX:Math.round(origHotX*scale),hotY:Math.round(origHotY*scale),w,h};
+                cursors[key]=entry;
+                if(key==='normal'+activeCursorSet){cursors['normal']=entry;applyCursor('normal');if(mouseInDoc)el.style.display='block';}
+                if(key==='edit'+activeCursorSet){cursors['edit']=entry;if(activeKey==='edit')applyCursor('edit');}
+            };
+            img.src=src;
+        }
+        function applyCursor(key){const c=cursors[key];if(!c)return;el.style.width=c.w+'px';el.style.height=c.h+'px';el.style.backgroundImage=`url(${c.url})`;}
+        Object.keys(CURSOR_SETS).forEach(n=>{const set=CURSOR_SETS[n];processImg(set[0][0],set[0][1],set[0][2],'normal'+n,set[0][3]);processImg(set[1][0],set[1][1],set[1][2],'edit'+n,set[1][3]);});
+        window.applyCursorSet=function(n){const sn=String(n);activeCursorSet=sn;if(cursors['normal'+sn])cursors['normal']=cursors['normal'+sn];if(cursors['edit'+sn])cursors['edit']=cursors['edit'+sn];applyCursor(activeKey);if(cursors['normal']&&mouseInDoc)el.style.display='block';};
+        let lastMX=0,lastMY=0;
+        function evalCursor(target){const cellEl=target.closest('.cell-weight'),isEdit=target.closest('.note-resize-handle')||(cellEl&&!cellEl.classList.contains('cell-missing'));const key=isEdit?'edit':'normal';if(key!==activeKey){activeKey=key;applyCursor(key);}}
+        document.addEventListener('mouseover',e=>evalCursor(e.target));
+        document.addEventListener('click',()=>{setTimeout(()=>{const t=document.elementFromPoint(lastMX,lastMY);if(t)evalCursor(t);},0);});
+        document.addEventListener('mousemove',e=>{lastMX=e.clientX;lastMY=e.clientY;const c=cursors[activeKey];if(!c)return;el.style.left=(e.clientX-c.hotX)+'px';el.style.top=(e.clientY-c.hotY)+'px';});
+        document.addEventListener('mouseleave',()=>{mouseInDoc=false;el.style.display='none';});
+        document.addEventListener('mouseenter',()=>{mouseInDoc=true;if(cursors['normal'])el.style.display='block';});
+    })();
+
+    /* ── Site-wide hover tooltips ── */
+    (function () {
+        const ttEl=document.createElement('div');ttEl.id='site-tooltip';document.body.appendChild(ttEl);
+        function position(x,y){const w=ttEl.offsetWidth,h=ttEl.offsetHeight;ttEl.style.top=Math.round(y-h/2)+'px';ttEl.style.left=Math.max(8,Math.round(x-12-w))+'px';}
+        document.addEventListener('mouseover',e=>{const t=e.target.closest('[data-tip]');if(t){ttEl.textContent=t.dataset.tip;ttEl.style.opacity='1';}else{ttEl.style.opacity='0';}});
+        document.addEventListener('focusin',e=>{const t=e.target.closest('[data-tip]');if(!t)return;ttEl.textContent=t.dataset.tip;ttEl.style.opacity='1';const r=t.getBoundingClientRect();position(r.right,r.top+r.height/2);});
+        document.addEventListener('focusout',()=>{ttEl.style.opacity='0';});
+        document.addEventListener('mousemove',e=>{if(ttEl.style.opacity==='1')position(e.clientX,e.clientY);});
+        document.addEventListener('mouseleave',()=>{ttEl.style.opacity='0';});
+        document.addEventListener('wheel',()=>{ttEl.style.opacity='0';const ct=document.getElementById('chart-tooltip');if(ct)ct.style.opacity='0';},{passive:true});
+    })();
+
+    /* ── Header stats ── */
+    (function () {
+        async function updateHeaderStats() {
+            const rows=await fetch('/api/weights?range=all').then(r=>r.json());
+            const withWeight=rows.filter(r=>r.weight_lbs!=null);
+            if(!withWeight.length)return;
+            const weekAgo=new Date();weekAgo.setDate(weekAgo.getDate()-6);weekAgo.setHours(0,0,0,0);
+            const weekISO=weekAgo.toISOString().split('T')[0];
+            const thisWeek=withWeight.filter(r=>r.date>=weekISO);
+            const loggedEl=document.getElementById('wt-logged-week');
+            if(loggedEl)loggedEl.textContent=thisWeek.length;
+            const avgEl=document.getElementById('wt-7d-avg');
+            if(avgEl){
+                if(thisWeek.length>0){const unit=window.activeUnit||'lbs';const avg=thisWeek.reduce((s,r)=>s+(unit==='kg'?r.weight_kg:r.weight_lbs),0)/thisWeek.length;const rounded=avg===Math.round(avg)?Math.round(avg):parseFloat(avg.toFixed(1));avgEl.textContent=rounded+' '+(unit==='kg'?'kg':'lb');}
+                else{avgEl.textContent='—';}
+            }
+            const streakEl=document.getElementById('wt-streak');
+            if(streakEl){const dateSet=new Set(withWeight.map(r=>r.date));let streak=0,d=new Date();if(!dateSet.has(d.toLocaleDateString('en-CA')))d.setDate(d.getDate()-1);while(dateSet.has(d.toLocaleDateString('en-CA'))){streak++;d.setDate(d.getDate()-1);}streakEl.textContent=streak;applyStreakGlow(streakEl,streakEl.nextElementSibling,streak);}
+        }
+        updateHeaderStats();
+        window.refreshHeaderStats=updateHeaderStats;
+    })();
+
+    /* ── Footer filter menu + range context switching ── */
+    (function () {
+        const filterBtn    = document.getElementById('mp-filter-btn');
+        const rangeMenu    = document.getElementById('mp-range-menu');
+        const dailyRanges  = document.getElementById('mp-daily-ranges');
+        const weeklyRanges = document.getElementById('mp-weekly-ranges');
+        if(!filterBtn||!rangeMenu)return;
+
+        function closeMenu(){filterBtn.classList.remove('open');rangeMenu.classList.remove('open');}
+        filterBtn.addEventListener('click',e=>{e.stopPropagation();filterBtn.classList.toggle('open');rangeMenu.classList.toggle('open');});
+        document.addEventListener('click',closeMenu);
+        rangeMenu.addEventListener('click',e=>e.stopPropagation());
+
+        function updateRangeContext(){
+            const isWeekly=window.currentChartPage==='weekly';
+            if(dailyRanges)dailyRanges.hidden=isWeekly;
+            if(weeklyRanges)weeklyRanges.hidden=!isWeekly;
+        }
+
+        const chartTypeBtn2=document.getElementById('chart-type-btn');
+        if(chartTypeBtn2)chartTypeBtn2.addEventListener('click',()=>setTimeout(updateRangeContext,50));
+
+        const viewToggle=document.getElementById('view-toggle-btn');
+        if(viewToggle)viewToggle.addEventListener('click',()=>setTimeout(updateRangeContext,50));
+
+        const iconChart=document.getElementById('mp-view-icon-chart');
+        const iconTable=document.getElementById('mp-view-icon-table');
+        if(viewToggle&&iconChart&&iconTable){
+            viewToggle.addEventListener('click',()=>{
+                setTimeout(()=>{
+                    const inTable=document.getElementById('data-table-wrap')&&!document.getElementById('data-table-wrap').hidden;
+                    iconChart.hidden=inTable;iconTable.hidden=!inTable;viewToggle.classList.toggle('in-table',inTable);
+                },50);
+            });
+        }
+        setTimeout(updateRangeContext,200);
+    })();
+</script>
+
+</body>
+</html>

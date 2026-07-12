@@ -3,10 +3,230 @@
 <head>
     <title>Project 189</title>
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link href="https://fonts.googleapis.com/css2?family=Pacifico&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}?v=150">
-    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <style>
+        /* ── Main page shell ── */
+        :root { --mp-hdr: 62px; --mp-ftr: 72px; }
+        html, body { height: 100%; margin: 0; overflow: hidden; }
+
+        .mp-bg {
+            position: fixed; inset: 0; z-index: -1;
+            background: url('/static/mainbackground.png') center / cover no-repeat;
+            background-color: rgb(8, 0, 18);
+        }
+        .mp-bg::after {
+            content: ''; position: absolute; inset: 0;
+            background: rgba(8, 0, 18, 0.72);
+        }
+        /* Hide miami panels */
+        .miami-left, .miami-right { display: none !important; }
+        /* Hide old page-scrollbar */
+        #page-scrollbar-track { display: none !important; }
+
+        /* ── Fixed header ── */
+        .mp-header {
+            position: fixed; top: 0; left: 0; right: 0;
+            height: var(--mp-hdr); z-index: 700;
+            display: grid; grid-template-columns: 1fr auto 1fr;
+            align-items: center; padding: 0 16px;
+            background: rgba(8, 0, 20, 0.6);
+            border-bottom: 1px solid rgba(255, 45, 120, 0.12);
+            backdrop-filter: blur(8px);
+        }
+        .mp-title {
+            font-family: 'Pacifico', cursive;
+            font-size: clamp(16px, 3.5vw, 26px);
+            color: #ffe0ee;
+            text-shadow: 0 0 10px #ff80aa, 0 0 24px #ff2d78;
+            margin: 0; text-align: center;
+        }
+        .mp-header-stats {
+            display: flex; gap: clamp(10px, 3vw, 28px);
+            justify-content: flex-end; align-items: center;
+        }
+        .mp-stat { text-align: center; }
+        .mp-stat-num {
+            font-family: Impact, 'Arial Black', sans-serif;
+            font-size: clamp(15px, 2.5vw, 20px);
+            color: #fff; line-height: 1;
+        }
+        .mp-stat-label {
+            font-family: Arial, sans-serif; font-size: 9px;
+            letter-spacing: 0.8px; text-transform: uppercase;
+            color: rgba(255,255,255,0.45); margin-top: 2px;
+            white-space: nowrap;
+        }
+
+        /* ── Reposition profile menu → fixed top-left inside header ── */
+        #profile-menu {
+            top: 8px !important; left: 16px !important; right: auto !important;
+            gap: 8px !important;
+        }
+        #profile-btn {
+            width: 44px !important; height: 44px !important;
+        }
+        /* ── Reposition health bar below header ── */
+        #healthbar-hud {
+            top: calc(var(--mp-hdr) + 6px) !important;
+        }
+
+        /* ── Scrollable main ── */
+        .mp-main {
+            position: fixed;
+            top: var(--mp-hdr); bottom: var(--mp-ftr);
+            left: 0; right: 0;
+            overflow: hidden;
+        }
+        .mp-main::-webkit-scrollbar { display: none; }
+
+        /* ── Plates section — full viewport height, centered ── */
+        .mp-plates-section {
+            height: calc(100vh - var(--mp-hdr) - var(--mp-ftr));
+            display: flex; align-items: center; justify-content: center;
+        }
+        /* Give .plates a defined width so 1fr columns resolve.
+           Size to fill ~90% of the available section height (square grid) */
+        .mp-plates-section .plates {
+            width: min(clamp(300px, calc(100vh - var(--mp-hdr) - var(--mp-ftr) - 60px), 720px), 92vw);
+        }
+
+
+        /* ── Mobile: two-row header + full-width chart ── */
+        @media (max-width: 560px) {
+            :root { --mp-hdr: 90px; }
+
+            /* Switch header to flex-wrap so stats drop to a second line */
+            .mp-header {
+                height: var(--mp-hdr);
+                display: flex;
+                flex-wrap: wrap;
+                align-content: flex-start;
+                align-items: center;
+                padding: 0 16px;
+                gap: 0;
+            }
+            /* Left spacer stays — keeps title visually centered in row 1 */
+            .mp-header > div:first-child {
+                width: 44px;
+                flex-shrink: 0;
+                align-self: flex-start;
+                padding-top: 10px;
+            }
+            .mp-title {
+                flex: 1;
+                font-size: clamp(16px, 5vw, 22px);
+                padding: 10px 0 8px;
+                align-self: flex-start;
+            }
+            /* Stats: full-width second row with a divider, spaced evenly */
+            .mp-header-stats {
+                width: 100%;
+                justify-content: space-around;
+                gap: 0;
+                padding: 5px 0 8px;
+                border-top: 1px solid rgba(255, 45, 120, 0.15);
+            }
+            .mp-stat-num { font-size: 15px; }
+            .mp-stat-label { font-size: 8px; letter-spacing: 0.5px; }
+
+        }
+
+        /* ── Quick-add footer ── */
+        .mp-footer {
+            position: fixed; bottom: 0; left: 0; right: 0;
+            height: var(--mp-ftr); z-index: 700;
+            display: grid; grid-template-columns: 1fr auto 1fr;
+            align-items: center; padding: 0 16px;
+            background: rgba(8, 0, 20, 0.6);
+            border-top: 1px solid rgba(255, 45, 120, 0.12);
+            backdrop-filter: blur(8px);
+        }
+        .mp-add-picker-wrap {
+            position: relative;
+            display: flex; align-items: center; justify-content: center;
+        }
+        .mp-footer-add-btn {
+            width: 44px; height: 44px; border-radius: 12px;
+            background: linear-gradient(135deg, #ff2d78, #c73862);
+            border: none; color: #fff; font-size: 30px; line-height: 1;
+            display: flex; align-items: center; justify-content: center;
+            box-shadow: 0 4px 20px rgba(255, 45, 120, 0.4);
+            transition: all 0.2s; cursor: pointer;
+        }
+        .mp-footer-add-btn:hover { box-shadow: 0 4px 28px rgba(255, 45, 120, 0.85); transform: scale(1.06); }
+        .mp-add-picker {
+            position: absolute;
+            bottom: calc(100% + 10px); left: 50%;
+            transform: translateX(-50%) translateY(8px);
+            background: rgba(8, 0, 20, 0.97);
+            border: 1px solid rgba(255, 45, 120, 0.3);
+            border-radius: 10px; padding: 8px; min-width: 190px;
+            opacity: 0; pointer-events: none;
+            transition: opacity 0.18s ease, transform 0.18s ease;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.6);
+        }
+        .mp-add-picker.open { opacity: 1; pointer-events: auto; transform: translateX(-50%) translateY(0); }
+        .mp-add-option {
+            display: block; width: 100%; margin-bottom: 5px;
+            padding: 10px 16px;
+            background: transparent;
+            border: 1px solid rgba(255, 45, 120, 0.2); border-radius: 6px;
+            color: rgba(255, 255, 255, 0.85);
+            font-family: Arial, sans-serif; font-size: 13px; letter-spacing: 0.4px;
+            text-align: left; cursor: pointer; transition: all 0.15s;
+        }
+        .mp-add-option:last-child { margin-bottom: 0; }
+        .mp-add-option:hover { background: rgba(255, 45, 120, 0.12); color: #fff; border-color: rgba(255, 45, 120, 0.45); }
+
+        /* ── Delete-check list for quick-log workout ── */
+        #idx-del-checks { display: flex; flex-direction: column; gap: 8px; margin: 16px 0 24px; text-align: left; }
+
+        /* ── Log Workout Modal ── */
+        .wp-modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.72); display: flex; align-items: center; justify-content: center; z-index: 1300; }
+        .wp-modal-overlay[hidden] { display: none; }
+        .wp-modal-card { background: linear-gradient(160deg,#18002e 0%,#0b001c 100%); border: 1px solid rgba(255,45,120,0.32); border-radius: 16px; width: clamp(340px,90vw,500px); max-height: 90vh; display: flex; flex-direction: column; box-shadow: 0 0 40px rgba(255,45,120,0.15),0 24px 64px rgba(0,0,0,0.8); }
+        .wp-modal-head { display: flex; align-items: center; justify-content: space-between; padding: 14px 20px 11px; border-bottom: 1px solid rgba(255,255,255,0.1); flex-shrink: 0; }
+        .wp-modal-title-text { font-family: Impact,'Arial Black',sans-serif; font-size: 19px; letter-spacing: 2.5px; color: #ff2d78; text-transform: uppercase; }
+        .wp-modal-x { background: none; border: none; color: rgba(255,255,255,0.85); font-size: 19px; padding: 4px 8px; border-radius: 4px; transition: color 0.2s; line-height: 1; }
+        .wp-modal-x:hover { color: #ff2d78; }
+        .wp-modal-body { flex: 1; overflow-y: auto; overflow-x: hidden; padding: 14px 20px; scrollbar-width: thin; scrollbar-color: rgba(255,45,120,0.35) transparent; box-sizing: border-box; }
+        .wp-modal-body::-webkit-scrollbar { width: 4px; }
+        .wp-modal-body::-webkit-scrollbar-track { background: transparent; }
+        .wp-modal-body::-webkit-scrollbar-thumb { background: rgba(255,45,120,0.45); border-radius: 2px; }
+        .wp-modal-body * { box-sizing: border-box; }
+        .wpm-date-wrap { margin-bottom: 14px; position: relative; }
+        .wpm-field-label { font-family: Arial,sans-serif; font-size: 12px; letter-spacing: 1.2px; text-transform: uppercase; color: rgba(255,255,255,0.88); margin-bottom: 5px; }
+        .wpm-date-input { width: 100%; background: #1a0035; border: 1px solid rgba(255,45,120,0.3); border-radius: 8px; padding: 9px 14px; font-size: 14px; font-family: Arial,sans-serif; color: #f4f4f4; outline: none; cursor: pointer; }
+        .wpm-date-input:focus { border-color: rgba(255,45,120,0.7); box-shadow: 0 0 12px rgba(255,45,120,0.25); }
+        .wpm-day-section { margin-bottom: 14px; }
+        .wpm-entries-wrap { display: flex; gap: 4px; height: 128px; }
+        #wpm-entries-scroll { flex: 1; min-width: 0; overflow-y: scroll; scrollbar-width: none; -ms-overflow-style: none; }
+        #wpm-entries-scroll::-webkit-scrollbar { display: none; }
+        .wpm-scroll-track { width: 4px; flex-shrink: 0; position: relative; border-radius: 2px; }
+        .wpm-scroll-thumb { position: absolute; left: 0; width: 4px; min-height: 16px; background: rgba(255,45,120,0.45); border-radius: 2px; display: none; cursor: none !important; }
+        .wpm-day-heading { font-family: Arial,sans-serif; font-size: 12px; letter-spacing: 1.2px; text-transform: uppercase; color: rgba(255,255,255,0.88); margin-bottom: 6px; }
+        .wpm-day-empty { font-family: Arial,sans-serif; font-size: 14px; color: rgba(255,255,255,0.65); font-style: italic; padding: 2px 0 6px; }
+        .wpm-day-row { display: flex; align-items: center; gap: 8px; padding: 5px 0; border-bottom: 1px solid rgba(255,255,255,0.08); }
+        .wpm-day-row:last-of-type { border-bottom: none; }
+        .wpm-day-row-info { flex: 1; min-width: 0; }
+        .wpm-day-dur { font-family: Arial,sans-serif; font-size: 13px; color: rgba(255,255,255,0.9); white-space: nowrap; }
+        .wpm-day-kcal { font-family: Impact,'Arial Black',sans-serif; font-size: 14px; color: #fff; white-space: nowrap; min-width: 58px; text-align: right; }
+        .wpm-staged-row { display: flex; align-items: center; gap: 8px; padding: 5px 0; border-bottom: 1px solid rgba(255,255,255,0.08); opacity: 0.75; }
+        .wpm-staged-row:last-of-type { border-bottom: none; }
+        .wpm-staged-row-info { flex: 1; min-width: 0; }
+        .wpm-divider { border: none; border-top: 1px solid rgba(255,45,120,0.25); margin: 10px 0 8px; }
+        .wpm-add-label { font-family: Arial,sans-serif; font-size: 12px; letter-spacing: 1.2px; text-transform: uppercase; color: rgba(255,255,255,0.88); margin-bottom: 10px; }
+        .wpm-add-activity-btn { width: 100%; padding: 8px; margin-top: 8px; background: rgba(255,45,120,0.12); border: 1px dashed rgba(255,45,120,0.45); border-radius: 8px; color: #ff2d78; font-family: Arial,sans-serif; font-size: 14px; letter-spacing: 0.5px; transition: all 0.15s; }
+        .wpm-add-activity-btn:hover { background: rgba(255,45,120,0.22); border-color: rgba(255,45,120,0.7); color: #ff5599; }
+        .wpm-add-activity-btn:disabled { opacity: 0.35; cursor: default; }
+        .wpm-add-activity-btn:disabled:hover { background: rgba(255,45,120,0.12); border-color: rgba(255,45,120,0.45); color: #ff2d78; }
+        .wp-modal-card .workout-selected-chip { margin-top: 0; }
+        .wpm-note-section { margin-top: 10px; }
+        .wpm-day-row .table-delete-btn,
+        .wpm-staged-row .table-delete-btn { color: rgba(255,255,255,0.5); border-color: rgba(255,45,120,0.3); }
+        .wp-modal-foot { display: flex; justify-content: flex-end; gap: 8px; padding: 10px 20px 14px; border-top: 1px solid rgba(255,255,255,0.1); flex-shrink: 0; }
+
+    </style>
 </head>
 
 <body class="preload">
@@ -14,8 +234,26 @@
 <a href="#main-content" class="sr-only skip-link">Skip to main content</a>
 <div id="status-announce" aria-live="polite" aria-atomic="true" class="sr-only"></div>
 
-<div class="miami-left"></div>
-<div class="miami-right"></div>
+<div class="mp-bg"></div>
+
+<header class="mp-header" role="banner">
+    <div><!-- left spacer behind profile menu --></div>
+    <h1 class="mp-title">Project 189</h1>
+    <div class="mp-header-stats" aria-label="Weekly stats">
+        <div class="mp-stat">
+            <div class="mp-stat-num" id="mp-trend">—</div>
+            <div class="mp-stat-label">7 Day Trend</div>
+        </div>
+        <div class="mp-stat">
+            <div class="mp-stat-num" id="mp-kcal-week">—</div>
+            <div class="mp-stat-label">Weekly Kcal Burn</div>
+        </div>
+        <div class="mp-stat mp-stat--streak">
+            <div class="mp-stat-num" id="mp-active-streak">—</div>
+            <div class="mp-stat-label">Active Streak</div>
+        </div>
+    </div>
+</header>
 
 <div id="healthbar-hud">
     <div id="healthbar-name"></div>
@@ -35,6 +273,9 @@
     <a id="dumbbell-btn" class="side-btn" data-tip="Workouts" href="/workouts">
         <img src="/static/dumbbellbutton.png" alt="Workouts">
     </a>
+    <a id="weights-btn" class="side-btn" data-tip="Weights" href="/weights">
+        <img src="/static/weightbutton.png" alt="Weights">
+    </a>
     <button id="protein-btn" class="side-btn" data-tip="Nutrition">
         <img src="/static/proteinshakebutton.png" alt="Nutrition">
     </button>
@@ -46,12 +287,8 @@
     </button>
 </div>
 
-<main id="main-content">
-<section class="page page--plates" aria-label="Weight plate goals">
-<div class="container">
-
-    <h1>Project 189</h1>
-
+<main id="main-content" class="mp-main">
+<section class="mp-plates-section" aria-label="Weight plate goals">
     <div class="plates">
 
         <!-- Starting Weight -->
@@ -156,170 +393,9 @@
         </div>
 
     </div>
-
-</div>
 </section>
 
-
-<section class="page page--chart" aria-label="Weight chart and data table">
-<div class="container">
-
-    <!-- Weight Chart -->
-    <div class="chart-section">
-        <div class="chart-card">
-            <!-- Slide viewport: page 0 = Daily Summary, page 1 = Weekly Summary -->
-            <div class="chart-with-nav">
-                <button class="chart-page-btn chart-page-btn--left invisible" id="chart-page-btn-left" aria-label="Go to Daily Summary">‹</button>
-                <div class="chart-page-area">
-                <div class="chart-slide-viewport" id="chart-slide-viewport">
-                    <div class="chart-slide-inner" id="chart-slide-inner">
-
-                        <!-- Page 0: Daily Summary -->
-                        <div class="chart-slide-page">
-                            <div class="chart-header">
-                                <h2 class="chart-title">Daily Summary</h2>
-                                <div class="chart-controls">
-                                    <div class="range-btns">
-                                        <button class="range-btn active" data-range="7d">7D</button>
-                                        <button class="range-btn" data-range="30d">30D</button>
-                                        <button class="range-btn" data-range="90d">90D</button>
-                                        <button class="range-btn" data-range="1y">1Y</button>
-                                        <button class="range-btn" data-range="all">All</button>
-                                    </div>
-                                    <div class="custom-range-group">
-                                        <div class="range-btns">
-                                            <button class="range-btn" data-range="custom">Custom</button>
-                                        </div>
-                                        <div class="custom-days-wrap" id="custom-days-wrap" hidden>
-                                            <input type="number" id="custom-days" class="custom-days-input" min="7" max="1095" placeholder="—" data-tip="Min 7 days">
-                                            <span class="custom-days-label">days</span>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="chart-wrap">
-                                <canvas id="weight-chart" role="img" aria-label="Daily weight chart. Switch to Table view for accessible data."></canvas>
-                                <div id="chart-info-icon">i</div>
-                            </div>
-                            <div class="chart-legend" id="daily-chart-legend"></div>
-                            <p class="chart-empty" id="chart-empty" hidden>No weight data yet — start logging!</p>
-                        </div>
-
-                        <!-- Page 1: Weekly Summary -->
-                        <div class="chart-slide-page">
-                            <div class="chart-header">
-                                <h2 class="chart-title">Weekly Summary</h2>
-                                <div class="chart-controls">
-                                    <div class="range-btns">
-                                        <button class="weekly-range-btn active" data-weeks="4">4W</button>
-                                        <button class="weekly-range-btn" data-weeks="12">12W</button>
-                                        <button class="weekly-range-btn" data-weeks="30">30W</button>
-                                        <button class="weekly-range-btn" data-weeks="all">All</button>
-                                    </div>
-                                    <div class="custom-range-group">
-                                        <div class="range-btns">
-                                            <button class="weekly-range-btn" data-weeks="custom">Custom</button>
-                                        </div>
-                                        <div class="custom-weeks-wrap" id="custom-weeks-wrap" hidden>
-                                            <input type="number" id="custom-weeks" class="custom-days-input" min="4" max="156" placeholder="—" data-tip="Min 4 weeks">
-                                            <span class="custom-days-label">weeks</span>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="chart-wrap">
-                                <canvas id="weekly-chart" role="img" aria-label="Weekly weight chart. Switch to Table view for accessible data."></canvas>
-                                <div id="weekly-info-icon">i</div>
-                            </div>
-                            <div class="chart-legend" id="weekly-chart-legend"></div>
-                            <p class="chart-empty" id="weekly-chart-empty" hidden>No weight data yet — start logging!</p>
-                        </div>
-
-                    </div>
-                </div>
-                <div class="data-table-wrap" id="data-table-wrap" hidden>
-                    <h3 class="table-view-title" id="table-view-title" hidden>Daily Summary</h3>
-                    <div class="data-table-scroll-area">
-                        <div class="data-table-scroll">
-                            <table class="data-table">
-                                <thead>
-                                    <tr>
-                                        <th style="width:27%">Date</th>
-                                        <th id="th-primary"   style="width:25%">Weight (lbs)</th>
-                                        <th id="th-secondary" style="width:25%">Weight (kgs)</th>
-                                        <th style="width:9%"></th>
-                                        <th id="th-days-logged" style="width:14%"></th>
-                                    </tr>
-                                </thead>
-                                <tbody id="data-table-body"></tbody>
-                            </table>
-                        </div>
-                        <div class="custom-scrollbar-track">
-                            <div class="custom-scrollbar-thumb" id="custom-scrollbar-thumb"></div>
-                        </div>
-                    </div>
-                </div>
-                </div><!-- end .chart-page-area -->
-                <button class="chart-page-btn chart-page-btn--right" id="chart-page-btn-right" aria-label="Go to Weekly Summary">›</button>
-            </div>
-
-            <div class="chart-footer">
-                <button class="unit-toggle-btn" id="unit-toggle-btn">KGS</button>
-                <button class="chart-add-btn" id="chart-add-btn" aria-label="Log a past weight">+</button>
-                <button class="view-toggle-btn" id="view-toggle-btn">Table</button>
-            </div>
-        </div>
-    </div>
-
-</div>
-</section>
 </main>
-
-<!-- Historical Weight Modal -->
-<div id="history-modal" class="modal-overlay" hidden>
-    <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="history-modal-title">
-        <div id="history-screen-input">
-            <h2 class="modal-title" id="history-modal-title">Log Past Weight</h2>
-            <label class="modal-label" for="history-date">Date</label>
-            <div class="date-picker-wrap" id="history-date-wrap">
-                <input type="text" id="history-date" class="history-date-input" placeholder="Select a date" readonly>
-                <div class="date-picker-dropdown" id="history-calendar" hidden>
-                    <div class="dp-header">
-                        <button type="button" class="dp-nav" id="dp-prev">&#8249;</button>
-                        <span class="dp-month-year" id="dp-month-label"></span>
-                        <button type="button" class="dp-nav" id="dp-next">&#8250;</button>
-                    </div>
-                    <div class="dp-day-names">
-                        <span>Su</span><span>Mo</span><span>Tu</span><span>We</span><span>Th</span><span>Fr</span><span>Sa</span>
-                    </div>
-                    <div class="dp-grid" id="dp-grid"></div>
-                </div>
-            </div>
-            <label class="modal-label" for="history-weight">Weight (lbs)</label>
-            <div class="modal-input-row">
-                <input type="number" class="weight-input" id="history-weight" min="50" max="999" step="0.1" placeholder="0.0">
-                <span class="modal-unit-tag">lbs</span>
-                <div class="goal-stepper">
-                    <button type="button" class="stepper-btn stepper-up"   id="history-step-up"   aria-label="Increase weight"></button>
-                    <button type="button" class="stepper-btn stepper-down" id="history-step-down" aria-label="Decrease weight"></button>
-                </div>
-            </div>
-            <div class="modal-kg-preview" id="history-kg-preview"></div>
-            <div class="modal-actions">
-                <button class="modal-btn modal-cancel" id="history-cancel">Cancel</button>
-                <button class="modal-btn modal-save"   id="history-save">Save</button>
-            </div>
-        </div>
-        <div id="history-screen-confirm" hidden>
-            <h2 class="modal-title">Confirm Overwrite</h2>
-            <p id="history-overwrite-message" class="overwrite-message"></p>
-            <div class="modal-actions">
-                <button class="modal-btn modal-cancel" id="history-overwrite-cancel">Cancel</button>
-                <button class="modal-btn modal-save"   id="history-overwrite-confirm">Overwrite</button>
-            </div>
-        </div>
-    </div>
-</div>
 
 <!-- Goal Weight Modal -->
 <div id="goal-modal" class="modal-overlay" hidden>
@@ -752,47 +828,184 @@
 </div>
 
 <!-- Row delete modal with per-item checkboxes -->
-<div id="row-delete-modal" class="modal-overlay" hidden>
-    <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="row-delete-modal-title">
-        <h2 class="modal-title" id="row-delete-modal-title">Delete Entry</h2>
-        <p class="overwrite-message">Select what to remove for <span id="row-delete-date"></span>:</p>
-        <div id="row-delete-checks"></div>
+
+<!-- ── Quick-add footer ── -->
+<footer class="mp-footer">
+    <div></div>
+    <div class="mp-add-picker-wrap">
+        <div class="mp-add-picker" id="mp-add-picker" role="menu">
+            <button class="mp-add-option" id="mp-add-weight" role="menuitem">&#x2696; Log Past Weight</button>
+            <button class="mp-add-option" id="mp-add-workout" role="menuitem">&#x1F3C3; Log Workout</button>
+        </div>
+        <button class="mp-footer-add-btn" id="mp-footer-add-btn"
+                aria-label="Quick add" aria-haspopup="true" aria-expanded="false" data-tip="Quick add">+</button>
+    </div>
+    <div></div>
+</footer>
+
+<!-- App-wide confirm modal (fixes window.showAppConfirm latent bug) -->
+<div id="app-confirm-modal" class="modal-overlay" hidden role="dialog" aria-modal="true" aria-labelledby="app-confirm-title">
+    <div class="modal-card">
+        <h2 class="modal-title" id="app-confirm-title">Confirm</h2>
+        <p id="app-confirm-msg" class="overwrite-message"></p>
         <div class="modal-actions">
-            <button class="modal-btn modal-cancel" id="row-delete-cancel">Cancel</button>
-            <button class="modal-btn modal-save"   id="row-delete-ok">Delete selected</button>
+            <button class="modal-btn modal-cancel" id="app-confirm-cancel">Cancel</button>
+            <button class="modal-btn modal-save"   id="app-confirm-ok">Confirm</button>
         </div>
     </div>
 </div>
 
-<!-- Shared table confirm modal (overwrite / clear) -->
-<div id="table-confirm-modal" class="modal-overlay" hidden>
-    <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="table-confirm-title">
-        <h2 class="modal-title" id="table-confirm-title">Confirm</h2>
-        <p id="table-confirm-message" class="overwrite-message"></p>
+<!-- Delete-with-checkboxes modal (quick-log workout save with pending deletes) -->
+<div id="idx-del-check-modal" class="modal-overlay" hidden role="dialog" aria-modal="true" aria-labelledby="idx-del-check-title">
+    <div class="modal-card">
+        <h2 class="modal-title" id="idx-del-check-title">Delete Workouts</h2>
+        <p class="overwrite-message">Select workouts to remove. This cannot be undone.</p>
+        <div id="idx-del-checks"></div>
         <div class="modal-actions">
-            <button class="modal-btn modal-cancel" id="table-confirm-cancel">Cancel</button>
-            <button class="modal-btn modal-save"   id="table-confirm-ok">Confirm</button>
+            <button class="modal-btn modal-cancel" id="idx-del-check-cancel">Cancel</button>
+            <button class="modal-btn modal-save"   id="idx-del-check-ok">Delete selected</button>
         </div>
     </div>
 </div>
 
-<!-- Note editor popover -->
-<div id="note-popover" hidden role="dialog" aria-modal="true" aria-labelledby="note-popover-heading">
-    <div class="note-popover-arrow"></div>
-    <div class="note-popover-label" id="note-popover-heading">Note for <span id="note-popover-date"></span></div>
-    <div class="note-textarea-wrap">
-        <textarea id="note-popover-text" maxlength="300" rows="3" placeholder="Add a note…"></textarea>
-        <div class="note-scrollbar-track"><div class="note-scrollbar-thumb"></div></div>
+<!-- Log Past Weight modal -->
+<div id="history-modal" class="modal-overlay" hidden>
+    <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="history-modal-title">
+        <div id="history-screen-input">
+            <h2 class="modal-title" id="history-modal-title">Log Past Weight</h2>
+            <label class="modal-label" for="history-date">Date</label>
+            <div class="date-picker-wrap" id="history-date-wrap">
+                <input type="text" id="history-date" class="history-date-input" placeholder="Select a date" readonly>
+                <div class="date-picker-dropdown" id="history-calendar" hidden>
+                    <div class="dp-header">
+                        <button type="button" class="dp-nav" id="dp-prev">&#8249;</button>
+                        <span class="dp-month-year" id="dp-month-label"></span>
+                        <button type="button" class="dp-nav" id="dp-next">&#8250;</button>
+                    </div>
+                    <div class="dp-day-names">
+                        <span>Su</span><span>Mo</span><span>Tu</span><span>We</span><span>Th</span><span>Fr</span><span>Sa</span>
+                    </div>
+                    <div class="dp-grid" id="dp-grid"></div>
+                </div>
+            </div>
+            <label class="modal-label" for="history-weight">Weight (lbs)</label>
+            <div class="modal-input-row">
+                <input type="number" class="weight-input" id="history-weight" min="50" max="999" step="0.1" placeholder="0.0">
+                <span class="modal-unit-tag">lbs</span>
+                <div class="goal-stepper">
+                    <button type="button" class="stepper-btn stepper-up"   id="history-step-up"   aria-label="Increase weight"></button>
+                    <button type="button" class="stepper-btn stepper-down" id="history-step-down" aria-label="Decrease weight"></button>
+                </div>
+            </div>
+            <div class="modal-kg-preview" id="history-kg-preview"></div>
+            <div class="modal-actions">
+                <button class="modal-btn modal-cancel" id="history-cancel">Cancel</button>
+                <button class="modal-btn modal-save"   id="history-save">Save</button>
+            </div>
+        </div>
+        <div id="history-screen-confirm" hidden>
+            <h2 class="modal-title">Confirm Overwrite</h2>
+            <p id="history-overwrite-message" class="overwrite-message"></p>
+            <div class="modal-actions">
+                <button class="modal-btn modal-cancel" id="history-overwrite-cancel">Cancel</button>
+                <button class="modal-btn modal-save"   id="history-overwrite-confirm">Overwrite</button>
+            </div>
+        </div>
     </div>
-    <div class="note-resize-handle" id="note-resize-handle">
-        <svg width="22" height="8" viewBox="0 0 22 8" fill="none"><circle cx="4" cy="4" r="2" fill="currentColor"/><circle cx="11" cy="4" r="2" fill="currentColor"/><circle cx="18" cy="4" r="2" fill="currentColor"/></svg>
-    </div>
-    <div class="note-popover-actions">
-        <button id="note-popover-delete" class="note-delete-btn" title="Delete note">
-            <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4h6v2"/></svg>
-        </button>
-        <button id="note-popover-cancel" class="modal-btn modal-cancel">Cancel</button>
-        <button id="note-popover-save"   class="modal-btn modal-save">Save</button>
+</div>
+
+<!-- Log Workout modal -->
+<div id="wp-log-modal" class="wp-modal-overlay" hidden role="dialog" aria-modal="true" aria-labelledby="wp-log-modal-title">
+    <div class="wp-modal-card">
+        <div class="wp-modal-head">
+            <div class="wp-modal-title-text" id="wp-log-modal-title">Log Workout</div>
+            <button class="wp-modal-x" id="wp-modal-x" aria-label="Close">&#10005;</button>
+        </div>
+        <div class="wp-modal-body">
+            <div class="wpm-date-wrap">
+                <div class="wpm-field-label">Date</div>
+                <div class="date-picker-wrap" id="wpm-dp-wrap" style="margin-bottom:0;">
+                    <input type="text" class="history-date-input wpm-date-input" id="wp-date-input" placeholder="Select a date" readonly>
+                    <div class="date-picker-dropdown" id="wpm-calendar" hidden>
+                        <div class="dp-header">
+                            <button type="button" class="dp-nav" id="wpm-dp-prev">&#8249;</button>
+                            <span class="dp-month-year" id="wpm-dp-month-label"></span>
+                            <button type="button" class="dp-nav" id="wpm-dp-next">&#8250;</button>
+                        </div>
+                        <div class="dp-day-names">
+                            <span>Su</span><span>Mo</span><span>Tu</span><span>We</span><span>Th</span><span>Fr</span><span>Sa</span>
+                        </div>
+                        <div class="dp-grid" id="wpm-dp-grid"></div>
+                    </div>
+                </div>
+            </div>
+            <div class="wpm-day-section">
+                <div class="wpm-day-heading" id="wpm-day-heading">Logged for today</div>
+                <div class="wpm-entries-wrap">
+                    <div id="wpm-entries-scroll">
+                        <div id="wpm-day-entries">
+                            <div class="wpm-day-empty" id="wpm-day-empty">No workouts logged for this day yet.</div>
+                        </div>
+                        <div id="wpm-staged-entries"></div>
+                    </div>
+                    <div class="wpm-scroll-track">
+                        <div class="wpm-scroll-thumb" id="wpm-scroll-thumb"></div>
+                    </div>
+                </div>
+            </div>
+            <hr class="wpm-divider">
+            <div class="wpm-add-label">Add activity</div>
+            <div class="workout-form-field" style="position:relative; margin-bottom:10px;">
+                <div class="workout-search-wrap">
+                    <input type="text" class="workout-search-input" id="workout-type-input"
+                           placeholder="Search workout types…" autocomplete="off" spellcheck="false">
+                    <div class="workout-search-dropdown" id="workout-search-dropdown" hidden></div>
+                </div>
+                <div class="workout-selected-chip" id="workout-selected-chip" hidden>
+                    <span class="workout-chip-tier" id="workout-chip-tier"></span>
+                    <span id="workout-selected-label"></span>
+                    <button type="button" class="workout-chip-clear" id="workout-chip-clear" aria-label="Clear">&#10005;</button>
+                </div>
+            </div>
+            <div class="workout-form-field" id="workout-speed-field" style="margin-bottom:10px;">
+                <div class="workout-form-label">Speed</div>
+                <div class="workout-stepper-row">
+                    <button class="workout-stepper-btn" id="workout-speed-down" type="button">&#8722;</button>
+                    <div class="workout-dur-val" id="workout-speed-val">5.0</div>
+                    <button class="workout-stepper-btn" id="workout-speed-up" type="button">+</button>
+                    <span class="workout-dur-unit">mph</span>
+                </div>
+            </div>
+            <div class="workout-form-row" style="margin-bottom:10px;">
+                <div class="workout-form-field" id="workout-dur-field">
+                    <div class="workout-form-label">Duration</div>
+                    <div class="workout-stepper-row">
+                        <button class="workout-stepper-btn" id="workout-dur-down" type="button">&#8722;</button>
+                        <div class="workout-dur-val" id="workout-dur-val">30</div>
+                        <button class="workout-stepper-btn" id="workout-dur-up" type="button">+</button>
+                        <span class="workout-dur-unit">min</span>
+                    </div>
+                </div>
+                <div class="workout-form-field workout-kcal-preview-wrap">
+                    <div class="workout-form-label">Est. Calories</div>
+                    <div class="workout-kcal-preview">
+                        <span class="workout-kcal-num" id="workout-kcal-num">&#8212;</span>
+                        <span class="workout-kcal-unit">kcal</span>
+                    </div>
+                </div>
+            </div>
+            <button type="button" class="wpm-add-activity-btn" id="wpm-add-activity-btn">+ Add Activity</button>
+            <div class="wpm-note-section">
+                <div class="workout-form-label">Day note (optional)</div>
+                <textarea class="workout-note-input" id="workout-note-input"
+                          placeholder="e.g. Push day — chest and triceps"
+                          rows="2" maxlength="300"></textarea>
+            </div>
+        </div>
+        <div class="wp-modal-foot">
+            <button class="modal-btn modal-cancel" id="wp-modal-cancel">Cancel</button>
+            <button class="modal-btn modal-save"   id="wp-modal-save">Save</button>
+        </div>
     </div>
 </div>
 
@@ -826,22 +1039,7 @@
         document.body.classList.remove('preload');
     }));
 
-    (function () {
-        const left  = document.querySelector('.miami-left');
-        const right = document.querySelector('.miami-right');
-
-        function update() {
-            const maxScroll = document.documentElement.scrollHeight - window.innerHeight;
-            const progress  = maxScroll > 0 ? Math.min(window.scrollY / maxScroll, 1) : 0;
-            const scale = 0.88 - progress * 0.13;
-            const t = 'scale(' + scale + ')';
-            left.style.transform  = t;
-            right.style.transform = t;
-        }
-
-        window.addEventListener('scroll', update, { passive: true });
-        update();
-    })();
+    /* miami scroll removed — background is now a fixed mp-bg div */
 
     /* ── Helpers ── */
     function getTodayISO() {
@@ -979,7 +1177,7 @@
             img.src = c.toDataURL('image/png');
         }
         if (img.complete && img.naturalWidth) strip();
-        else img.addEventListener('load', strip);
+        else img.addEventListener('load', strip, { once: true });
     })();
 
 
@@ -1214,12 +1412,7 @@
     };
     window.applyPlateUnit(window.activeUnit);
 
-    /* ── Weight chart ── */
-    const chartTtEl = document.createElement('div');
-    chartTtEl.id = 'chart-tooltip';
-    document.body.appendChild(chartTtEl);
-
-    /* ── Goal date computation (shared between chart and Insights) ── */
+    /* ── Goal date computation (shared with Insights modal) ── */
     function computeGoalDateISO(rows, settings) {
         if (!rows.length || !settings['goal_weight']) return null;
         const n         = rows.length;
@@ -1294,2021 +1487,7 @@
     }
 
 
-    (function () {
-        let chartInst    = null;
-        let activeRange  = 'all';
-        let activeDays   = 30;
-        let currentDates = [];
-        let currentRawW  = [];
-        let mouseX = 0, mouseY = 0;
-
-        const canvas   = document.getElementById('weight-chart');
-        const emptyMsg = document.getElementById('chart-empty');
-
-        function fmtAxisDate(iso, spanDays) {
-            const [y, m, d] = iso.split('-').map(Number);
-            const dt = new Date(y, m - 1, d);
-            if (spanDays <= 90) {
-                const mon = dt.toLocaleDateString('en-US', { month: 'short' });
-                return (localStorage.getItem('pref_date_format') || 'mdy') === 'mdy'
-                    ? mon + ' ' + d
-                    : d + ' ' + mon;
-            }
-            return dt.toLocaleDateString('en-US', { month: 'short', year: '2-digit' });
-        }
-
-        Chart.register({
-            id: 'chartAxisLabels',
-            afterDraw(chart) {
-                const yScale = chart.scales && chart.scales.y;
-                if (!yScale) return;
-                const { top, bottom, left } = chart.chartArea;
-                const unit = window.activeUnit === 'kg' ? 'kgs' : 'lbs';
-
-                const isWeekly = chart.canvas?.id === 'weekly-chart';
-                const goalVal  = isWeekly ? window.weeklyGoalVal  : window.goalWeightVal;
-                const maVal    = isWeekly ? null                  : window.maCurrentVal;
-                const trendVal = isWeekly ? window.weeklyTrendVal : window.trendCurrentVal;
-
-                // Update DOM legend
-                const legendEl = document.getElementById(isWeekly ? 'weekly-chart-legend' : 'daily-chart-legend');
-                if (legendEl) {
-                    const parts = [];
-                    if (isWeekly) {
-                        if (window.weeklyMinMaxOn)  parts.push({ label: 'MIN/MAX RANGE',                                   color: 'rgba(255, 200, 50, 0.8)'  });
-                        if (trendVal != null)        parts.push({ label: 'TREND '  + trendVal.toFixed(1) + ' ' + unit,    color: 'rgba(160, 100, 255, 0.95)' });
-                        if (goalVal  != null)        parts.push({ label: 'GOAL '   + goalVal.toFixed(1)  + ' ' + unit,    color: 'rgba(0, 200, 175, 0.95)'   });
-                    } else {
-                        if (maVal    != null)        parts.push({ label: '7D AVG ' + maVal.toFixed(1)    + ' ' + unit,    color: 'rgba(255, 200, 50, 0.95)'  });
-                        if (trendVal != null)        parts.push({ label: 'TREND '  + trendVal.toFixed(1) + ' ' + unit,    color: 'rgba(160, 100, 255, 0.95)' });
-                        if (goalVal  != null)        parts.push({ label: 'GOAL '   + goalVal.toFixed(1)  + ' ' + unit,    color: 'rgba(0, 200, 175, 0.95)'   });
-                    }
-                    const html = parts.map(p =>
-                        `<span class="chart-legend-item"><span class="chart-legend-dot" style="background:${p.color}"></span><span style="color:${p.color}">${p.label}</span></span>`
-                    ).join('');
-                    if (legendEl.innerHTML !== html) legendEl.innerHTML = html;
-                }
-            }
-        });
-
-        async function loadChart(range, days) {
-            if (range !== undefined) activeRange = range;
-            if (days  !== undefined) activeDays  = days;
-            if (window.onChartRangeChange) window.onChartRangeChange();
-
-            let url = '/api/weights?range=' + activeRange;
-            if (activeRange === 'custom') url += '&days=' + activeDays;
-
-            const [rows, settings] = await Promise.all([
-                fetch(url).then(r => r.json()),
-                fetch('/api/settings').then(r => r.json()),
-            ]);
-
-            if (!rows.length) {
-                canvas.hidden   = true;
-                emptyMsg.hidden = false;
-                if (chartInst) { chartInst.destroy(); chartInst = null; }
-                return;
-            }
-
-            // Build note map from all rows (includes note-only entries with null weights)
-            window.noteMap = new Map(rows.map(r => [r.date, r.notes || '']));
-
-            // Exclude note-only rows (null weights) from all chart data calculations
-            const weightRows = rows.filter(r => r.weight_lbs != null);
-            if (!weightRows.length) {
-                canvas.hidden   = true;
-                emptyMsg.hidden = false;
-                if (chartInst) { chartInst.destroy(); chartInst = null; }
-                return;
-            }
-
-            canvas.hidden   = false;
-            emptyMsg.hidden = true;
-
-            const last      = new Date(weightRows[weightRows.length - 1].date + 'T00:00:00');
-            const dataFirst = new Date(weightRows[0].date + 'T00:00:00');
-            let   first;
-            if (activeRange === 'all') {
-                first = dataFirst;
-            } else {
-                const n = activeRange === '7d'  ? 7  :
-                          activeRange === '30d' ? 30 :
-                          activeRange === '90d' ? 90 :
-                          activeRange === '1y'  ? 365 : Math.min(activeDays || 30, 1095);
-                first = new Date(last);
-                first.setDate(last.getDate() - (n - 1));
-                if (first < dataFirst) first = dataFirst;
-                if (first > last) first = last;
-            }
-
-            const unit    = window.activeUnit || 'lbs';
-            const dataMap = new Map(weightRows.map(r => [r.date, r]));
-            const allDates = [];
-            const cursor = new Date(first);
-            while (cursor <= last) {
-                allDates.push(cursor.toISOString().split('T')[0]);
-                cursor.setDate(cursor.getDate() + 1);
-            }
-
-            currentDates = allDates;
-
-            const infoIcon = document.getElementById('chart-info-icon');
-            if (activeRange !== 'all') {
-                const nReq = activeRange === '7d'  ? 7  :
-                             activeRange === '30d' ? 30 :
-                             activeRange === '90d' ? 90 :
-                             activeRange === '1y'  ? 365 : (activeDays || 30);
-                if (allDates.length < nReq - 1) {
-                    infoIcon.dataset.tip = 'Showing max data - ' + weightRows.length + (weightRows.length !== 1 ? ' entries' : ' entry') + ' logged';
-                    infoIcon.style.display = 'flex';
-                } else {
-                    infoIcon.style.display = 'none';
-                }
-            } else {
-                infoIcon.style.display = 'none';
-            }
-
-            const chartType = localStorage.getItem('pref_chart_type') || 'interpolated';
-            if (chartType === 'actual' || chartType === 'dots-only') {
-                allDates.length = 0;
-                weightRows.forEach(r => allDates.push(r.date));
-                currentDates = allDates;
-            }
-
-            const spanDays = allDates.length;
-            const labels   = allDates.map(d => fmtAxisDate(d, spanDays));
-            const rawW     = allDates.map(d => {
-                const r = dataMap.get(d);
-                return r ? (unit === 'lbs' ? r.weight_lbs : r.weight_kg) : null;
-            });
-            currentRawW = rawW;
-            const weights  = rawW.map((v, i, arr) => {
-                if (v !== null) return v;
-                let lo = i - 1, hi = i + 1;
-                while (lo >= 0 && arr[lo] === null) lo--;
-                while (hi < arr.length && arr[hi] === null) hi++;
-                if (lo >= 0 && hi < arr.length)
-                    return arr[lo] + (arr[hi] - arr[lo]) * (i - lo) / (hi - lo);
-                if (lo < 0 && hi < arr.length) return arr[hi]; // before first real entry
-                return null; // past last real entry — no extrapolation
-            });
-            const minW     = Math.min(...weightRows.map(r => unit === 'lbs' ? r.weight_lbs : r.weight_kg));
-            const maxW     = Math.max(...weightRows.map(r => unit === 'lbs' ? r.weight_lbs : r.weight_kg));
-            const ptRadius = weightRows.length > 60 ? 2 : 4;
-            const ptRadii    = chartType === 'no-data' ? rawW.map(() => 0) : rawW.map(v => v === null ? 0 : ptRadius);
-            const hoverRadii = rawW.map(v => v === null ? 0 : 6);
-
-            // Goal weight horizontal line — flat second dataset
-            const gw = settings['goal_weight'];
-            const goalLineOn    = localStorage.getItem('pref_goal_line') === '1';
-            const goalWeightVal = (goalLineOn && gw) ? (unit === 'kg' ? gw.value_kg : gw.value_lbs) : null;
-            window.goalWeightVal = goalWeightVal;
-            const goalData = allDates.map(() => goalWeightVal);
-            const yMin = Math.floor(Math.min(minW, goalWeightVal != null ? goalWeightVal : minW) - 5);
-            const yMax = Math.ceil(maxW + 5);
-
-            // 7-day trailing moving average
-            const maLineOn = localStorage.getItem('pref_ma_line') !== '0';
-            const maData = allDates.map(dateStr => {
-                if (!maLineOn) return null;
-                const [yr, mo, dy] = dateStr.split('-').map(Number);
-                const endDt   = new Date(yr, mo - 1, dy);
-                const startDt = new Date(endDt);
-                startDt.setDate(startDt.getDate() - 6);
-                const startStr = startDt.toISOString().slice(0, 10);
-                const vals = weightRows
-                    .filter(r => r.date >= startStr && r.date <= dateStr)
-                    .map(r => unit === 'kg' ? r.weight_kg : r.weight_lbs);
-                return vals.length ? vals.reduce((s, v) => s + v, 0) / vals.length : null;
-            });
-            window.maCurrentVal = maLineOn
-                ? ([...maData].reverse().find(v => v != null) ?? null)
-                : null;
-
-            // Trend line — linear regression over all actual entries in view
-            const trendLineOn = localStorage.getItem('pref_trend_line') === '1';
-            let trendData = allDates.map(() => null);
-            window.trendCurrentVal = null;
-            if (trendLineOn && weightRows.length >= 2) {
-                const t0 = new Date(weightRows[0].date + 'T00:00:00').getTime();
-                const pairs = weightRows.map(r => ({
-                    x: (new Date(r.date + 'T00:00:00').getTime() - t0) / 86400000,
-                    y: unit === 'kg' ? r.weight_kg : r.weight_lbs
-                }));
-                const n = pairs.length;
-                const sumX  = pairs.reduce((s, p) => s + p.x, 0);
-                const sumY  = pairs.reduce((s, p) => s + p.y, 0);
-                const sumXY = pairs.reduce((s, p) => s + p.x * p.y, 0);
-                const sumX2 = pairs.reduce((s, p) => s + p.x * p.x, 0);
-                const denom = n * sumX2 - sumX * sumX;
-                if (denom !== 0) {
-                    const slope     = (n * sumXY - sumX * sumY) / denom;
-                    const intercept = (sumY - slope * sumX) / n;
-                    trendData = allDates.map(dateStr => {
-                        const x = (new Date(dateStr + 'T00:00:00').getTime() - t0) / 86400000;
-                        return parseFloat((intercept + slope * x).toFixed(2));
-                    });
-                    window.trendCurrentVal = trendData[trendData.length - 1] ?? null;
-                }
-            }
-
-            if (chartInst) {
-                chartInst.data.labels                          = labels;
-                chartInst.data.datasets[0].data                = weights;
-                chartInst.data.datasets[0].tension             = (chartType === 'actual' || chartType === 'dots-only') ? 0 : 0.35;
-                chartInst.data.datasets[0].borderWidth         = (chartType === 'dots-only' || chartType === 'no-data') ? 0 : 2.5;
-                chartInst.data.datasets[0].fill                = chartType !== 'dots-only' && chartType !== 'no-data';
-                chartInst.data.datasets[0].pointRadius         = ptRadii;
-                chartInst.data.datasets[0].pointHoverRadius    = hoverRadii;
-                chartInst.data.datasets[1].data                = goalData;
-                chartInst.data.datasets[2].data                = maData;
-                chartInst.data.datasets[3].data                = trendData;
-                chartInst.options.scales.y.min                 = yMin;
-                chartInst.options.scales.y.max                 = yMax;
-                chartInst.update();
-                return;
-            }
-
-            const ctx = canvas.getContext('2d');
-            chartInst = new Chart(ctx, {
-                type: 'line',
-                data: {
-                    labels,
-                    datasets: [
-                    {
-                        data: weights,
-                        borderColor: '#ff2d78',
-                        borderWidth: (chartType === 'dots-only' || chartType === 'no-data') ? 0 : 2.5,
-                        pointBackgroundColor: '#ff2d78',
-                        pointBorderColor: '#ff2d78',
-                        pointRadius: ptRadii,
-                        pointHoverRadius: hoverRadii,
-                        pointHoverBackgroundColor: '#ffe0ee',
-                        fill: chartType !== 'dots-only' && chartType !== 'no-data',
-                        backgroundColor: function (context) {
-                            const ch = context.chart;
-                            if (!ch.chartArea) return 'rgba(255,45,120,0.15)';
-                            const g = ch.ctx.createLinearGradient(0, ch.chartArea.top, 0, ch.chartArea.bottom);
-                            g.addColorStop(0, 'rgba(255,45,120,0.35)');
-                            g.addColorStop(1, 'rgba(255,45,120,0)');
-                            return g;
-                        },
-                        tension: (chartType === 'actual' || chartType === 'dots-only') ? 0 : 0.35,
-                    },
-                    {
-                        data: goalData,
-                        borderColor: 'rgba(0, 200, 175, 0.8)',
-                        borderWidth: 1.5,
-                        borderDash: [6, 4],
-                        pointRadius: 0,
-                        pointHoverRadius: 0,
-                        fill: false,
-                        tension: 0,
-                        spanGaps: true,
-                    },
-                    {
-                        data: maData,
-                        borderColor: 'rgba(255, 200, 50, 0.8)',
-                        borderWidth: 1.5,
-                        pointRadius: 0,
-                        pointHoverRadius: 0,
-                        fill: false,
-                        tension: 0.3,
-                        spanGaps: false,
-                    },
-                    {
-                        data: trendData,
-                        borderColor: 'rgba(160, 100, 255, 0.8)',
-                        borderWidth: 1.5,
-                        borderDash: [4, 3],
-                        pointRadius: 0,
-                        pointHoverRadius: 0,
-                        fill: false,
-                        tension: 0,
-                        spanGaps: false,
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    animation: { duration: 400 },
-                    interaction: { mode: 'index', intersect: false, axis: 'x' },
-                    plugins: {
-                        legend: { display: false },
-                        tooltip: {
-                            enabled: false,
-                            external: function(context) {
-                                const tt = context.tooltip;
-                                if (tt.opacity === 0) { chartTtEl.style.opacity = '0'; return; }
-                                const dp = tt.dataPoints?.find(p => p.datasetIndex === 0);
-                                if (!dp) return;
-                                const idx    = dp.dataIndex;
-                                const date   = currentDates[idx];
-                                if (!date) return;
-                                const isReal = currentRawW[idx] !== null;
-                                const val    = dp.parsed.y;
-                                if (val == null) { chartTtEl.style.opacity = '0'; return; }
-                                const est    = isReal ? '' : ' <span class="ctt-est">(est.)</span>';
-                                const label  = window.activeUnit === 'kg'
-                                    ? val.toFixed(1) + ' kgs' + est
-                                    : Number(val.toFixed(1)) + ' lbs' + est;
-                                const noteRaw = (window.noteMap && window.noteMap.get(date)) || '';
-                                const noteHtml = noteRaw
-                                    ? '<div class="ctt-note">' + noteRaw.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;') + '</div>'
-                                    : '';
-                                chartTtEl.innerHTML =
-                                    `<div class="ctt-title">${formatDateDisplay(date)}</div><div class="ctt-body">${label}</div>${noteHtml}`;
-                                chartTtEl.style.opacity = '1';
-                                chartTtEl.style.top  = Math.round(mouseY - chartTtEl.offsetHeight / 2) + 'px';
-                                const w = chartTtEl.offsetWidth;
-                                chartTtEl.style.left = Math.max(8, Math.round(mouseX - 12 - w)) + 'px';
-                            }
-                        }
-                    },
-                    scales: {
-                        x: {
-                            grid:   { color: 'rgba(255,255,255,0.04)' },
-                            border: { color: 'rgba(255,255,255,0.08)' },
-                            ticks:  { color: '#888', font: { family: 'Arial', size: 13 }, maxTicksLimit: 10, maxRotation: 0 }
-                        },
-                        y: {
-                            min:     yMin,
-                            max:     yMax,
-                            grid:    { color: 'rgba(255,255,255,0.04)' },
-                            border:  { color: 'rgba(255,255,255,0.08)' },
-                            ticks:   { color: '#888', font: { family: 'Arial', size: 13 }, maxTicksLimit: 6, callback: v => v + ' ' + (window.activeUnit === 'kg' ? 'kgs' : 'lbs') },
-                            afterFit: scale => { scale.width = scale.chart.width < 480 ? 64 : 80; }
-                        }
-                    }
-                }
-            });
-        }
-
-        document.querySelectorAll('.range-btn').forEach(btn => {
-            btn.addEventListener('click', () => {
-                document.querySelectorAll('.range-btn').forEach(b => b.classList.remove('active'));
-                btn.classList.add('active');
-                const wrap = document.getElementById('custom-days-wrap');
-                if (btn.dataset.range === 'custom') {
-                    wrap.hidden = false;
-                    customIn.focus();
-                    customIn.select();
-                    loadChart('custom', parseInt(document.getElementById('custom-days').value) || 7);
-                } else {
-                    wrap.hidden = true;
-                    loadChart(btn.dataset.range);
-                }
-            });
-        });
-
-        const customIn = document.getElementById('custom-days');
-        function applyCustom() {
-            const d = Math.min(Math.max(parseInt(customIn.value) || 7, 7), 1095);
-            customIn.value = d;
-            document.querySelectorAll('.range-btn').forEach(b => b.classList.remove('active'));
-            document.querySelector('.range-btn[data-range="custom"]').classList.add('active');
-            loadChart('custom', d);
-        }
-        customIn.addEventListener('keydown', e => { if (e.key === 'Enter') applyCustom(); });
-        customIn.addEventListener('change', applyCustom);
-
-        canvas.addEventListener('mousemove',  e => { mouseX = e.clientX; mouseY = e.clientY; });
-        canvas.addEventListener('mouseleave', () => { chartTtEl.style.opacity = '0'; });
-
-        window.refreshChart   = loadChart;
-        window.getChartRange  = () => ({ range: activeRange, days: activeDays });
-
-        const savedRange      = localStorage.getItem('pref_range') || '7d';
-        const savedCustomDaysStr = localStorage.getItem('pref_custom_days');
-        const savedCustomDays    = parseInt(savedCustomDaysStr) || 30;
-        const savedRangeBtn      = document.querySelector(`.range-btn[data-range="${savedRange}"]`);
-        if (savedRangeBtn) {
-            document.querySelectorAll('.range-btn').forEach(b => b.classList.remove('active'));
-            savedRangeBtn.classList.add('active');
-        }
-        if (savedRange === 'custom') customIn.value = savedCustomDaysStr || '';
-        loadChart(savedRange, savedRange === 'custom' ? savedCustomDays : undefined);
-    })();
-
-    /* ── Weekly chart ── */
-    (function () {
-        const canvas   = document.getElementById('weekly-chart');
-        if (!canvas) return;
-        const ctx       = canvas.getContext('2d');
-        const emptyEl   = document.getElementById('weekly-chart-empty');
-        const infoIconEl = document.getElementById('weekly-info-icon');
-        const customWrap = document.getElementById('custom-weeks-wrap');
-        const customIn   = document.getElementById('custom-weeks');
-
-        let weeklyInst = null;
-        let activeWeeksRange = localStorage.getItem('pref_weekly_range') || '4';
-        const savedCustomWeeks = localStorage.getItem('pref_custom_weeks');
-        if (savedCustomWeeks) customIn.value = savedCustomWeeks;
-
-        // Set correct active button and custom wrap visibility on load
-        document.querySelectorAll('.weekly-range-btn').forEach(b => b.classList.remove('active'));
-        const initWeeklyBtn = document.querySelector(`.weekly-range-btn[data-weeks="${activeWeeksRange}"]`);
-        if (initWeeklyBtn) initWeeklyBtn.classList.add('active');
-        if (activeWeeksRange === 'custom') {
-            customWrap.hidden = false;
-        } else {
-            customWrap.hidden = true;
-        }
-
-        let weeklyMouseX = 0, weeklyMouseY = 0;
-
-        function groupByWeek(rows) {
-            const map = new Map();
-            const todayD = new Date();
-            todayD.setHours(0, 0, 0, 0);
-            const dfmt = localStorage.getItem('pref_date_format') || 'mdy';
-            const fmt = iso => { const [,mm,dd] = iso.split('-'); return dfmt === 'mdy' ? mm+'/'+dd : dd+'/'+mm; };
-            const iso = (localStorage.getItem('pref_weekly_mode') || 'rolling') === 'iso';
-
-            for (const r of rows) {
-                let key;
-                if (iso) {
-                    const d = new Date(r.date + 'T00:00:00');
-                    const day = d.getDay();
-                    const mon = new Date(d);
-                    mon.setDate(d.getDate() + (day === 0 ? -6 : 1 - day));
-                    key = mon.toISOString().slice(0, 10);
-                } else {
-                    const rowD = new Date(r.date + 'T00:00:00');
-                    key = Math.floor(Math.round((todayD - rowD) / 86400000) / 7);
-                }
-                if (!map.has(key)) map.set(key, []);
-                map.get(key).push(r.weight_lbs);
-            }
-
-            const result = [];
-            for (const [key, weights] of map.entries()) {
-                const avg = weights.reduce((a, b) => a + b, 0) / weights.length;
-                let monISO, sunISO;
-                if (iso) {
-                    monISO = key;
-                    const sunD = new Date(monISO + 'T00:00:00');
-                    sunD.setDate(sunD.getDate() + 6);
-                    sunISO = sunD.toISOString().slice(0, 10);
-                } else {
-                    const endD = new Date(todayD);
-                    endD.setDate(todayD.getDate() - key * 7);
-                    const startD = new Date(endD);
-                    startD.setDate(endD.getDate() - 6);
-                    monISO = startD.toISOString().slice(0, 10);
-                    sunISO = endD.toISOString().slice(0, 10);
-                }
-                result.push({ monISO, sunISO, label: fmt(monISO) + '–' + fmt(sunISO), avg, min: Math.min(...weights), max: Math.max(...weights), count: weights.length });
-            }
-            result.sort((a, b) => a.monISO.localeCompare(b.monISO));
-            return result;
-        }
-
-        const weeklyMinMaxPlugin = {
-            id: 'weeklyMinMax',
-            afterDatasetsDraw(chart) {
-                if (!window.weeklyMinMaxOn) return;
-                const wks = window.weeklyWeeks;
-                if (!wks || !wks.length) return;
-                const { ctx, scales: { x, y } } = chart;
-                ctx.save();
-                ctx.strokeStyle = 'rgba(255, 200, 50, 0.8)';
-                ctx.lineWidth = 1.5;
-                const cap = 4;
-                wks.forEach((w, i) => {
-                    if (w.minU == null || w.maxU == null || w.minU === w.maxU) return;
-                    const xPx  = x.getPixelForValue(i);
-                    const yTop = y.getPixelForValue(w.maxU);
-                    const yBot = y.getPixelForValue(w.minU);
-                    ctx.beginPath(); ctx.moveTo(xPx, yTop); ctx.lineTo(xPx, yBot); ctx.stroke();
-                    ctx.beginPath(); ctx.moveTo(xPx - cap, yTop); ctx.lineTo(xPx + cap, yTop); ctx.stroke();
-                    ctx.beginPath(); ctx.moveTo(xPx - cap, yBot); ctx.lineTo(xPx + cap, yBot); ctx.stroke();
-                });
-                ctx.restore();
-            }
-        };
-
-        async function loadWeeklyChart(range, customWeeks) {
-            let days;
-            if (range === 'all') {
-                days = null;
-            } else if (range === 'custom') {
-                days = (parseInt(customWeeks) || 4) * 7;
-            } else {
-                days = (parseInt(range) || 4) * 7;
-            }
-
-            const url = days == null ? '/api/weights?range=all' : '/api/weights?range=custom&days=' + days;
-            const [rows, settings] = await Promise.all([
-                fetch(url).then(r => r.json()),
-                fetch('/api/settings').then(r => r.json()),
-            ]);
-            const filteredRows = (rows || []).filter(r => r.weight_lbs != null);
-            const gw = settings['goal_weight'];
-            const goalLbs = gw ? gw.value_lbs : null;
-
-            if (filteredRows.length === 0) {
-                emptyEl.hidden = false;
-                canvas.style.display = 'none';
-                infoIconEl.style.display = 'none';
-                if (weeklyInst) { weeklyInst.destroy(); weeklyInst = null; }
-                return;
-            }
-            emptyEl.hidden = true;
-            canvas.style.display = '';
-
-            if (days != null) {
-                const cutoff = new Date();
-                cutoff.setDate(cutoff.getDate() - days);
-                const oldestD = new Date(filteredRows[0].date + 'T00:00:00');
-                if (oldestD > cutoff) {
-                    infoIconEl.dataset.tip = 'Showing max data — ' + filteredRows.length + (filteredRows.length !== 1 ? ' entries' : ' entry') + ' logged';
-                    infoIconEl.style.display = 'flex';
-                } else {
-                    infoIconEl.style.display = 'none';
-                }
-            } else {
-                infoIconEl.style.display = 'none';
-            }
-
-            const maxWeeks = range === 'all' ? null
-                           : range === 'custom' ? (parseInt(customWeeks) || 4)
-                           : (parseInt(range) || 4);
-            let weeks = groupByWeek(filteredRows);
-            if (maxWeeks != null) weeks = weeks.slice(-maxWeeks);
-            const unit = window.activeUnit === 'kg' ? 'kgs' : 'lbs';
-            const toUnit = v => window.activeUnit === 'kg' ? parseFloat((v / 2.20462).toFixed(1)) : parseFloat(v.toFixed(1));
-            const avgs = weeks.map(w => toUnit(w.avg));
-            const minMaxOn = (localStorage.getItem('pref_weekly_minmax') ?? '1') !== '0';
-            const mins = weeks.map(w => toUnit(w.min));
-            const maxs = weeks.map(w => toUnit(w.max));
-
-            const goalLineOn = localStorage.getItem('pref_weekly_goal_line') === '1';
-            const goalVal = goalLbs != null ? toUnit(goalLbs) : null;
-            const goalData = goalLineOn && goalVal != null ? avgs.map(() => goalVal) : avgs.map(() => null);
-
-            const trendLineOn = localStorage.getItem('pref_weekly_trend_line') === '1';
-            let trendData = avgs.map(() => null);
-            if (trendLineOn && avgs.length >= 2) {
-                const n = avgs.length, xM = (n - 1) / 2, yM = avgs.reduce((a, b) => a + b, 0) / n;
-                let num = 0, den = 0;
-                for (let i = 0; i < n; i++) { num += (i - xM) * (avgs[i] - yM); den += (i - xM) ** 2; }
-                const slope = den ? num / den : 0, intercept = yM - slope * xM;
-                trendData = avgs.map((_, i) => parseFloat((slope * i + intercept).toFixed(2)));
-            }
-
-            const allVals = [...avgs, ...(goalVal && goalLineOn ? [goalVal] : []), ...trendData.filter(v => v != null), ...(minMaxOn ? [...mins, ...maxs] : [])];
-            const pad = Math.max((Math.max(...allVals) - Math.min(...allVals)) * 0.15, 2);
-            const yMin = parseFloat((Math.min(...allVals) - pad).toFixed(1));
-            const yMax = parseFloat((Math.max(...allVals) + pad).toFixed(1));
-
-            window.weeklyWeeks    = weeks.map((w, i) => ({ ...w, minU: mins[i], maxU: maxs[i] }));
-            window.weeklyMinMaxOn = minMaxOn;
-            window.weeklyGoalVal  = (goalLineOn && goalVal != null) ? goalVal : null;
-            window.weeklyTrendVal = trendLineOn && trendData.length > 0
-                ? trendData[trendData.length - 1]
-                : null;
-
-            if (weeklyInst) {
-                weeklyInst.data.labels             = weeks.map(w => w.label);
-                weeklyInst.data.datasets[0].data   = avgs;
-                weeklyInst.data.datasets[1].data   = goalData;
-                weeklyInst.data.datasets[2].data   = trendData;
-                weeklyInst.options.scales.y.min    = yMin;
-                weeklyInst.options.scales.y.max    = yMax;
-                weeklyInst.options.scales.y.ticks.callback = v => v + ' ' + unit;
-                weeklyInst.update();
-                return;
-            }
-
-            weeklyInst = new Chart(ctx, {
-                type: 'bar',
-                plugins: [weeklyMinMaxPlugin],
-                data: {
-                    labels: weeks.map(w => w.label),
-                    datasets: [
-                        {
-                            label: 'Weekly Avg',
-                            data: avgs,
-                            backgroundColor: 'rgba(255, 45, 120, 0.5)',
-                            borderColor: '#ff2d78',
-                            borderWidth: 1,
-                            borderRadius: 3,
-                            type: 'bar'
-                        },
-                        {
-                            label: 'Goal',
-                            data: goalData,
-                            borderColor: 'rgba(0, 200, 175, 0.85)',
-                            borderWidth: 2,
-                            borderDash: [6, 3],
-                            pointRadius: 0,
-                            tension: 0,
-                            type: 'line',
-                            fill: false
-                        },
-                        {
-                            label: 'Trend',
-                            data: trendData,
-                            borderColor: 'rgba(160, 100, 255, 0.85)',
-                            borderWidth: 2,
-                            pointRadius: 0,
-                            tension: 0,
-                            type: 'line',
-                            fill: false
-                        }
-                    ]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    animation: { duration: 300 },
-                    interaction: { mode: 'index', intersect: false },
-                    plugins: {
-                        legend: { display: false },
-                        tooltip: {
-                            enabled: false,
-                            external: function (context) {
-                                const tt = context.tooltip;
-                                if (tt.opacity === 0) { chartTtEl.style.opacity = '0'; return; }
-                                const dp = tt.dataPoints?.find(p => p.datasetIndex === 0);
-                                if (!dp) return;
-                                const w = window.weeklyWeeks && window.weeklyWeeks[dp.dataIndex];
-                                if (!w) return;
-                                const val = dp.parsed.y;
-                                const unitLabel = window.activeUnit === 'kg' ? 'kgs' : 'lbs';
-                                const hasRange = w.count > 1 && w.minU != null && w.maxU != null && w.minU !== w.maxU;
-                                const rangeHtml = hasRange
-                                    ? `<div class="ctt-body" style="color:#aaa;font-size:11px">Range: ${w.minU.toFixed(1)}–${w.maxU.toFixed(1)} ${unitLabel}</div>`
-                                    : '';
-                                chartTtEl.innerHTML =
-                                    `<div class="ctt-title">${w.label}</div>` +
-                                    `<div class="ctt-body">${val.toFixed(1)} ${unitLabel}</div>` +
-                                    rangeHtml +
-                                    `<div class="ctt-body" style="color:#aaa;font-size:11px">${w.count} weigh-in${w.count !== 1 ? 's' : ''}</div>`;
-                                chartTtEl.style.opacity = '1';
-                                chartTtEl.style.top  = Math.round(weeklyMouseY - chartTtEl.offsetHeight / 2) + 'px';
-                                const tw = chartTtEl.offsetWidth;
-                                chartTtEl.style.left = Math.max(8, Math.round(weeklyMouseX - 12 - tw)) + 'px';
-                            }
-                        },
-                        chartAxisLabels: {}
-                    },
-                    scales: {
-                        x: {
-                            ticks: { color: '#888', font: { family: 'Arial', size: 11 }, maxRotation: 30, maxTicksLimit: 8 },
-                            grid: { color: 'rgba(255,255,255,0.05)' }
-                        },
-                        y: {
-                            min: yMin,
-                            max: yMax,
-                            ticks: {
-                                color: '#888',
-                                font: { family: 'Arial', size: 13 },
-                                maxTicksLimit: 6,
-                                callback: v => v + ' ' + unit
-                            },
-                            grid: { color: 'rgba(255,255,255,0.05)' },
-                            afterFit: scale => { scale.width = scale.chart.width < 480 ? 64 : 80; }
-                        }
-                    }
-                }
-            });
-
-            canvas.addEventListener('mousemove', e => { weeklyMouseX = e.clientX; weeklyMouseY = e.clientY; });
-            canvas.addEventListener('mouseleave', () => { chartTtEl.style.opacity = '0'; });
-        }
-
-        document.querySelectorAll('.weekly-range-btn').forEach(btn => {
-            btn.addEventListener('click', () => {
-                document.querySelectorAll('.weekly-range-btn').forEach(b => b.classList.remove('active'));
-                btn.classList.add('active');
-                const w = btn.dataset.weeks;
-                activeWeeksRange = w;
-                if (w === 'custom') {
-                    customWrap.hidden = false;
-                    customIn.focus();
-                    customIn.select();
-                    loadWeeklyChart('custom', parseInt(customIn.value) || 4);
-                } else {
-                    customWrap.hidden = true;
-                    loadWeeklyChart(w);
-                }
-                if (window.onWeeklyRangeChange) window.onWeeklyRangeChange();
-            });
-        });
-
-        function applyWeeklyCustom() {
-            const w = Math.min(Math.max(parseInt(customIn.value) || 4, 4), 156);
-            customIn.value = w;
-            document.querySelectorAll('.weekly-range-btn').forEach(b => b.classList.remove('active'));
-            document.querySelector('.weekly-range-btn[data-weeks="custom"]').classList.add('active');
-            activeWeeksRange = 'custom';
-            loadWeeklyChart('custom', w);
-            if (window.onWeeklyRangeChange) window.onWeeklyRangeChange();
-        }
-
-        customIn.addEventListener('keydown', e => { if (e.key === 'Enter') applyWeeklyCustom(); });
-        customIn.addEventListener('blur', () => {
-            const v = parseInt(customIn.value);
-            if (v && v < 4) customIn.value = 4;
-            else if (v > 156) customIn.value = 156;
-        });
-
-
-        window.refreshWeeklyChart = function () {
-            if (!window.weeklyChartLoaded) return;
-            const cw = activeWeeksRange === 'custom' ? (parseInt(customIn.value) || 4) : undefined;
-            loadWeeklyChart(activeWeeksRange, cw);
-        };
-
-        window.setWeeklyRange = function (range, weeks) {
-            activeWeeksRange = range;
-            document.querySelectorAll('.weekly-range-btn').forEach(b => b.classList.remove('active'));
-            const btn = document.querySelector('.weekly-range-btn[data-weeks="' + range + '"]');
-            if (btn) btn.classList.add('active');
-            if (range === 'custom') {
-                customWrap.hidden = false;
-                customIn.value = weeks || '';
-            } else {
-                customWrap.hidden = true;
-            }
-        };
-
-        window.getWeeklyChartRange = () => ({ range: activeWeeksRange, weeks: parseInt(customIn.value) || null });
-
-        window.loadWeeklyChartOnce = function () {
-            if (!window.weeklyChartLoaded) {
-                window.weeklyChartLoaded = true;
-                const cw = activeWeeksRange === 'custom' ? (parseInt(customIn.value) || 4) : undefined;
-                loadWeeklyChart(activeWeeksRange, cw);
-            }
-        };
-    })();
-
-    /* ── Chart slide navigation ── */
-    (function () {
-        const inner    = document.getElementById('chart-slide-inner');
-        const leftBtn  = document.getElementById('chart-page-btn-left');
-        const rightBtn = document.getElementById('chart-page-btn-right');
-
-        const defaultLanding = localStorage.getItem('pref_default_landing') || 'daily';
-        let homeIsWeekly     = defaultLanding === 'weekly' || defaultLanding === 'table-weekly';
-
-        function updateTips() {
-            leftBtn.dataset.tip  = homeIsWeekly ? 'Weekly Summary' : 'Daily Summary';
-            rightBtn.dataset.tip = homeIsWeekly ? 'Daily Summary'  : 'Weekly Summary';
-        }
-        updateTips();
-
-        function goHome() {
-            if (homeIsWeekly) {
-                inner.classList.add('at-weekly');
-                window.currentChartPage = 'weekly';
-                if (window.loadWeeklyChartOnce) window.loadWeeklyChartOnce();
-            } else {
-                inner.classList.remove('at-weekly');
-                window.currentChartPage = 'daily';
-            }
-            leftBtn.classList.add('invisible');
-            rightBtn.classList.remove('invisible');
-        }
-
-        function goAway() {
-            if (homeIsWeekly) {
-                inner.classList.remove('at-weekly');
-                window.currentChartPage = 'daily';
-            } else {
-                inner.classList.add('at-weekly');
-                window.currentChartPage = 'weekly';
-                if (window.loadWeeklyChartOnce) window.loadWeeklyChartOnce();
-            }
-            leftBtn.classList.remove('invisible');
-            rightBtn.classList.add('invisible');
-        }
-
-        rightBtn.addEventListener('click', goAway);
-        leftBtn.addEventListener('click', goHome);
-
-        window.applyChartNav = function () {
-            const dl = localStorage.getItem('pref_default_landing') || 'daily';
-            homeIsWeekly = dl === 'weekly' || dl === 'table-weekly';
-            updateTips();
-            goHome();
-        };
-
-        goHome();
-    })();
-
-    /* ── Data table toggle ── */
-    (function () {
-        const toggleBtn     = document.getElementById('view-toggle-btn');
-        const slideViewport = document.getElementById('chart-slide-viewport');
-        const tableWrap     = document.getElementById('data-table-wrap');
-        const tableTitle    = document.getElementById('table-view-title');
-        const tableBody     = document.getElementById('data-table-body');
-        const leftNavBtn    = document.getElementById('chart-page-btn-left');
-        const rightNavBtn   = document.getElementById('chart-page-btn-right');
-
-        let isTableView = false;
-        let lastChart = 'daily';
-
-        function applyTableMode(on) {
-            slideViewport.classList.toggle('in-table', on);
-            tableWrap.hidden = !on;
-        }
-
-        function addDays(iso, n) {
-            const d = new Date(iso + 'T00:00:00');
-            d.setDate(d.getDate() + n);
-            return d.toISOString().split('T')[0];
-        }
-
-        function dateRange(start, end) {
-            const dates = [];
-            let cur = start;
-            while (cur <= end) { dates.push(cur); cur = addDays(cur, 1); }
-            return dates;
-        }
-
-        function groupByWeekFull(rows) {
-            const map = new Map();
-            const todayD = new Date();
-            todayD.setHours(0, 0, 0, 0);
-            const dfmt = localStorage.getItem('pref_date_format') || 'mdy';
-            const fmt = iso => { const [,mm,dd] = iso.split('-'); return dfmt === 'mdy' ? mm+'/'+dd : dd+'/'+mm; };
-            const isoMode = (localStorage.getItem('pref_weekly_mode') || 'rolling') === 'iso';
-
-            for (const r of rows) {
-                let key;
-                if (isoMode) {
-                    const d = new Date(r.date + 'T00:00:00');
-                    const day = d.getDay();
-                    const mon = new Date(d);
-                    mon.setDate(d.getDate() + (day === 0 ? -6 : 1 - day));
-                    key = mon.toISOString().slice(0, 10);
-                } else {
-                    const rowD = new Date(r.date + 'T00:00:00');
-                    key = Math.floor(Math.round((todayD - rowD) / 86400000) / 7);
-                }
-                if (!map.has(key)) map.set(key, []);
-                map.get(key).push(r);
-            }
-
-            const result = [];
-            for (const [key, dayRows] of map.entries()) {
-                const wr     = dayRows.filter(r => r.weight_lbs != null);
-                const avgLbs = wr.length ? wr.reduce((s, r) => s + r.weight_lbs, 0) / wr.length : null;
-                const avgKg  = wr.length ? wr.reduce((s, r) => s + r.weight_kg,  0) / wr.length : null;
-                let startISO, endISO;
-                if (isoMode) {
-                    startISO = key;
-                    const sunD = new Date(startISO + 'T00:00:00');
-                    sunD.setDate(sunD.getDate() + 6);
-                    endISO = sunD.toISOString().slice(0, 10);
-                } else {
-                    const endD = new Date(todayD);
-                    endD.setDate(todayD.getDate() - key * 7);
-                    const startD = new Date(endD);
-                    startD.setDate(endD.getDate() - 6);
-                    startISO = startD.toISOString().slice(0, 10);
-                    endISO   = endD.toISOString().slice(0, 10);
-                }
-                result.push({ monISO: startISO, sunISO: endISO, label: fmt(startISO) + '–' + fmt(endISO), avg: avgLbs, avgKg, days: dayRows });
-            }
-            result.sort((a, b) => a.monISO.localeCompare(b.monISO));
-            return result;
-        }
-
-        function appendExportRow(tbody, rows) {
-            const exportTr = document.createElement('tr');
-            exportTr.className = 'table-export-row';
-            const exportTd = document.createElement('td');
-            exportTd.colSpan = 5;
-            exportTd.className = 'table-export-cell';
-            const exportBtn = document.createElement('button');
-            exportBtn.className = 'table-export-btn';
-            exportBtn.innerHTML = '<svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg> Export CSV';
-            exportBtn.addEventListener('click', async () => {
-                const exportRows = rows || await fetch('/api/weights?range=all').then(r => r.json());
-                const lines = ['Date,Weight (lbs),Weight (kg),Notes'];
-                exportRows.forEach(r => {
-                    const note = (r.notes || '').replace(/"/g, '""');
-                    lines.push(`${r.date},${r.weight_lbs ?? ''},${r.weight_kg ?? ''},"${note}"`);
-                });
-                const blob = new Blob([lines.join('\n')], { type: 'text/csv' });
-                const a = document.createElement('a');
-                a.href = URL.createObjectURL(blob);
-                a.download = 'weight-history.csv';
-                a.click();
-                URL.revokeObjectURL(a.href);
-            });
-            exportTd.appendChild(exportBtn);
-            exportTr.appendChild(exportTd);
-            tbody.appendChild(exportTr);
-        }
-
-        async function renderWeeklyTable() {
-            const allRows = await fetch('/api/weights?range=all').then(r => r.json());
-            const { range: wRange, weeks: wWeeks } = window.getWeeklyChartRange
-                ? window.getWeeklyChartRange() : { range: '4', weeks: null };
-
-            let weekGroups = groupByWeekFull(allRows);
-            const maxWeeks = wRange === 'all' ? null
-                : wRange === 'custom' ? (wWeeks || 4)
-                : (parseInt(wRange) || 4);
-            if (maxWeeks != null) weekGroups = weekGroups.slice(-maxWeeks);
-            const weekExportRows = weekGroups.flatMap(w => w.days).sort((a, b) => a.date.localeCompare(b.date));
-
-            tableBody.innerHTML = '';
-            if (!weekGroups.length) {
-                tableBody.innerHTML = '<tr><td colspan="5" class="table-empty-cell">No data yet.</td></tr>';
-                return;
-            }
-
-            const unit = window.activeUnit || 'lbs';
-            document.getElementById('th-primary').textContent     = unit === 'lbs' ? 'Avg (lbs)' : 'Avg (kgs)';
-            document.getElementById('th-secondary').textContent   = unit === 'lbs' ? 'Avg (kgs)' : 'Avg (lbs)';
-            document.getElementById('th-days-logged').textContent = 'Days Logged';
-
-            const defaultExpanded = localStorage.getItem('pref_weekly_table_expanded') === 'true';
-
-            weekGroups.slice().reverse().forEach(week => {
-                // Pre-compute missing dates before building header
-                const dayMap = new Map(week.days.map(r => [r.date, r]));
-                const endISO = week.sunISO <= getTodayISO() ? week.sunISO : getTodayISO();
-                const allWeekDates = dateRange(week.monISO, endISO).reverse(); // newest first
-                const missingDates = allWeekDates.filter(d => !dayMap.has(d) || dayMap.get(d).weight_lbs == null);
-                const missingRefs  = new Map(); // populated during day row loop
-
-                const primAvg = week.avg   != null ? (unit === 'lbs' ? fmtLbs(week.avg)   : fmtLbs(week.avgKg)) : '—';
-                const secAvg  = week.avgKg != null ? (unit === 'lbs' ? fmtLbs(week.avgKg) : fmtLbs(week.avg))   : '—';
-
-                // Week header row
-                const headerTr = document.createElement('tr');
-                headerTr.className = 'week-header-row';
-                headerTr.setAttribute('tabindex', '0');
-                headerTr.setAttribute('role', 'button');
-                headerTr.setAttribute('aria-expanded', defaultExpanded ? 'true' : 'false');
-                headerTr.setAttribute('aria-label', 'Week of ' + week.label);
-
-                const dateTd = document.createElement('td');
-                const dateInner = document.createElement('span');
-                dateInner.className = 'week-date-inner';
-                const icon = document.createElement('span');
-                icon.className = 'week-toggle-icon' + (defaultExpanded ? ' expanded' : '');
-                icon.textContent = '▶';
-                const lbl = document.createElement('span');
-                lbl.textContent = week.label;
-                dateInner.append(icon, lbl);
-                dateTd.appendChild(dateInner);
-
-                const primTd = document.createElement('td');
-                primTd.textContent = primAvg;
-                const secTd = document.createElement('td');
-                secTd.className = 'sec-col-cell';
-                secTd.textContent = secAvg;
-
-                const hdrExclTd = document.createElement('td');
-                hdrExclTd.className = 'excl-col-cell';
-                let hdrExcl = null;
-                if (missingDates.length > 0) {
-                    hdrExcl = document.createElement('button');
-                    hdrExcl.className = 'missing-excl-btn';
-                    hdrExcl.textContent = '!';
-                    hdrExcl.dataset.tip = 'Missing data';
-                    hdrExclTd.appendChild(hdrExcl);
-                }
-
-                const cntTd = document.createElement('td');
-                cntTd.className = 'week-count-cell';
-                const loggedDays = week.days.filter(d => d.weight_lbs != null).length;
-                cntTd.textContent = String(loggedDays);
-
-                headerTr.append(dateTd, primTd, secTd, hdrExclTd, cntTd);
-                tableBody.appendChild(headerTr);
-
-                // Collapsible body row
-                const collapseTr = document.createElement('tr');
-                collapseTr.className = 'week-collapse-row';
-                const collapseTd = document.createElement('td');
-                collapseTd.colSpan = 5;
-
-                const wrap = document.createElement('div');
-                wrap.className = 'week-days-wrap';
-
-                const innerTable = document.createElement('table');
-                innerTable.className = 'week-day-table';
-                const innerBody = document.createElement('tbody');
-
-                allWeekDates.forEach(date => {
-                    const entry = dayMap.get(date);
-                    const missing = !entry || entry.weight_lbs == null;
-                    const dayTr = document.createElement('tr');
-                    dayTr.className = 'week-day-row' + (missing ? ' row-missing' : '');
-
-                    const dayDateTd = document.createElement('td');
-                    dayDateTd.innerHTML = '<span class="date-full">' + formatDateDisplay(date) + '</span><span class="date-short">' + formatDateShort(date) + '</span>';
-
-                    const wtTd = document.createElement('td');
-                    wtTd.dataset.date = date;
-                    const secEntTd = document.createElement('td');
-                    secEntTd.className = 'sec-col-cell';
-                    if (missing) {
-                        wtTd.className = 'cell-weight cell-missing';
-                        wtTd.dataset.lbs = '';
-                        wtTd.dataset.kg  = '';
-                        wtTd.innerHTML   = '<span class="missing-dash">—</span>';
-                        secEntTd.innerHTML = '<span class="missing-dash">—</span>';
-                    } else {
-                        wtTd.className = 'cell-weight';
-                        wtTd.dataset.lbs  = entry.weight_lbs;
-                        wtTd.dataset.kg   = entry.weight_kg;
-                        wtTd.textContent  = unit === 'lbs' ? fmtLbs(entry.weight_lbs) : fmtLbs(entry.weight_kg);
-                        secEntTd.textContent = unit === 'lbs' ? fmtLbs(entry.weight_kg) : fmtLbs(entry.weight_lbs);
-                    }
-
-                    const exclTd = document.createElement('td');
-                    exclTd.className = 'excl-col-cell';
-                    if (missing) {
-                        const exclBtn = document.createElement('button');
-                        exclBtn.className = 'missing-excl-btn';
-                        exclBtn.textContent = '!';
-                        exclBtn.dataset.tip = 'Missing data';
-                        exclBtn.addEventListener('click', e => { e.stopPropagation(); startEdit(wtTd, secEntTd); });
-                        exclTd.appendChild(exclBtn);
-                        missingRefs.set(date, { wtTd, secEntTd });
-                    }
-
-                    const actTd = document.createElement('td');
-                    actTd.className = 'action-cell';
-                    if (missing) {
-                        const noteText = entry && entry.notes ? entry.notes : '';
-                        const hasNote  = !!(noteText.trim());
-                        const noteBtn = document.createElement('button');
-                        noteBtn.className = 'note-btn' + (hasNote ? ' has-note' : '');
-                        noteBtn.dataset.tip = hasNote ? 'Edit note' : 'Add note';
-                        noteBtn.innerHTML = '<svg viewBox="0 0 16 16" xmlns="http://www.w3.org/2000/svg"><path d="M13 1H3C2.45 1 2 1.45 2 2v9c0 .55.45 1 1 1h1.5l2.5 2.5L9.5 12H13c.55 0 1-.45 1-1V2c0-.55-.45-1-1-1z"/></svg>';
-                        noteBtn.addEventListener('click', e => { e.stopPropagation(); window.openNoteEditor(date, noteText, noteBtn); });
-
-                        const del = document.createElement('button');
-                        if (entry) {
-                            del.className = 'table-delete-btn';
-                            del.dataset.tip = 'Delete this entry';
-                            del.addEventListener('click', e => { e.stopPropagation(); showRowDeleteModal(date, entry); });
-                        } else {
-                            del.className = 'table-delete-btn missing-del';
-                        }
-                        del.textContent = '×';
-
-                        actTd.append(noteBtn, del);
-                    } else {
-                        const del = document.createElement('button');
-                        del.className = 'table-delete-btn';
-                        del.dataset.tip = 'Delete this entry';
-                        del.textContent = '×';
-                        del.addEventListener('click', e => { e.stopPropagation(); showRowDeleteModal(date, entry); });
-
-                        const hasNote = !!(entry.notes && entry.notes.trim());
-                        const noteBtn = document.createElement('button');
-                        noteBtn.className = 'note-btn' + (hasNote ? ' has-note' : '');
-                        noteBtn.dataset.tip = hasNote ? 'Edit note' : 'Add note';
-                        noteBtn.innerHTML = '<svg viewBox="0 0 16 16" xmlns="http://www.w3.org/2000/svg"><path d="M13 1H3C2.45 1 2 1.45 2 2v9c0 .55.45 1 1 1h1.5l2.5 2.5L9.5 12H13c.55 0 1-.45 1-1V2c0-.55-.45-1-1-1z"/></svg>';
-                        noteBtn.addEventListener('click', e => {
-                            e.stopPropagation();
-                            window.openNoteEditor(date, entry.notes || '', noteBtn);
-                        });
-                        actTd.append(noteBtn, del);
-                    }
-
-                    dayTr.append(dayDateTd, wtTd, secEntTd, exclTd, actTd);
-                    dayTr.addEventListener('mouseenter', () => dayTr.classList.add('row-hover'));
-                    dayTr.addEventListener('mouseleave', () => dayTr.classList.remove('row-hover'));
-                    wtTd.addEventListener('click', () => startEdit(wtTd, secEntTd));
-                    innerBody.appendChild(dayTr);
-                });
-
-                const innerHead = document.createElement('thead');
-                const innerHeadTr = document.createElement('tr');
-                [27, 25, 25, 9, 14].forEach((w, i) => {
-                    const th = document.createElement('th');
-                    th.style.width = w + '%';
-                    if (i === 2) th.className = 'sec-col-cell';
-                    innerHeadTr.appendChild(th);
-                });
-                innerHead.appendChild(innerHeadTr);
-                innerTable.appendChild(innerHead);
-                innerTable.appendChild(innerBody);
-                wrap.appendChild(innerTable);
-                collapseTd.appendChild(wrap);
-                collapseTr.appendChild(collapseTd);
-                tableBody.appendChild(collapseTr);
-
-                // Wire up header ! click now that missingRefs is populated
-                if (hdrExcl) {
-                    hdrExcl.addEventListener('click', e => {
-                        e.stopPropagation();
-                        const refs = missingRefs.get(missingDates[0]);
-                        const triggerEdit = () => { if (refs) startEdit(refs.wtTd, refs.secEntTd); };
-                        if (!icon.classList.contains('expanded')) {
-                            icon.classList.add('expanded');
-                            wrap.style.maxHeight = wrap.scrollHeight + 'px';
-                            wrap.addEventListener('transitionend', triggerEdit, { once: true });
-                        } else {
-                            triggerEdit();
-                        }
-                    });
-                }
-
-                if (defaultExpanded) {
-                    requestAnimationFrame(() => { wrap.style.maxHeight = wrap.scrollHeight + 'px'; });
-                }
-
-                headerTr.addEventListener('click', () => {
-                    const open = icon.classList.contains('expanded');
-                    if (open) {
-                        icon.classList.remove('expanded');
-                        wrap.style.maxHeight = '0';
-                        headerTr.setAttribute('aria-expanded', 'false');
-                    } else {
-                        icon.classList.add('expanded');
-                        wrap.style.maxHeight = wrap.scrollHeight + 'px';
-                        headerTr.setAttribute('aria-expanded', 'true');
-                    }
-                });
-                headerTr.addEventListener('keydown', e => {
-                    if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); headerTr.click(); }
-                });
-            });
-
-            appendExportRow(tableBody, weekExportRows);
-        }
-
-        async function renderTable() {
-            if (lastChart === 'weekly') { await renderWeeklyTable(); return; }
-            const { range, days } = window.getChartRange();
-            let url = '/api/weights?range=' + range;
-            if (range === 'custom') url += '&days=' + days;
-            const rows = await fetch(url).then(r => r.json());
-
-            const map = {};
-            rows.forEach(r => { map[r.date] = r; });
-
-            const today = getTodayISO();
-            let startDate;
-            if (range === 'all') {
-                startDate = rows.length ? rows[0].date : today;
-            } else {
-                let n = days || 30;
-                if (range === '7d')  n = 7;
-                if (range === '30d') n = 30;
-                if (range === '90d') n = 90;
-                if (range === '1y')  n = 365;
-                n = Math.min(n, 1095);
-                startDate = addDays(today, -(n - 1));
-                if (rows.length && startDate < rows[0].date) startDate = rows[0].date;
-            }
-
-            const allDates = dateRange(startDate, today).reverse();
-            tableBody.innerHTML = '';
-
-            if (!allDates.length) {
-                tableBody.innerHTML = '<tr><td colspan="5" class="table-empty-cell">No data yet.</td></tr>';
-                return;
-            }
-
-            const unit = window.activeUnit || 'lbs';
-            document.getElementById('th-primary').textContent     = unit === 'lbs' ? 'Weight (lbs)' : 'Weight (kgs)';
-            document.getElementById('th-secondary').textContent   = unit === 'lbs' ? 'Weight (kgs)' : 'Weight (lbs)';
-            document.getElementById('th-days-logged').textContent = '';
-
-            allDates.forEach(date => {
-                const entry = map[date];
-                const missing = !entry || entry.weight_lbs == null;
-                const tr = document.createElement('tr');
-                if (missing) tr.classList.add('row-missing');
-
-                const dateTd = document.createElement('td');
-                dateTd.innerHTML = '<span class="date-full">' + formatDateDisplay(date) + '</span><span class="date-short">' + formatDateShort(date) + '</span>';
-
-                const wtTd = document.createElement('td');
-                wtTd.className = 'cell-weight' + (missing ? ' cell-missing' : '');
-                wtTd.dataset.date = date;
-                wtTd.dataset.lbs  = (!missing && entry) ? entry.weight_lbs : '';
-                wtTd.dataset.kg   = (!missing && entry) ? entry.weight_kg  : '';
-                const primaryVal   = (!missing && entry) ? (unit === 'lbs' ? fmtLbs(entry.weight_lbs) : fmtLbs(entry.weight_kg)) : null;
-                const secondaryVal = (!missing && entry) ? (unit === 'lbs' ? fmtLbs(entry.weight_kg) : fmtLbs(entry.weight_lbs)) : null;
-                wtTd.innerHTML = missing ? '<span class="missing-dash">—</span>' : primaryVal;
-
-                const kgTd = document.createElement('td');
-                kgTd.className = 'sec-col-cell';
-                kgTd.innerHTML = missing ? '<span class="missing-dash">—</span>' : secondaryVal;
-
-                const exclTd = document.createElement('td');
-                exclTd.className = 'excl-col-cell';
-                if (missing) {
-                    const exclBtn = document.createElement('button');
-                    exclBtn.className = 'missing-excl-btn';
-                    exclBtn.textContent = '!';
-                    exclBtn.dataset.tip = 'Log weight for this day';
-                    exclBtn.addEventListener('click', e => { e.stopPropagation(); startEdit(wtTd, kgTd); });
-                    exclTd.appendChild(exclBtn);
-                }
-
-                const stTd = document.createElement('td');
-                stTd.className = 'action-cell';
-                if (missing) {
-                    const noteText = entry && entry.notes ? entry.notes : '';
-                    const hasNote  = !!(noteText.trim());
-                    const noteBtn = document.createElement('button');
-                    noteBtn.className = 'note-btn' + (hasNote ? ' has-note' : '');
-                    noteBtn.dataset.tip = hasNote ? 'Edit note' : 'Add note';
-                    noteBtn.innerHTML = '<svg viewBox="0 0 16 16" xmlns="http://www.w3.org/2000/svg"><path d="M13 1H3C2.45 1 2 1.45 2 2v9c0 .55.45 1 1 1h1.5l2.5 2.5L9.5 12H13c.55 0 1-.45 1-1V2c0-.55-.45-1-1-1z"/></svg>';
-                    noteBtn.addEventListener('click', e => { e.stopPropagation(); window.openNoteEditor(date, noteText, noteBtn); });
-
-                    const del = document.createElement('button');
-                    if (entry) {
-                        del.className = 'table-delete-btn';
-                        del.dataset.tip = 'Delete this entry';
-                        del.addEventListener('click', e => { e.stopPropagation(); showRowDeleteModal(date, entry); });
-                    } else {
-                        del.className = 'table-delete-btn missing-del';
-                    }
-                    del.textContent = '×';
-
-                    stTd.append(noteBtn, del);
-                } else {
-                    const del = document.createElement('button');
-                    del.className = 'table-delete-btn';
-                    del.dataset.tip = 'Delete this entry';
-                    del.textContent = '×';
-                    del.addEventListener('click', e => { e.stopPropagation(); showRowDeleteModal(date, entry); });
-
-                    const hasNote = !!(entry.notes && entry.notes.trim());
-                    const noteBtn = document.createElement('button');
-                    noteBtn.className = 'note-btn' + (hasNote ? ' has-note' : '');
-                    noteBtn.dataset.tip = hasNote ? 'Edit note' : 'Add note';
-                    noteBtn.innerHTML = '<svg viewBox="0 0 16 16" xmlns="http://www.w3.org/2000/svg"><path d="M13 1H3C2.45 1 2 1.45 2 2v9c0 .55.45 1 1 1h1.5l2.5 2.5L9.5 12H13c.55 0 1-.45 1-1V2c0-.55-.45-1-1-1z"/></svg>';
-                    noteBtn.addEventListener('click', e => {
-                        e.stopPropagation();
-                        window.openNoteEditor(date, entry.notes || '', noteBtn);
-                    });
-
-                    stTd.append(noteBtn, del);
-                }
-
-                tr.append(dateTd, wtTd, kgTd, exclTd, stTd);
-                tableBody.appendChild(tr);
-
-                wtTd.addEventListener('click', () => startEdit(wtTd, kgTd));
-            });
-
-            if (rows.length && window.oldestEntryDate && startDate <= window.oldestEntryDate) {
-                const footerTr = document.createElement('tr');
-                footerTr.className = 'no-earlier-row';
-                const footerTd = document.createElement('td');
-                footerTd.colSpan = 5;
-                footerTd.className = 'no-earlier-cell';
-                footerTd.innerHTML = '<span class="no-earlier-inner">&#9670;&nbsp;&nbsp;No Earlier Data Recorded&nbsp;&nbsp;&#9670;</span>';
-                footerTr.appendChild(footerTd);
-                tableBody.appendChild(footerTr);
-            }
-
-            appendExportRow(tableBody, rows);
-        }
-
-        function showTableConfirm(title, message, okLabel, onOk, onCancel, cancelLabel) {
-            document.getElementById('table-confirm-title').textContent        = title;
-            document.getElementById('table-confirm-message').textContent      = message;
-            document.getElementById('table-confirm-ok').textContent           = okLabel;
-            document.getElementById('table-confirm-cancel').textContent       = cancelLabel || 'Cancel';
-            const modal = document.getElementById('table-confirm-modal');
-            modal.hidden = false;
-            modalOpen(modal);
-            document.getElementById('table-confirm-ok').onclick     = () => { modal.hidden = true; modalClose(modal); onOk(); };
-            document.getElementById('table-confirm-cancel').onclick  = () => { modal.hidden = true; modalClose(modal); if (onCancel) onCancel(); else renderTable(); };
-        }
-        window.showAppConfirm = showTableConfirm;
-
-        async function startEdit(wtTd, kgTd) {
-            if (wtTd.querySelector('input')) return;
-            const date    = wtTd.dataset.date;
-            const unit    = window.activeUnit || 'lbs';
-            const cur     = unit === 'lbs' ? wtTd.dataset.lbs : wtTd.dataset.kg;
-
-            const inp = document.createElement('input');
-            inp.type = 'number'; inp.min = '1'; inp.max = '999'; inp.step = '0.1';
-            inp.value = cur; inp.className = 'table-edit-input';
-            wtTd.innerHTML = ''; wtTd.appendChild(inp);
-            inp.focus(); if (cur) inp.select();
-
-            let done = false;
-            async function commitSave(lbs) {
-                await fetch('/api/weight', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ weight_lbs: lbs, date, overwrite: true })
-                });
-                await renderTable();
-                if (window.refreshChart) window.refreshChart();
-            }
-            async function save() {
-                if (done) return; done = true;
-                inp.removeEventListener('blur', save);
-                const raw = inp.value.trim();
-                if (raw === '' && wtTd.dataset.lbs) {
-                    showTableConfirm(
-                        'Confirm Clear Weight',
-                        'Are you sure you want to remove your weight for ' + formatDateDisplay(date) + '?',
-                        'Clear',
-                        async () => {
-                            const res  = await fetch('/api/weight/' + date + '/weight', { method: 'DELETE' });
-                            const data = await res.json();
-                            if (data.latest && data.latest.weight_lbs !== undefined) {
-                                document.getElementById('current-lbs-num').textContent = fmtLbs(data.latest.weight_lbs);
-                                document.getElementById('current-kg-num').textContent  = data.latest.weight_kg.toFixed(1);
-                                updateLostWeight();
-                            }
-                            await renderTable();
-                            if (window.refreshChart) window.refreshChart();
-                        }
-                    );
-                    return;
-                }
-                const val = parseFloat(raw);
-                if (isNaN(val) || val <= 0) { renderTable(); return; }
-                const lbs = unit === 'lbs' ? val : parseFloat((val * 2.2046).toFixed(1));
-                if (!wtTd.dataset.lbs) {
-                    await commitSave(lbs);
-                } else if (Math.abs(val - parseFloat(cur)) < 0.001) {
-                    renderTable();
-                } else {
-                    showTableConfirm(
-                        'Confirm Overwrite',
-                        'Are you sure you want to overwrite your weight for ' + formatDateDisplay(date) + '?',
-                        'Overwrite',
-                        () => commitSave(lbs)
-                    );
-                }
-            }
-            function cancel() { if (done) return; done = true; renderTable(); }
-
-            inp.addEventListener('keydown', e => { if (e.key === 'Enter') save(); if (e.key === 'Escape') cancel(); });
-            inp.addEventListener('blur', save);
-        }
-
-        async function applyDelete(date) {
-            const res  = await fetch('/api/weight/' + date, { method: 'DELETE' });
-            const data = await res.json();
-            if (data.latest && data.latest.weight_lbs !== undefined) {
-                document.getElementById('current-lbs-num').textContent = fmtLbs(data.latest.weight_lbs);
-                document.getElementById('current-kg-num').textContent  = data.latest.weight_kg.toFixed(1);
-                updateLostWeight();
-            }
-            await renderTable();
-            if (window.refreshChart) window.refreshChart();
-        }
-
-        async function clearWeightEntry(date) {
-            const res  = await fetch('/api/weight/' + date + '/weight', { method: 'DELETE' });
-            const data = await res.json();
-            if (data.latest && data.latest.weight_lbs !== undefined) {
-                document.getElementById('current-lbs-num').textContent = fmtLbs(data.latest.weight_lbs);
-                document.getElementById('current-kg-num').textContent  = data.latest.weight_kg.toFixed(1);
-                updateLostWeight();
-            }
-            await renderTable();
-            if (window.refreshChart) window.refreshChart();
-        }
-
-        async function deleteNoteOnly(date) {
-            await fetch('/api/weight/' + date + '/note', {
-                method: 'PATCH',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ notes: '' }),
-            });
-            if (window.noteMap) window.noteMap.set(date, '');
-            await renderTable();
-            if (window.refreshChart) window.refreshChart();
-        }
-
-        function showRowDeleteModal(date, entry) {
-            const hasWeight = !!(entry && entry.weight_lbs != null);
-            const hasNote   = !!(entry && entry.notes && entry.notes.trim());
-            const unit      = window.activeUnit || 'lbs';
-            const modal     = document.getElementById('row-delete-modal');
-            const checks    = document.getElementById('row-delete-checks');
-
-            document.getElementById('row-delete-date').textContent = formatDateDisplay(date);
-            checks.innerHTML = '';
-
-            if (hasWeight) {
-                const weightVal = unit === 'lbs'
-                    ? fmtLbs(entry.weight_lbs) + ' lbs'
-                    : fmtLbs(entry.weight_kg)  + ' kg';
-                const lbl = document.createElement('label');
-                lbl.className = 'row-delete-check-label';
-                const cb = document.createElement('input');
-                cb.type = 'checkbox'; cb.checked = true; cb.dataset.key = 'weight';
-                lbl.append(cb, document.createTextNode('Weight: ' + weightVal));
-                checks.appendChild(lbl);
-            }
-            if (hasNote) {
-                const snippet = entry.notes.trim().length > 48
-                    ? entry.notes.trim().slice(0, 48) + '…'
-                    : entry.notes.trim();
-                const lbl = document.createElement('label');
-                lbl.className = 'row-delete-check-label';
-                const cb = document.createElement('input');
-                cb.type = 'checkbox'; cb.checked = true; cb.dataset.key = 'note';
-                lbl.append(cb, document.createTextNode('Note: “' + snippet + '”'));
-                checks.appendChild(lbl);
-            }
-
-            const okBtn = document.getElementById('row-delete-ok');
-            function syncOk() {
-                okBtn.disabled = checks.querySelectorAll('input:checked').length === 0;
-            }
-            checks.querySelectorAll('input[type="checkbox"]').forEach(cb => cb.addEventListener('change', syncOk));
-            okBtn.disabled = false;
-            modal.hidden   = false;
-            modalOpen(modal);
-
-            document.getElementById('row-delete-cancel').onclick = () => { modal.hidden = true; modalClose(modal); };
-            okBtn.onclick = async () => {
-                modal.hidden = true;
-                modalClose(modal);
-                const weightCb = checks.querySelector('[data-key="weight"]');
-                const noteCb   = checks.querySelector('[data-key="note"]');
-                const delWeight = !!(weightCb && weightCb.checked);
-                const delNote   = !!(noteCb   && noteCb.checked);
-                if      (delWeight && delNote) await applyDelete(date);
-                else if (delWeight)            await clearWeightEntry(date);
-                else if (delNote)              await deleteNoteOnly(date);
-                announce('Entry deleted.');
-            };
-        }
-
-        function switchTablePage(page) {
-            lastChart = page;
-            if (tableTitle) tableTitle.textContent = page === 'weekly' ? 'Weekly Summary' : 'Daily Summary';
-            renderTable();
-        }
-
-        toggleBtn.addEventListener('click', () => {
-            isTableView = !isTableView;
-            applyTableMode(isTableView);
-            if (isTableView) {
-                lastChart = window.currentChartPage || 'daily';
-                if (tableTitle) tableTitle.textContent = lastChart === 'weekly' ? 'Weekly Summary' : 'Daily Summary';
-                toggleBtn.textContent = 'Chart';
-                renderTable();
-            } else {
-                toggleBtn.textContent = 'Table';
-                if (lastChart === 'weekly') {
-                    if (window.refreshWeeklyChart) window.refreshWeeklyChart();
-                } else {
-                    if (window.refreshChart) window.refreshChart();
-                }
-            }
-        });
-
-        if (leftNavBtn) leftNavBtn.addEventListener('click', () => {
-            if (isTableView) switchTablePage(window.currentChartPage || 'daily');
-        });
-        if (rightNavBtn) rightNavBtn.addEventListener('click', () => {
-            if (isTableView) switchTablePage(window.currentChartPage || 'daily');
-        });
-
-        /* ── Custom scrollbar ── */
-        const scrollEl = document.querySelector('.data-table-scroll');
-        const thumbEl  = document.getElementById('custom-scrollbar-thumb');
-        const trackEl  = thumbEl.parentElement;
-
-        function syncThumb() {
-            if (scrollEl.scrollHeight <= scrollEl.clientHeight) {
-                thumbEl.style.display = 'none';
-                return;
-            }
-            const thumbH    = Math.max((scrollEl.clientHeight / scrollEl.scrollHeight) * trackEl.clientHeight, 30);
-            const maxTop    = trackEl.clientHeight - thumbH;
-            const maxScroll = scrollEl.scrollHeight - scrollEl.clientHeight;
-            thumbEl.style.display = 'block';
-            thumbEl.style.height  = thumbH + 'px';
-            thumbEl.style.top     = (scrollEl.scrollTop / maxScroll) * maxTop + 'px';
-        }
-
-        scrollEl.addEventListener('scroll', syncThumb);
-        new ResizeObserver(syncThumb).observe(scrollEl.querySelector('.data-table'));
-
-        let drag = false, dragY = 0, dragScroll = 0;
-
-        function startDrag(e) {
-            drag = true; dragY = e.clientY; dragScroll = scrollEl.scrollTop;
-            e.preventDefault();
-        }
-
-        thumbEl.addEventListener('mousedown', startDrag);
-
-        trackEl.addEventListener('mousedown', e => {
-            if (e.target === thumbEl) return;
-            const trackRect = trackEl.getBoundingClientRect();
-            const thumbH    = parseFloat(thumbEl.style.height) || 30;
-            const maxTop    = trackEl.clientHeight - thumbH;
-            const maxScroll = scrollEl.scrollHeight - scrollEl.clientHeight;
-            const clickY    = Math.min(Math.max(e.clientY - trackRect.top - thumbH / 2, 0), maxTop);
-            scrollEl.scrollTop = (clickY / maxTop) * maxScroll;
-            startDrag(e);
-        });
-
-        document.addEventListener('mousemove', e => {
-            if (!drag) return;
-            const maxTop    = trackEl.clientHeight - parseFloat(thumbEl.style.height);
-            const maxScroll = scrollEl.scrollHeight - scrollEl.clientHeight;
-            scrollEl.scrollTop = Math.max(0, Math.min(maxScroll,
-                dragScroll + (e.clientY - dragY) * (maxScroll / maxTop)));
-        });
-        document.addEventListener('mouseup', () => { drag = false; });
-
-        window.onChartRangeChange  = () => { if (isTableView) renderTable(); };
-        window.onWeeklyRangeChange = () => { if (isTableView && lastChart === 'weekly') renderWeeklyTable(); };
-        window.renderTable = renderTable;
-        window.setTablePage = function(page) {
-            lastChart = page;
-            if (tableTitle) tableTitle.textContent = page === 'weekly' ? 'Weekly Summary' : 'Daily Summary';
-        };
-
-        window.setView = function (view, range, days) {
-            isTableView = (view === 'table');
-            applyTableMode(isTableView);
-            toggleBtn.textContent = isTableView ? 'Chart' : 'Table';
-            if (window.refreshChart) window.refreshChart(range, days);
-            if (isTableView) renderTable();
-        };
-
-        const savedLanding = localStorage.getItem('pref_default_landing') || 'daily';
-        if (savedLanding === 'table-weekly') lastChart = 'weekly';
-        if (savedLanding === 'table-daily' || savedLanding === 'table-weekly') window.setView('table');
-    })();
-
-    /* ── Note editor popover ── */
-    (() => {
-        const popover    = document.getElementById('note-popover');
-        const dateSpan   = document.getElementById('note-popover-date');
-        const textarea   = document.getElementById('note-popover-text');
-        const saveBtn    = document.getElementById('note-popover-save');
-        const cancelBtn  = document.getElementById('note-popover-cancel');
-        const deleteBtn  = document.getElementById('note-popover-delete');
-        const resizeHdl  = document.getElementById('note-resize-handle');
-        const sbThumb    = popover.querySelector('.note-scrollbar-thumb');
-        const arrowEl    = popover.querySelector('.note-popover-arrow');
-        let activeDate   = null;
-        let _anchorEl    = null;
-        let isResizing   = false;
-        let wasDragging  = false;
-        let resizeStartY = 0;
-        let resizeStartH = 0;
-        let sbDrag = false, sbDragY = 0, sbDragScrollTop = 0;
-
-        function syncNoteScrollbar() {
-            if (!sbThumb) return;
-            const track = sbThumb.parentElement;
-            if (textarea.scrollHeight <= textarea.clientHeight) {
-                sbThumb.style.display = 'none';
-                return;
-            }
-            sbThumb.style.display = 'block';
-            const ratio  = textarea.clientHeight / textarea.scrollHeight;
-            const thumbH = Math.max(16, ratio * track.clientHeight);
-            const maxTop = track.clientHeight - thumbH;
-            const pct    = textarea.scrollTop / (textarea.scrollHeight - textarea.clientHeight);
-            sbThumb.style.height = thumbH + 'px';
-            sbThumb.style.top    = (pct * maxTop) + 'px';
-        }
-
-        textarea.addEventListener('scroll', syncNoteScrollbar);
-        new ResizeObserver(syncNoteScrollbar).observe(textarea);
-
-        // Scrollbar thumb drag
-        sbThumb.addEventListener('mousedown', e => {
-            sbDrag = true;
-            sbDragY = e.clientY;
-            sbDragScrollTop = textarea.scrollTop;
-            e.preventDefault();
-            e.stopPropagation();
-        });
-        document.addEventListener('mousemove', e => {
-            if (!sbDrag) return;
-            const track     = sbThumb.parentElement;
-            const thumbH    = parseFloat(sbThumb.style.height) || 16;
-            const maxTop    = track.clientHeight - thumbH;
-            const maxScroll = textarea.scrollHeight - textarea.clientHeight;
-            const ratio     = maxTop > 0 ? (e.clientY - sbDragY) / maxTop : 0;
-            textarea.scrollTop = Math.max(0, Math.min(sbDragScrollTop + ratio * maxScroll, maxScroll));
-        });
-        document.addEventListener('mouseup', () => { sbDrag = false; });
-
-        function positionPopover() {
-            if (!_anchorEl) return;
-            const rect   = _anchorEl.getBoundingClientRect();
-            const pw     = popover.offsetWidth  || 320;
-            const ph     = popover.offsetHeight || 200;
-            const gap    = 8, margin = 8;
-            const idealLeft = rect.left + rect.width / 2 - pw / 2;
-            const left      = Math.max(margin, Math.min(idealLeft, window.innerWidth - pw - margin));
-            let top, side;
-            if (rect.bottom + gap + ph + margin <= window.innerHeight) {
-                top  = rect.bottom + gap;
-                side = 'below';
-            } else {
-                top  = Math.max(margin, rect.top - gap - ph);
-                side = 'above';
-            }
-            popover.style.top  = top  + 'px';
-            popover.style.left = left + 'px';
-            if (arrowEl) {
-                arrowEl.className = 'note-popover-arrow note-popover-arrow--' + side;
-                const btnCx     = rect.left + rect.width / 2;
-                const arrowLeft = Math.max(16, Math.min(btnCx - left - 9, pw - 24));
-                arrowEl.style.left = arrowLeft + 'px';
-            }
-        }
-
-        window.addEventListener('resize', () => {
-            if (popover.hidden) return;
-            positionPopover();
-        });
-
-        function close() {
-            popover.hidden = true;
-            document.body.classList.remove('note-open');
-            activeDate = null;
-            modalClose(popover);
-        }
-
-        function getExpandedWeeks() {
-            const s = new Set();
-            document.querySelectorAll('.week-header-row').forEach(hdr => {
-                if (hdr.querySelector('.week-toggle-icon.expanded')) {
-                    const lbl = hdr.querySelector('.week-date-inner span:last-child');
-                    if (lbl) s.add(lbl.textContent);
-                }
-            });
-            return s;
-        }
-
-        function restoreExpandedWeeks(labels) {
-            document.querySelectorAll('.week-header-row').forEach(hdr => {
-                const lbl = hdr.querySelector('.week-date-inner span:last-child');
-                if (lbl && labels.has(lbl.textContent)) {
-                    const icon = hdr.querySelector('.week-toggle-icon');
-                    const wrap = hdr.nextElementSibling && hdr.nextElementSibling.querySelector('.week-days-wrap');
-                    if (icon && wrap && !icon.classList.contains('expanded')) {
-                        icon.classList.add('expanded');
-                        wrap.style.maxHeight = wrap.scrollHeight + 'px';
-                    }
-                }
-            });
-        }
-
-        async function save() {
-            if (!activeDate) return;
-            const notes = textarea.value.trim().slice(0, 300);
-            await fetch('/api/weight/' + activeDate + '/note', {
-                method: 'PATCH',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ notes }),
-            });
-            if (window.noteMap) window.noteMap.set(activeDate, notes);
-            announce('Note saved.');
-            const exp = getExpandedWeeks();
-            close();
-            if (window.renderTable) await window.renderTable();
-            restoreExpandedWeeks(exp);
-        }
-
-        async function deleteNote(exp) {
-            if (!activeDate) return;
-            await fetch('/api/weight/' + activeDate + '/note', {
-                method: 'PATCH',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ notes: '' }),
-            });
-            if (window.noteMap) window.noteMap.set(activeDate, '');
-            close();
-            if (window.renderTable) await window.renderTable();
-            if (exp) restoreExpandedWeeks(exp);
-        }
-
-        window.openNoteEditor = function(date, currentNote, anchorEl) {
-            activeDate = date;
-            _anchorEl  = anchorEl;
-            dateSpan.textContent = formatDateDisplay(date);
-            textarea.value = currentNote || '';
-            popover.hidden = false;
-            document.body.classList.add('note-open');
-            modalOpen(popover);
-            positionPopover();
-            textarea.focus();
-            syncNoteScrollbar();
-        };
-
-        /* Custom resize handle */
-        resizeHdl.addEventListener('mousedown', e => {
-            isResizing   = true;
-            wasDragging  = false;
-            resizeStartY = e.clientY;
-            resizeStartH = textarea.offsetHeight;
-            e.preventDefault();
-            e.stopPropagation();
-        });
-
-        document.addEventListener('mousemove', e => {
-            if (!isResizing) return;
-            const newH = Math.max(80, resizeStartH + (e.clientY - resizeStartY));
-            textarea.style.height = newH + 'px';
-        });
-
-        document.addEventListener('mouseup', e => {
-            if (isResizing) {
-                isResizing  = false;
-                wasDragging = true;
-                setTimeout(() => { wasDragging = false; }, 50);
-            }
-        });
-
-        /* Delete with confirmation */
-        deleteBtn.addEventListener('click', e => {
-            e.stopPropagation();
-            const exp = getExpandedWeeks();
-            if (window.showAppConfirm) {
-                window.showAppConfirm(
-                    'Delete Note',
-                    'Are you sure you want to delete this note?',
-                    'Delete',
-                    () => deleteNote(exp)
-                );
-            } else {
-                deleteNote(exp);
-            }
-        });
-
-        saveBtn.addEventListener('click', save);
-        cancelBtn.addEventListener('click', close);
-        textarea.addEventListener('keydown', e => {
-            if (e.key === 'Escape') close();
-            if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) save();
-        });
-        document.addEventListener('click', e => {
-            if (wasDragging) return;
-            if (!popover.hidden && !e.composedPath().includes(popover) && !e.target.closest('.note-btn')) {
-                close();
-            }
-        });
-    })();
-
-    /* ── Unit toggle ── */
-    (function () {
-        const unitBtn = document.getElementById('unit-toggle-btn');
-        unitBtn.textContent = window.activeUnit === 'lbs' ? 'KGS' : 'LBS';
-        unitBtn.addEventListener('click', () => {
-            window.activeUnit = window.activeUnit === 'lbs' ? 'kg' : 'lbs';
-            window.savePref('pref_unit', window.activeUnit);
-            unitBtn.textContent = window.activeUnit === 'lbs' ? 'KGS' : 'LBS';
-            window.applyPlateUnit(window.activeUnit);
-            if (window.currentChartPage === 'weekly') {
-                if (window.refreshWeeklyChart) window.refreshWeeklyChart();
-            } else {
-                if (window.refreshChart) window.refreshChart();
-            }
-            if (window.renderTable) window.renderTable();
-        });
-    })();
-
-    /* ── Historical weight modal ── */
-    (function () {
-        const modal    = document.getElementById('history-modal');
-        const dateIn   = document.getElementById('history-date');
-        const weightIn = document.getElementById('history-weight');
-        const preview  = document.getElementById('history-kg-preview');
-        const screenEl = document.getElementById('history-screen-input');
-        const labelEl  = screenEl.querySelector('label[for="history-weight"]');
-        const unitTag  = screenEl.querySelector('.modal-unit-tag');
-        const baseLabel = labelEl ? labelEl.textContent.replace(/\s*\((lbs|kgs)\)$/, '') : '';
-
-        /* ── Custom date picker ── */
-        const calEl    = document.getElementById('history-calendar');
-        const gridEl   = document.getElementById('dp-grid');
-        const monthLbl = document.getElementById('dp-month-label');
-        const dayNames = calEl.querySelector('.dp-day-names');
-        const MONTHS   = ['January','February','March','April','May','June',
-                          'July','August','September','October','November','December'];
-        let viewDate        = new Date();
-        let selectedDateISO = '';
-        let calMode         = 'days';
-        let yearPage        = new Date().getFullYear() - 5;
-
-        function isoFromParts(y, m, d) {
-            return y + '-' + String(m + 1).padStart(2, '0') + '-' + String(d).padStart(2, '0');
-        }
-        function displayFromISO(iso) {
-            const [y, m, d] = iso.split('-');
-            return MONTHS[parseInt(m) - 1] + ' ' + parseInt(d) + ', ' + y;
-        }
-
-        function renderCalendar() {
-            calMode = 'days';
-            dayNames.style.display = '';
-            gridEl.style.gridTemplateColumns = 'repeat(7, 1fr)';
-            const today   = getTodayISO();
-            const todayD  = new Date();
-            const minDate = isoFromParts(todayD.getFullYear() - 10, todayD.getMonth(), todayD.getDate());
-            const y = viewDate.getFullYear(), m = viewDate.getMonth();
-            monthLbl.textContent = MONTHS[m] + ' ' + y;
-
-            const firstDow    = new Date(y, m, 1).getDay();
-            const daysInMonth = new Date(y, m + 1, 0).getDate();
-            const daysInPrev  = new Date(y, m, 0).getDate();
-            gridEl.innerHTML  = '';
-
-            for (let i = firstDow - 1; i >= 0; i--) {
-                const btn = document.createElement('button');
-                btn.type = 'button'; btn.className = 'dp-day dp-other-month';
-                btn.textContent = daysInPrev - i; btn.disabled = true;
-                gridEl.appendChild(btn);
-            }
-            for (let day = 1; day <= daysInMonth; day++) {
-                const iso = isoFromParts(y, m, day);
-                const btn = document.createElement('button');
-                btn.type = 'button'; btn.className = 'dp-day';
-                btn.textContent = day;
-                if (iso === today)           btn.classList.add('dp-today');
-                if (iso === selectedDateISO) btn.classList.add('dp-selected');
-                if (iso > today || iso < minDate) {
-                    btn.disabled = true;
-                } else {
-                    btn.addEventListener('click', () => {
-                        selectedDateISO = iso;
-                        dateIn.value = displayFromISO(iso);
-                        calEl.hidden = true;
-                    });
-                }
-                gridEl.appendChild(btn);
-            }
-            const rem = (firstDow + daysInMonth) % 7;
-            if (rem > 0) {
-                for (let i = 1; i <= 7 - rem; i++) {
-                    const btn = document.createElement('button');
-                    btn.type = 'button'; btn.className = 'dp-day dp-other-month';
-                    btn.textContent = i; btn.disabled = true;
-                    gridEl.appendChild(btn);
-                }
-            }
-        }
-
-        function renderYearGrid() {
-            calMode = 'years';
-            dayNames.style.display = 'none';
-            gridEl.style.gridTemplateColumns = 'repeat(3, 1fr)';
-            const todayY = new Date().getFullYear();
-            const minY   = todayY - 10;
-            const curY   = viewDate.getFullYear();
-            monthLbl.textContent = yearPage + ' – ' + (yearPage + 11);
-            gridEl.innerHTML = '';
-            for (let i = 0; i < 12; i++) {
-                const yr  = yearPage + i;
-                const btn = document.createElement('button');
-                btn.type = 'button'; btn.className = 'dp-day dp-year';
-                btn.textContent = yr;
-                if (yr === todayY) btn.classList.add('dp-today');
-                if (yr === curY)   btn.classList.add('dp-selected');
-                if (yr > todayY || yr < minY) {
-                    btn.disabled = true;
-                } else {
-                    btn.addEventListener('click', () => {
-                        viewDate = new Date(yr, viewDate.getMonth(), 1);
-                        renderCalendar();
-                    });
-                }
-                gridEl.appendChild(btn);
-            }
-        }
-
-        monthLbl.addEventListener('click', () => {
-            if (calMode === 'days') { yearPage = viewDate.getFullYear() - 5; renderYearGrid(); }
-            else                    { renderCalendar(); }
-        });
-
-        dateIn.addEventListener('click', () => {
-            if (calEl.hidden) {
-                viewDate = selectedDateISO ? new Date(selectedDateISO + 'T12:00:00') : new Date();
-                renderCalendar();
-                calEl.hidden = false;
-            } else {
-                calEl.hidden = true;
-            }
-        });
-
-        document.getElementById('dp-prev').addEventListener('click', () => {
-            if (calMode === 'years') { yearPage -= 12; renderYearGrid(); }
-            else { viewDate = new Date(viewDate.getFullYear(), viewDate.getMonth() - 1, 1); renderCalendar(); }
-        });
-        document.getElementById('dp-next').addEventListener('click', () => {
-            if (calMode === 'years') { yearPage += 12; renderYearGrid(); }
-            else { viewDate = new Date(viewDate.getFullYear(), viewDate.getMonth() + 1, 1); renderCalendar(); }
-        });
-
-        document.addEventListener('click', e => {
-            const wrap = document.getElementById('history-date-wrap');
-            if (!calEl.hidden && !e.composedPath().includes(wrap)) calEl.hidden = true;
-        });
-        /* ── end custom date picker ── */
-
-        function isKgMode() { return window.activeUnit === 'kg'; }
-
-        function close() {
-            modal.hidden = true;
-            calEl.hidden = true;
-            document.getElementById('history-screen-input').hidden   = false;
-            document.getElementById('history-screen-confirm').hidden = true;
-            modalClose(modal);
-        }
-
-        function updatePreview() {
-            const v = parseFloat(weightIn.value);
-            preview.textContent = (!isNaN(v) && v > 0)
-                ? (isKgMode() ? (v * 2.2046).toFixed(1) + ' lbs' : (v / 2.2046).toFixed(1) + ' kgs')
-                : '';
-        }
-
-        async function doSave(dt, lbs, overwrite) {
-            const res  = await fetch('/api/weight', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ weight_lbs: lbs, date: dt, overwrite })
-            });
-            const data = await res.json();
-
-            if (data.success) { close(); window.refreshChart(); if (window.renderTable) window.renderTable(); return; }
-
-            if (data.conflict) {
-                document.getElementById('history-overwrite-message').textContent =
-                    'Are you sure you want to overwrite your weight for ' + formatDateDisplay(dt) + '?';
-                document.getElementById('history-screen-input').hidden   = true;
-                document.getElementById('history-screen-confirm').hidden = false;
-                document.getElementById('history-overwrite-cancel').onclick  = close;
-                document.getElementById('history-overwrite-confirm').onclick = () => doSave(dt, lbs, true);
-            }
-        }
-
-        function trySave() {
-            const dt  = selectedDateISO;
-            const raw = parseFloat(weightIn.value);
-            if (!dt)                    { dateIn.focus();   return; }
-            if (isNaN(raw) || raw <= 0) { weightIn.focus(); return; }
-            const lbs = isKgMode() ? parseFloat((raw * 2.2046).toFixed(1)) : raw;
-            doSave(dt, lbs, false);
-        }
-
-        function step(amount) {
-            const kg  = isKgMode();
-            const min = kg ? 20  : 50;
-            const max = kg ? 450 : 999;
-            const cur = parseFloat(weightIn.value) || 0;
-            weightIn.value = Math.min(max, Math.max(min, Math.round((cur + amount) * 10) / 10));
-            updatePreview();
-        }
-
-        document.getElementById('chart-add-btn').addEventListener('click', () => {
-            const kg = isKgMode();
-            if (labelEl) labelEl.textContent = baseLabel + (kg ? ' (kgs)' : ' (lbs)');
-            if (unitTag) unitTag.textContent  = kg ? 'kgs' : 'lbs';
-            weightIn.min = kg ? '20'  : '50';
-            weightIn.max = kg ? '450' : '999';
-            selectedDateISO = ''; dateIn.value = ''; weightIn.value = ''; preview.textContent = '';
-            close();
-            modal.hidden = false;
-            modalOpen(modal);
-            setTimeout(() => dateIn.focus(), 50);
-        });
-
-        document.getElementById('history-cancel').addEventListener('click', close);
-        document.getElementById('history-save').addEventListener('click', trySave);
-        document.getElementById('history-step-up').addEventListener('click',   () => step(1));
-        document.getElementById('history-step-down').addEventListener('click', () => step(-1));
-        modal.addEventListener('click', e => { if (e.target === modal) close(); });
-        document.addEventListener('keydown', e => {
-            if (e.key === 'Escape') {
-                if (!calEl.hidden) { calEl.hidden = true; return; }
-                if (!modal.hidden) close();
-            }
-        });
-        weightIn.addEventListener('input', updatePreview);
-        weightIn.addEventListener('keydown', e => { if (e.key === 'Enter') trySave(); });
-    })();
-
-    /* Custom cursor: DOM element follows the mouse so cursor: none works
+        /* Custom cursor: DOM element follows the mouse so cursor: none works
        even over scrollbars (which ignore CSS cursor on pseudo-elements). */
     (function () {
         const el       = document.getElementById('site-cursor');
@@ -4651,15 +2830,18 @@
             window.savePref('pref_legend',               newLegend);
             window.savePref('pref_weekly_legend',        newWeeklyLegend);
             window.savePref('pref_date_format',       newDateFormat);
-            document.getElementById('daily-chart-legend').style.display  = newLegend        === '1' ? '' : 'none';
-            document.getElementById('weekly-chart-legend').style.display = newWeeklyLegend  === '1' ? '' : 'none';
+            const _dlEl = document.getElementById('daily-chart-legend');
+            const _wlEl = document.getElementById('weekly-chart-legend');
+            if (_dlEl) _dlEl.style.display  = newLegend       === '1' ? '' : 'none';
+            if (_wlEl) _wlEl.style.display  = newWeeklyLegend === '1' ? '' : 'none';
             const hud = document.getElementById('healthbar-hud');
             if (hud) hud.style.display = newHealthBar === '1' ? '' : 'none';
             if (window.updateHealthBarName) window.updateHealthBarName();
 
             if (newUnit !== window.activeUnit) {
                 window.activeUnit = newUnit;
-                document.getElementById('unit-toggle-btn').textContent = newUnit === 'lbs' ? 'KGS' : 'LBS';
+                const _utb = document.getElementById('unit-toggle-btn');
+                if (_utb) _utb.textContent = newUnit === 'lbs' ? 'KGS' : 'LBS';
                 window.applyPlateUnit(newUnit);
             }
 
@@ -4828,21 +3010,10 @@
     // are cancelled and redirected to that scroll body when one is present.
     window.addEventListener('wheel', function (e) {
         const activeOverlay = document.querySelector('.modal-overlay:not([hidden])');
-        const noteEl        = document.getElementById('note-popover');
-        const noteOpen      = !noteEl.hidden;
-        const tableWrap     = document.getElementById('data-table-wrap');
-        const inTable       = tableWrap && !tableWrap.hidden && !!e.target.closest('.data-table-scroll-area');
-        const inNote        = noteOpen && !!e.target.closest('#note-popover');
-        if (!activeOverlay && !noteOpen && !inTable) return;
-        if (inNote) return; // let the textarea scroll via wheel normally
+        if (!activeOverlay) return;
         e.preventDefault();
-        if (activeOverlay) {
-            const scrollEl = activeOverlay.querySelector('.settings-scroll-body');
-            if (scrollEl) scrollEl.scrollTop += e.deltaY;
-        } else if (inTable && !noteOpen) {
-            const scrollEl = document.querySelector('.data-table-scroll');
-            if (scrollEl) scrollEl.scrollTop += e.deltaY;
-        }
+        const scrollEl = activeOverlay.querySelector('.settings-scroll-body');
+        if (scrollEl) scrollEl.scrollTop += e.deltaY;
     }, { passive: false, capture: true });
 
     /* ── Settings custom scrollbar ── */
@@ -4983,6 +3154,628 @@
             }, true); // capture phase: fires before the button's own listeners
         });
     })();
+
+    /* ── Header stats ── */
+    (function () {
+        const STREAK_STOPS = [
+            [ 60, 120, 255],
+            [100, 175, 255],
+            [155, 215, 255],
+            [255, 245, 110],
+            [255, 225,  40],
+            [255, 155,  30],
+            [255,  90,  30],
+            [255,  60,  60],
+        ];
+        function applyStreakGlow(numEl, labelEl, val) {
+            numEl.classList.remove('streak-flame-num');
+            if (labelEl) labelEl.classList.remove('streak-flame-label');
+            if (val >= 7) {
+                numEl.style.color = '';
+                numEl.style.textShadow = '';
+                numEl.classList.add('streak-flame-num');
+                if (labelEl) {
+                    labelEl.style.color = '';
+                    labelEl.style.textShadow = '';
+                    labelEl.classList.add('streak-flame-label');
+                }
+            } else {
+                const [r, g, b] = STREAK_STOPS[Math.min(Math.max(Math.round(val), 0), 7)];
+                const color = `rgb(${r},${g},${b})`;
+                const fade  = `rgba(${r},${g},${b},0.35)`;
+                numEl.style.color = color;
+                numEl.style.textShadow = `0 0 6px ${color}, 0 0 18px ${color}, 0 0 36px ${fade}`;
+                if (labelEl) {
+                    labelEl.style.color = color;
+                    labelEl.style.textShadow = `0 0 5px ${color}, 0 0 14px ${fade}`;
+                }
+            }
+        }
+
+        async function updateHeaderStats() {
+            const stats = await fetch('/api/home-stats').then(r => r.json());
+            const streakNumEl = document.getElementById('mp-active-streak');
+            const streakLblEl = streakNumEl.closest('.mp-stat--streak').querySelector('.mp-stat-label');
+            streakNumEl.textContent = stats.streak;
+            applyStreakGlow(streakNumEl, streakLblEl, stats.streak);
+            document.getElementById('mp-kcal-week').textContent = stats.kcal_week.toLocaleString();
+            const trendEl = document.getElementById('mp-trend');
+            const unit = window.activeUnit || 'lbs';
+            const delta = unit === 'kg' ? stats.trend_kg : stats.trend_lbs;
+            trendEl.textContent = delta != null
+                ? (delta >= 0 ? '+' : '−') + Math.abs(delta).toFixed(1)
+                : '—';
+        }
+        updateHeaderStats().catch(e => console.warn('Header stats failed:', e));
+        window.refreshHeaderStats = updateHeaderStats;
+    })();
+
+    /* ── App-wide confirm modal (fixes window.showAppConfirm latent bug) ── */
+    window.showAppConfirm = function(title, message, okLabel, onOk) {
+        const modal = document.getElementById('app-confirm-modal');
+        document.getElementById('app-confirm-title').textContent = title;
+        document.getElementById('app-confirm-msg').textContent   = message;
+        document.getElementById('app-confirm-ok').textContent    = okLabel || 'Confirm';
+        modal.hidden = false;
+        document.getElementById('app-confirm-ok').onclick    = () => { modal.hidden = true; onOk(); };
+        document.getElementById('app-confirm-cancel').onclick = () => { modal.hidden = true; };
+    };
+
+    /* ── Refresh weight plates from DB (callable after quick-log) ── */
+    window.refreshPlatesData = function() {
+        Promise.all([
+            fetch('/api/latest-weight').then(r => r.json()),
+            fetch('/api/settings').then(r => r.json())
+        ]).then(([latest, settings]) => {
+            window.oldestEntryDate = latest.oldest_date || null;
+            if (latest.weight_lbs !== undefined) {
+                document.getElementById('current-lbs-num').textContent = fmtLbs(latest.weight_lbs);
+                document.getElementById('current-kg-num').textContent  = latest.weight_kg.toFixed(1);
+            }
+            const sw = settings['starting_weight'];
+            if (sw) {
+                document.getElementById('start-lbs-num').textContent = fmtLbs(sw.value_lbs);
+                document.getElementById('start-kg-num').textContent  = sw.value_kg.toFixed(1);
+            }
+            const gw = settings['goal_weight'];
+            if (gw) {
+                document.getElementById('goal-lbs-num').textContent = fmtLbs(gw.value_lbs);
+                document.getElementById('goal-kg-num').textContent  = gw.value_kg.toFixed(1);
+            }
+            updateLostWeight();
+        });
+    };
+
+    /* ── Quick-add footer picker ── */
+    (function () {
+        const addBtn = document.getElementById('mp-footer-add-btn');
+        const picker = document.getElementById('mp-add-picker');
+
+        function openPicker()  { picker.classList.add('open');    addBtn.setAttribute('aria-expanded', 'true');  }
+        function closePicker() { picker.classList.remove('open'); addBtn.setAttribute('aria-expanded', 'false'); }
+
+        addBtn.addEventListener('click', e => {
+            e.stopPropagation();
+            picker.classList.contains('open') ? closePicker() : openPicker();
+        });
+        document.addEventListener('click', e => {
+            if (!e.target.closest('.mp-add-picker-wrap')) closePicker();
+        });
+        document.getElementById('mp-add-weight').addEventListener('click', () => {
+            closePicker();
+            if (window.openWeightModal) window.openWeightModal();
+        });
+        document.getElementById('mp-add-workout').addEventListener('click', () => {
+            closePicker();
+            if (window.openWorkoutModal) window.openWorkoutModal();
+        });
+    })();
+
+    /* ── Log Past Weight modal (quick-add) ── */
+    (function () {
+        const modal    = document.getElementById('history-modal');
+        const dateIn   = document.getElementById('history-date');
+        const weightIn = document.getElementById('history-weight');
+        const preview  = document.getElementById('history-kg-preview');
+        const screenEl = document.getElementById('history-screen-input');
+        const labelEl  = screenEl ? screenEl.querySelector('label[for="history-weight"]') : null;
+        const unitTag  = screenEl ? screenEl.querySelector('.modal-unit-tag') : null;
+        const baseLabel = labelEl ? labelEl.textContent.replace(/\s*\((lbs|kgs)\)$/,'') : '';
+        const calEl    = document.getElementById('history-calendar');
+        const gridEl   = document.getElementById('dp-grid');
+        const monthLbl = document.getElementById('dp-month-label');
+        const dayNames = calEl ? calEl.querySelector('.dp-day-names') : null;
+        const MONTHS   = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+        let viewDate=new Date(), selectedDateISO='', calMode='days', yearPage=new Date().getFullYear()-5;
+
+        function isoFromParts(y,m,d){return y+'-'+String(m+1).padStart(2,'0')+'-'+String(d).padStart(2,'0');}
+        function displayFromISO(iso){const[y,m,d]=iso.split('-');return MONTHS[parseInt(m)-1]+' '+parseInt(d)+', '+y;}
+        function renderCalendar(){
+            if(!gridEl)return; calMode='days'; if(dayNames)dayNames.style.display=''; gridEl.style.gridTemplateColumns='repeat(7,1fr)';
+            const today=getTodayISO(),todayD=new Date();
+            const minDate=isoFromParts(todayD.getFullYear()-10,todayD.getMonth(),todayD.getDate());
+            const y=viewDate.getFullYear(),m=viewDate.getMonth();
+            if(monthLbl)monthLbl.textContent=MONTHS[m]+' '+y;
+            const firstDow=new Date(y,m,1).getDay(),daysInMonth=new Date(y,m+1,0).getDate(),daysInPrev=new Date(y,m,0).getDate();
+            gridEl.innerHTML='';
+            for(let i=firstDow-1;i>=0;i--){const btn=document.createElement('button');btn.type='button';btn.className='dp-day dp-other-month';btn.textContent=daysInPrev-i;btn.disabled=true;gridEl.appendChild(btn);}
+            for(let day=1;day<=daysInMonth;day++){
+                const iso=isoFromParts(y,m,day),btn=document.createElement('button');
+                btn.type='button';btn.className='dp-day';btn.textContent=day;
+                if(iso===today)btn.classList.add('dp-today');if(iso===selectedDateISO)btn.classList.add('dp-selected');
+                if(iso>today||iso<minDate){btn.disabled=true;}else{btn.addEventListener('click',()=>{selectedDateISO=iso;if(dateIn)dateIn.value=displayFromISO(iso);if(calEl)calEl.hidden=true;});}
+                gridEl.appendChild(btn);
+            }
+            const rem=(firstDow+daysInMonth)%7;
+            if(rem>0){for(let i=1;i<=7-rem;i++){const btn=document.createElement('button');btn.type='button';btn.className='dp-day dp-other-month';btn.textContent=i;btn.disabled=true;gridEl.appendChild(btn);}}
+        }
+        function renderYearGrid(){
+            if(!gridEl)return; calMode='years'; if(dayNames)dayNames.style.display='none'; gridEl.style.gridTemplateColumns='repeat(3,1fr)';
+            const todayY=new Date().getFullYear(),minY=todayY-10,curY=viewDate.getFullYear();
+            if(monthLbl)monthLbl.textContent=yearPage+' – '+(yearPage+11); gridEl.innerHTML='';
+            for(let i=0;i<12;i++){
+                const yr=yearPage+i,btn=document.createElement('button');
+                btn.type='button';btn.className='dp-day dp-year';btn.textContent=yr;
+                if(yr===todayY)btn.classList.add('dp-today');if(yr===curY)btn.classList.add('dp-selected');
+                if(yr>todayY||yr<minY){btn.disabled=true;}else{btn.addEventListener('click',()=>{viewDate=new Date(yr,viewDate.getMonth(),1);renderCalendar();});}
+                gridEl.appendChild(btn);
+            }
+        }
+        if(monthLbl)monthLbl.addEventListener('click',()=>{if(calMode==='days'){yearPage=viewDate.getFullYear()-5;renderYearGrid();}else{renderCalendar();}});
+        if(dateIn)dateIn.addEventListener('click',()=>{if(calEl.hidden){viewDate=selectedDateISO?new Date(selectedDateISO+'T12:00:00'):new Date();renderCalendar();calEl.hidden=false;}else{calEl.hidden=true;}});
+        const dpPrev=document.getElementById('dp-prev'),dpNext=document.getElementById('dp-next');
+        if(dpPrev)dpPrev.addEventListener('click',()=>{if(calMode==='years'){yearPage-=12;renderYearGrid();}else{viewDate=new Date(viewDate.getFullYear(),viewDate.getMonth()-1,1);renderCalendar();}});
+        if(dpNext)dpNext.addEventListener('click',()=>{if(calMode==='years'){yearPage+=12;renderYearGrid();}else{viewDate=new Date(viewDate.getFullYear(),viewDate.getMonth()+1,1);renderCalendar();}});
+        document.addEventListener('click',e=>{const wrap=document.getElementById('history-date-wrap');if(calEl&&!calEl.hidden&&!e.composedPath().includes(wrap))calEl.hidden=true;});
+
+        function isKgMode(){return window.activeUnit==='kg';}
+        function close(){modal.hidden=true;if(calEl)calEl.hidden=true;const si=document.getElementById('history-screen-input'),sc=document.getElementById('history-screen-confirm');if(si)si.hidden=false;if(sc)sc.hidden=true;modalClose(modal);}
+        function updatePreview(){const v=parseFloat(weightIn.value);preview.textContent=(!isNaN(v)&&v>0)?(isKgMode()?(v*2.2046).toFixed(1)+' lbs':(v/2.2046).toFixed(1)+' kgs'):'';}
+        async function doSave(dt,lbs,overwrite){
+            const res=await fetch('/api/weight',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({weight_lbs:lbs,date:dt,overwrite})});
+            const data=await res.json();
+            if(data.success){close();if(window.refreshHeaderStats)window.refreshHeaderStats();if(window.refreshPlatesData)window.refreshPlatesData();return;}
+            if(data.conflict){
+                const om=document.getElementById('history-overwrite-message');if(om)om.textContent='Are you sure you want to overwrite your weight for '+formatDateDisplay(dt)+'?';
+                const si=document.getElementById('history-screen-input'),sc=document.getElementById('history-screen-confirm');
+                if(si)si.hidden=true;if(sc)sc.hidden=false;
+                const oc=document.getElementById('history-overwrite-cancel'),ocf=document.getElementById('history-overwrite-confirm');
+                if(oc)oc.onclick=close; if(ocf)ocf.onclick=()=>doSave(dt,lbs,true);
+            }
+        }
+        function trySave(){const dt=selectedDateISO,raw=parseFloat(weightIn.value);if(!dt){if(dateIn)dateIn.focus();return;}if(isNaN(raw)||raw<=0){weightIn.focus();return;}const lbs=isKgMode()?parseFloat((raw*2.2046).toFixed(1)):raw;doSave(dt,lbs,false);}
+        function step(amount){const kg=isKgMode(),min=kg?20:50,max=kg?450:999,cur=parseFloat(weightIn.value)||0;weightIn.value=Math.min(max,Math.max(min,Math.round((cur+amount)*10)/10));updatePreview();}
+
+        window.openWeightModal = function() {
+            const kg=isKgMode();
+            if(labelEl)labelEl.textContent=baseLabel+(kg?' (kgs)':' (lbs)');
+            if(unitTag)unitTag.textContent=kg?'kgs':'lbs';
+            weightIn.min=kg?'20':'50'; weightIn.max=kg?'450':'999';
+            selectedDateISO=''; if(dateIn)dateIn.value=''; weightIn.value=''; preview.textContent='';
+            const si=document.getElementById('history-screen-input'),sc=document.getElementById('history-screen-confirm');
+            if(si)si.hidden=false; if(sc)sc.hidden=true;
+            modal.hidden=false; modalOpen(modal);
+            setTimeout(()=>{if(dateIn)dateIn.focus();},50);
+        };
+        const hCancel=document.getElementById('history-cancel'),hSave=document.getElementById('history-save');
+        const hStepUp=document.getElementById('history-step-up'),hStepDown=document.getElementById('history-step-down');
+        if(hCancel)hCancel.addEventListener('click',close);
+        if(hSave)hSave.addEventListener('click',trySave);
+        if(hStepUp)hStepUp.addEventListener('click',()=>step(1));
+        if(hStepDown)hStepDown.addEventListener('click',()=>step(-1));
+        modal.addEventListener('click',e=>{if(e.target===modal)close();});
+        document.addEventListener('keydown',e=>{if(e.key==='Escape'){if(calEl&&!calEl.hidden){calEl.hidden=true;return;}if(!modal.hidden)close();}});
+        weightIn.addEventListener('input',updatePreview);
+        weightIn.addEventListener('keydown',e=>{if(e.key==='Enter')trySave();});
+    })();
+
+    /* ── Workout data (for quick-log modal) ── */
+    const WORKOUTS = [
+        { name: 'Aerobics Class',                  met: 6.5  },
+        { name: 'Backpacking',                     met: 7.0  },
+        { name: 'Badminton',                       met: 5.5  },
+        { name: 'Ballet',                          met: 6.0  },
+        { name: 'Ballroom Dancing',                met: 3.0  },
+        { name: 'Baseball / Softball',             met: 5.0  },
+        { name: 'Basketball',                      met: 6.5  },
+        { name: 'Boxing',                          met: 7.8  },
+        { name: 'Calisthenics',                    met: 3.8  },
+        { name: 'Cardio (general)',                met: 7.5  },
+        { name: 'Circuit Training',                met: 8.0  },
+        { name: 'CrossFit',                        met: 8.0  },
+        { name: 'Cross-Country Skiing',            met: 9.0  },
+        { name: 'Cycling',                         speedBased: true, speedTable: 'cycling', defaultSpeed: 12.0 },
+        { name: 'Disc Golf',                       met: 3.5  },
+        { name: 'Downhill Skiing',                 met: 5.3  },
+        { name: 'Elliptical (moderate)',           met: 5.0  },
+        { name: 'Elliptical (vigorous)',           met: 6.5  },
+        { name: 'Football',                        met: 8.0  },
+        { name: 'Golf (cart)',                     met: 3.5  },
+        { name: 'Golf (walking)',                  met: 4.3  },
+        { name: 'Hiking',                          met: 5.3  },
+        { name: 'HIIT',                            met: 9.5  },
+        { name: 'Hip Hop Dance',                   met: 6.5  },
+        { name: 'Hockey',                          met: 8.0  },
+        { name: 'Ice Hockey',                      met: 8.0  },
+        { name: 'Ice Skating',                     met: 5.5  },
+        { name: 'Jogging',                         met: 7.0  },
+        { name: 'Jump Rope',                       met: 10.0 },
+        { name: 'Kayaking',                        met: 5.0  },
+        { name: 'Kettlebell Training',             met: 8.0  },
+        { name: 'Lacrosse',                        met: 8.0  },
+        { name: 'Martial Arts',                    met: 10.3 },
+        { name: 'Mountain Biking',                 met: 8.5  },
+        { name: 'Open Water Swimming',             met: 6.0  },
+        { name: 'Paddleboarding',                  met: 6.0  },
+        { name: 'Pickleball',                      met: 4.0  },
+        { name: 'Pilates',                         met: 3.0  },
+        { name: 'Powerlifting',                    met: 6.0  },
+        { name: 'Power Yoga',                      met: 4.0  },
+        { name: 'Racquetball',                     met: 7.0  },
+        { name: 'Rock Climbing',                   met: 7.5  },
+        { name: 'Rollerblading',                   met: 7.5  },
+        { name: 'Rowing (water)',                  met: 7.0  },
+        { name: 'Rowing Machine (moderate)',       met: 7.0  },
+        { name: 'Rowing Machine (vigorous)',       met: 8.5  },
+        { name: 'Rugby',                           met: 8.3  },
+        { name: 'Running',                         speedBased: true, speedTable: 'running', defaultSpeed: 5.0  },
+        { name: 'Salsa Dancing',                   met: 5.5  },
+        { name: 'Skateboarding',                   met: 5.0  },
+        { name: 'Snowboarding',                    met: 5.3  },
+        { name: 'Snowshoeing',                     met: 5.3  },
+        { name: 'Soccer',                          met: 7.0  },
+        { name: 'Spin Class',                      met: 8.5  },
+        { name: 'Squash',                          met: 7.3  },
+        { name: 'Stair Climbing',                  met: 8.0  },
+        { name: 'Stair Climber Machine',           met: 9.0  },
+        { name: 'Stationary Bike (moderate)',      met: 5.5  },
+        { name: 'Stationary Bike (vigorous)',      met: 8.5  },
+        { name: 'Step Aerobics',                   met: 8.5  },
+        { name: 'Strength Training (moderate)',    met: 3.5  },
+        { name: 'Strength Training (vigorous)',    met: 6.0  },
+        { name: 'Stretching',                      met: 2.3  },
+        { name: 'Surfing',                         met: 3.0  },
+        { name: 'Swimming (backstroke)',           met: 4.8  },
+        { name: 'Swimming (breaststroke)',         met: 5.3  },
+        { name: 'Swimming (butterfly)',            met: 13.8 },
+        { name: 'Swimming (freestyle, moderate)', met: 5.8  },
+        { name: 'Swimming (freestyle, vigorous)', met: 9.8  },
+        { name: 'Table Tennis',                    met: 4.0  },
+        { name: 'Tabata',                          met: 9.5  },
+        { name: 'Tai Chi',                         met: 3.0  },
+        { name: 'Tennis (doubles)',                met: 5.0  },
+        { name: 'Tennis (singles)',                met: 7.3  },
+        { name: 'Trail Running',                   met: 9.0  },
+        { name: 'Treadmill Running',               speedBased: true, speedTable: 'running', defaultSpeed: 5.0  },
+        { name: 'Ultimate Frisbee',                met: 7.0  },
+        { name: 'Volleyball',                      met: 4.0  },
+        { name: 'Beach Volleyball',                met: 8.0  },
+        { name: 'Walking',                         speedBased: true, speedTable: 'walking', defaultSpeed: 3.0  },
+        { name: 'Water Aerobics',                  met: 5.3  },
+        { name: 'Weight Training (moderate)',      met: 3.5  },
+        { name: 'Weight Training (vigorous)',      met: 6.0  },
+        { name: 'Wrestling',                       met: 6.0  },
+        { name: 'Yoga',                            met: 2.5  },
+        { name: 'Zumba',                           met: 6.5  },
+    ];
+    const SPEED_TABLES = {
+        running: [[0.5,1.8],[1.0,2.3],[1.5,2.8],[2.0,3.0],[2.5,3.3],[3.0,3.8],[3.5,4.3],[4.0,5.0],[4.5,6.3],[5.0,8.3],[5.5,9.0],[6.0,9.8],[6.5,10.5],[7.0,11.0],[7.5,11.5],[8.0,11.8],[8.5,12.3],[9.0,12.8],[9.5,13.5],[10.0,14.5],[11.0,16.0],[12.0,19.0]],
+        cycling: [[3.0,3.5],[5.0,4.0],[8.0,5.0],[10.0,6.8],[12.0,8.0],[14.0,10.0],[16.0,12.0],[19.0,14.0],[22.0,16.0],[25.0,19.0]],
+        walking: [[0.5,1.5],[1.0,2.0],[1.5,2.3],[2.0,2.5],[2.5,3.0],[3.0,3.5],[3.5,4.3],[4.0,5.0],[4.5,6.0],[5.0,7.0]]
+    };
+    function speedToMet(mph, table) {
+        const pts = SPEED_TABLES[table] || SPEED_TABLES.running;
+        for (let i = 0; i < pts.length - 1; i++) {
+            const [lo,loM] = pts[i], [hi,hiM] = pts[i+1];
+            if (mph >= lo && mph <= hi) { const t=(mph-lo)/(hi-lo); return Math.round((loM+t*(hiM-loM))*10)/10; }
+        }
+        return mph < pts[0][0] ? pts[0][1] : pts[pts.length-1][1];
+    }
+    function tierClass(met) {
+        if (met >= 9)   return 'tier-intense';
+        if (met >= 6)   return 'tier-hard';
+        if (met >= 3.5) return 'tier-moderate';
+        return 'tier-light';
+    }
+    function tierClassByName(name) {
+        const w = WORKOUTS.find(e => e.name === name);
+        return tierClass(w ? w.met : 5);
+    }
+    function fmtDateWO(iso) {
+        const d = new Date(iso + 'T00:00:00');
+        return d.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
+    }
+
+    /* ── Log Workout modal (quick-add) ── */
+    (function () {
+        const logModal   = document.getElementById('wp-log-modal');
+        const dayHeading = document.getElementById('wpm-day-heading');
+        const dayEntries = document.getElementById('wpm-day-entries');
+        const dayEmpty   = document.getElementById('wpm-day-empty');
+
+        let duration      = 30;
+        let selectedMet   = null;
+        let selectedLabel = null;
+        let isSpeedBased  = false;
+        let speedMph      = 5.0;
+        let speedTable    = 'running';
+        let weightKg      = 80;
+        let dropdownIdx   = -1;
+
+        const speedField   = document.getElementById('workout-speed-field');
+        const speedVal     = document.getElementById('workout-speed-val');
+        const durVal       = document.getElementById('workout-dur-val');
+        const kcalNum      = document.getElementById('workout-kcal-num');
+        const noteInput    = document.getElementById('workout-note-input');
+        const typeInput    = document.getElementById('workout-type-input');
+        const dropdown     = document.getElementById('workout-search-dropdown');
+        const chip         = document.getElementById('workout-selected-chip');
+        const chipLabel    = document.getElementById('workout-selected-label');
+        const chipTier     = document.getElementById('workout-chip-tier');
+        const chipClear    = document.getElementById('workout-chip-clear');
+        const durField     = document.getElementById('workout-dur-field');
+        const addActivityBtn = document.getElementById('wpm-add-activity-btn');
+
+        function calcKcal() { return Math.round(selectedMet * weightKg * (duration / 60)); }
+        function refreshKcal() { kcalNum.textContent = selectedMet ? calcKcal().toLocaleString() : '—'; }
+        function setFormActive(active) { durField.classList.toggle('speed-inactive', !active); addActivityBtn.disabled = !active; }
+
+        chip.style.display = 'none';
+        speedField.classList.add('speed-inactive');
+        document.getElementById('workout-speed-up').disabled   = true;
+        document.getElementById('workout-speed-down').disabled = true;
+        setFormActive(false);
+
+        document.getElementById('workout-speed-up').addEventListener('click', () => {
+            speedMph = Math.round((speedMph + 0.5) * 10) / 10;
+            speedVal.textContent = speedMph.toFixed(1);
+            if (isSpeedBased) { selectedMet = speedToMet(speedMph, speedTable); refreshKcal(); }
+        });
+        document.getElementById('workout-speed-down').addEventListener('click', () => {
+            speedMph = Math.max(0.5, Math.round((speedMph - 0.5) * 10) / 10);
+            speedVal.textContent = speedMph.toFixed(1);
+            if (isSpeedBased) { selectedMet = speedToMet(speedMph, speedTable); refreshKcal(); }
+        });
+        document.getElementById('workout-dur-up').addEventListener('click', () => {
+            duration = Math.min(duration + 5, 300); durVal.textContent = duration; refreshKcal();
+        });
+        document.getElementById('workout-dur-down').addEventListener('click', () => {
+            duration = Math.max(duration - 5, 5); durVal.textContent = duration; refreshKcal();
+        });
+
+        function buildDropdown(results) {
+            dropdown.innerHTML = '';
+            results.forEach((w, i) => {
+                const item = document.createElement('div');
+                item.className = 'wsd-item'; item.dataset.idx = i;
+                item.innerHTML = `<span>${w.name}</span><span class="wsd-met">${w.speedBased ? 'speed-based' : w.met + ' MET'}</span>`;
+                item.addEventListener('mousedown', e => { e.preventDefault(); selectWorkout(w); });
+                dropdown.appendChild(item);
+            });
+            dropdownIdx = -1;
+        }
+        function selectWorkout(w) {
+            isSpeedBased  = !!w.speedBased;
+            selectedLabel = w.name;
+            const speedUp   = document.getElementById('workout-speed-up');
+            const speedDown = document.getElementById('workout-speed-down');
+            if (isSpeedBased) {
+                speedTable = w.speedTable || 'running'; speedMph = w.defaultSpeed || 5.0;
+                speedVal.textContent = speedMph.toFixed(1); selectedMet = speedToMet(speedMph, speedTable);
+                speedField.classList.remove('speed-inactive'); speedUp.disabled = false; speedDown.disabled = false;
+            } else {
+                selectedMet = w.met; speedField.classList.add('speed-inactive');
+                speedUp.disabled = true; speedDown.disabled = true;
+            }
+            chipLabel.textContent = w.name; chipTier.className = 'workout-chip-tier ' + tierClass(selectedMet);
+            typeInput.style.display = 'none'; chip.style.display = 'flex';
+            typeInput.value = ''; dropdown.hidden = true; refreshKcal(); setFormActive(true);
+        }
+        chipClear.addEventListener('click', () => {
+            chip.style.display = 'none'; typeInput.style.display = '';
+            speedField.classList.add('speed-inactive'); typeInput.value = '';
+            selectedMet = null; selectedLabel = null; isSpeedBased = false; refreshKcal(); setFormActive(false);
+        });
+        typeInput.addEventListener('input', () => {
+            const q = typeInput.value.trim().toLowerCase();
+            if (!q) { dropdown.hidden = true; return; }
+            const matches = WORKOUTS.filter(w => w.name.toLowerCase().includes(q));
+            matches.sort((a, b) => {
+                const rank = n => { const lo=n.toLowerCase(); if(lo.startsWith(q))return 0; if(lo.split(/[\s(/]/).some(w=>w.startsWith(q)))return 1; return 2; };
+                return rank(a.name) - rank(b.name);
+            });
+            const results = matches.slice(0, 10);
+            if (!results.length) { dropdown.hidden = true; return; }
+            buildDropdown(results); dropdown.hidden = false;
+        });
+        typeInput.addEventListener('keydown', e => {
+            const items = dropdown.querySelectorAll('.wsd-item');
+            if (e.key === 'ArrowDown') { e.preventDefault(); dropdownIdx=Math.min(dropdownIdx+1,items.length-1); items.forEach((el,i)=>el.classList.toggle('highlighted',i===dropdownIdx)); }
+            else if (e.key === 'ArrowUp') { e.preventDefault(); dropdownIdx=Math.max(dropdownIdx-1,0); items.forEach((el,i)=>el.classList.toggle('highlighted',i===dropdownIdx)); }
+            else if (e.key === 'Enter' && dropdownIdx >= 0) { e.preventDefault(); const q=typeInput.value.trim().toLowerCase(); const results=WORKOUTS.filter(w=>w.name.toLowerCase().includes(q)); if(results[dropdownIdx])selectWorkout(results[dropdownIdx]); }
+            else if (e.key === 'Escape') { dropdown.hidden = true; }
+        });
+        document.addEventListener('click', e => { if (!e.target.closest('#workout-type-input,#workout-search-dropdown,.workout-search-wrap')) dropdown.hidden = true; });
+        dropdown.addEventListener('wheel', e => { e.preventDefault(); dropdown.scrollTop += e.deltaY; }, { passive: false });
+
+        const stagedEntriesEl = document.getElementById('wpm-staged-entries');
+        let stagedActivities = [], pendingDeletes = [], loadedNote = '';
+
+        function renderStagedRow(item, idx) {
+            const el = document.createElement('div');
+            el.className = 'wpm-staged-row'; el.dataset.idx = idx;
+            el.innerHTML = `<div class="wpm-staged-row-info"><span class="workout-badge ${tierClassByName(item.type)}">${item.type.replace(/</g,'&lt;')}</span></div><div class="wpm-day-dur">${item.duration_min} min</div><div class="wpm-day-kcal">${item.kcal.toLocaleString()} kcal</div><button class="table-delete-btn" aria-label="Remove" data-tip="Remove">&#10005;</button>`;
+            el.querySelector('.table-delete-btn').addEventListener('click', () => {
+                const i = parseInt(el.dataset.idx, 10); stagedActivities.splice(i, 1); el.remove();
+                stagedEntriesEl.querySelectorAll('.wpm-staged-row').forEach((r,j)=>{ r.dataset.idx=j; });
+                if (!dayEntries.querySelectorAll('.wpm-day-row').length && !stagedActivities.length) dayEmpty.hidden = false;
+            });
+            stagedEntriesEl.appendChild(el);
+        }
+
+        async function loadDayEntries(isoDate) {
+            const isToday = isoDate === getTodayISO();
+            dayHeading.textContent = isToday ? 'Logged today' : `Logged for ${fmtDateWO(isoDate)}`;
+            dayEntries.querySelectorAll('.wpm-day-row').forEach(el => el.remove());
+            stagedEntriesEl.innerHTML = ''; stagedActivities = []; pendingDeletes = []; dayEmpty.hidden = false;
+            const [rows, noteData] = await Promise.all([
+                fetch('/api/workouts?date=' + isoDate).then(r => r.json()),
+                fetch('/api/workout-day-note?date=' + isoDate).then(r => r.json())
+            ]);
+            loadedNote = noteData.note || ''; noteInput.value = loadedNote;
+            if (rows.length) {
+                dayEmpty.hidden = true;
+                rows.forEach(w => {
+                    const el = document.createElement('div');
+                    el.className = 'wpm-day-row'; el.dataset.wid = w.id;
+                    el.innerHTML = `<div class="wpm-day-row-info"><span class="workout-badge ${tierClassByName(w.type)}">${w.type.replace(/</g,'&lt;')}</span></div><div class="wpm-day-dur">${w.duration_min} min</div><div class="wpm-day-kcal">${w.kcal.toLocaleString()} kcal</div><button class="table-delete-btn" aria-label="Delete" data-tip="Delete workout">&#10005;</button>`;
+                    el.querySelector('.table-delete-btn').addEventListener('click', () => {
+                        pendingDeletes.push({ id: w.id, type: w.type, duration_min: w.duration_min }); el.remove();
+                        if (!dayEntries.querySelectorAll('.wpm-day-row').length && !stagedActivities.length) dayEmpty.hidden = false;
+                    });
+                    dayEntries.appendChild(el);
+                });
+            }
+        }
+
+        /* ── Workout date picker ── */
+        const dpInput    = document.getElementById('wp-date-input');
+        const dpCalEl    = document.getElementById('wpm-calendar');
+        const dpGridEl   = document.getElementById('wpm-dp-grid');
+        const dpMonthLbl = document.getElementById('wpm-dp-month-label');
+        const dpDayNames = dpCalEl.querySelector('.dp-day-names');
+        const DP_MONTHS  = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+        let dpViewDate = new Date(), dpSelected = '', dpCalMode = 'days', dpYearPage = new Date().getFullYear() - 5;
+
+        function dpIsoFromParts(y,m,d){return y+'-'+String(m+1).padStart(2,'0')+'-'+String(d).padStart(2,'0');}
+        function dpDisplayFromISO(iso){const[y,m,d]=iso.split('-');return DP_MONTHS[parseInt(m)-1]+' '+parseInt(d)+', '+y;}
+        function dpRenderCalendar() {
+            dpCalMode='days'; dpDayNames.style.display=''; dpGridEl.style.gridTemplateColumns='repeat(7,1fr)';
+            const today=getTodayISO(),y=dpViewDate.getFullYear(),m=dpViewDate.getMonth();
+            dpMonthLbl.textContent=DP_MONTHS[m]+' '+y;
+            const firstDow=new Date(y,m,1).getDay(),daysInMonth=new Date(y,m+1,0).getDate(),daysInPrev=new Date(y,m,0).getDate();
+            dpGridEl.innerHTML='';
+            for(let i=firstDow-1;i>=0;i--){const btn=document.createElement('button');btn.type='button';btn.className='dp-day dp-other-month';btn.textContent=daysInPrev-i;btn.disabled=true;dpGridEl.appendChild(btn);}
+            for(let day=1;day<=daysInMonth;day++){
+                const iso=dpIsoFromParts(y,m,day),btn=document.createElement('button');
+                btn.type='button';btn.className='dp-day';btn.textContent=day;
+                if(iso===today)btn.classList.add('dp-today');if(iso===dpSelected)btn.classList.add('dp-selected');
+                if(iso>today){btn.disabled=true;}else{btn.addEventListener('click',()=>{dpSelected=iso;dpInput.value=dpDisplayFromISO(iso);dpCalEl.hidden=true;loadDayEntries(iso);});}
+                dpGridEl.appendChild(btn);
+            }
+            const rem=(firstDow+daysInMonth)%7;
+            if(rem>0){for(let i=1;i<=7-rem;i++){const btn=document.createElement('button');btn.type='button';btn.className='dp-day dp-other-month';btn.textContent=i;btn.disabled=true;dpGridEl.appendChild(btn);}}
+        }
+        function dpRenderYearGrid() {
+            dpCalMode='years'; dpDayNames.style.display='none'; dpGridEl.style.gridTemplateColumns='repeat(3,1fr)';
+            const todayY=new Date().getFullYear(); dpMonthLbl.textContent=dpYearPage+' – '+(dpYearPage+11); dpGridEl.innerHTML='';
+            for(let i=0;i<12;i++){
+                const yr=dpYearPage+i,btn=document.createElement('button');
+                btn.type='button';btn.className='dp-day dp-year';btn.textContent=yr;
+                if(yr===todayY)btn.classList.add('dp-today');if(yr===dpViewDate.getFullYear())btn.classList.add('dp-selected');
+                if(yr>todayY){btn.disabled=true;}else{btn.addEventListener('click',()=>{dpViewDate=new Date(yr,dpViewDate.getMonth(),1);dpRenderCalendar();});}
+                dpGridEl.appendChild(btn);
+            }
+        }
+        dpMonthLbl.addEventListener('click',()=>{if(dpCalMode==='days'){dpYearPage=dpViewDate.getFullYear()-5;dpRenderYearGrid();}else dpRenderCalendar();});
+        dpInput.addEventListener('click',()=>{if(dpCalEl.hidden){dpViewDate=dpSelected?new Date(dpSelected+'T12:00:00'):new Date();dpRenderCalendar();dpCalEl.hidden=false;}else{dpCalEl.hidden=true;}});
+        document.getElementById('wpm-dp-prev').addEventListener('click',()=>{if(dpCalMode==='years'){dpYearPage-=12;dpRenderYearGrid();}else{dpViewDate=new Date(dpViewDate.getFullYear(),dpViewDate.getMonth()-1,1);dpRenderCalendar();}});
+        document.getElementById('wpm-dp-next').addEventListener('click',()=>{if(dpCalMode==='years'){dpYearPage+=12;dpRenderYearGrid();}else{dpViewDate=new Date(dpViewDate.getFullYear(),dpViewDate.getMonth()+1,1);dpRenderCalendar();}});
+        document.addEventListener('click',e=>{const wrap=document.getElementById('wpm-dp-wrap');if(!dpCalEl.hidden&&!e.composedPath().includes(wrap))dpCalEl.hidden=true;});
+        function dpSetDate(isoDate){dpSelected=isoDate;dpInput.value=isoDate?dpDisplayFromISO(isoDate):'';dpCalEl.hidden=true;}
+
+        /* ── Modal open / close ── */
+        function clearActivityForm() {
+            typeInput.value=''; typeInput.style.display=''; chip.style.display='none';
+            speedField.classList.add('speed-inactive');
+            document.getElementById('workout-speed-up').disabled=true; document.getElementById('workout-speed-down').disabled=true;
+            selectedMet=null; selectedLabel=null; isSpeedBased=false; speedMph=5.0;
+            speedVal.textContent='5.0'; duration=30; durVal.textContent='30';
+            setFormActive(false); refreshKcal(); dropdown.hidden=true;
+        }
+        function closeModal() { logModal.hidden=true; dpCalEl.hidden=true; dropdown.hidden=true; }
+        function hasUnsavedChanges() { return stagedActivities.length>0||pendingDeletes.length>0||noteInput.value.trim()!==loadedNote; }
+        function maybeClose() {
+            if (!hasUnsavedChanges()) { closeModal(); return; }
+            window.showAppConfirm('Discard changes?','You have unsaved changes. Discard them?','Discard',closeModal);
+        }
+
+        async function openModal(isoDate) {
+            try { const w=await fetch('/api/latest-weight').then(r=>r.json()); weightKg=w.weight_lbs?w.weight_lbs/2.2046:80; } catch { weightKg=80; }
+            dpSetDate(isoDate || getTodayISO()); clearActivityForm(); noteInput.value='';
+            await loadDayEntries(dpSelected);
+            logModal.hidden=false;
+            requestAnimationFrame(()=>document.getElementById('wpm-entries-scroll').dispatchEvent(new Event('scroll')));
+            typeInput.focus();
+        }
+        window.openWorkoutModal = function() { openModal(getTodayISO()); };
+
+        document.getElementById('wp-modal-x').addEventListener('click', maybeClose);
+        document.getElementById('wp-modal-cancel').addEventListener('click', maybeClose);
+        logModal.addEventListener('click', e => { if (e.target === logModal) maybeClose(); });
+        logModal.addEventListener('keydown', e => { if (e.key === 'Escape') maybeClose(); });
+
+        document.getElementById('wpm-add-activity-btn').addEventListener('click', () => {
+            if (!selectedLabel) return;
+            const kcal=calcKcal(), typeLabel=isSpeedBased?`${selectedLabel} (${speedMph.toFixed(1)} mph)`:selectedLabel;
+            const item={type:typeLabel,duration_min:duration,kcal};
+            const idx=stagedActivities.length; stagedActivities.push(item);
+            renderStagedRow(item,idx); dayEmpty.hidden=true; clearActivityForm();
+        });
+
+        function showDeleteConfirm(onCommit) {
+            const modal   = document.getElementById('idx-del-check-modal');
+            const checks  = document.getElementById('idx-del-checks');
+            const okBtn   = document.getElementById('idx-del-check-ok');
+            checks.innerHTML='';
+            pendingDeletes.forEach((d,i)=>{
+                const lbl=document.createElement('label'); lbl.className='row-delete-check-label';
+                const cb=document.createElement('input'); cb.type='checkbox';cb.checked=true;cb.dataset.idx=i;
+                lbl.append(cb,document.createTextNode(`${d.type} (${d.duration_min} min)`)); checks.appendChild(lbl);
+            });
+            function syncOk(){okBtn.disabled=checks.querySelectorAll('input:checked').length===0;}
+            checks.querySelectorAll('input[type="checkbox"]').forEach(cb=>cb.addEventListener('change',syncOk));
+            okBtn.disabled=false; modal.hidden=false;
+            document.getElementById('idx-del-check-cancel').onclick=()=>{modal.hidden=true;};
+            okBtn.onclick=()=>{
+                modal.hidden=true;
+                const kept=new Set(); checks.querySelectorAll('input[type="checkbox"]').forEach(cb=>{if(!cb.checked)kept.add(parseInt(cb.dataset.idx,10));});
+                pendingDeletes=pendingDeletes.filter((_,i)=>kept.has(i)); onCommit();
+            };
+        }
+
+        document.getElementById('wp-modal-save').addEventListener('click', async () => {
+            const isoDate=dpSelected||getTodayISO();
+            async function commitSave() {
+                for(const d of pendingDeletes) await fetch('/api/workout/'+d.id,{method:'DELETE'});
+                for(const item of stagedActivities) await fetch('/api/workout',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({date:isoDate,type:item.type,duration_min:item.duration_min,kcal:item.kcal,note:''})});
+                await fetch('/api/workout-day-note',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({date:isoDate,note:noteInput.value.trim()})});
+                closeModal();
+            }
+            if (pendingDeletes.length > 0) { showDeleteConfirm(commitSave); } else { await commitSave(); }
+        });
+
+        /* ── Logged-entries custom scrollbar ── */
+        (function () {
+            const scroll=document.getElementById('wpm-entries-scroll');
+            const thumb=document.getElementById('wpm-scroll-thumb');
+            function sync(){
+                const track=thumb.parentElement;
+                if(scroll.scrollHeight<=scroll.clientHeight){thumb.style.display='none';return;}
+                thumb.style.display='block';
+                const ratio=scroll.clientHeight/scroll.scrollHeight,thumbH=Math.max(16,ratio*track.clientHeight),maxTop=track.clientHeight-thumbH,pct=scroll.scrollTop/(scroll.scrollHeight-scroll.clientHeight);
+                thumb.style.height=thumbH+'px'; thumb.style.top=(pct*maxTop)+'px';
+            }
+            scroll.addEventListener('scroll',sync);
+            new MutationObserver(sync).observe(scroll,{childList:true,subtree:true});
+            let drag=false,dragY=0,dragTop=0;
+            thumb.addEventListener('mousedown',e=>{drag=true;dragY=e.clientY;dragTop=scroll.scrollTop;e.preventDefault();e.stopPropagation();});
+            document.addEventListener('mousemove',e=>{if(!drag)return;const track=thumb.parentElement,thumbH=parseFloat(thumb.style.height)||16,maxTop=track.clientHeight-thumbH,maxScroll=scroll.scrollHeight-scroll.clientHeight;scroll.scrollTop=Math.max(0,Math.min(dragTop+(maxTop>0?(e.clientY-dragY)/maxTop:0)*maxScroll,maxScroll));});
+            document.addEventListener('mouseup',()=>{drag=false;});
+        })();
+    })();
+
+
 </script>
 </body>
 </html>

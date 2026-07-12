@@ -169,6 +169,19 @@ def workouts_page():
     return render_template("workouts.html", prefs=prefs)
 
 
+@app.route("/weights")
+def weights_page():
+    conn = get_db()
+    try:
+        rows = conn.execute(
+            "SELECT key, value FROM preferences WHERE user_id = ?", (_USER_ID,)
+        ).fetchall()
+        prefs = {r["key"]: r["value"] for r in rows}
+    finally:
+        conn.close()
+    return render_template("weights.html", prefs=prefs)
+
+
 @app.route("/api/weight", methods=["POST"])
 def save_weight():
     data = request.get_json(silent=True) or {}
@@ -453,6 +466,61 @@ def save_preference():
         )
         conn.commit()
         return jsonify({"success": True})
+    finally:
+        conn.close()
+
+
+@app.route("/api/home-stats")
+def home_stats():
+    conn = get_db()
+    try:
+        today = date.today()
+
+        # Active streak: union of weight-logged and workout dates
+        weight_dates = {r["date"] for r in conn.execute(
+            "SELECT DISTINCT date FROM weights WHERE user_id = ? AND weight_lbs IS NOT NULL",
+            (_USER_ID,)
+        ).fetchall()}
+        workout_dates = {r["date"] for r in conn.execute(
+            "SELECT DISTINCT date FROM workouts WHERE user_id = ?",
+            (_USER_ID,)
+        ).fetchall()}
+        active_dates = weight_dates | workout_dates
+        streak = 0
+        d = today
+        if d.isoformat() not in active_dates:
+            d -= timedelta(days=1)
+        while d.isoformat() in active_dates:
+            streak += 1
+            d -= timedelta(days=1)
+
+        # Kcal this week (last 7 calendar days)
+        week_ago = (today - timedelta(days=6)).isoformat()
+        kcal_week = conn.execute(
+            "SELECT COALESCE(SUM(kcal), 0) as total FROM workouts WHERE user_id = ? AND date >= ?",
+            (_USER_ID, week_ago)
+        ).fetchone()["total"]
+
+        # 7-day weight trend (avg last 7 days vs avg prior 7 days)
+        d7  = (today - timedelta(days=7)).isoformat()
+        d14 = (today - timedelta(days=14)).isoformat()
+        last7 = conn.execute(
+            "SELECT weight_lbs, weight_kg FROM weights WHERE user_id = ? AND weight_lbs IS NOT NULL AND date > ?",
+            (_USER_ID, d7)
+        ).fetchall()
+        prev7 = conn.execute(
+            "SELECT weight_lbs, weight_kg FROM weights WHERE user_id = ? AND weight_lbs IS NOT NULL AND date > ? AND date <= ?",
+            (_USER_ID, d14, d7)
+        ).fetchall()
+        trend_lbs = trend_kg = None
+        if last7 and prev7:
+            trend_lbs = round(sum(r["weight_lbs"] for r in last7) / len(last7)
+                              - sum(r["weight_lbs"] for r in prev7) / len(prev7), 1)
+            trend_kg  = round(sum(r["weight_kg"]  for r in last7) / len(last7)
+                              - sum(r["weight_kg"]  for r in prev7) / len(prev7), 1)
+
+        return jsonify({"streak": streak, "kcal_week": kcal_week,
+                        "trend_lbs": trend_lbs, "trend_kg": trend_kg})
     finally:
         conn.close()
 

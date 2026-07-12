@@ -2869,3 +2869,22 @@ body.note-open .custom-scrollbar-track {
     opacity: 0.28;
     pointer-events: none;
 }
+
+/* ── Streak flame animation (7+ days) ── */
+@keyframes streak-flame-glow {
+    0%   { color: #ff280a; text-shadow: 0 0 6px #ff280a, 0 0 14px #ff280a, 0 0 26px rgba(255,40,10,0.4); }
+    20%  { color: #ff7814; text-shadow: 0 0 8px #ff7814, 0 0 18px #ff500f, 0 0 34px rgba(255,120,20,0.4); }
+    42%  { color: #ffd732; text-shadow: 0 0 9px #ffd732, 0 0 22px #ffaa1e, 0 0 42px rgba(255,215,50,0.35); }
+    58%  { color: #ff500f; text-shadow: 0 0 7px #ff500f, 0 0 16px #ff280a, 0 0 28px rgba(255,80,15,0.4); }
+    72%  { color: #ff280a; text-shadow: 0 0 6px #ff280a, 0 0 14px #ff280a, 0 0 24px rgba(255,40,10,0.4); }
+    84%  { color: #ff9018; text-shadow: 0 0 7px #ff9018, 0 0 18px #ff6010, 0 0 32px rgba(255,144,24,0.38); }
+    94%  { color: #ff280a; text-shadow: 0 0 6px #ff280a, 0 0 14px #ff280a, 0 0 24px rgba(255,40,10,0.38); }
+    100% { color: #ff280a; text-shadow: 0 0 6px #ff280a, 0 0 14px #ff280a, 0 0 26px rgba(255,40,10,0.4); }
+}
+.streak-flame-num {
+    animation: streak-flame-glow 1.6s linear infinite;
+}
+.streak-flame-label {
+    animation: streak-flame-glow 2.1s linear infinite;
+    animation-delay: -0.9s;
+}
