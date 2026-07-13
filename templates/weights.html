@@ -27,6 +27,9 @@
         gap: 8px;
     }
 
+    /* Match the Log Workout modal's title font */
+    #history-modal-title { font-family: Impact,'Arial Black',sans-serif; font-size: 19px; letter-spacing: 2.5px; color: #ff2d78; text-transform: uppercase; text-shadow: none; }
+
     /* ── Filter button ── */
     .mp-filter-wrap { position: relative; }
     .mp-filter-btn {
@@ -44,12 +47,12 @@
     }
     .mp-range-menu {
         position: absolute;
-        top: calc(100% + 10px);
+        bottom: calc(100% + 10px);
         left: 0;
         background: rgba(8,0,20,0.97);
         border: 1px solid rgba(255,45,120,0.3); border-radius: 10px;
         padding: 10px; min-width: 90px;
-        opacity: 0; transform: translateY(-10px); pointer-events: none;
+        opacity: 0; transform: translateY(10px); pointer-events: none;
         transition: opacity 0.18s ease, transform 0.18s ease;
         box-shadow: 0 8px 32px rgba(0,0,0,0.6);
         z-index: 200;
@@ -203,7 +206,7 @@
         vertical-align: middle !important;
     }
     .data-table tbody tr { background: transparent; }
-    .data-table tbody tr:last-child td { border: none !important; }
+    #data-table-body > tr:last-child td { border: none !important; }
 
     /* Week group header rows */
     .week-header-row td {
@@ -388,7 +391,7 @@
 <div class="wt-bg"></div>
 {% endblock %}
 
-{% block header_left %}
+{% block footer_left %}
 <div class="wt-ctrl-group">
     <div class="mp-filter-wrap">
         <button class="mp-filter-btn" id="mp-filter-btn" aria-label="Filter by date range" data-tip="Filter by date range">
@@ -1133,8 +1136,10 @@
 
     /* ── Chart slide navigation ── */
     (function () {
-        const inner   = document.getElementById('chart-slide-inner');
-        const typeBtn = document.getElementById('chart-type-btn');
+        const inner       = document.getElementById('chart-slide-inner');
+        const typeBtn     = document.getElementById('chart-type-btn');
+        const dailyRanges  = document.getElementById('mp-daily-ranges');
+        const weeklyRanges = document.getElementById('mp-weekly-ranges');
 
         function setChart(weekly) {
             inner.classList.toggle('at-weekly', weekly);
@@ -1143,6 +1148,8 @@
             typeBtn.classList.toggle('in-weekly', weekly);
             typeBtn.dataset.tip = weekly ? 'Switch to daily chart' : 'Switch to weekly chart';
             typeBtn.setAttribute('aria-label', weekly ? 'Switch to daily chart' : 'Switch to weekly chart');
+            dailyRanges.hidden = weekly;
+            weeklyRanges.hidden = !weekly;
         }
 
         typeBtn.addEventListener('click', () => setChart(window.currentChartPage !== 'weekly'));

@@ -72,9 +72,14 @@
                 padding: 0 16px; gap: 0;
             }
             .site-header-left {
-                flex-shrink: 0; align-self: flex-start; padding-top: 10px;
+                flex-shrink: 0; align-self: flex-start; padding-top: 6px;
                 min-width: 44px;
             }
+            .site-header-left .site-nav { gap: 4px; }
+            .site-header-left .site-nav-btn { width: 34px; height: 38px; border-radius: 8px; }
+            .site-header-left .site-nav-btn img { width: 22px; height: 22px; }
+            .site-header-left .site-nav-btn svg { width: 18px; height: 18px; }
+            .site-header-left .site-nav-btn.active::after { width: 12px; height: 2px; bottom: 2px; }
             .site-title {
                 flex: 1; font-size: clamp(16px, 5vw, 22px);
                 padding: 10px 0 8px; align-self: flex-start; text-align: center;
@@ -172,13 +177,13 @@
         /* ── Menu modal ── */
         .menu-modal-card {
             position: relative;
-            background: rgba(8, 0, 20, 0.97);
-            border: 1px solid rgba(255, 45, 120, 0.3);
+            background: #0d0020;
+            border: 1px solid rgba(255, 45, 120, 0.4);
             border-radius: 20px;
             padding: 32px 28px 28px;
             width: min(320px, 90vw);
             display: flex; flex-direction: column; align-items: center; gap: 20px;
-            box-shadow: 0 20px 60px rgba(0,0,0,0.7);
+            box-shadow: 0 0 30px rgba(255, 45, 120, 0.2), 0 20px 60px rgba(0,0,0,0.8);
             animation: menuPop 0.22s cubic-bezier(0.34,1.56,0.64,1) both;
         }
         @keyframes menuPop {
@@ -187,9 +192,9 @@
         }
         .menu-modal-title {
             font-family: 'Pacifico', cursive;
-            font-size: 28px; color: #ff2d78;
+            font-size: 28px; color: #ffe0ee;
             margin: 0;
-            text-shadow: 0 0 20px rgba(255,45,120,0.5);
+            text-shadow: 0 0 10px #ff80aa, 0 0 24px #ff2d78;
         }
         .menu-modal-options {
             display: flex; flex-direction: column; gap: 12px; width: 100%;
@@ -209,7 +214,6 @@
             transform: translateX(4px);
             box-shadow: 0 4px 16px rgba(255,45,120,0.3);
         }
-        .menu-modal-btn-icon { font-size: 24px; line-height: 1; }
         .menu-modal-btn-label { font-weight: 600; letter-spacing: 0.02em; }
         .menu-modal-close {
             position: absolute; top: 14px; right: 16px;
@@ -219,30 +223,6 @@
         }
         .menu-modal-close:hover { color: rgba(255,255,255,0.8); }
 
-        /* ── Index + picker popup ── */
-        .site-add-picker {
-            position: absolute;
-            bottom: calc(100% + 10px); left: 50%;
-            transform: translateX(-50%) translateY(8px);
-            background: rgba(8, 0, 20, 0.97);
-            border: 1px solid rgba(255, 45, 120, 0.3);
-            border-radius: 10px; padding: 8px; min-width: 190px;
-            opacity: 0; pointer-events: none;
-            transition: opacity 0.18s ease, transform 0.18s ease;
-            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.6);
-            z-index: 800;
-        }
-        .site-add-picker.open { opacity: 1; pointer-events: auto; transform: translateX(-50%) translateY(0); }
-        .site-add-option {
-            display: block; width: 100%; margin-bottom: 5px;
-            padding: 10px 16px; background: transparent;
-            border: 1px solid rgba(255, 45, 120, 0.2); border-radius: 6px;
-            color: rgba(255, 255, 255, 0.85);
-            font-family: Arial, sans-serif; font-size: 13px; letter-spacing: 0.4px;
-            text-align: left; cursor: pointer; transition: all 0.15s;
-        }
-        .site-add-option:last-child { margin-bottom: 0; }
-        .site-add-option:hover { background: rgba(255, 45, 120, 0.12); color: #fff; border-color: rgba(255, 45, 120, 0.45); }
 
         /* ── Main content area ── */
         .site-main {
@@ -263,7 +243,28 @@
 {% block bg %}{% endblock %}
 
 <header class="site-header" role="banner">
-    <div class="site-header-left">{% block header_left %}{% endblock %}</div>
+    <div class="site-header-left">
+        <nav class="site-nav" aria-label="Pages">
+            <a href="/" class="site-nav-btn{% if request.path == '/' %} active{% endif %}" aria-label="Home" data-tip="Home">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                    <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
+                    <polyline points="9 22 9 12 15 12 15 22"/>
+                </svg>
+            </a>
+            <a href="/workouts" class="site-nav-btn{% if request.path == '/workouts' %} active{% endif %}" aria-label="Workouts" data-tip="Workouts">
+                <img src="/static/dumbbellbutton.png" alt="Workouts">
+            </a>
+            <a href="/weights" class="site-nav-btn{% if request.path == '/weights' %} active{% endif %}" aria-label="Weights" data-tip="Weights">
+                <img src="/static/weightbutton.png" alt="Weights">
+            </a>
+            <button class="site-nav-btn" id="protein-btn" aria-label="Nutrition" data-tip="Nutrition">
+                <img src="/static/proteinshakebutton.png" alt="Nutrition">
+            </button>
+            <button class="site-nav-btn" id="whistle-btn" aria-label="Insights" data-tip="Insights">
+                <img src="/static/insightsbutton.png" alt="Insights">
+            </button>
+        </nav>
+    </div>
     {% block header_title %}<h1 class="site-title">Project 189</h1>{% endblock %}
     <div class="site-header-stats" aria-label="Page stats">{% block header_stats %}{% endblock %}</div>
 </header>
@@ -626,11 +627,9 @@
         <h2 class="menu-modal-title" id="menu-modal-title">Menu</h2>
         <div class="menu-modal-options">
             <button class="menu-modal-btn" id="menu-profile-btn">
-                <span class="menu-modal-btn-icon">⚔️</span>
                 <span class="menu-modal-btn-label">Profile</span>
             </button>
             <button class="menu-modal-btn" id="menu-settings-btn">
-                <span class="menu-modal-btn-icon">⚙️</span>
                 <span class="menu-modal-btn-label">Settings</span>
             </button>
         </div>
@@ -640,26 +639,7 @@
 
 <!-- ── Site footer ── -->
 <footer class="site-footer" role="navigation" aria-label="Main navigation">
-    <nav class="site-nav" aria-label="Pages">
-        <a href="/" class="site-nav-btn{% if request.path == '/' %} active{% endif %}" aria-label="Home" data-tip="Home">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
-                <polyline points="9 22 9 12 15 12 15 22"/>
-            </svg>
-        </a>
-        <a href="/workouts" class="site-nav-btn{% if request.path == '/workouts' %} active{% endif %}" aria-label="Workouts" data-tip="Workouts">
-            <img src="/static/dumbbellbutton.png" alt="Workouts">
-        </a>
-        <a href="/weights" class="site-nav-btn{% if request.path == '/weights' %} active{% endif %}" aria-label="Weights" data-tip="Weights">
-            <img src="/static/weightbutton.png" alt="Weights">
-        </a>
-        <button class="site-nav-btn" id="protein-btn" aria-label="Nutrition" data-tip="Nutrition">
-            <img src="/static/proteinshakebutton.png" alt="Nutrition">
-        </button>
-        <button class="site-nav-btn" id="whistle-btn" aria-label="Insights" data-tip="Insights">
-            <img src="/static/insightsbutton.png" alt="Insights">
-        </button>
-    </nav>
+    <div class="site-nav" aria-label="Page controls">{% block footer_left %}{% endblock %}</div>
     <div class="site-add-wrap">
         {% block footer_add %}
         <button class="site-add-btn" id="site-add-btn" aria-label="Quick add" aria-haspopup="true" aria-expanded="false">+</button>

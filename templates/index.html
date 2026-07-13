@@ -35,6 +35,8 @@
     .wp-modal-card { background: linear-gradient(160deg,#18002e 0%,#0b001c 100%); border: 1px solid rgba(255,45,120,0.32); border-radius: 16px; width: clamp(340px,90vw,500px); max-height: 90vh; display: flex; flex-direction: column; box-shadow: 0 0 40px rgba(255,45,120,0.15),0 24px 64px rgba(0,0,0,0.8); }
     .wp-modal-head { display: flex; align-items: center; justify-content: space-between; padding: 14px 20px 11px; border-bottom: 1px solid rgba(255,255,255,0.1); flex-shrink: 0; }
     .wp-modal-title-text { font-family: Impact,'Arial Black',sans-serif; font-size: 19px; letter-spacing: 2.5px; color: #ff2d78; text-transform: uppercase; }
+    /* Match the Log Workout modal's title font */
+    #history-modal-title { font-family: Impact,'Arial Black',sans-serif; font-size: 19px; letter-spacing: 2.5px; color: #ff2d78; text-transform: uppercase; text-shadow: none; }
     .wp-modal-x { background: none; border: none; color: rgba(255,255,255,0.85); font-size: 19px; padding: 4px 8px; border-radius: 4px; transition: color 0.2s; line-height: 1; }
     .wp-modal-x:hover { color: #ff2d78; }
     .wp-modal-body { flex: 1; overflow-y: auto; overflow-x: hidden; padding: 14px 20px; scrollbar-width: thin; scrollbar-color: rgba(255,45,120,0.35) transparent; box-sizing: border-box; }
@@ -107,10 +109,6 @@
 {% endblock %}
 
 {% block footer_add %}
-<div class="site-add-picker" id="mp-add-picker" role="menu">
-    <button class="site-add-option" id="mp-add-weight" role="menuitem">&#x2696; Log Past Weight</button>
-    <button class="site-add-option" id="mp-add-workout" role="menuitem">&#x1F3C3; Log Workout</button>
-</div>
 <button class="site-add-btn" id="mp-footer-add-btn"
         aria-label="Quick add" aria-haspopup="true" aria-expanded="false" data-tip="Quick add">+</button>
 {% endblock %}
@@ -296,6 +294,21 @@
         <div class="modal-actions">
             <button class="modal-btn modal-cancel" id="idx-del-check-cancel">Cancel</button>
             <button class="modal-btn modal-save"   id="idx-del-check-ok">Delete selected</button>
+        </div>
+    </div>
+</div>
+
+<!-- Quick Add modal -->
+<div id="quick-add-modal" class="modal-overlay" hidden>
+    <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="quick-add-modal-title">
+        <h2 class="modal-title" id="quick-add-modal-title">Quick Add</h2>
+        <div class="menu-modal-options">
+            <button class="menu-modal-btn" id="qa-log-weight">
+                <span class="menu-modal-btn-label">Log a Weigh-in</span>
+            </button>
+            <button class="menu-modal-btn" id="qa-log-workout">
+                <span class="menu-modal-btn-label">Log a Workout</span>
+            </button>
         </div>
     </div>
 </div>
@@ -716,16 +729,17 @@
         });
     };
 
-    /* ── Quick-add footer picker ── */
+    /* ── Quick-add modal ── */
     (function () {
         const addBtn = document.getElementById('mp-footer-add-btn');
-        const picker = document.getElementById('mp-add-picker');
-        function openPicker()  { picker.classList.add('open');    addBtn.setAttribute('aria-expanded', 'true');  }
-        function closePicker() { picker.classList.remove('open'); addBtn.setAttribute('aria-expanded', 'false'); }
-        addBtn.addEventListener('click', e => { e.stopPropagation(); picker.classList.contains('open') ? closePicker() : openPicker(); });
-        document.addEventListener('click', e => { if (!e.target.closest('.site-add-wrap')) closePicker(); });
-        document.getElementById('mp-add-weight').addEventListener('click', () => { closePicker(); if (window.openWeightModal) window.openWeightModal(); });
-        document.getElementById('mp-add-workout').addEventListener('click', () => { closePicker(); if (window.openWorkoutModal) window.openWorkoutModal(); });
+        const modal  = document.getElementById('quick-add-modal');
+        function openQA()  { modal.hidden = false; modalOpen(modal); addBtn.setAttribute('aria-expanded', 'true'); }
+        function closeQA() { modal.hidden = true; modalClose(modal); addBtn.setAttribute('aria-expanded', 'false'); }
+        addBtn.addEventListener('click', openQA);
+        modal.addEventListener('click', e => { if (e.target === modal) closeQA(); });
+        document.addEventListener('keydown', e => { if (e.key === 'Escape' && !modal.hidden) closeQA(); });
+        document.getElementById('qa-log-weight').addEventListener('click', () => { closeQA(); if (window.openWeightModal) window.openWeightModal(); });
+        document.getElementById('qa-log-workout').addEventListener('click', () => { closeQA(); if (window.openWorkoutModal) window.openWorkoutModal(); });
     })();
 
     /* ── Log Past Weight modal ── */
