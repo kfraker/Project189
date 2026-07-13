@@ -1,609 +1,473 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <title>Weights — Project 189</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link href="https://fonts.googleapis.com/css2?family=Pacifico&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="/static/style.css">
-    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
-    <style>
-        :root {
-            --wt-hdr: 62px;
-            --wt-ftr: 72px;
-        }
-        html, body { height: 100%; margin: 0; overflow: hidden; }
+{% extends "base.html" %}
 
-        /* ── Background ── */
-        .wt-bg {
-            position: fixed;
-            inset: 0;
-            background: url('/static/workoutbackground4.png') center / cover no-repeat;
-            z-index: -1;
-        }
-        .wt-bg::after {
-            content: '';
-            position: absolute;
-            inset: 0;
-            background: rgba(8, 0, 18, 0.68);
-        }
+{% block extra_head %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+{% endblock %}
 
-        /* ── Header ── */
-        .wt-header {
-            position: fixed;
-            top: 0; left: 0; right: 0;
-            height: var(--wt-hdr);
-            z-index: 700;
-            display: grid;
-            grid-template-columns: 1fr auto 1fr;
-            align-items: center;
-            padding: 0 24px;
-            background: rgba(8, 0, 20, 0.75);
-            border-bottom: 1px solid rgba(255, 45, 120, 0.2);
-            backdrop-filter: blur(10px);
-        }
-        .wt-back {
-            display: flex;
-            align-items: center;
-            gap: 6px;
-            padding: 6px 16px;
-            border: 1px solid rgba(255, 45, 120, 0.45);
-            border-radius: 8px;
-            background: transparent;
-            color: #ff2d78;
-            font-family: 'Arial Black', Impact, sans-serif;
-            font-size: 11px;
-            font-weight: 900;
-            letter-spacing: 1px;
-            text-transform: uppercase;
-            text-decoration: none;
-            transition: all 0.18s ease;
-            justify-self: start;
-        }
-        .wt-back:hover {
-            background: rgba(255, 45, 120, 0.12);
-            border-color: rgba(255, 45, 120, 0.8);
-            box-shadow: 0 0 14px rgba(255, 45, 120, 0.3);
-        }
-        .wt-title {
-            margin: 0;
-            text-align: center;
-            font-family: 'Pacifico', cursive;
-            font-size: 26px;
-            color: #ffe0ee;
-            text-shadow: 0 0 10px #ff80aa, 0 0 28px #ff2d78;
-        }
-        .wt-stats {
-            display: flex;
-            gap: 24px;
-            justify-self: end;
-        }
-        .wt-stat { text-align: center; }
-        .wt-stat-num {
-            font-family: Impact, 'Arial Black', sans-serif;
-            font-size: 20px;
-            color: #fff;
-            line-height: 1;
-        }
-        .wt-stat-label {
-            font-size: 11px;
-            color: #fff;
-            font-family: Arial, sans-serif;
-            letter-spacing: 0.8px;
-            text-transform: uppercase;
-            margin-top: 2px;
-        }
+{% block page_css %}
+<style>
+    /* ── Background ── */
+    .wt-bg {
+        position: fixed;
+        inset: 0;
+        background: url('/static/workoutbackground4.png') center / cover no-repeat;
+        z-index: -1;
+    }
+    .wt-bg::after {
+        content: '';
+        position: absolute;
+        inset: 0;
+        background: rgba(8, 0, 18, 0.68);
+    }
 
-        /* ── Main content area ── */
-        .wt-main {
-            position: fixed;
-            top: var(--wt-hdr);
-            bottom: var(--wt-ftr);
-            left: 0; right: 0;
-            overflow: hidden;
-            display: flex;
-            align-items: stretch;
-            padding: 20px 24px;
-            box-sizing: border-box;
-        }
+    /* ── Header left controls group ── */
+    .wt-ctrl-group {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
 
-        /* ── Footer ── */
-        .wt-footer {
-            position: fixed;
-            bottom: 0; left: 0; right: 0;
-            height: var(--wt-ftr);
-            z-index: 700;
-            display: grid;
-            grid-template-columns: 1fr auto 1fr;
-            align-items: center;
-            padding: 0 16px;
-            background: rgba(8, 0, 20, 0.6);
-            border-top: 1px solid rgba(255, 45, 120, 0.12);
-            backdrop-filter: blur(8px);
-        }
+    /* ── Filter button ── */
+    .mp-filter-wrap { position: relative; }
+    .mp-filter-btn {
+        width: 44px; height: 44px; border-radius: 12px;
+        background: rgba(255,45,120,0.1);
+        border: 1px solid rgba(255,45,120,0.4);
+        color: #ff2d78; font-size: 20px;
+        display: flex; align-items: center; justify-content: center;
+        transition: all 0.2s;
+    }
+    .mp-filter-btn:hover, .mp-filter-btn.open {
+        background: rgba(255,45,120,0.22);
+        border-color: rgba(255,45,120,0.75);
+        box-shadow: 0 4px 20px rgba(255,45,120,0.3);
+    }
+    .mp-range-menu {
+        position: absolute;
+        top: calc(100% + 10px);
+        left: 0;
+        background: rgba(8,0,20,0.97);
+        border: 1px solid rgba(255,45,120,0.3); border-radius: 10px;
+        padding: 10px; min-width: 90px;
+        opacity: 0; transform: translateY(-10px); pointer-events: none;
+        transition: opacity 0.18s ease, transform 0.18s ease;
+        box-shadow: 0 8px 32px rgba(0,0,0,0.6);
+        z-index: 200;
+    }
+    .mp-range-menu.open { opacity: 1; transform: translateY(0); pointer-events: auto; }
+    .mp-range-menu .range-btn,
+    .mp-range-menu .weekly-range-btn {
+        display: block; width: 100%; margin-bottom: 5px;
+        padding: 7px 14px; background: transparent;
+        border: 1px solid rgba(255,45,120,0.2); border-radius: 6px;
+        color: rgba(255,255,255,0.7); font-family: Arial, sans-serif;
+        font-size: 12px; letter-spacing: 0.5px; text-transform: uppercase;
+        text-align: center; transition: all 0.15s;
+    }
+    .mp-range-menu .range-btn:last-child,
+    .mp-range-menu .weekly-range-btn:last-child { margin-bottom: 0; }
+    .mp-range-menu .range-btn:hover,
+    .mp-range-menu .weekly-range-btn:hover {
+        background: rgba(255,45,120,0.12); color: #fff;
+        border-color: rgba(255,45,120,0.45);
+    }
+    .mp-range-menu .range-btn.active,
+    .mp-range-menu .weekly-range-btn.active {
+        background: rgba(255,45,120,0.2);
+        border-color: rgba(255,45,120,0.7); color: #ff2d78;
+    }
+    .mp-custom-days-wrap {
+        padding: 6px 4px 2px;
+        display: flex; align-items: center; gap: 6px;
+    }
+    .mp-custom-days-wrap input {
+        width: 52px; background: rgba(255,255,255,0.08);
+        border: 1px solid rgba(255,45,120,0.3); border-radius: 6px;
+        color: #fff; font-family: Arial, sans-serif; font-size: 12px;
+        padding: 4px 6px; text-align: center;
+    }
+    .mp-custom-days-wrap span {
+        font-family: Arial, sans-serif; font-size: 11px;
+        color: rgba(255,255,255,0.5);
+    }
 
-        /* ── Filter button ── */
-        .mp-filter-wrap { position: relative; }
-        .mp-filter-btn {
-            width: 44px; height: 44px; border-radius: 12px;
-            background: rgba(255,45,120,0.1);
-            border: 1px solid rgba(255,45,120,0.4);
-            color: #ff2d78; font-size: 20px;
-            display: flex; align-items: center; justify-content: center;
-            transition: all 0.2s;
-        }
-        .mp-filter-btn:hover, .mp-filter-btn.open {
-            background: rgba(255,45,120,0.22);
-            border-color: rgba(255,45,120,0.75);
-            box-shadow: 0 4px 20px rgba(255,45,120,0.3);
-        }
-        .mp-range-menu {
-            position: absolute; bottom: calc(100% + 10px); left: 0;
-            background: rgba(8,0,20,0.97);
-            border: 1px solid rgba(255,45,120,0.3); border-radius: 10px;
-            padding: 10px; min-width: 90px;
-            opacity: 0; transform: translateY(10px); pointer-events: none;
-            transition: opacity 0.18s ease, transform 0.18s ease;
-            box-shadow: 0 8px 32px rgba(0,0,0,0.6);
-        }
-        .mp-range-menu.open { opacity: 1; transform: translateY(0); pointer-events: auto; }
-        .mp-range-menu .range-btn,
-        .mp-range-menu .weekly-range-btn {
-            display: block; width: 100%; margin-bottom: 5px;
-            padding: 7px 14px; background: transparent;
-            border: 1px solid rgba(255,45,120,0.2); border-radius: 6px;
-            color: rgba(255,255,255,0.7); font-family: Arial, sans-serif;
-            font-size: 12px; letter-spacing: 0.5px; text-transform: uppercase;
-            text-align: center; transition: all 0.15s;
-        }
-        .mp-range-menu .range-btn:last-child,
-        .mp-range-menu .weekly-range-btn:last-child { margin-bottom: 0; }
-        .mp-range-menu .range-btn:hover,
-        .mp-range-menu .weekly-range-btn:hover {
-            background: rgba(255,45,120,0.12); color: #fff;
-            border-color: rgba(255,45,120,0.45);
-        }
-        .mp-range-menu .range-btn.active,
-        .mp-range-menu .weekly-range-btn.active {
-            background: rgba(255,45,120,0.2);
-            border-color: rgba(255,45,120,0.7); color: #ff2d78;
-        }
-        .mp-custom-days-wrap {
-            padding: 6px 4px 2px;
-            display: flex; align-items: center; gap: 6px;
-        }
-        .mp-custom-days-wrap input {
-            width: 52px; background: rgba(255,255,255,0.08);
-            border: 1px solid rgba(255,45,120,0.3); border-radius: 6px;
-            color: #fff; font-family: Arial, sans-serif; font-size: 12px;
-            padding: 4px 6px; text-align: center;
-        }
-        .mp-custom-days-wrap span {
-            font-family: Arial, sans-serif; font-size: 11px;
-            color: rgba(255,255,255,0.5);
-        }
+    /* ── Chart-type toggle button ── */
+    #chart-type-btn {
+        width: 44px; height: 44px; border-radius: 12px;
+        background: rgba(255,45,120,0.1);
+        border: 1px solid rgba(255,45,120,0.4); color: #ff2d78;
+        display: flex; align-items: center; justify-content: center;
+        transition: all 0.2s;
+    }
+    #chart-type-btn:hover, #chart-type-btn.in-weekly {
+        background: rgba(255,45,120,0.22);
+        border-color: rgba(255,45,120,0.75);
+        box-shadow: 0 4px 20px rgba(255,45,120,0.3);
+    }
 
-        /* ── + button ── */
-        .mp-add-btn {
-            width: 44px; height: 44px; border-radius: 12px;
-            background: linear-gradient(135deg, #ff2d78, #c73862);
-            border: none;
-            color: #fff; font-size: 30px; line-height: 1;
-            display: flex; align-items: center; justify-content: center;
-            box-shadow: 0 4px 20px rgba(255, 45, 120, 0.4);
-            transition: all 0.2s; justify-self: center;
-        }
-        .mp-add-btn:hover {
-            box-shadow: 0 4px 28px rgba(255, 45, 120, 0.85);
-            transform: scale(1.06);
-        }
+    /* ── View toggle button ── */
+    .mp-view-toggle-btn {
+        width: 44px; height: 44px; border-radius: 12px;
+        background: rgba(255,45,120,0.1);
+        border: 1px solid rgba(255,45,120,0.4); color: #ff2d78;
+        display: flex; align-items: center; justify-content: center;
+        transition: all 0.2s;
+    }
+    .mp-view-toggle-btn:hover, .mp-view-toggle-btn.in-table {
+        background: rgba(255,45,120,0.22);
+        border-color: rgba(255,45,120,0.75);
+        box-shadow: 0 4px 20px rgba(255,45,120,0.3);
+    }
 
-        /* ── Right footer group (chart-type toggle + view toggle) ── */
-        .mp-right-group {
-            display: flex; align-items: center; gap: 8px; justify-self: end;
-        }
-        #chart-type-btn {
-            width: 44px; height: 44px; border-radius: 12px;
-            background: rgba(255,45,120,0.1);
-            border: 1px solid rgba(255,45,120,0.4); color: #ff2d78;
-            display: flex; align-items: center; justify-content: center;
-            transition: all 0.2s;
-        }
-        #chart-type-btn:hover, #chart-type-btn.in-weekly {
-            background: rgba(255,45,120,0.22);
-            border-color: rgba(255,45,120,0.75);
-            box-shadow: 0 4px 20px rgba(255,45,120,0.3);
-        }
-        /* ── View toggle button ── */
-        .mp-view-toggle-btn {
-            width: 44px; height: 44px; border-radius: 12px;
-            background: rgba(255,45,120,0.1);
-            border: 1px solid rgba(255,45,120,0.4); color: #ff2d78;
-            display: flex; align-items: center; justify-content: center;
-            transition: all 0.2s;
-        }
-        .mp-view-toggle-btn:hover, .mp-view-toggle-btn.in-table {
-            background: rgba(255,45,120,0.22);
-            border-color: rgba(255,45,120,0.75);
-            box-shadow: 0 4px 20px rgba(255,45,120,0.3);
-        }
+    /* ── Main content area ── */
+    .wt-main {
+        position: fixed;
+        top: var(--site-hdr);
+        bottom: var(--site-ftr);
+        left: 0; right: 0;
+        overflow: hidden;
+        display: flex;
+        align-items: stretch;
+        padding: 20px 24px;
+        box-sizing: border-box;
+    }
 
-        /* ── Chart sizing inside wt-main ── */
-        .wt-main .chart-with-nav {
-            flex: 1;
-            min-width: 0;
-            min-height: 0;
-            width: 100%;
-            max-width: 860px;
-            margin: 0 auto;
-            display: flex;
-        }
-        .wt-main .chart-page-area {
-            flex: 1;
-            min-height: 0;
-            display: flex;
-            flex-direction: column;
-        }
-        .wt-main .chart-slide-viewport {
-            flex: 1;
-            min-height: 0;
-        }
-        /* Completely remove chart viewport from layout in table mode */
-        .wt-main .chart-slide-viewport.in-table {
-            display: none;
-        }
-        .wt-main .chart-slide-inner,
-        .wt-main .chart-slide-page {
-            height: 100%;
-        }
-        .wt-main .chart-wrap {
-            flex: 1;
-            min-height: 0 !important;
-        }
-        .wt-main .chart-wrap canvas {
-            height: 100% !important;
-        }
-        .wt-main .data-table-wrap:not([hidden]) {
-            flex: 1;
-            min-height: 0 !important;
-            height: auto !important;
-        }
-        /* Table mode: mirrors workouts layout —
-           wp-table-wrap (full-width, 24px side padding) + wp-table-inner (max-width 860px, margin auto) */
-        .wt-main.wt-table-mode {
-            padding: 0;
-        }
-        .wt-main.wt-table-mode .chart-with-nav {
-            max-width: none;
-        }
-        .wt-main.wt-table-mode .data-table-scroll {
-            padding-top: 20px !important;
-            padding-left: 24px !important;
-            padding-right: 24px !important;
-        }
-        .wt-main.wt-table-mode .data-table {
-            max-width: 860px;
-            margin-left: auto;
-            margin-right: auto;
-        }
+    /* ── Chart sizing inside wt-main ── */
+    .wt-main .chart-with-nav {
+        flex: 1; min-width: 0; min-height: 0;
+        width: 100%; max-width: 860px;
+        margin: 0 auto; display: flex;
+    }
+    .wt-main .chart-page-area {
+        flex: 1; min-height: 0;
+        display: flex; flex-direction: column;
+    }
+    .wt-main .chart-slide-viewport { flex: 1; min-height: 0; }
+    .wt-main .chart-slide-viewport.in-table { display: none; }
+    .wt-main .chart-slide-inner,
+    .wt-main .chart-slide-page { height: 100%; }
+    .wt-main .chart-wrap { flex: 1; min-height: 0 !important; }
+    .wt-main .chart-wrap canvas { height: 100% !important; }
+    .wt-main .data-table-wrap:not([hidden]) {
+        flex: 1; min-height: 0 !important; height: auto !important;
+    }
+    .wt-main.wt-table-mode { padding: 0; }
+    .wt-main.wt-table-mode .chart-with-nav { max-width: none; }
+    .wt-main.wt-table-mode .data-table-scroll {
+        padding-top: 20px !important;
+        padding-left: 24px !important;
+        padding-right: 24px !important;
+    }
+    .wt-main.wt-table-mode .data-table {
+        max-width: 860px;
+        margin-left: auto;
+        margin-right: auto;
+    }
 
-        /* ── Scrollbar: pin to right edge of page, match workouts look ── */
-        .custom-scrollbar-track {
-            position: fixed !important;
-            right: 0 !important;
-            top: var(--wt-hdr) !important;
-            bottom: var(--wt-ftr) !important;
-            width: 8px !important;
-            background: transparent !important;
-        }
-        .custom-scrollbar-thumb {
-            width: 8px !important;
-            left: 0 !important;
-            transform: none !important;
-            background: rgba(255, 45, 120, 0.45) !important;
-            border-radius: 4px !important;
-        }
-        /* Remove inset padding that was reserving space for the old inline scrollbar */
-        .data-table-scroll { padding-right: 0 !important; }
+    /* ── Scrollbar ── */
+    .custom-scrollbar-track {
+        position: fixed !important;
+        right: 0 !important;
+        top: var(--site-hdr) !important;
+        bottom: var(--site-ftr) !important;
+        width: 8px !important;
+        background: transparent !important;
+    }
+    .custom-scrollbar-thumb {
+        width: 8px !important;
+        left: 0 !important;
+        transform: none !important;
+        background: rgba(255, 45, 120, 0.45) !important;
+        border-radius: 4px !important;
+    }
+    .data-table-scroll { padding-right: 0 !important; }
 
-        /* ── Table overrides — match Workouts page style ── */
-        .data-table-wrap { background: transparent; }
-        .data-table-scroll-area::before { display: none; }
-        .data-table-scroll-area { border-radius: 0; background: transparent; }
-        .data-table {
-            background: transparent; border-radius: 0;
-            /* separate + 0 spacing is required for border-radius on <td> to render */
-            border-collapse: separate !important;
-            border-spacing: 0 !important;
-        }
-        /* Collapse row: tight to header above, 18px gap before next group (matches wp-date-group margin-bottom) */
-        /* Use .data-table .week-collapse-row td so it beats .data-table td (same !important, higher specificity wins) */
-        .data-table .week-collapse-row td { padding: 4px 0 18px !important; line-height: normal !important; }
+    /* ── Table overrides ── */
+    .data-table-wrap { background: transparent; }
+    .data-table-scroll-area::before { display: none; }
+    .data-table-scroll-area { border-radius: 0; background: transparent; }
+    .data-table {
+        background: transparent; border-radius: 0;
+        border-collapse: separate !important;
+        border-spacing: 0 !important;
+    }
+    .data-table .week-collapse-row td { padding: 4px 0 18px !important; line-height: normal !important; }
+    .data-table thead th { display: none !important; }
+    .data-table td {
+        border: none !important;
+        background: transparent !important;
+        padding: 7px 10px !important;
+        font-size: 14px !important;
+        color: rgba(255,255,255,0.75) !important;
+        line-height: normal !important;
+        vertical-align: middle !important;
+    }
+    .data-table tbody tr { background: transparent; }
+    .data-table tbody tr:last-child td { border: none !important; }
 
-        /* Hide thead — no column-label headers, matching workouts */
-        .data-table thead th {
-            display: none !important;
-        }
+    /* Week group header rows */
+    .week-header-row td {
+        background: rgba(8, 0, 20, 0.55) !important;
+        border-top: 1px solid rgba(255, 45, 120, 0.4) !important;
+        border-bottom: 1px solid rgba(255, 45, 120, 0.4) !important;
+        border-left: none !important; border-right: none !important;
+        padding: 7px 10px !important;
+        font-family: Impact, 'Arial Black', sans-serif !important;
+        font-size: 13px !important; letter-spacing: 2px !important;
+        text-transform: uppercase !important; color: #fff !important;
+        text-shadow: 0 0 16px rgba(255, 45, 120, 0.55) !important;
+        line-height: normal !important;
+    }
+    .week-header-row td:first-child {
+        border-left: 1px solid rgba(255, 45, 120, 0.6) !important;
+        border-radius: 7px 0 0 7px !important;
+    }
+    .week-header-row td:last-child {
+        border-right: 1px solid rgba(255, 45, 120, 0.6) !important;
+        border-radius: 0 7px 7px 0 !important;
+    }
+    .week-header-row:hover td {
+        background: rgba(8, 0, 20, 0.85) !important;
+        border-color: rgba(255, 45, 120, 0.85) !important;
+    }
+    .week-header-row td:nth-child(2) {
+        font-size: 17px !important;
+        color: rgba(255,255,255,0.75) !important;
+        text-shadow: none !important;
+        text-align: right !important;
+        letter-spacing: 0 !important;
+    }
+    .week-header-row td.sec-col-cell,
+    .week-header-row td.week-count-cell {
+        font-family: Arial, sans-serif !important;
+        font-size: 12px !important;
+        color: rgba(255,255,255,0.45) !important;
+        text-shadow: none !important;
+        letter-spacing: 0 !important;
+        text-transform: none !important;
+    }
+    .week-header-row td.week-count-cell { text-align: right !important; }
+    .week-count-cell .week-count-outer { display: inline-flex; align-items: center; gap: 6px; }
+    .week-count-inner { display: inline-flex; align-items: center; justify-content: flex-end; gap: 6px; min-width: 70px; }
+    .week-toggle-icon { transform: rotate(-90deg) !important; transition: transform 0.25s !important; font-size: 15px !important; }
+    .week-toggle-icon.expanded { transform: rotate(0deg) !important; }
+    .week-day-table { border-spacing: 0 3px; width: 100%; border-collapse: separate !important; }
 
-        /* All body cells: no border, clean padding */
-        .data-table td {
-            border: none !important;
-            background: transparent !important;
-            padding: 7px 10px !important;
-            font-size: 14px !important;
-            color: rgba(255,255,255,0.75) !important;
-            line-height: normal !important;
-            vertical-align: middle !important;
-        }
+    /* Week day rows */
+    .week-day-row td {
+        padding: 7px 10px !important; font-size: 14px !important;
+        line-height: normal !important; color: rgba(255,255,255,0.7) !important;
+        background: transparent !important;
+        border-top: 1px solid rgba(255, 45, 120, 0.55) !important;
+        border-bottom: 1px solid rgba(255, 45, 120, 0.55) !important;
+    }
+    .week-day-row td:first-child {
+        padding-left: 14px !important;
+        border-left: 1px solid rgba(255, 45, 120, 0.55) !important;
+        border-radius: 7px 0 0 7px !important;
+    }
+    .week-day-row td:last-child {
+        border-right: 1px solid rgba(255, 45, 120, 0.55) !important;
+        border-radius: 0 7px 7px 0 !important;
+    }
+    .week-day-row.row-hover td,
+    .week-day-row:hover td {
+        background: rgba(255, 255, 255, 0.05) !important;
+        border-color: rgba(255, 45, 120, 0.8) !important;
+    }
+    .week-day-row.row-missing td { border-color: rgba(240, 165, 0, 0.7) !important; }
+    .week-day-row.row-missing.row-hover td { border-color: rgba(240, 165, 0, 0.9) !important; }
+    .week-day-row .table-delete-btn {
+        border-color: rgba(255, 45, 120, 0.75) !important;
+        color: rgba(255, 255, 255, 0.5) !important;
+    }
+    .week-day-row .note-btn {
+        border: 1px solid rgba(255, 45, 120, 0.65) !important;
+        border-radius: 5px !important;
+        width: 32px !important; height: 32px !important;
+        padding: 0 !important;
+        display: flex !important; align-items: center !important; justify-content: center !important;
+    }
+    .week-day-row.row-missing .table-delete-btn { border-color: rgba(240, 165, 0, 0.7) !important; }
+    .week-day-row.row-missing .note-btn { border-color: rgba(240, 165, 0, 0.65) !important; }
+    .week-day-row td.cell-weight:not(.cell-missing) {
+        font-family: Impact, 'Arial Black', sans-serif !important;
+        font-size: 17px !important; color: #fff !important;
+    }
 
-        /* No default row background */
-        .data-table tbody tr { background: transparent; }
-        .data-table tbody tr:last-child td { border: none !important; }
+    /* Daily summary rows */
+    .data-table tbody tr:not(.week-header-row):not(.week-collapse-row):not(.table-export-row):not(.no-earlier-row) td {
+        padding: 7px 10px !important;
+    }
+    .data-table tbody tr:not(.week-header-row):not(.week-collapse-row):not(.table-export-row):not(.no-earlier-row):hover > td {
+        background: rgba(255,255,255,0.06) !important;
+    }
+    .data-table tbody tr.row-missing:hover > td { background: rgba(240,165,0,0.13) !important; }
+    .data-table tbody tr:not(.week-header-row):not(.week-collapse-row):not(.table-export-row):not(.no-earlier-row) td:first-child {
+        font-family: Impact, 'Arial Black', sans-serif !important;
+        font-size: 13px !important; letter-spacing: 2px !important;
+        text-transform: uppercase !important; color: #fff !important;
+        text-shadow: 0 0 16px rgba(255, 45, 120, 0.55) !important;
+    }
+    .data-table td.cell-weight { text-align: right !important; }
+    .data-table td.cell-weight:not(.cell-missing) {
+        font-family: Impact, 'Arial Black', sans-serif !important;
+        font-size: 17px !important; color: #fff !important;
+    }
+    .data-table td.sec-col-cell {
+        font-size: 12px !important;
+        color: rgba(255,255,255,0.45) !important;
+    }
 
-        /* ── Week group header rows: match wp-date-header-row ── */
-        .week-header-row td {
-            background: rgba(8, 0, 20, 0.55) !important;
-            border-top: 1px solid rgba(255, 45, 120, 0.4) !important;
-            border-bottom: 1px solid rgba(255, 45, 120, 0.4) !important;
-            border-left: none !important;
-            border-right: none !important;
-            padding: 7px 10px !important;
-            font-family: Impact, 'Arial Black', sans-serif !important;
-            font-size: 13px !important;
-            letter-spacing: 2px !important;
-            text-transform: uppercase !important;
-            color: #fff !important;
-            text-shadow: 0 0 16px rgba(255, 45, 120, 0.55) !important;
-            line-height: normal !important;
-        }
-        .week-header-row td:first-child {
-            border-left: 1px solid rgba(255, 45, 120, 0.6) !important;
-            border-radius: 7px 0 0 7px !important;
-        }
-        .week-header-row td:last-child {
-            border-right: 1px solid rgba(255, 45, 120, 0.6) !important;
-            border-radius: 0 7px 7px 0 !important;
-        }
-        .week-header-row:hover td {
-            background: rgba(8, 0, 20, 0.85) !important;
-            border-color: rgba(255, 45, 120, 0.85) !important;
-        }
+    /* Daily mode bordered cards */
+    .data-table.daily-mode { border-spacing: 0 3px !important; }
+    .data-table tbody .daily-row td {
+        border-top: 1px solid rgba(255, 45, 120, 0.55) !important;
+        border-bottom: 1px solid rgba(255, 45, 120, 0.55) !important;
+    }
+    .data-table tbody .daily-row td:first-child {
+        border-left: 1px solid rgba(255, 45, 120, 0.55) !important;
+        border-radius: 7px 0 0 7px !important;
+    }
+    .data-table tbody .daily-row td:last-child {
+        border-right: 1px solid rgba(255, 45, 120, 0.55) !important;
+        border-radius: 0 7px 7px 0 !important;
+    }
+    .data-table tbody .daily-row:hover td { border-color: rgba(255, 45, 120, 0.8) !important; }
+    .data-table tbody .daily-row.row-missing td { border-color: rgba(240, 165, 0, 0.7) !important; }
+    .data-table tbody .daily-row.row-missing:hover td { border-color: rgba(240, 165, 0, 0.9) !important; }
+    .data-table tbody .daily-row .table-delete-btn {
+        border-color: rgba(255, 45, 120, 0.75) !important;
+        color: rgba(255, 255, 255, 0.5) !important;
+    }
+    .data-table tbody .daily-row .note-btn {
+        border: 1px solid rgba(255, 45, 120, 0.65) !important;
+        border-radius: 5px !important;
+        width: 32px !important; height: 32px !important;
+        padding: 0 !important;
+        display: flex !important; align-items: center !important; justify-content: center !important;
+    }
+    .data-table tbody .daily-row.row-missing .table-delete-btn { border-color: rgba(240, 165, 0, 0.7) !important; }
+    .data-table tbody .daily-row.row-missing .note-btn { border-color: rgba(240, 165, 0, 0.65) !important; }
 
-        /* Avg weight in header: Impact, larger, dimmer like wp-header-kcal */
-        .week-header-row td:nth-child(2) {
-            font-size: 17px !important;
-            color: rgba(255,255,255,0.75) !important;
-            text-shadow: none !important;
-            text-align: right !important;
-            letter-spacing: 0 !important;
-        }
-        /* Secondary (kg) and count cells: dimmer Arial */
-        .week-header-row td.sec-col-cell,
-        .week-header-row td.week-count-cell {
-            font-family: Arial, sans-serif !important;
-            font-size: 12px !important;
-            color: rgba(255,255,255,0.45) !important;
-            text-shadow: none !important;
-            letter-spacing: 0 !important;
-            text-transform: none !important;
-        }
-        .week-header-row td.week-count-cell { text-align: right !important; }
-        .week-count-cell .week-count-outer { display: inline-flex; align-items: center; gap: 6px; }
-        .week-count-inner { display: inline-flex; align-items: center; justify-content: flex-end; gap: 6px; min-width: 70px; }
+    /* Export row */
+    .table-export-cell { border-top-color: rgba(255, 45, 120, 0.55) !important; }
+    .table-export-btn { border-color: rgba(255, 45, 120, 0.75) !important; color: rgba(255, 45, 120, 0.8) !important; }
 
-        /* ── Toggle icon: ▾ default points right (collapsed), expanded points down ── */
-        .week-toggle-icon { transform: rotate(-90deg) !important; transition: transform 0.25s !important; font-size: 15px !important; }
-        .week-toggle-icon.expanded { transform: rotate(0deg) !important; }
+    /* Always show full date format */
+    .data-table tbody .daily-row td:first-child,
+    .week-day-row td:first-child { white-space: nowrap; }
+    @media (max-width: 800px) {
+        .week-day-table .date-full { display: inline !important; }
+        .data-table thead th:first-child      { width: 38% !important; }
+        #th-primary                           { width: 33% !important; }
+        #th-days-logged                       { width: 29% !important; }
+        .week-day-table thead th:first-child  { width: 38% !important; }
+        .week-day-table thead th:nth-child(2) { width: 33% !important; }
+        .week-day-table thead th:nth-child(3) { width: 29% !important; }
+    }
+    @media (max-width: 560px) {
+        .data-table .date-full,
+        .week-day-table .date-full { display: inline !important; }
+        .data-table .date-short,
+        .week-day-table .date-short { display: none !important; }
+    }
 
-        /* ── Day inner table: border-collapse separate required for border-radius ── */
-        .week-day-table { border-spacing: 0 3px; width: 100%; border-collapse: separate !important; }
+    /* Clickable rows */
+    .data-table tbody .daily-row { cursor: pointer; }
+    .week-day-row { cursor: pointer; }
 
-        /* ── Week day rows: transparent background, pink border ── */
-        .week-day-row td {
-            padding: 7px 10px !important;
-            font-size: 14px !important;
-            line-height: normal !important;
-            color: rgba(255,255,255,0.7) !important;
-            background: transparent !important;
-            border-top: 1px solid rgba(255, 45, 120, 0.55) !important;
-            border-bottom: 1px solid rgba(255, 45, 120, 0.55) !important;
-        }
-        .week-day-row td:first-child {
-            padding-left: 14px !important;
-            border-left: 1px solid rgba(255, 45, 120, 0.55) !important;
-            border-radius: 7px 0 0 7px !important;
-        }
-        .week-day-row td:last-child {
-            border-right: 1px solid rgba(255, 45, 120, 0.55) !important;
-            border-radius: 0 7px 7px 0 !important;
-        }
-        .week-day-row.row-hover td,
-        .week-day-row:hover td {
-            background: rgba(255, 255, 255, 0.05) !important;
-            border-color: rgba(255, 45, 120, 0.8) !important;
-        }
-        .week-day-row.row-missing td {
-            border-color: rgba(240, 165, 0, 0.7) !important;
-        }
-        .week-day-row.row-missing.row-hover td {
-            border-color: rgba(240, 165, 0, 0.9) !important;
-        }
+    /* Mobile */
+    @media (max-width: 560px) {
+        .wt-main { padding: 12px 16px; }
+    }
+</style>
+{% endblock %}
 
-        /* Buttons: pink border on delete, matching border+size on note */
-        .week-day-row .table-delete-btn {
-            border-color: rgba(255, 45, 120, 0.75) !important;
-            color: rgba(255, 255, 255, 0.5) !important;
-        }
-        .week-day-row .note-btn {
-            border: 1px solid rgba(255, 45, 120, 0.65) !important;
-            border-radius: 5px !important;
-            width: 32px !important; height: 32px !important;
-            padding: 0 !important;
-            display: flex !important; align-items: center !important; justify-content: center !important;
-        }
-        .week-day-row.row-missing .table-delete-btn {
-            border-color: rgba(240, 165, 0, 0.7) !important;
-        }
-        .week-day-row.row-missing .note-btn {
-            border-color: rgba(240, 165, 0, 0.65) !important;
-        }
-
-        /* Weight values in day rows: Impact, brighter */
-        .week-day-row td.cell-weight:not(.cell-missing) {
-            font-family: Impact, 'Arial Black', sans-serif !important;
-            font-size: 17px !important;
-            color: #fff !important;
-        }
-
-        /* ── Daily summary rows: same wp-row treatment ── */
-        .data-table tbody tr:not(.week-header-row):not(.week-collapse-row):not(.table-export-row):not(.no-earlier-row) td {
-            padding: 7px 10px !important;
-        }
-        .data-table tbody tr:not(.week-header-row):not(.week-collapse-row):not(.table-export-row):not(.no-earlier-row):hover > td {
-            background: rgba(255,255,255,0.06) !important;
-        }
-        .data-table tbody tr.row-missing:hover > td { background: rgba(240,165,0,0.13) !important; }
-
-        /* Date column: Impact uppercase, matches wp-date-heading */
-        .data-table tbody tr:not(.week-header-row):not(.week-collapse-row):not(.table-export-row):not(.no-earlier-row) td:first-child {
-            font-family: Impact, 'Arial Black', sans-serif !important;
-            font-size: 13px !important;
-            letter-spacing: 2px !important;
-            text-transform: uppercase !important;
-            color: #fff !important;
-            text-shadow: 0 0 16px rgba(255, 45, 120, 0.55) !important;
-        }
-        /* Weight column always right-aligned (missing dash + entered value both align consistently) */
-        .data-table td.cell-weight { text-align: right !important; }
-        /* Weight value: Impact, large, bright */
-        .data-table td.cell-weight:not(.cell-missing) {
-            font-family: Impact, 'Arial Black', sans-serif !important;
-            font-size: 17px !important;
-            color: #fff !important;
-        }
-        /* Secondary kg value: dimmer */
-        .data-table td.sec-col-cell {
-            font-size: 12px !important;
-            color: rgba(255,255,255,0.45) !important;
-        }
-
-        /* ── Daily rows: bordered cards matching weekly day row style ── */
-        .data-table.daily-mode { border-spacing: 0 3px !important; }
-        .data-table tbody .daily-row td {
-            border-top: 1px solid rgba(255, 45, 120, 0.55) !important;
-            border-bottom: 1px solid rgba(255, 45, 120, 0.55) !important;
-        }
-        .data-table tbody .daily-row td:first-child {
-            border-left: 1px solid rgba(255, 45, 120, 0.55) !important;
-            border-radius: 7px 0 0 7px !important;
-        }
-        .data-table tbody .daily-row td:last-child {
-            border-right: 1px solid rgba(255, 45, 120, 0.55) !important;
-            border-radius: 0 7px 7px 0 !important;
-        }
-        .data-table tbody .daily-row:hover td { border-color: rgba(255, 45, 120, 0.8) !important; }
-        .data-table tbody .daily-row.row-missing td { border-color: rgba(240, 165, 0, 0.7) !important; }
-        .data-table tbody .daily-row.row-missing:hover td { border-color: rgba(240, 165, 0, 0.9) !important; }
-        .data-table tbody .daily-row .table-delete-btn {
-            border-color: rgba(255, 45, 120, 0.75) !important;
-            color: rgba(255, 255, 255, 0.5) !important;
-        }
-        .data-table tbody .daily-row .note-btn {
-            border: 1px solid rgba(255, 45, 120, 0.65) !important;
-            border-radius: 5px !important;
-            width: 32px !important; height: 32px !important;
-            padding: 0 !important;
-            display: flex !important; align-items: center !important; justify-content: center !important;
-        }
-        .data-table tbody .daily-row.row-missing .table-delete-btn { border-color: rgba(240, 165, 0, 0.7) !important; }
-        .data-table tbody .daily-row.row-missing .note-btn { border-color: rgba(240, 165, 0, 0.65) !important; }
-
-        /* ── Export row: darker border and button ── */
-        .table-export-cell { border-top-color: rgba(255, 45, 120, 0.55) !important; }
-        .table-export-btn { border-color: rgba(255, 45, 120, 0.75) !important; color: rgba(255, 45, 120, 0.8) !important; }
-
-        /* ── Always show full date format in weights tables ── */
-        .data-table tbody .daily-row td:first-child,
-        .week-day-row td:first-child { white-space: nowrap; }
-        @media (max-width: 800px) {
-            .week-day-table .date-full { display: inline !important; }
-            /* Re-assert 3-column widths (style.css @800px targets stale old values) */
-            .data-table thead th:first-child      { width: 38% !important; }
-            #th-primary                           { width: 33% !important; }
-            #th-days-logged                       { width: 29% !important; }
-            .week-day-table thead th:first-child  { width: 38% !important; }
-            .week-day-table thead th:nth-child(2) { width: 33% !important; }
-            .week-day-table thead th:nth-child(3) { width: 29% !important; }
-        }
-        @media (max-width: 560px) {
-            .data-table .date-full,
-            .week-day-table .date-full { display: inline !important; }
-            .data-table .date-short,
-            .week-day-table .date-short { display: none !important; }
-        }
-
-        /* ── Clickable daily rows ── */
-        .data-table tbody .daily-row { cursor: pointer; }
-        .week-day-row { cursor: pointer; }
-
-        /* ── Mobile breakpoints ── */
-        @media (max-width: 560px) {
-            :root { --wt-hdr: 90px; }
-            .wt-header {
-                display: flex;
-                flex-wrap: wrap;
-                align-content: flex-start;
-                align-items: center;
-                padding: 0 16px;
-                gap: 0;
-                height: var(--wt-hdr);
-            }
-            .wt-title {
-                flex: 1;
-                font-size: 20px;
-                padding: 10px 0 8px;
-                align-self: flex-start;
-            }
-            .wt-stats {
-                width: 100%;
-                justify-self: auto;
-                justify-content: space-around;
-                gap: 0;
-                padding: 6px 0 2px;
-                border-top: 1px solid rgba(255, 45, 120, 0.15);
-            }
-            .wt-stat-num { font-size: 17px; }
-            .wt-stat-label { font-size: 10px; }
-            .wt-main { padding: 12px 16px; }
-        }
-    </style>
-</head>
-<body class="preload">
-
-<a href="#main-content" class="sr-only skip-link">Skip to main content</a>
-<div id="status-announce" aria-live="polite" aria-atomic="true" class="sr-only"></div>
-
+{% block bg %}
 <div class="wt-bg"></div>
+{% endblock %}
 
-<header class="wt-header" role="banner">
-    <a href="/" class="wt-back" aria-label="Back to dashboard">← Dashboard</a>
-    <h1 class="wt-title">Weights</h1>
-    <div class="wt-stats" aria-label="Weekly stats">
-        <div class="wt-stat">
-            <div class="wt-stat-num" id="wt-logged-week">—</div>
-            <div class="wt-stat-label">This Week</div>
-        </div>
-        <div class="wt-stat">
-            <div class="wt-stat-num" id="wt-7d-avg">—</div>
-            <div class="wt-stat-label">7D Avg</div>
-        </div>
-        <div class="wt-stat">
-            <div class="wt-stat-num" id="wt-streak">—</div>
-            <div class="wt-stat-label">Day Streak</div>
+{% block header_left %}
+<div class="wt-ctrl-group">
+    <div class="mp-filter-wrap">
+        <button class="mp-filter-btn" id="mp-filter-btn" aria-label="Filter by date range" data-tip="Filter by date range">
+            <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <path d="M22 3H2l8 9.46V19l4 2V12.46L22 3z"/>
+            </svg>
+        </button>
+        <div class="mp-range-menu" id="mp-range-menu">
+            <div id="mp-daily-ranges">
+                <button class="range-btn active" data-range="7d">7D</button>
+                <button class="range-btn" data-range="30d">30D</button>
+                <button class="range-btn" data-range="90d">90D</button>
+                <button class="range-btn" data-range="1y">1Y</button>
+                <button class="range-btn" data-range="all">All</button>
+                <button class="range-btn" data-range="custom">Custom</button>
+                <div class="mp-custom-days-wrap" id="custom-days-wrap" hidden>
+                    <input type="number" id="custom-days" class="custom-days-input" min="7" max="1095" placeholder="—" data-tip="Min 7 days">
+                    <span>days</span>
+                </div>
+            </div>
+            <div id="mp-weekly-ranges" hidden>
+                <button class="weekly-range-btn active" data-weeks="4">4W</button>
+                <button class="weekly-range-btn" data-weeks="12">12W</button>
+                <button class="weekly-range-btn" data-weeks="30">30W</button>
+                <button class="weekly-range-btn" data-weeks="all">All</button>
+                <button class="weekly-range-btn" data-weeks="custom">Custom</button>
+                <div class="mp-custom-days-wrap" id="custom-weeks-wrap" hidden>
+                    <input type="number" id="custom-weeks" class="custom-days-input" min="4" max="156" placeholder="—" data-tip="Min 4 weeks">
+                    <span>weeks</span>
+                </div>
+            </div>
         </div>
     </div>
-</header>
+    <button id="chart-type-btn" aria-label="Switch to weekly chart" data-tip="Switch to weekly chart">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/>
+            <line x1="16" y1="2" x2="16" y2="6"/>
+            <line x1="8" y1="2" x2="8" y2="6"/>
+            <line x1="3" y1="10" x2="21" y2="10"/>
+        </svg>
+    </button>
+    <button class="mp-view-toggle-btn" id="view-toggle-btn" aria-label="Toggle chart or table view" data-tip="Toggle chart / table">
+        <svg id="mp-view-icon-chart" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/>
+        </svg>
+        <svg id="mp-view-icon-table" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" hidden>
+            <rect x="3" y="3" width="18" height="18" rx="2"/>
+            <line x1="3" y1="9" x2="21" y2="9"/>
+            <line x1="3" y1="15" x2="21" y2="15"/>
+            <line x1="9" y1="9" x2="9" y2="21"/>
+        </svg>
+    </button>
+</div>
+{% endblock %}
 
+{% block header_title %}
+<h1 class="site-title">Weights</h1>
+{% endblock %}
+
+{% block header_stats %}
+<div class="site-stat">
+    <div class="site-stat-num" id="wt-logged-week">—</div>
+    <div class="site-stat-label">This Week</div>
+</div>
+<div class="site-stat">
+    <div class="site-stat-num" id="wt-7d-avg">—</div>
+    <div class="site-stat-label">7D Avg</div>
+</div>
+<div class="site-stat wt-stat--streak">
+    <div class="site-stat-num" id="wt-streak">—</div>
+    <div class="site-stat-label">Day Streak</div>
+</div>
+{% endblock %}
+
+{% block footer_add %}
+<button class="site-add-btn" id="chart-add-btn" aria-label="Log a past weight" data-tip="Log a past weight">+</button>
+{% endblock %}
+
+{% block content %}
 <main id="main-content" class="wt-main">
     <div class="chart-with-nav">
         <div class="chart-page-area">
@@ -646,7 +510,7 @@
                             <thead>
                                 <tr>
                                     <th style="width:38%">Date</th>
-                                    <th id="th-primary"   style="width:33%">Weight (lbs)</th>
+                                    <th id="th-primary"     style="width:33%">Weight (lbs)</th>
                                     <th id="th-days-logged" style="width:29%"></th>
                                 </tr>
                             </thead>
@@ -658,66 +522,9 @@
                     </div>
                 </div>
             </div>
-        </div><!-- end .chart-page-area -->
-    </div>
-</main>
-
-<footer class="wt-footer">
-    <div class="mp-filter-wrap">
-        <button class="mp-filter-btn" id="mp-filter-btn" aria-label="Filter by date range" data-tip="Filter by date range">
-            <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                <path d="M22 3H2l8 9.46V19l4 2V12.46L22 3z"/>
-            </svg>
-        </button>
-        <div class="mp-range-menu" id="mp-range-menu">
-            <div id="mp-daily-ranges">
-                <button class="range-btn active" data-range="7d">7D</button>
-                <button class="range-btn" data-range="30d">30D</button>
-                <button class="range-btn" data-range="90d">90D</button>
-                <button class="range-btn" data-range="1y">1Y</button>
-                <button class="range-btn" data-range="all">All</button>
-                <button class="range-btn" data-range="custom">Custom</button>
-                <div class="mp-custom-days-wrap" id="custom-days-wrap" hidden>
-                    <input type="number" id="custom-days" class="custom-days-input" min="7" max="1095" placeholder="—" data-tip="Min 7 days">
-                    <span>days</span>
-                </div>
-            </div>
-            <div id="mp-weekly-ranges" hidden>
-                <button class="weekly-range-btn active" data-weeks="4">4W</button>
-                <button class="weekly-range-btn" data-weeks="12">12W</button>
-                <button class="weekly-range-btn" data-weeks="30">30W</button>
-                <button class="weekly-range-btn" data-weeks="all">All</button>
-                <button class="weekly-range-btn" data-weeks="custom">Custom</button>
-                <div class="mp-custom-days-wrap" id="custom-weeks-wrap" hidden>
-                    <input type="number" id="custom-weeks" class="custom-days-input" min="4" max="156" placeholder="—" data-tip="Min 4 weeks">
-                    <span>weeks</span>
-                </div>
-            </div>
         </div>
     </div>
-    <button class="mp-add-btn" id="chart-add-btn" aria-label="Log a past weight" data-tip="Log a past weight">+</button>
-    <div class="mp-right-group">
-        <button id="chart-type-btn" aria-label="Switch to weekly chart" data-tip="Switch to weekly chart">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/>
-                <line x1="16" y1="2" x2="16" y2="6"/>
-                <line x1="8" y1="2" x2="8" y2="6"/>
-                <line x1="3" y1="10" x2="21" y2="10"/>
-            </svg>
-        </button>
-        <button class="mp-view-toggle-btn" id="view-toggle-btn" aria-label="Toggle chart or table view" data-tip="Toggle chart / table">
-            <svg id="mp-view-icon-chart" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/>
-            </svg>
-            <svg id="mp-view-icon-table" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" hidden>
-                <rect x="3" y="3" width="18" height="18" rx="2"/>
-                <line x1="3" y1="9" x2="21" y2="9"/>
-                <line x1="3" y1="15" x2="21" y2="15"/>
-                <line x1="9" y1="9" x2="9" y2="21"/>
-            </svg>
-        </button>
-    </div>
-</footer>
+</main>
 
 <!-- Historical Weight Modal -->
 <div id="history-modal" class="modal-overlay" hidden>
@@ -778,7 +585,7 @@
     </div>
 </div>
 
-<!-- Shared table confirm modal -->
+<!-- Table confirm modal -->
 <div id="table-confirm-modal" class="modal-overlay" hidden>
     <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="table-confirm-title">
         <h2 class="modal-title" id="table-confirm-title">Confirm</h2>
@@ -809,52 +616,10 @@
         <button id="note-popover-save"   class="modal-btn modal-save">Save</button>
     </div>
 </div>
+{% endblock %}
 
-<div id="site-cursor"></div>
-
+{% block page_js %}
 <script>
-    /* Hydrate localStorage from server-rendered preferences */
-    (function () {
-        var prefs = {{ prefs | tojson }};
-        Object.keys(prefs).forEach(function (k) { localStorage.setItem(k, prefs[k]); });
-    })();
-
-    /* ── Streak temperature glow ── */
-    var STREAK_STOPS = [
-        [ 60, 120, 255],
-        [100, 175, 255],
-        [155, 215, 255],
-        [255, 245, 110],
-        [255, 225,  40],
-        [255, 155,  30],
-        [255,  90,  30],
-        [255,  60,  60],
-    ];
-    function applyStreakGlow(numEl, labelEl, val) {
-        numEl.classList.remove('streak-flame-num');
-        if (labelEl) labelEl.classList.remove('streak-flame-label');
-        if (val >= 7) {
-            numEl.style.color = '';
-            numEl.style.textShadow = '';
-            numEl.classList.add('streak-flame-num');
-            if (labelEl) {
-                labelEl.style.color = '';
-                labelEl.style.textShadow = '';
-                labelEl.classList.add('streak-flame-label');
-            }
-        } else {
-            var s = STREAK_STOPS[Math.min(Math.max(Math.round(val), 0), 7)];
-            var color = 'rgb(' + s[0] + ',' + s[1] + ',' + s[2] + ')';
-            var fade  = 'rgba(' + s[0] + ',' + s[1] + ',' + s[2] + ',0.35)';
-            numEl.style.color = color;
-            numEl.style.textShadow = '0 0 6px ' + color + ', 0 0 18px ' + color + ', 0 0 36px ' + fade;
-            if (labelEl) {
-                labelEl.style.color = color;
-                labelEl.style.textShadow = '0 0 5px ' + color + ', 0 0 14px ' + fade;
-            }
-        }
-    }
-
     window.savePref = function (key, value) {
         localStorage.setItem(key, value);
         fetch('/api/preference', {
@@ -870,33 +635,6 @@
         document.body.classList.remove('preload');
     }));
 
-    /* ── Helpers ── */
-    function getTodayISO() {
-        const d = new Date();
-        return d.getFullYear() + '-' +
-            String(d.getMonth() + 1).padStart(2, '0') + '-' +
-            String(d.getDate()).padStart(2, '0');
-    }
-
-    function formatDateDisplay(isoDate) {
-        const [y, m, d] = isoDate.split('-').map(Number);
-        const dt = new Date(y, m - 1, d);
-        const mon = dt.toLocaleDateString('en-US', { month: 'long' });
-        if ((localStorage.getItem('pref_date_format') || 'mdy') === 'mdy') {
-            return mon + ' ' + d + ', ' + y;
-        }
-        return d + ' ' + mon + ' ' + y;
-    }
-
-    function formatDateShort(isoDate) {
-        const [y, m, d] = isoDate.split('-').map(Number);
-        const dt = new Date(y, m - 1, d);
-        const mon = dt.toLocaleDateString('en-US', { month: 'short' });
-        return (localStorage.getItem('pref_date_format') || 'mdy') === 'mdy'
-            ? mon + ' ' + d
-            : d + ' ' + mon;
-    }
-
     function fmtDateShort(dt) {
         const mon = dt.toLocaleDateString('en-US', { month: 'short' });
         const y = dt.getFullYear(), d = dt.getDate();
@@ -905,65 +643,15 @@
             : d + ' ' + mon + ' ' + y;
     }
 
-    function fmtLbs(n) { return n === Math.round(n) ? Math.round(n) : parseFloat(n.toFixed(1)); }
 
-    /* No-op — plate cards live on the main page, not here */
-    function updateLostWeight() {}
-
-    /* Unit state */
-    window.activeUnit = localStorage.getItem('pref_unit') || 'lbs';
-    window.applyPlateUnit = function() {};
-
-    /* Fetch oldest entry date for table footer */
     fetch('/api/latest-weight').then(r => r.json()).then(d => {
         window.oldestEntryDate = d.oldest_date || null;
     });
 
-    /* ── Focus trap + modal open/close ── */
-    function makeFocusTrap(card) {
-        return function(e) {
-            if (e.key !== 'Tab') return;
-            const focusable = [...card.querySelectorAll(
-                'button:not([disabled]), [href], input:not([disabled]), select, textarea, [tabindex]:not([tabindex="-1"])'
-            )].filter(el => !el.closest('[hidden]') && el.offsetParent !== null);
-            if (!focusable.length) return;
-            const first = focusable[0], last = focusable[focusable.length - 1];
-            if (e.shiftKey && document.activeElement === first) {
-                e.preventDefault(); last.focus();
-            } else if (!e.shiftKey && document.activeElement === last) {
-                e.preventDefault(); first.focus();
-            }
-        };
-    }
-    const _modalOpeners = new WeakMap();
-    const _modalTraps   = new WeakMap();
-    function modalOpen(overlay) {
-        _modalOpeners.set(overlay, document.activeElement);
-        const card = overlay.querySelector('[role="dialog"]') || overlay;
-        const trap = makeFocusTrap(card);
-        _modalTraps.set(overlay, trap);
-        overlay.addEventListener('keydown', trap);
-    }
-    function modalClose(overlay) {
-        const trap = _modalTraps.get(overlay);
-        if (trap) overlay.removeEventListener('keydown', trap);
-        const opener = _modalOpeners.get(overlay);
-        if (opener && opener.focus) opener.focus();
-    }
-
-    function announce(msg) {
-        const el = document.getElementById('status-announce');
-        if (!el) return;
-        el.textContent = '';
-        requestAnimationFrame(() => { el.textContent = msg; });
-    }
-
-    /* ── Chart tooltip element ── */
     const chartTtEl = document.createElement('div');
     chartTtEl.id = 'chart-tooltip';
     document.body.appendChild(chartTtEl);
 
-    /* ── Shared axis-label plugin (registers once for both charts) ── */
     Chart.register({
         id: 'chartAxisLabels',
         afterDraw(chart) {
@@ -1221,7 +909,7 @@
         window.refreshChart  = loadChart;
         window.getChartRange = () => ({ range: activeRange, days: activeDays });
 
-        const savedRange    = localStorage.getItem('pref_range') || '7d';
+        const savedRange         = localStorage.getItem('pref_range') || '7d';
         const savedCustomDaysStr = localStorage.getItem('pref_custom_days');
         const savedCustomDays    = parseInt(savedCustomDaysStr) || 30;
         const savedRangeBtn = document.querySelector(`.range-btn[data-range="${savedRange}"]`);
@@ -1445,7 +1133,7 @@
 
     /* ── Chart slide navigation ── */
     (function () {
-        const inner  = document.getElementById('chart-slide-inner');
+        const inner   = document.getElementById('chart-slide-inner');
         const typeBtn = document.getElementById('chart-type-btn');
 
         function setChart(weekly) {
@@ -1542,7 +1230,6 @@
                 const endISO=week.sunISO<=getTodayISO()?week.sunISO:getTodayISO();
                 const allWeekDates=dateRange(week.monISO,endISO).reverse();
                 const missingDates=allWeekDates.filter(d=>!dayMap.has(d)||dayMap.get(d).weight_lbs==null);
-                const missingRefs=new Map();
                 const primAvg=week.avg!=null?(unit==='lbs'?fmtLbs(week.avg)+' '+unit:fmtLbs(week.avgKg)+' '+unit):'—';
 
                 const headerTr=document.createElement('tr'); headerTr.className='week-header-row';
@@ -1670,7 +1357,6 @@
             document.getElementById('table-confirm-ok').onclick=()=>{modal.hidden=true;modalClose(modal);onOk();};
             document.getElementById('table-confirm-cancel').onclick=()=>{modal.hidden=true;modalClose(modal);if(onCancel)onCancel();else renderTable();};
         }
-        window.showAppConfirm=showTableConfirm;
 
         async function startEdit(wtTd) {
             if (wtTd.querySelector('input')) return;
@@ -1760,13 +1446,6 @@
         document.addEventListener('mousemove',e=>{if(!drag)return;const mt=trackEl.clientHeight-parseFloat(thumbEl.style.height),ms=scrollEl.scrollHeight-scrollEl.clientHeight;scrollEl.scrollTop=Math.max(0,Math.min(ms,dragScroll+(e.clientY-dragY)*(ms/mt)));});
         document.addEventListener('mouseup',()=>{drag=false;});
 
-        /* Keep scrollbar top flush with the actual header — header grows at narrow widths */
-        const wtHeaderEl=document.querySelector('.wt-header');
-        function syncTrackTop(){trackEl.style.top=wtHeaderEl.offsetHeight+'px';}
-        new ResizeObserver(syncTrackTop).observe(wtHeaderEl);
-        syncTrackTop();
-
-        /* Scroll table from anywhere on the page when no modal/popover is open */
         window.addEventListener('wheel',function(e){
             if(e.target.closest&&e.target.closest('.data-table-scroll'))return;
             if(document.body.classList.contains('note-open'))return;
@@ -2013,118 +1692,92 @@
         };
     })();
 
-    /* ── Custom cursor ── */
-    (function () {
-        const el=document.getElementById('site-cursor');
-        const cursors={};
-        let activeKey='normal',mouseInDoc=false,activeCursorSet=localStorage.getItem('pref_profile_pic')||'1';
-        const CURSOR_SETS={
-            '1':[['/static/pointer.png',240,10,48],['/static/editpointer.png',650,30,64]],
-            '2':[['/static/pointer2.png',198,10,48],['/static/editpointer2.png',460,30,64]],
-            '3':[['/static/pointer3.png',198,10,48],['/static/editpointer3.png',460,30,64]],
-            '4':[['/static/pointer4.png',198,10,48],['/static/editpointer4.png',460,30,64]],
-        };
-        function processImg(src,origHotX,origHotY,key,renderH){
-            const img=new Image();
-            img.onload=function(){
-                const h=renderH||48,scale=h/img.height,w=Math.round(img.width*scale);
-                const cv=document.createElement('canvas');cv.width=w;cv.height=h;
-                const ctx=cv.getContext('2d');ctx.drawImage(img,0,0,w,h);
-                const id=ctx.getImageData(0,0,w,h),d=id.data;
-                for(let i=0;i<d.length;i+=4){if(d[i]>240&&d[i+1]>240&&d[i+2]>240)d[i+3]=0;}
-                ctx.putImageData(id,0,0);
-                const entry={url:cv.toDataURL(),hotX:Math.round(origHotX*scale),hotY:Math.round(origHotY*scale),w,h};
-                cursors[key]=entry;
-                if(key==='normal'+activeCursorSet){cursors['normal']=entry;applyCursor('normal');if(mouseInDoc)el.style.display='block';}
-                if(key==='edit'+activeCursorSet){cursors['edit']=entry;if(activeKey==='edit')applyCursor('edit');}
-            };
-            img.src=src;
-        }
-        function applyCursor(key){const c=cursors[key];if(!c)return;el.style.width=c.w+'px';el.style.height=c.h+'px';el.style.backgroundImage=`url(${c.url})`;}
-        Object.keys(CURSOR_SETS).forEach(n=>{const set=CURSOR_SETS[n];processImg(set[0][0],set[0][1],set[0][2],'normal'+n,set[0][3]);processImg(set[1][0],set[1][1],set[1][2],'edit'+n,set[1][3]);});
-        window.applyCursorSet=function(n){const sn=String(n);activeCursorSet=sn;if(cursors['normal'+sn])cursors['normal']=cursors['normal'+sn];if(cursors['edit'+sn])cursors['edit']=cursors['edit'+sn];applyCursor(activeKey);if(cursors['normal']&&mouseInDoc)el.style.display='block';};
-        let lastMX=0,lastMY=0;
-        function evalCursor(target){const cellEl=target.closest('.cell-weight'),isEdit=target.closest('.note-resize-handle')||(cellEl&&!cellEl.classList.contains('cell-missing'));const key=isEdit?'edit':'normal';if(key!==activeKey){activeKey=key;applyCursor(key);}}
-        document.addEventListener('mouseover',e=>evalCursor(e.target));
-        document.addEventListener('click',()=>{setTimeout(()=>{const t=document.elementFromPoint(lastMX,lastMY);if(t)evalCursor(t);},0);});
-        document.addEventListener('mousemove',e=>{lastMX=e.clientX;lastMY=e.clientY;const c=cursors[activeKey];if(!c)return;el.style.left=(e.clientX-c.hotX)+'px';el.style.top=(e.clientY-c.hotY)+'px';});
-        document.addEventListener('mouseleave',()=>{mouseInDoc=false;el.style.display='none';});
-        document.addEventListener('mouseenter',()=>{mouseInDoc=true;if(cursors['normal'])el.style.display='block';});
-    })();
-
-    /* ── Site-wide hover tooltips ── */
-    (function () {
-        const ttEl=document.createElement('div');ttEl.id='site-tooltip';document.body.appendChild(ttEl);
-        function position(x,y){const w=ttEl.offsetWidth,h=ttEl.offsetHeight;ttEl.style.top=Math.round(y-h/2)+'px';ttEl.style.left=Math.max(8,Math.round(x-12-w))+'px';}
-        document.addEventListener('mouseover',e=>{const t=e.target.closest('[data-tip]');if(t){ttEl.textContent=t.dataset.tip;ttEl.style.opacity='1';}else{ttEl.style.opacity='0';}});
-        document.addEventListener('focusin',e=>{const t=e.target.closest('[data-tip]');if(!t)return;ttEl.textContent=t.dataset.tip;ttEl.style.opacity='1';const r=t.getBoundingClientRect();position(r.right,r.top+r.height/2);});
-        document.addEventListener('focusout',()=>{ttEl.style.opacity='0';});
-        document.addEventListener('mousemove',e=>{if(ttEl.style.opacity==='1')position(e.clientX,e.clientY);});
-        document.addEventListener('mouseleave',()=>{ttEl.style.opacity='0';});
-        document.addEventListener('wheel',()=>{ttEl.style.opacity='0';const ct=document.getElementById('chart-tooltip');if(ct)ct.style.opacity='0';},{passive:true});
-    })();
-
     /* ── Header stats ── */
     (function () {
-        async function updateHeaderStats() {
-            const rows=await fetch('/api/weights?range=all').then(r=>r.json());
-            const withWeight=rows.filter(r=>r.weight_lbs!=null);
-            if(!withWeight.length)return;
-            const weekAgo=new Date();weekAgo.setDate(weekAgo.getDate()-6);weekAgo.setHours(0,0,0,0);
-            const weekISO=weekAgo.toISOString().split('T')[0];
-            const thisWeek=withWeight.filter(r=>r.date>=weekISO);
-            const loggedEl=document.getElementById('wt-logged-week');
-            if(loggedEl)loggedEl.textContent=thisWeek.length;
-            const avgEl=document.getElementById('wt-7d-avg');
-            if(avgEl){
-                if(thisWeek.length>0){const unit=window.activeUnit||'lbs';const avg=thisWeek.reduce((s,r)=>s+(unit==='kg'?r.weight_kg:r.weight_lbs),0)/thisWeek.length;const rounded=avg===Math.round(avg)?Math.round(avg):parseFloat(avg.toFixed(1));avgEl.textContent=rounded+' '+(unit==='kg'?'kg':'lb');}
-                else{avgEl.textContent='—';}
+        const weekEl   = document.getElementById('wt-logged-week');
+        const avgEl    = document.getElementById('wt-7d-avg');
+        const streakEl = document.getElementById('wt-streak');
+
+        async function refresh() {
+            let data;
+            try { const r = await fetch('/api/weight/stats'); data = await r.json(); }
+            catch { return; }
+
+            if (weekEl) weekEl.textContent = (data.logged_this_week ?? 0) + '/7';
+
+            if (avgEl) {
+                const raw = data.avg_7d;
+                if (raw == null) { avgEl.textContent = '--'; }
+                else {
+                    const kg = window.activeUnit === 'kg';
+                    avgEl.textContent = kg
+                        ? (raw / 2.2046).toFixed(1) + ' kg'
+                        : raw.toFixed(1) + ' lbs';
+                }
             }
-            const streakEl=document.getElementById('wt-streak');
-            if(streakEl){const dateSet=new Set(withWeight.map(r=>r.date));let streak=0,d=new Date();if(!dateSet.has(d.toLocaleDateString('en-CA')))d.setDate(d.getDate()-1);while(dateSet.has(d.toLocaleDateString('en-CA'))){streak++;d.setDate(d.getDate()-1);}streakEl.textContent=streak;applyStreakGlow(streakEl,streakEl.nextElementSibling,streak);}
+
+            if (streakEl) {
+                const s = data.streak ?? 0;
+                streakEl.textContent = s + (s === 1 ? ' day' : ' days');
+                const parent = streakEl.closest('.wt-stat--streak');
+                if (parent) {
+                    parent.classList.remove('streak-hot');
+                    if (s >= 7) parent.classList.add('streak-hot');
+                }
+                if (s > 0) applyStreakGlow(streakEl, s);
+            }
         }
-        updateHeaderStats();
-        window.refreshHeaderStats=updateHeaderStats;
+
+        refresh();
+        window.refreshHeaderStats = refresh;
     })();
 
-    /* ── Footer filter menu + range context switching ── */
+    /* ── Filter menu ── */
     (function () {
-        const filterBtn    = document.getElementById('mp-filter-btn');
-        const rangeMenu    = document.getElementById('mp-range-menu');
-        const dailyRanges  = document.getElementById('mp-daily-ranges');
-        const weeklyRanges = document.getElementById('mp-weekly-ranges');
-        if(!filterBtn||!rangeMenu)return;
+        const btn  = document.getElementById('mp-filter-btn');
+        const menu = document.getElementById('mp-range-menu');
+        if (!btn || !menu) return;
 
-        function closeMenu(){filterBtn.classList.remove('open');rangeMenu.classList.remove('open');}
-        filterBtn.addEventListener('click',e=>{e.stopPropagation();filterBtn.classList.toggle('open');rangeMenu.classList.toggle('open');});
-        document.addEventListener('click',closeMenu);
-        rangeMenu.addEventListener('click',e=>e.stopPropagation());
+        function close() { menu.classList.remove('open'); btn.setAttribute('aria-expanded','false'); }
+        function open()  { menu.classList.add('open');    btn.setAttribute('aria-expanded','true'); }
+        function toggle(){ menu.classList.contains('open') ? close() : open(); }
 
-        function updateRangeContext(){
-            const isWeekly=window.currentChartPage==='weekly';
-            if(dailyRanges)dailyRanges.hidden=isWeekly;
-            if(weeklyRanges)weeklyRanges.hidden=!isWeekly;
-        }
+        btn.addEventListener('click', e => { e.stopPropagation(); toggle(); });
+        document.addEventListener('click', e => {
+            if (!menu.classList.contains('open')) return;
+            if (!e.composedPath().includes(menu) && !e.composedPath().includes(btn)) close();
+        });
+        document.addEventListener('keydown', e => { if (e.key === 'Escape') close(); });
 
-        const chartTypeBtn2=document.getElementById('chart-type-btn');
-        if(chartTypeBtn2)chartTypeBtn2.addEventListener('click',()=>setTimeout(updateRangeContext,50));
+        menu.querySelectorAll('[data-range]').forEach(item => {
+            item.addEventListener('click', () => {
+                const range = item.dataset.range;
+                menu.querySelectorAll('[data-range]').forEach(i => i.classList.remove('active'));
+                item.classList.add('active');
+                close();
+                window.savePref('chart_range', range);
+                if (window.setChartRange) window.setChartRange(range);
+            });
+        });
 
-        const viewToggle=document.getElementById('view-toggle-btn');
-        if(viewToggle)viewToggle.addEventListener('click',()=>setTimeout(updateRangeContext,50));
-
-        const iconChart=document.getElementById('mp-view-icon-chart');
-        const iconTable=document.getElementById('mp-view-icon-table');
-        if(viewToggle&&iconChart&&iconTable){
-            viewToggle.addEventListener('click',()=>{
-                setTimeout(()=>{
-                    const inTable=document.getElementById('data-table-wrap')&&!document.getElementById('data-table-wrap').hidden;
-                    iconChart.hidden=inTable;iconTable.hidden=!inTable;viewToggle.classList.toggle('in-table',inTable);
-                },50);
+        // Custom date range modal trigger
+        const customBtn = menu.querySelector('[data-range="custom"]');
+        if (customBtn) {
+            customBtn.addEventListener('click', e => {
+                e.stopPropagation();
+                close();
+                const modal = document.getElementById('custom-date-modal');
+                if (modal) { modal.hidden = false; modalOpen(modal); }
             });
         }
-        setTimeout(updateRangeContext,200);
-    })();
-</script>
 
-</body>
-</html>
+        // Restore saved range
+        const saved = localStorage.getItem('pref_chart_range') || 'daily-30';
+        const match = menu.querySelector('[data-range="'+saved+'"]');
+        if (match) {
+            menu.querySelectorAll('[data-range]').forEach(i => i.classList.remove('active'));
+            match.classList.add('active');
+        }
+    })();
+    </script>
+{% endblock %}

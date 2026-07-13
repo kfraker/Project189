@@ -1,0 +1,1669 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <title>{% block page_title %}Project 189{% endblock %}</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Pacifico&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}?v=151">
+    {% block extra_head %}{% endblock %}
+    <style>
+        /* ── Shared layout ── */
+        :root { --site-hdr: 62px; --site-ftr: 72px; }
+        html, body { height: 100%; margin: 0; overflow: hidden; }
+
+        /* ── Fixed header ── */
+        .site-header {
+            position: fixed; top: 0; left: 0; right: 0;
+            height: var(--site-hdr); z-index: 700;
+            display: grid; grid-template-columns: 1fr auto 1fr;
+            align-items: center; padding: 0 16px;
+            background: rgba(8, 0, 20, 0.75);
+            border-bottom: 1px solid rgba(255, 45, 120, 0.2);
+            backdrop-filter: blur(10px);
+        }
+        .site-header-left {
+            display: flex; align-items: center; gap: 8px;
+            justify-self: start;
+        }
+        .site-title {
+            font-family: 'Pacifico', cursive;
+            font-size: clamp(16px, 3.5vw, 26px);
+            color: #ffe0ee;
+            text-shadow: 0 0 10px #ff80aa, 0 0 24px #ff2d78;
+            margin: 0; text-align: center;
+        }
+        .site-header-stats {
+            display: flex; gap: clamp(10px, 3vw, 24px);
+            justify-content: flex-end; align-items: center;
+        }
+        /* Generic stat cell — pages can override with their own classes */
+        .site-stat { text-align: center; }
+        .site-stat-num {
+            font-family: Impact, 'Arial Black', sans-serif;
+            font-size: clamp(15px, 2.5vw, 20px);
+            color: #fff; line-height: 1;
+        }
+        .site-stat-label {
+            font-family: Arial, sans-serif; font-size: 9px;
+            letter-spacing: 0.8px; text-transform: uppercase;
+            color: rgba(255,255,255,0.45); margin-top: 2px;
+            white-space: nowrap;
+        }
+
+        /* ── Mobile: two-row header ── */
+        @media (max-width: 560px) {
+            :root { --site-hdr: 90px; }
+            .site-header {
+                height: var(--site-hdr);
+                display: flex; flex-wrap: wrap;
+                align-content: flex-start; align-items: center;
+                padding: 0 16px; gap: 0;
+            }
+            .site-header-left {
+                flex-shrink: 0; align-self: flex-start; padding-top: 10px;
+                min-width: 44px;
+            }
+            .site-title {
+                flex: 1; font-size: clamp(16px, 5vw, 22px);
+                padding: 10px 0 8px; align-self: flex-start; text-align: center;
+            }
+            .site-header-stats {
+                width: 100%; justify-content: space-around; gap: 0;
+                padding: 5px 0 8px;
+                border-top: 1px solid rgba(255, 45, 120, 0.15);
+            }
+            .site-stat-num { font-size: 15px; }
+            .site-stat-label { font-size: 8px; letter-spacing: 0.5px; }
+        }
+
+        /* ── Fixed footer ── */
+        .site-footer {
+            position: fixed; bottom: 0; left: 0; right: 0;
+            height: var(--site-ftr); z-index: 700;
+            display: flex; align-items: center;
+            padding: 0 16px;
+            background: rgba(8, 0, 20, 0.6);
+            border-top: 1px solid rgba(255, 45, 120, 0.12);
+            backdrop-filter: blur(8px);
+        }
+
+        /* ── Nav buttons ── */
+        .site-nav {
+            display: flex; align-items: center; gap: 6px;
+            flex: 1;
+        }
+        .site-nav-btn {
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            width: 48px; height: 52px; border-radius: 10px;
+            background: transparent; border: none;
+            color: rgba(255,255,255,0.45); text-decoration: none;
+            transition: all 0.18s; position: relative;
+            cursor: pointer; padding: 0;
+        }
+        .site-nav-btn img {
+            width: 34px; height: 34px; object-fit: contain;
+            opacity: 0.55; transition: opacity 0.18s;
+            display: block;
+        }
+        .site-nav-btn svg {
+            width: 26px; height: 26px;
+            opacity: 0.55; transition: opacity 0.18s;
+        }
+        .site-nav-btn:hover img, .site-nav-btn:hover svg { opacity: 0.9; }
+        .site-nav-btn.active img, .site-nav-btn.active svg { opacity: 1; }
+        .site-nav-btn.active::after {
+            content: ''; position: absolute; bottom: 4px;
+            left: 50%; transform: translateX(-50%);
+            width: 20px; height: 3px; border-radius: 2px;
+            background: #ff2d78;
+            box-shadow: 0 0 8px rgba(255,45,120,0.6);
+        }
+        .site-nav-btn:disabled { cursor: default; }
+        .site-nav-btn:disabled img, .site-nav-btn:disabled svg { opacity: 0.25; }
+
+        /* ── Center add button — absolutely centered in footer ── */
+        .site-add-wrap {
+            position: absolute;
+            left: 50%; transform: translateX(-50%);
+            display: flex; align-items: center; justify-content: center;
+        }
+        .site-add-btn {
+            width: 48px; height: 48px; border-radius: 14px;
+            background: linear-gradient(135deg, #ff2d78, #c73862);
+            border: none; color: #fff; font-size: 30px; line-height: 1;
+            display: flex; align-items: center; justify-content: center;
+            box-shadow: 0 4px 20px rgba(255, 45, 120, 0.4);
+            transition: all 0.2s; cursor: pointer;
+        }
+        .site-add-btn:hover { box-shadow: 0 4px 28px rgba(255, 45, 120, 0.85); transform: scale(1.06); }
+
+        /* ── Profile button — absolutely positioned, overflows footer top by 25% ── */
+        .site-profile-btn {
+            position: absolute; bottom: 10px; right: 16px;
+            width: 80px; height: 80px; border-radius: 50%;
+            background: none; border: none; padding: 0;
+            cursor: pointer; transition: transform 0.2s;
+            box-shadow: 0 4px 24px rgba(255,45,120,0.45);
+            z-index: 1;
+        }
+        .site-profile-btn:hover { transform: scale(1.06); box-shadow: 0 6px 32px rgba(255,45,120,0.7); }
+        .site-profile-btn img {
+            width: 80px; height: 80px; border-radius: 50%;
+            object-fit: contain; display: block;
+        }
+        /* Override style.css #profile-btn clamp() sizing from the old fixed overlay */
+        footer #profile-btn {
+            width: 80px; height: 80px;
+        }
+        footer #profile-btn img { width: 80px; height: 80px; }
+
+        /* ── Menu modal ── */
+        .menu-modal-card {
+            position: relative;
+            background: rgba(8, 0, 20, 0.97);
+            border: 1px solid rgba(255, 45, 120, 0.3);
+            border-radius: 20px;
+            padding: 32px 28px 28px;
+            width: min(320px, 90vw);
+            display: flex; flex-direction: column; align-items: center; gap: 20px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.7);
+            animation: menuPop 0.22s cubic-bezier(0.34,1.56,0.64,1) both;
+        }
+        @keyframes menuPop {
+            from { opacity: 0; transform: scale(0.88); }
+            to   { opacity: 1; transform: scale(1); }
+        }
+        .menu-modal-title {
+            font-family: 'Pacifico', cursive;
+            font-size: 28px; color: #ff2d78;
+            margin: 0;
+            text-shadow: 0 0 20px rgba(255,45,120,0.5);
+        }
+        .menu-modal-options {
+            display: flex; flex-direction: column; gap: 12px; width: 100%;
+        }
+        .menu-modal-btn {
+            display: flex; align-items: center; gap: 14px;
+            width: 100%; padding: 16px 20px;
+            background: rgba(255,45,120,0.08);
+            border: 1px solid rgba(255,45,120,0.25);
+            border-radius: 14px; color: rgba(255,255,255,0.9);
+            font-size: 18px; cursor: pointer;
+            transition: all 0.18s;
+        }
+        .menu-modal-btn:hover {
+            background: rgba(255,45,120,0.2);
+            border-color: rgba(255,45,120,0.6);
+            transform: translateX(4px);
+            box-shadow: 0 4px 16px rgba(255,45,120,0.3);
+        }
+        .menu-modal-btn-icon { font-size: 24px; line-height: 1; }
+        .menu-modal-btn-label { font-weight: 600; letter-spacing: 0.02em; }
+        .menu-modal-close {
+            position: absolute; top: 14px; right: 16px;
+            background: none; border: none;
+            color: rgba(255,255,255,0.35); font-size: 16px;
+            cursor: pointer; transition: color 0.15s; padding: 4px 8px;
+        }
+        .menu-modal-close:hover { color: rgba(255,255,255,0.8); }
+
+        /* ── Index + picker popup ── */
+        .site-add-picker {
+            position: absolute;
+            bottom: calc(100% + 10px); left: 50%;
+            transform: translateX(-50%) translateY(8px);
+            background: rgba(8, 0, 20, 0.97);
+            border: 1px solid rgba(255, 45, 120, 0.3);
+            border-radius: 10px; padding: 8px; min-width: 190px;
+            opacity: 0; pointer-events: none;
+            transition: opacity 0.18s ease, transform 0.18s ease;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.6);
+            z-index: 800;
+        }
+        .site-add-picker.open { opacity: 1; pointer-events: auto; transform: translateX(-50%) translateY(0); }
+        .site-add-option {
+            display: block; width: 100%; margin-bottom: 5px;
+            padding: 10px 16px; background: transparent;
+            border: 1px solid rgba(255, 45, 120, 0.2); border-radius: 6px;
+            color: rgba(255, 255, 255, 0.85);
+            font-family: Arial, sans-serif; font-size: 13px; letter-spacing: 0.4px;
+            text-align: left; cursor: pointer; transition: all 0.15s;
+        }
+        .site-add-option:last-child { margin-bottom: 0; }
+        .site-add-option:hover { background: rgba(255, 45, 120, 0.12); color: #fff; border-color: rgba(255, 45, 120, 0.45); }
+
+        /* ── Main content area ── */
+        .site-main {
+            position: fixed;
+            top: var(--site-hdr); bottom: var(--site-ftr);
+            left: 0; right: 0;
+            overflow: hidden;
+        }
+    </style>
+    {% block page_css %}{% endblock %}
+</head>
+
+<body class="preload">
+
+<a href="#main-content" class="sr-only skip-link">Skip to main content</a>
+<div id="status-announce" aria-live="polite" aria-atomic="true" class="sr-only"></div>
+<div id="site-cursor"></div>
+
+{% block bg %}{% endblock %}
+
+<header class="site-header" role="banner">
+    <div class="site-header-left">{% block header_left %}{% endblock %}</div>
+    {% block header_title %}<h1 class="site-title">Project 189</h1>{% endblock %}
+    <div class="site-header-stats" aria-label="Page stats">{% block header_stats %}{% endblock %}</div>
+</header>
+
+{% block healthbar %}{% endblock %}
+
+<main id="main-content" class="site-main">
+    {% block content %}{% endblock %}
+</main>
+
+<!-- ── Shared modals ── -->
+
+<!-- Fight Card Modal -->
+<div id="fight-card-modal" class="modal-overlay" hidden>
+    <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="fight-card-modal-title">
+        <h2 class="modal-title" id="fight-card-modal-title">Fight Card</h2>
+
+        <div class="profile-setting-group">
+            <label class="profile-setting-label" for="fight-name">Name</label>
+            <input type="text" id="fight-name" class="fight-dob-input" placeholder="Fighter name" maxlength="20">
+        </div>
+
+        <div class="profile-setting-group">
+            <div class="profile-toggle-row">
+                <button class="profile-opt-btn" id="fight-sex-male">Male</button>
+                <button class="profile-opt-btn" id="fight-sex-female">Female</button>
+            </div>
+        </div>
+
+        <div class="profile-setting-group">
+            <div class="fight-dob-header">
+                <label class="profile-setting-label" for="fight-dob">D.O.B.</label>
+                <div class="fight-age-display">
+                    <span id="fight-age-num">—</span>
+                    <span class="profile-custom-unit">yrs</span>
+                </div>
+            </div>
+            <div class="date-picker-wrap" id="fight-dob-wrap">
+                <input type="text" id="fight-dob" class="fight-dob-input" placeholder="Select date of birth" readonly>
+                <div class="date-picker-dropdown" id="fight-dob-calendar" hidden>
+                    <div class="dp-header">
+                        <button type="button" class="dp-nav" id="fight-dp-prev">&#8249;</button>
+                        <span class="dp-month-year" id="fight-dp-month-label"></span>
+                        <button type="button" class="dp-nav" id="fight-dp-next">&#8250;</button>
+                    </div>
+                    <div class="dp-day-names">
+                        <span>Su</span><span>Mo</span><span>Tu</span><span>We</span><span>Th</span><span>Fr</span><span>Sa</span>
+                    </div>
+                    <div class="dp-grid" id="fight-dp-grid"></div>
+                </div>
+            </div>
+        </div>
+
+        <div class="profile-setting-group">
+            <label class="profile-setting-label">Height</label>
+            <div class="profile-toggle-row" id="fight-height-us-row">
+                <input type="number" id="fight-height-ft" class="profile-custom-input" min="1" max="8" placeholder="—">
+                <span class="profile-custom-unit">ft</span>
+                <input type="number" id="fight-height-in" class="profile-custom-input" min="0" max="11" placeholder="—">
+                <span class="profile-custom-unit">in</span>
+            </div>
+            <div class="profile-toggle-row" id="fight-height-metric-row" style="display:none">
+                <input type="number" id="fight-height-cm" class="profile-custom-input" min="50" max="300" placeholder="—">
+                <span class="profile-custom-unit">cm</span>
+            </div>
+            <div class="modal-kg-preview" id="fight-height-preview"></div>
+        </div>
+
+        <div class="profile-setting-group">
+            <label class="profile-setting-label">Activity Level</label>
+            <div class="profile-toggle-row fight-activity-row">
+                <button class="profile-opt-btn" id="fight-act-sedentary" data-activity="1.2">Sedentary</button>
+                <button class="profile-opt-btn" id="fight-act-light"     data-activity="1.375">Light</button>
+                <button class="profile-opt-btn" id="fight-act-moderate"  data-activity="1.55">Moderate</button>
+                <button class="profile-opt-btn" id="fight-act-active"    data-activity="1.725">Active</button>
+            </div>
+        </div>
+
+        <div class="profile-setting-group">
+            <label class="profile-setting-label">Goal</label>
+            <div class="profile-toggle-row fight-goal-row">
+                <button class="profile-opt-btn" id="fight-goal-lean"   data-tip="Lose weight">Lean Machine</button>
+                <button class="profile-opt-btn" id="fight-goal-muscle" data-tip="Gain weight">Muscle Monster</button>
+            </div>
+        </div>
+
+        <div class="modal-actions">
+            <button class="modal-btn modal-cancel" id="fight-card-cancel">Cancel</button>
+            <button class="modal-btn modal-save"   id="fight-card-save">Save</button>
+        </div>
+    </div>
+</div>
+
+<!-- Insights Modal -->
+<div id="insights-modal" class="modal-overlay" hidden>
+    <div class="modal-card insights-modal-card" role="dialog" aria-modal="true" aria-labelledby="insights-modal-title">
+        <h2 class="modal-title" id="insights-modal-title">Insights</h2>
+        <div class="insights-grid" id="insights-grid"></div>
+        <div class="modal-actions">
+            <button class="modal-btn modal-save" id="insights-close">Close</button>
+        </div>
+    </div>
+</div>
+
+<!-- Settings Modal -->
+<div id="settings-modal" class="modal-overlay" hidden>
+    <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="settings-modal-title">
+        <h2 class="modal-title" id="settings-modal-title">Settings</h2>
+
+        <div class="settings-scroll-wrap">
+        <div class="settings-scroll-body">
+
+        <div class="settings-section-label" data-section="measurements">Default Formats <span class="section-caret">▾</span></div>
+        <div class="settings-section-body" id="ssb-measurements">
+            <div class="overlay-grid overlay-grid-3col">
+                <div class="overlay-item">
+                    <label class="profile-setting-label">Weight</label>
+                    <div class="profile-toggle-row">
+                        <button class="profile-opt-btn" id="prof-lbs-btn">LBS</button>
+                        <button class="profile-opt-btn" id="prof-kg-btn">KGS</button>
+                    </div>
+                </div>
+                <div class="overlay-item">
+                    <label class="profile-setting-label">Height</label>
+                    <div class="profile-toggle-row">
+                        <button class="profile-opt-btn" id="prof-height-us">Imperial</button>
+                        <button class="profile-opt-btn" id="prof-height-metric">Metric</button>
+                    </div>
+                </div>
+                <div class="overlay-item">
+                    <label class="profile-setting-label">Dates</label>
+                    <div class="profile-toggle-row">
+                        <button class="profile-opt-btn" id="prof-date-mdy" data-tip="MM-DD-YYYY">MDY</button>
+                        <button class="profile-opt-btn" id="prof-date-dmy" data-tip="DD-MM-YYYY">DMY</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="settings-section-label" data-section="landing">Chart Landing <span class="section-caret">▾</span></div>
+        <div class="settings-section-body" id="ssb-landing">
+            <div class="overlay-grid">
+                <div class="overlay-item">
+                    <label class="profile-setting-label">Daily Summary</label>
+                    <div class="profile-toggle-row">
+                        <button class="profile-opt-btn" id="prof-landing-daily">Chart</button>
+                        <button class="profile-opt-btn" id="prof-landing-table-daily">Table</button>
+                    </div>
+                </div>
+                <div class="overlay-item">
+                    <label class="profile-setting-label">Weekly Summary</label>
+                    <div class="profile-toggle-row">
+                        <button class="profile-opt-btn" id="prof-landing-weekly">Chart</button>
+                        <button class="profile-opt-btn" id="prof-landing-table-weekly">Table</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="settings-section-label" data-section="overtime">Daily Summary <span class="section-caret">▾</span></div>
+        <div class="settings-section-body" id="ssb-overtime">
+            <div id="prof-range-row-daily" class="profile-setting-group">
+                <label class="profile-setting-label">Range</label>
+                <div class="profile-toggle-row">
+                    <button class="profile-opt-btn" id="prof-range-7d"     data-range="7d">7D</button>
+                    <button class="profile-opt-btn" id="prof-range-30d"    data-range="30d">30D</button>
+                    <button class="profile-opt-btn" id="prof-range-90d"    data-range="90d">90D</button>
+                    <button class="profile-opt-btn" id="prof-range-1y"     data-range="1y">1Y</button>
+                    <button class="profile-opt-btn" id="prof-range-all"    data-range="all">All</button>
+                    <button class="profile-opt-btn" id="prof-range-custom" data-range="custom">Custom</button>
+                    <div id="prof-custom-wrap" class="prof-custom-wrap">
+                        <input type="number" id="prof-custom-days" class="profile-custom-input" min="7" max="1095" placeholder="—">
+                        <span class="profile-custom-unit">days</span>
+                    </div>
+                </div>
+            </div>
+            <div class="overlay-grid overlay-grid-3col">
+                <div class="overlay-item">
+                    <label class="profile-setting-label">Moving Avg</label>
+                    <div class="profile-toggle-row is-toggle">
+                        <button class="profile-opt-btn" id="prof-ma-line-on">On</button>
+                        <button class="profile-opt-btn" id="prof-ma-line-off">Off</button>
+                    </div>
+                </div>
+                <div class="overlay-item">
+                    <label class="profile-setting-label">Trend</label>
+                    <div class="profile-toggle-row is-toggle">
+                        <button class="profile-opt-btn" id="prof-trend-line-on">On</button>
+                        <button class="profile-opt-btn" id="prof-trend-line-off">Off</button>
+                    </div>
+                </div>
+                <div class="overlay-item">
+                    <label class="profile-setting-label">Goal Line</label>
+                    <div class="profile-toggle-row is-toggle">
+                        <button class="profile-opt-btn" id="prof-goal-line-on">On</button>
+                        <button class="profile-opt-btn" id="prof-goal-line-off">Off</button>
+                    </div>
+                </div>
+            </div>
+            <div class="profile-setting-group">
+                <label class="profile-setting-label">Data</label>
+                <div class="profile-toggle-row">
+                    <button class="profile-opt-btn" id="prof-chart-interp">Interpolated</button>
+                    <button class="profile-opt-btn" id="prof-chart-actual">Actual</button>
+                    <button class="profile-opt-btn" id="prof-chart-dots">Data Only</button>
+                    <button class="profile-opt-btn" id="prof-chart-none">No Data</button>
+                </div>
+            </div>
+            <div class="overlay-grid overlay-grid-3col">
+                <div class="overlay-item">
+                    <label class="profile-setting-label">Legend</label>
+                    <div class="profile-toggle-row is-toggle">
+                        <button class="profile-opt-btn" id="prof-legend-on">On</button>
+                        <button class="profile-opt-btn" id="prof-legend-off">Off</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="settings-section-label" data-section="weekly">Weekly Summary <span class="section-caret">▾</span></div>
+        <div class="settings-section-body" id="ssb-weekly">
+            <div id="prof-range-row-weekly" class="profile-setting-group">
+                <label class="profile-setting-label">Range</label>
+                <div class="profile-toggle-row">
+                    <button class="profile-opt-btn" id="prof-wrange-4"      data-weeks="4">4W</button>
+                    <button class="profile-opt-btn" id="prof-wrange-12"     data-weeks="12">12W</button>
+                    <button class="profile-opt-btn" id="prof-wrange-30"     data-weeks="30">30W</button>
+                    <button class="profile-opt-btn" id="prof-wrange-all"    data-weeks="all">All</button>
+                    <button class="profile-opt-btn" id="prof-wrange-custom" data-weeks="custom">Custom</button>
+                    <div id="prof-custom-wrap-weekly" class="prof-custom-wrap" hidden>
+                        <input type="number" id="prof-custom-weeks-setting" class="profile-custom-input" min="4" max="156" placeholder="—">
+                        <span class="profile-custom-unit">wks</span>
+                    </div>
+                </div>
+            </div>
+            <div class="overlay-grid overlay-grid-3col">
+                <div class="overlay-item">
+                    <label class="profile-setting-label">Min/Max Range</label>
+                    <div class="profile-toggle-row is-toggle">
+                        <button class="profile-opt-btn" id="prof-weekly-minmax-on">On</button>
+                        <button class="profile-opt-btn" id="prof-weekly-minmax-off">Off</button>
+                    </div>
+                </div>
+                <div class="overlay-item">
+                    <label class="profile-setting-label">Trend</label>
+                    <div class="profile-toggle-row is-toggle">
+                        <button class="profile-opt-btn" id="prof-weekly-trend-on">On</button>
+                        <button class="profile-opt-btn" id="prof-weekly-trend-off">Off</button>
+                    </div>
+                </div>
+                <div class="overlay-item">
+                    <label class="profile-setting-label">Goal Line</label>
+                    <div class="profile-toggle-row is-toggle">
+                        <button class="profile-opt-btn" id="prof-weekly-goal-on">On</button>
+                        <button class="profile-opt-btn" id="prof-weekly-goal-off">Off</button>
+                    </div>
+                </div>
+                <div class="overlay-item">
+                    <label class="profile-setting-label">Table Expanded</label>
+                    <div class="profile-toggle-row is-toggle">
+                        <button class="profile-opt-btn" id="prof-weekly-table-exp-on">On</button>
+                        <button class="profile-opt-btn" id="prof-weekly-table-exp-off">Off</button>
+                    </div>
+                </div>
+                <div class="overlay-item">
+                    <label class="profile-setting-label">Week Mode</label>
+                    <div class="profile-toggle-row is-toggle">
+                        <button class="profile-opt-btn" id="prof-weekly-mode-rolling" data-tip="7-day windows ending today">Rolling</button>
+                        <button class="profile-opt-btn" id="prof-weekly-mode-iso" data-tip="Calendar weeks (Mon–Sun)">ISO</button>
+                    </div>
+                </div>
+            </div>
+            <div class="overlay-grid overlay-grid-3col">
+                <div class="overlay-item">
+                    <label class="profile-setting-label">Legend</label>
+                    <div class="profile-toggle-row is-toggle">
+                        <button class="profile-opt-btn" id="prof-weekly-legend-on">On</button>
+                        <button class="profile-opt-btn" id="prof-weekly-legend-off">Off</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="settings-section-label" data-section="hud">HUD <span class="section-caret">▾</span></div>
+        <div class="settings-section-body" id="ssb-hud">
+            <div class="overlay-grid overlay-grid-3col">
+                <div class="overlay-item">
+                    <label class="profile-setting-label">Health Bar</label>
+                    <div class="profile-toggle-row is-toggle">
+                        <button class="profile-opt-btn" id="prof-healthbar-on">On</button>
+                        <button class="profile-opt-btn" id="prof-healthbar-off">Off</button>
+                    </div>
+                </div>
+                <div class="overlay-item">
+                    <label class="profile-setting-label">Fighter Name</label>
+                    <div class="profile-toggle-row is-toggle">
+                        <button class="profile-opt-btn" id="prof-fighter-name-on">On</button>
+                        <button class="profile-opt-btn" id="prof-fighter-name-off">Off</button>
+                    </div>
+                </div>
+                <div class="overlay-item"></div>
+            </div>
+            <button id="change-pic-btn" class="change-pic-btn">Change Profile Pic</button>
+        </div>
+
+        </div><!-- /.settings-scroll-body -->
+        <div class="settings-scrollbar-track" id="settings-scrollbar-track">
+            <div class="settings-scrollbar-thumb" id="settings-scrollbar-thumb"></div>
+        </div>
+        </div><!-- /.settings-scroll-wrap -->
+
+        <div class="modal-actions">
+            <button class="modal-btn modal-reset" id="settings-reset">Reset defaults</button>
+            <button class="modal-btn modal-cancel" id="settings-cancel">Cancel</button>
+            <button class="modal-btn modal-save"   id="settings-save">Save</button>
+        </div>
+    </div>
+</div>
+
+<!-- Profile pic picker backdrop -->
+<div id="profile-pic-backdrop" hidden></div>
+
+<!-- Profile pic picker -->
+<div id="profile-pic-picker" hidden>
+    <div class="pic-options-row">
+        <button class="pic-option" data-pic="1">
+            <img src="/static/profilebutton.png" alt="Profile 1">
+        </button>
+        <button class="pic-option" data-pic="2">
+            <img src="/static/profile2button.png" alt="Profile 2">
+        </button>
+        <button class="pic-option" data-pic="3">
+            <img src="/static/profile3button.png" alt="Profile 3">
+        </button>
+        <button class="pic-option" data-pic="4">
+            <img src="/static/profile4button.png" alt="Profile 4">
+        </button>
+    </div>
+    <div class="pic-picker-actions">
+        <button id="pic-cancel-btn" class="modal-btn modal-cancel">Cancel</button>
+        <button id="pic-save-btn"   class="modal-btn modal-save">Save</button>
+    </div>
+</div>
+
+<!-- App-wide confirm modal -->
+<div id="app-confirm-modal" class="modal-overlay" hidden role="dialog" aria-modal="true" aria-labelledby="app-confirm-title">
+    <div class="modal-card">
+        <h2 class="modal-title" id="app-confirm-title">Confirm</h2>
+        <p id="app-confirm-msg" class="overwrite-message"></p>
+        <div class="modal-actions">
+            <button class="modal-btn modal-cancel" id="app-confirm-cancel">Cancel</button>
+            <button class="modal-btn modal-save"   id="app-confirm-ok">Confirm</button>
+        </div>
+    </div>
+</div>
+
+<!-- ── Menu modal ── -->
+<div id="menu-modal" class="modal-overlay" hidden>
+    <div class="menu-modal-card" role="dialog" aria-modal="true" aria-labelledby="menu-modal-title">
+        <h2 class="menu-modal-title" id="menu-modal-title">Menu</h2>
+        <div class="menu-modal-options">
+            <button class="menu-modal-btn" id="menu-profile-btn">
+                <span class="menu-modal-btn-icon">⚔️</span>
+                <span class="menu-modal-btn-label">Profile</span>
+            </button>
+            <button class="menu-modal-btn" id="menu-settings-btn">
+                <span class="menu-modal-btn-icon">⚙️</span>
+                <span class="menu-modal-btn-label">Settings</span>
+            </button>
+        </div>
+        <button class="menu-modal-close" id="menu-modal-close" aria-label="Close menu">✕</button>
+    </div>
+</div>
+
+<!-- ── Site footer ── -->
+<footer class="site-footer" role="navigation" aria-label="Main navigation">
+    <nav class="site-nav" aria-label="Pages">
+        <a href="/" class="site-nav-btn{% if request.path == '/' %} active{% endif %}" aria-label="Home" data-tip="Home">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
+                <polyline points="9 22 9 12 15 12 15 22"/>
+            </svg>
+        </a>
+        <a href="/workouts" class="site-nav-btn{% if request.path == '/workouts' %} active{% endif %}" aria-label="Workouts" data-tip="Workouts">
+            <img src="/static/dumbbellbutton.png" alt="Workouts">
+        </a>
+        <a href="/weights" class="site-nav-btn{% if request.path == '/weights' %} active{% endif %}" aria-label="Weights" data-tip="Weights">
+            <img src="/static/weightbutton.png" alt="Weights">
+        </a>
+        <button class="site-nav-btn" id="protein-btn" aria-label="Nutrition" data-tip="Nutrition">
+            <img src="/static/proteinshakebutton.png" alt="Nutrition">
+        </button>
+        <button class="site-nav-btn" id="whistle-btn" aria-label="Insights" data-tip="Insights">
+            <img src="/static/insightsbutton.png" alt="Insights">
+        </button>
+    </nav>
+    <div class="site-add-wrap">
+        {% block footer_add %}
+        <button class="site-add-btn" id="site-add-btn" aria-label="Quick add" aria-haspopup="true" aria-expanded="false">+</button>
+        {% endblock %}
+    </div>
+    <button class="site-profile-btn" id="profile-btn" aria-label="Menu" data-tip="Menu">
+        <img id="profile-btn-img" src="/static/profilebutton.png" alt="Profile">
+    </button>
+</footer>
+
+<script>
+    /* ── Hydrate localStorage from server prefs (must run before any getItem) ── */
+    (function () {
+        var prefs = {{ prefs | tojson }};
+        Object.keys(prefs).forEach(function (k) { localStorage.setItem(k, prefs[k]); });
+    })();
+
+    /* ── savePref ── */
+    window.savePref = function (key, value) {
+        localStorage.setItem(key, value);
+        fetch('/api/preference', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ key: key, value: value })
+        });
+    };
+
+    if ('scrollRestoration' in history) history.scrollRestoration = 'manual';
+    requestAnimationFrame(() => requestAnimationFrame(() => {
+        document.body.classList.remove('preload');
+    }));
+
+    /* ── Active unit ── */
+    window.activeUnit = localStorage.getItem('pref_unit') || 'lbs';
+
+    /* ── Shared helpers ── */
+    function getTodayISO() {
+        const d = new Date();
+        return d.getFullYear() + '-' +
+            String(d.getMonth() + 1).padStart(2, '0') + '-' +
+            String(d.getDate()).padStart(2, '0');
+    }
+
+    function formatDateDisplay(isoDate) {
+        const [y, m, d] = isoDate.split('-').map(Number);
+        const dt = new Date(y, m - 1, d);
+        const mon = dt.toLocaleDateString('en-US', { month: 'long' });
+        return (localStorage.getItem('pref_date_format') || 'mdy') === 'mdy'
+            ? mon + ' ' + d + ', ' + y : d + ' ' + mon + ' ' + y;
+    }
+
+    function formatDateShort(isoDate) {
+        const [y, m, d] = isoDate.split('-').map(Number);
+        const dt = new Date(y, m - 1, d);
+        const mon = dt.toLocaleDateString('en-US', { month: 'short' });
+        return (localStorage.getItem('pref_date_format') || 'mdy') === 'mdy'
+            ? mon + ' ' + d : d + ' ' + mon;
+    }
+
+    function fmtDateShort(dt) {
+        const mon = dt.toLocaleDateString('en-US', { month: 'short' });
+        const y = dt.getFullYear(), d = dt.getDate();
+        return (localStorage.getItem('pref_date_format') || 'mdy') === 'mdy'
+            ? mon + ' ' + d + ', ' + y
+            : d + ' ' + mon + ' ' + y;
+    }
+
+    function fmtLbs(n) { return n === Math.round(n) ? Math.round(n) : parseFloat(n.toFixed(1)); }
+
+    /* ── Custom cursor ── */
+    (function () {
+        const el = document.getElementById('site-cursor');
+        const cursors = {};
+        let mouseInDoc = false;
+        let activeCursorSet = localStorage.getItem('pref_profile_pic') || '1';
+
+        const CURSOR_SETS = {
+            '1': ['/static/pointer.png',  240, 10, 48],
+            '2': ['/static/pointer2.png', 198, 10, 48],
+            '3': ['/static/pointer3.png', 198, 10, 48],
+            '4': ['/static/pointer4.png', 198, 10, 48],
+        };
+
+        function processImg(src, origHotX, origHotY, key, renderH) {
+            const img = new Image();
+            img.onload = function () {
+                const h = renderH || 48, scale = h / img.height, w = Math.round(img.width * scale);
+                const cv = document.createElement('canvas');
+                cv.width = w; cv.height = h;
+                const ctx = cv.getContext('2d');
+                ctx.drawImage(img, 0, 0, w, h);
+                const id = ctx.getImageData(0, 0, w, h), dat = id.data;
+                for (let i = 0; i < dat.length; i += 4) {
+                    if (dat[i] > 240 && dat[i+1] > 240 && dat[i+2] > 240) dat[i+3] = 0;
+                }
+                ctx.putImageData(id, 0, 0);
+                cursors[key] = { url: cv.toDataURL(), hotX: Math.round(origHotX * scale), hotY: Math.round(origHotY * scale), w, h };
+                if (key === activeCursorSet) {
+                    const c = cursors[key];
+                    el.style.width = c.w + 'px'; el.style.height = c.h + 'px';
+                    el.style.backgroundImage = `url(${c.url})`;
+                    if (mouseInDoc) el.style.display = 'block';
+                }
+            };
+            img.src = src;
+        }
+
+        Object.keys(CURSOR_SETS).forEach(n => {
+            const [src, hx, hy, rh] = CURSOR_SETS[n];
+            processImg(src, hx, hy, n, rh);
+        });
+
+        window.applyCursorSet = function(n) {
+            const sn = String(n);
+            activeCursorSet = sn;
+            const c = cursors[sn]; if (!c) return;
+            el.style.width = c.w + 'px'; el.style.height = c.h + 'px';
+            el.style.backgroundImage = `url(${c.url})`;
+            if (mouseInDoc) el.style.display = 'block';
+        };
+
+        document.addEventListener('mousemove', e => {
+            const c = cursors[activeCursorSet]; if (!c) return;
+            el.style.left = (e.clientX - c.hotX) + 'px';
+            el.style.top  = (e.clientY - c.hotY) + 'px';
+        });
+        document.addEventListener('mouseleave', () => { mouseInDoc = false; el.style.display = 'none'; });
+        document.addEventListener('mouseenter', () => { mouseInDoc = true; if (cursors[activeCursorSet]) el.style.display = 'block'; });
+    })();
+
+    /* ── Nav button images: strip black backgrounds via canvas ── */
+    (function () {
+        document.querySelectorAll('.site-nav-btn img').forEach(function (img) {
+            function process() {
+                try {
+                    var cv = document.createElement('canvas');
+                    cv.width = img.naturalWidth; cv.height = img.naturalHeight;
+                    var ctx = cv.getContext('2d');
+                    ctx.drawImage(img, 0, 0);
+                    var id = ctx.getImageData(0, 0, cv.width, cv.height), dat = id.data;
+                    for (var i = 0; i < dat.length; i += 4) {
+                        if (dat[i] < 60 && dat[i+1] < 60 && dat[i+2] < 60) dat[i+3] = 0;
+                    }
+                    ctx.putImageData(id, 0, 0);
+                    img.src = cv.toDataURL();
+                } catch (e) {}
+            }
+            if (img.complete && img.naturalWidth) process();
+            else img.addEventListener('load', process);
+        });
+    })();
+
+    /* ── Accessibility: toggle-group roles + aria-pressed sync ── */
+    (function () {
+        document.querySelectorAll('.profile-setting-group, .overlay-item').forEach((container, i) => {
+            const lbl = container.querySelector('.profile-setting-label');
+            const row = container.querySelector('.profile-toggle-row');
+            if (!lbl || !row) return;
+            if (!lbl.id) lbl.id = 'ptlbl-' + i;
+            row.setAttribute('role', 'group');
+            row.setAttribute('aria-labelledby', lbl.id);
+        });
+        const sexMale = document.getElementById('fight-sex-male');
+        if (sexMale) {
+            const sexRow = sexMale.closest('.profile-toggle-row');
+            if (sexRow) { sexRow.setAttribute('role', 'group'); sexRow.setAttribute('aria-label', 'Sex'); }
+        }
+        const ftEl = document.getElementById('fight-height-ft');
+        const inEl = document.getElementById('fight-height-in');
+        const cmEl = document.getElementById('fight-height-cm');
+        if (ftEl) ftEl.setAttribute('aria-label', 'Feet');
+        if (inEl) inEl.setAttribute('aria-label', 'Inches');
+        if (cmEl) cmEl.setAttribute('aria-label', 'Centimeters');
+        const pressedBtns = document.querySelectorAll('.profile-opt-btn, .range-btn, .weekly-range-btn');
+        pressedBtns.forEach(btn => btn.setAttribute('aria-pressed', String(btn.classList.contains('active'))));
+        const obs = new MutationObserver(muts => {
+            muts.forEach(m => {
+                const btn = m.target;
+                if (btn.hasAttribute('aria-pressed'))
+                    btn.setAttribute('aria-pressed', String(btn.classList.contains('active')));
+            });
+        });
+        pressedBtns.forEach(btn => obs.observe(btn, { attributes: true, attributeFilter: ['class'] }));
+    })();
+
+    /* ── Tooltip ── */
+    (function () {
+        const ttEl = document.createElement('div');
+        ttEl.id = 'site-tooltip';
+        document.body.appendChild(ttEl);
+
+        function position(x, y) {
+            const w = ttEl.offsetWidth, h = ttEl.offsetHeight;
+            ttEl.style.top  = Math.round(y - h / 2) + 'px';
+            ttEl.style.left = Math.max(8, Math.round(x - 12 - w)) + 'px';
+        }
+
+        document.addEventListener('mouseover', e => {
+            const t = e.target.closest('[data-tip]');
+            if (t) { ttEl.textContent = t.dataset.tip; ttEl.style.opacity = '1'; }
+            else   { ttEl.style.opacity = '0'; }
+        });
+        document.addEventListener('focusin', e => {
+            const t = e.target.closest('[data-tip]');
+            if (!t) return;
+            ttEl.textContent = t.dataset.tip; ttEl.style.opacity = '1';
+            const r = t.getBoundingClientRect();
+            position(r.right, r.top + r.height / 2);
+        });
+        document.addEventListener('focusout', () => { ttEl.style.opacity = '0'; });
+        document.addEventListener('mousemove', e => { if (ttEl.style.opacity === '1') position(e.clientX, e.clientY); });
+        document.addEventListener('mouseleave', () => { ttEl.style.opacity = '0'; });
+        document.addEventListener('wheel', () => {
+            ttEl.style.opacity = '0';
+            const ct = document.getElementById('chart-tooltip');
+            if (ct) ct.style.opacity = '0';
+        }, { passive: true });
+    })();
+
+    /* ── Streak temperature glow (shared across all pages) ── */
+    const STREAK_STOPS = [
+        [ 60, 120, 255],
+        [100, 175, 255],
+        [155, 215, 255],
+        [255, 245, 110],
+        [255, 225,  40],
+        [255, 155,  30],
+        [255,  90,  30],
+        [255,  60,  60],
+    ];
+    function applyStreakGlow(numEl, labelEl, val) {
+        numEl.classList.remove('streak-flame-num');
+        if (labelEl) labelEl.classList.remove('streak-flame-label');
+        if (val >= 7) {
+            numEl.style.color = ''; numEl.style.textShadow = '';
+            numEl.classList.add('streak-flame-num');
+            if (labelEl) { labelEl.style.color = ''; labelEl.style.textShadow = ''; labelEl.classList.add('streak-flame-label'); }
+        } else {
+            const [r, g, b] = STREAK_STOPS[Math.min(Math.max(Math.round(val), 0), 7)];
+            const color = `rgb(${r},${g},${b})`, fade = `rgba(${r},${g},${b},0.35)`;
+            numEl.style.color = color;
+            numEl.style.textShadow = `0 0 6px ${color}, 0 0 18px ${color}, 0 0 36px ${fade}`;
+            if (labelEl) { labelEl.style.color = color; labelEl.style.textShadow = `0 0 5px ${color}, 0 0 14px ${fade}`; }
+        }
+    }
+
+    /* ── Modal infrastructure ── */
+    function makeFocusTrap(card) {
+        return function(e) {
+            if (e.key !== 'Tab') return;
+            const focusable = [...card.querySelectorAll(
+                'button:not([disabled]), [href], input:not([disabled]), select, textarea, [tabindex]:not([tabindex="-1"])'
+            )].filter(el => !el.closest('[hidden]') && el.offsetParent !== null);
+            if (!focusable.length) return;
+            const first = focusable[0], last = focusable[focusable.length - 1];
+            if (e.shiftKey && document.activeElement === first) { e.preventDefault(); last.focus(); }
+            else if (!e.shiftKey && document.activeElement === last) { e.preventDefault(); first.focus(); }
+        };
+    }
+    const _modalOpeners = new WeakMap(), _modalTraps = new WeakMap();
+    function modalOpen(overlay) {
+        _modalOpeners.set(overlay, document.activeElement);
+        const card = overlay.querySelector('[role="dialog"]') || overlay;
+        const trap = makeFocusTrap(card);
+        _modalTraps.set(overlay, trap);
+        overlay.addEventListener('keydown', trap);
+    }
+    function modalClose(overlay) {
+        const trap = _modalTraps.get(overlay);
+        if (trap) overlay.removeEventListener('keydown', trap);
+        const opener = _modalOpeners.get(overlay);
+        if (opener && opener.focus) opener.focus();
+    }
+    function announce(msg) {
+        const el = document.getElementById('status-announce');
+        if (el) { el.textContent = ''; requestAnimationFrame(() => { el.textContent = msg; }); }
+    }
+
+    /* ── App-wide confirm modal ── */
+    window.showAppConfirm = function(title, message, okLabel, onOk) {
+        const modal = document.getElementById('app-confirm-modal');
+        document.getElementById('app-confirm-title').textContent = title;
+        document.getElementById('app-confirm-msg').textContent   = message;
+        document.getElementById('app-confirm-ok').textContent    = okLabel || 'Confirm';
+        modal.hidden = false;
+        document.getElementById('app-confirm-ok').onclick    = () => { modal.hidden = true; if (onOk) onOk(); };
+        document.getElementById('app-confirm-cancel').onclick = () => { modal.hidden = true; };
+    };
+
+    /* ── Modal coordinator ── */
+    window.activeModal = null;
+    window.openExclusive = function(openFn) {
+        if (window.activeModal) { window.activeModal.tryClose(openFn); } else { openFn(); }
+    };
+
+    /* ── Scroll lock while any modal is open ── */
+    window.addEventListener('wheel', function (e) {
+        const activeOverlay = document.querySelector('.modal-overlay:not([hidden])');
+        if (!activeOverlay) return;
+        e.preventDefault();
+        const scrollEl = activeOverlay.querySelector('.settings-scroll-body');
+        if (scrollEl) scrollEl.scrollTop += e.deltaY;
+    }, { passive: false, capture: true });
+
+    /* ── Profile button → fight card modal ── */
+    (() => {
+        const btn       = document.getElementById('profile-btn');
+        const modal     = document.getElementById('fight-card-modal');
+        const saveBtn   = document.getElementById('fight-card-save');
+        const cancelBtn = document.getElementById('fight-card-cancel');
+        const dobIn     = document.getElementById('fight-dob');
+        const ageNumEl  = document.getElementById('fight-age-num');
+        const ftIn      = document.getElementById('fight-height-ft');
+        const inIn      = document.getElementById('fight-height-in');
+        const cmIn      = document.getElementById('fight-height-cm');
+        const usRow     = document.getElementById('fight-height-us-row');
+        const metRow    = document.getElementById('fight-height-metric-row');
+        const preview   = document.getElementById('fight-height-preview');
+        const nameIn    = document.getElementById('fight-name');
+        const sexMaleBtn    = document.getElementById('fight-sex-male');
+        const sexFemaleBtn  = document.getElementById('fight-sex-female');
+        const actBtns       = document.querySelectorAll('.fight-activity-row .profile-opt-btn');
+        const goalLeanBtn   = document.getElementById('fight-goal-lean');
+        const goalMuscleBtn = document.getElementById('fight-goal-muscle');
+
+        const calEl    = document.getElementById('fight-dob-calendar');
+        const gridEl   = document.getElementById('fight-dp-grid');
+        const monthLbl = document.getElementById('fight-dp-month-label');
+        const dayNames = calEl.querySelector('.dp-day-names');
+        const MONTHS   = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+        let viewDate = new Date(), selectedDobISO = '', calMode = 'days', yearPage = new Date().getFullYear() - 35;
+
+        function isoFromParts(y, m, d) { return y + '-' + String(m + 1).padStart(2,'0') + '-' + String(d).padStart(2,'0'); }
+        function displayFromISO(iso) { const [y,m,d] = iso.split('-'); return MONTHS[parseInt(m)-1] + ' ' + parseInt(d) + ', ' + y; }
+        function calcAge(dobISO) {
+            const [y,m,d] = dobISO.split('-').map(Number), t = new Date();
+            let age = t.getFullYear() - y;
+            if (t.getMonth()+1 < m || (t.getMonth()+1 === m && t.getDate() < d)) age--;
+            return age;
+        }
+        function updateAgeDisplay() { ageNumEl.textContent = selectedDobISO ? calcAge(selectedDobISO) : '—'; }
+
+        function renderDobCalendar() {
+            calMode = 'days'; dayNames.style.display = ''; gridEl.style.gridTemplateColumns = 'repeat(7, 1fr)';
+            const today = getTodayISO(), todayD = new Date();
+            const minDate = isoFromParts(todayD.getFullYear()-100, todayD.getMonth(), todayD.getDate());
+            const y = viewDate.getFullYear(), m = viewDate.getMonth();
+            monthLbl.textContent = MONTHS[m] + ' ' + y;
+            const firstDow = new Date(y,m,1).getDay(), daysInMonth = new Date(y,m+1,0).getDate(), daysInPrev = new Date(y,m,0).getDate();
+            gridEl.innerHTML = '';
+            for (let i = firstDow-1; i >= 0; i--) { const b = document.createElement('button'); b.type='button'; b.className='dp-day dp-other-month'; b.textContent=daysInPrev-i; b.disabled=true; gridEl.appendChild(b); }
+            for (let day = 1; day <= daysInMonth; day++) {
+                const iso = isoFromParts(y, m, day), b = document.createElement('button');
+                b.type='button'; b.className='dp-day'; b.textContent=day;
+                if (iso===selectedDobISO) b.classList.add('dp-selected');
+                if (iso > today || iso < minDate) { b.disabled=true; } else {
+                    b.addEventListener('click', () => { selectedDobISO=iso; dobIn.value=displayFromISO(iso); updateAgeDisplay(); calEl.hidden=true; });
+                }
+                gridEl.appendChild(b);
+            }
+            const rem = (firstDow+daysInMonth)%7;
+            if (rem>0) for (let i=1;i<=7-rem;i++) { const b=document.createElement('button'); b.type='button'; b.className='dp-day dp-other-month'; b.textContent=i; b.disabled=true; gridEl.appendChild(b); }
+        }
+
+        function renderDobYearGrid() {
+            calMode='years'; dayNames.style.display='none'; gridEl.style.gridTemplateColumns='repeat(3, 1fr)';
+            const todayY=new Date().getFullYear(), minY=todayY-100, curY=viewDate.getFullYear();
+            monthLbl.textContent=yearPage+' – '+(yearPage+11); gridEl.innerHTML='';
+            for (let i=0;i<12;i++) {
+                const yr=yearPage+i, b=document.createElement('button');
+                b.type='button'; b.className='dp-day dp-year'; b.textContent=yr;
+                if (yr===curY) b.classList.add('dp-selected');
+                if (yr>todayY||yr<minY) { b.disabled=true; } else {
+                    b.addEventListener('click',()=>{ viewDate=new Date(yr,viewDate.getMonth(),1); renderDobCalendar(); });
+                }
+                gridEl.appendChild(b);
+            }
+        }
+
+        monthLbl.addEventListener('click', () => { if (calMode==='days') { yearPage=viewDate.getFullYear()-5; renderDobYearGrid(); } else renderDobCalendar(); });
+        dobIn.addEventListener('click', () => {
+            if (calEl.hidden) {
+                viewDate = selectedDobISO ? new Date(selectedDobISO+'T12:00:00') : new Date(new Date().getFullYear()-30, new Date().getMonth(), 1);
+                renderDobCalendar(); calEl.hidden=false;
+            } else calEl.hidden=true;
+        });
+        document.getElementById('fight-dp-prev').addEventListener('click', () => {
+            if (calMode==='years') { yearPage-=12; renderDobYearGrid(); }
+            else { viewDate=new Date(viewDate.getFullYear(),viewDate.getMonth()-1,1); renderDobCalendar(); }
+        });
+        document.getElementById('fight-dp-next').addEventListener('click', () => {
+            if (calMode==='years') { yearPage+=12; renderDobYearGrid(); }
+            else { viewDate=new Date(viewDate.getFullYear(),viewDate.getMonth()+1,1); renderDobCalendar(); }
+        });
+        document.addEventListener('click', e => { const wrap=document.getElementById('fight-dob-wrap'); if (!calEl.hidden && !e.composedPath().includes(wrap)) calEl.hidden=true; });
+
+        let openState = null;
+        function heightUnit() { return localStorage.getItem('pref_height_unit') || 'us'; }
+        function getSelectedSex() { return sexMaleBtn.classList.contains('active') ? 'male' : sexFemaleBtn.classList.contains('active') ? 'female' : ''; }
+        function getSelectedActivity() { for (const b of actBtns) if (b.classList.contains('active')) return b.dataset.activity; return ''; }
+        function getSelectedGoal() { return goalMuscleBtn.classList.contains('active') ? 'muscle' : 'lean'; }
+
+        function snapshot() {
+            return { name:nameIn.value, dob:selectedDobISO, ft:ftIn.value, inch:inIn.value, cm:cmIn.value, sex:getSelectedSex(), activity:getSelectedActivity(), goal:getSelectedGoal() };
+        }
+        function hasChanges() {
+            if (!openState) return false;
+            const s = snapshot();
+            return s.name!==openState.name||s.dob!==openState.dob||s.ft!==openState.ft||s.inch!==openState.inch||s.cm!==openState.cm||s.sex!==openState.sex||s.activity!==openState.activity||s.goal!==openState.goal;
+        }
+
+        function updatePreview() {
+            if (heightUnit()==='us') {
+                const ft=parseInt(ftIn.value), i=parseInt(inIn.value)||0;
+                preview.textContent = (!isNaN(ft)&&ft>0) ? Math.round((ft*30.48)+(i*2.54))+' cm' : '';
+            } else {
+                const cm=parseInt(cmIn.value)||0;
+                preview.textContent = cm>0 ? Math.floor(cm/2.54/12)+' ft '+Math.round((cm/2.54)%12)+' in' : '';
+            }
+        }
+
+        function forceClose() { modal.hidden=true; calEl.hidden=true; openState=null; window.activeModal=null; modalClose(modal); }
+
+        function tryClose(onClosed) {
+            if (hasChanges()) {
+                window.showAppConfirm('Unsaved Changes','Close without saving?','Save & Close',
+                    () => { doSave(); if (onClosed) onClosed(); },
+                    () => { forceClose(); if (onClosed) onClosed(); }, 'Close');
+            } else { forceClose(); if (onClosed) onClosed(); }
+        }
+
+        function doSave() {
+            window.savePref('fight_name', nameIn.value.trim());
+            if (window.updateHealthBarName) window.updateHealthBarName();
+            if (selectedDobISO) window.savePref('fight_dob', selectedDobISO);
+            const sex = getSelectedSex(); if (sex) window.savePref('fight_sex', sex);
+            const act = getSelectedActivity(); if (act) window.savePref('fight_activity', act);
+            window.savePref('fight_goal_mode', getSelectedGoal());
+            if (window.updateLostWeight) window.updateLostWeight();
+            if (heightUnit()==='us') {
+                if (ftIn.value) window.savePref('fight_height_ft', ftIn.value);
+                if (inIn.value!=='') window.savePref('fight_height_in', inIn.value);
+            } else {
+                if (cmIn.value!=='') window.savePref('fight_height_cm', cmIn.value);
+            }
+            forceClose();
+        }
+
+        function openFightCard() {
+            const isUs = heightUnit()==='us';
+            usRow.style.display=isUs?'':'none'; metRow.style.display=isUs?'none':'';
+            const storedDob=localStorage.getItem('fight_dob')||'';
+            selectedDobISO=storedDob; dobIn.value=storedDob?displayFromISO(storedDob):'';
+            updateAgeDisplay(); calEl.hidden=true;
+            nameIn.value=localStorage.getItem('fight_name')||'';
+            const storedSex=localStorage.getItem('fight_sex')||'';
+            sexMaleBtn.classList.toggle('active',storedSex==='male');
+            sexFemaleBtn.classList.toggle('active',storedSex==='female');
+            const storedAct=localStorage.getItem('fight_activity')||'';
+            actBtns.forEach(b=>b.classList.toggle('active',b.dataset.activity===storedAct));
+            const storedGoal=localStorage.getItem('fight_goal_mode')||'lean';
+            goalLeanBtn.classList.toggle('active',storedGoal==='lean');
+            goalMuscleBtn.classList.toggle('active',storedGoal==='muscle');
+            if (isUs) {
+                ftIn.value=localStorage.getItem('fight_height_ft')||'';
+                inIn.value=localStorage.getItem('fight_height_in')||'';
+                if (!ftIn.value) {
+                    const sc=parseFloat(localStorage.getItem('fight_height_cm'));
+                    if (!isNaN(sc)&&sc>0) { const ti=sc/2.54; ftIn.value=Math.floor(ti/12); inIn.value=Math.round(ti%12); }
+                }
+            } else {
+                cmIn.value=localStorage.getItem('fight_height_cm')||'';
+                if (!cmIn.value) {
+                    const sf=parseFloat(localStorage.getItem('fight_height_ft')), si=parseFloat(localStorage.getItem('fight_height_in'))||0;
+                    if (!isNaN(sf)&&sf>0) cmIn.value=Math.round((sf*30.48)+(si*2.54));
+                }
+            }
+            updatePreview(); modal.hidden=false; modalOpen(modal);
+            openState=snapshot(); window.activeModal={tryClose};
+        }
+
+        window.openFightCard = openFightCard;
+
+        /* Profile button: image swap on hover, open menu modal on click */
+        const PICS = {
+            '1': ['profilebutton.png','profilebuttonsmile.png'],
+            '2': ['profile2button.png','profile2buttonsmile.png'],
+            '3': ['profile3button.png','profile3buttonsmile.png'],
+            '4': ['profile4button.png','profile4buttonsmile.png'],
+        };
+        function bases() { return PICS[localStorage.getItem('pref_profile_pic')||'1']||PICS['1']; }
+        const profImg = document.getElementById('profile-btn-img');
+        profImg.src = '/static/' + bases()[0];
+        btn.addEventListener('mouseenter', () => { profImg.src='/static/'+bases()[1]; });
+        btn.addEventListener('mouseleave', () => { profImg.src='/static/'+bases()[0]; });
+        btn.addEventListener('click', () => {
+            const mm = document.getElementById('menu-modal');
+            if (mm) { mm.hidden = false; modalOpen(mm); }
+        });
+
+        window.setProfilePic = function(n) {
+            window.savePref('pref_profile_pic', String(n));
+            profImg.src = '/static/' + bases()[0];
+            if (window.applyCursorSet) window.applyCursorSet(n);
+        };
+
+        [sexMaleBtn,sexFemaleBtn].forEach(b => b.addEventListener('click',()=>{ sexMaleBtn.classList.remove('active'); sexFemaleBtn.classList.remove('active'); b.classList.add('active'); }));
+        actBtns.forEach(b => b.addEventListener('click',()=>{ actBtns.forEach(x=>x.classList.remove('active')); b.classList.add('active'); }));
+        [goalLeanBtn,goalMuscleBtn].forEach(b => b.addEventListener('click',()=>{ goalLeanBtn.classList.remove('active'); goalMuscleBtn.classList.remove('active'); b.classList.add('active'); }));
+        ftIn.addEventListener('input',updatePreview); inIn.addEventListener('input',updatePreview); cmIn.addEventListener('input',updatePreview);
+        saveBtn.addEventListener('click',doSave); cancelBtn.addEventListener('click',tryClose);
+        modal.addEventListener('click',e=>{if(e.target===modal)tryClose();});
+        document.addEventListener('keydown',e=>{ if(e.key==='Escape'){if(!calEl.hidden){calEl.hidden=true;return;}if(!modal.hidden)tryClose();}});
+    })();
+
+    /* ── Menu modal ── */
+    (() => {
+        const modal      = document.getElementById('menu-modal');
+        const closeBtn   = document.getElementById('menu-modal-close');
+        const profileBtn = document.getElementById('menu-profile-btn');
+        const settingsBtn = document.getElementById('menu-settings-btn');
+
+        function close() { modal.hidden = true; modalClose(modal); }
+
+        closeBtn.addEventListener('click', close);
+        modal.addEventListener('click', e => { if (e.target === modal) close(); });
+        document.addEventListener('keydown', e => { if (e.key === 'Escape' && !modal.hidden) close(); });
+
+        profileBtn.addEventListener('click', () => {
+            close();
+            if (window.openFightCard) window.openExclusive(window.openFightCard);
+        });
+        settingsBtn.addEventListener('click', () => {
+            close();
+            if (window.openSettings) window.openSettings();
+        });
+    })();
+
+    /* ── Profile pic picker ── */
+    (() => {
+        const picker    = document.getElementById('profile-pic-picker');
+        const backdrop  = document.getElementById('profile-pic-backdrop');
+        const openBtn   = document.getElementById('change-pic-btn');
+        const saveBtn   = document.getElementById('pic-save-btn');
+        const cancelBtn = document.getElementById('pic-cancel-btn');
+        const options   = picker.querySelectorAll('.pic-option');
+        let pending = null, saved = null;
+        const PICS = { '1':['profilebutton.png','profilebuttonsmile.png'],'2':['profile2button.png','profile2buttonsmile.png'],'3':['profile3button.png','profile3buttonsmile.png'],'4':['profile4button.png','profile4buttonsmile.png'] };
+
+        function showPicker() {
+            saved=localStorage.getItem('pref_profile_pic')||'1'; pending=saved;
+            options.forEach(opt=>opt.classList.toggle('active',opt.dataset.pic===pending));
+            backdrop.hidden=false; picker.hidden=false;
+        }
+        function forceClose() { picker.hidden=true; backdrop.hidden=true; pending=null; saved=null; }
+        function tryClose() {
+            if (pending!==saved) {
+                picker.hidden=true; backdrop.hidden=true;
+                window.showAppConfirm('Unsaved Changes','Close without saving your profile pic?','Save & Close',
+                    ()=>{if(pending)window.setProfilePic(pending);forceClose();},()=>{forceClose();},'Close');
+            } else forceClose();
+        }
+
+        openBtn.addEventListener('click', showPicker);
+        options.forEach(opt => {
+            const img=opt.querySelector('img'), pics=PICS[opt.dataset.pic];
+            opt.addEventListener('mouseenter',()=>{img.src='/static/'+pics[1];});
+            opt.addEventListener('mouseleave',()=>{img.src='/static/'+pics[0];});
+            opt.addEventListener('click',()=>{ pending=opt.dataset.pic; options.forEach(o=>o.classList.toggle('active',o.dataset.pic===pending)); });
+        });
+        saveBtn.addEventListener('click',()=>{if(pending)window.setProfilePic(pending);forceClose();});
+        cancelBtn.addEventListener('click',tryClose);
+        backdrop.addEventListener('click',tryClose);
+    })();
+
+    /* ── Insights modal ── */
+    (() => {
+        const modal    = document.getElementById('insights-modal');
+        const grid     = document.getElementById('insights-grid');
+        const closeBtn = document.getElementById('insights-close');
+        const btn      = document.getElementById('whistle-btn');
+
+        const DAY_NAMES = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+        function isKg() { return (localStorage.getItem('pref_unit')||'lbs')==='kg'; }
+        function fmt(v)  { return isKg()?v.toFixed(1)+' kg':v.toFixed(1)+' lbs'; }
+        function fmtR(v) { return isKg()?v.toFixed(2)+' kg':v.toFixed(2)+' lbs'; }
+        function fmtRate(v) { return (v>=0?'−':'+') + fmtR(Math.abs(v)); }
+
+        async function compute() {
+            const [rows, settings] = await Promise.all([
+                fetch('/api/weights?range=all').then(r=>r.json()),
+                fetch('/api/settings').then(r=>r.json())
+            ]);
+            if (!rows.length) return null;
+            const kg=isKg(), weights=rows.map(r=>kg?r.weight_kg:r.weight_lbs), dates=rows.map(r=>new Date(r.date+'T00:00:00')), n=rows.length;
+            const tN=Math.min(7,n), trend=weights.slice(-tN).reduce((a,b)=>a+b,0)/tN;
+            const spanDays=(dates[n-1]-dates[0])/86400000, totalLoss=weights[0]-weights[n-1];
+            const weeklyRate=spanDays>=7?(totalLoss/spanDays)*7:null, monthlyRate=spanDays>=30?(totalLoss/spanDays)*30.44:null;
+            const dayCounts=Array(7).fill(0); dates.forEach(d=>dayCounts[d.getDay()]++);
+            const topDay=DAY_NAMES[dayCounts.indexOf(Math.max(...dayCounts))];
+            let longest=1,curS=1;
+            for (let i=1;i<n;i++) { if((dates[i]-dates[i-1])/86400000===1){curS++;if(curS>longest)longest=curS;}else curS=1; }
+            let curStreak=0; const today=new Date(); today.setHours(0,0,0,0);
+            if ((today-dates[n-1])/86400000<=1) { curStreak=1; for(let i=n-1;i>0;i--){if((dates[i]-dates[i-1])/86400000===1)curStreak++;else break;} }
+            const total=n, lowest=Math.min(...weights);
+            let bestWeek=0;
+            for (let i=0;i<n;i++) { const cutoff=dates[i].getTime()+7*86400000; for(let j=i+1;j<n&&dates[j].getTime()<=cutoff;j++){const loss=weights[i]-weights[j];if(loss>bestWeek)bestWeek=loss;} }
+            let totalFluc=0,flucCount=0;
+            for (let i=1;i<n;i++){const d=(dates[i]-dates[i-1])/86400000;if(d>=1&&d<=3){totalFluc+=Math.abs(weights[i]-weights[i-1])/d;flucCount++;}}
+            const avgFluc=flucCount?totalFluc/flucCount:0;
+            function getHeightCm(){const cm=parseFloat(localStorage.getItem('fight_height_cm')||'0')||0;if(cm>0)return cm;const ft=parseInt(localStorage.getItem('fight_height_ft')||'0')||0,ins=parseInt(localStorage.getItem('fight_height_in')||'0')||0;return ft>0?(ft*12+ins)*2.54:0;}
+            function msJeorBMR(wKg,hCm,age,sex){return 10*wKg+6.25*hCm-5*age+(sex==='male'?5:-161);}
+            function calcAgeMSJ(dobISO){const[y,m,d]=dobISO.split('-').map(Number),t=new Date();let a=t.getFullYear()-y;if(t.getMonth()+1<m||(t.getMonth()+1===m&&t.getDate()<d))a--;return a;}
+            let goalDateStr='No goal set',goalDateSub='at current rate';
+            const gw=settings['goal_weight'];
+            if (gw){
+                const curW_kg=rows[n-1].weight_kg,goalW_kg=gw.value_kg,curW_disp=weights[n-1],goalW_disp=kg?goalW_kg:gw.value_lbs;
+                if(curW_disp<=goalW_disp){goalDateStr='Goal reached!';goalDateSub='congrats!';}
+                else{
+                    const sex=localStorage.getItem('fight_sex')||'',dob=localStorage.getItem('fight_dob')||'',activityStored=parseFloat(localStorage.getItem('fight_activity')||'0')||0,activity=activityStored>0?activityStored:1.4,noActEst=activityStored<=0,hCm=getHeightCm(),canBMR=!!(sex&&dob&&hCm>0);
+                    if(canBMR){
+                        const age0=calcAgeMSJ(dob),bmr0=msJeorBMR(curW_kg,hCm,age0,sex),tdee0=bmr0*activity;
+                        let dailyDeficit,noRateEst=false;
+                        if(weeklyRate&&weeklyRate>0){const weeklyKg=kg?weeklyRate:weeklyRate/2.2046;dailyDeficit=Math.min(weeklyKg*7700/7,tdee0*0.85);}else{dailyDeficit=500;noRateEst=true;}
+                        const dailyIntake=tdee0-dailyDeficit;let simW=curW_kg;const simD=new Date(dates[n-1]);let weeks=0,plateau=false;
+                        while(simW>goalW_kg&&weeks<520){const deficit=msJeorBMR(simW,hCm,age0,sex)*activity-dailyIntake;if(deficit<=0){plateau=true;break;}simW-=(deficit*7)/7700;simD.setDate(simD.getDate()+7);weeks++;}
+                        if(plateau){goalDateStr='Plateau ahead';goalDateSub='adjust intake to continue';}
+                        else if(weeks>=520){goalDateStr='10+ years';goalDateSub='Mifflin-St. Jeor';}
+                        else{goalDateStr=fmtDateShort(simD);const msjLabel=noActEst?'MSJ · 1.4× activity est.':'Mifflin-St. Jeor';goalDateSub=noRateEst?'MSJ · 500 kcal/day deficit est.':msjLabel;}
+                    }else if(weeklyRate&&weeklyRate>0){const daysLeft=((curW_disp-goalW_disp)/weeklyRate)*7;const g=new Date(dates[n-1]);g.setDate(g.getDate()+Math.round(daysLeft));goalDateStr=fmtDateShort(g);goalDateSub='linear (complete Fight Card)';}
+                    else goalDateStr='Need more data';
+                }
+            }
+            return [
+                {label:'Predicted Goal Date',value:goalDateStr,sub:goalDateSub,wide:true},
+                {label:'Total Weigh-ins',value:String(total),sub:'all time'},
+                {label:'Longest Streak',value:String(longest),sub:longest===1?'day':'consecutive days'},
+                {label:'Current Streak',value:String(curStreak),sub:curStreak?(curStreak===1?'day and counting':'consecutive days and counting'):'inactive'},
+                {label:'Current Trend',value:fmt(trend),sub:'last 7 entries'},
+                {label:'Weekly Loss Rate',value:weeklyRate!=null?fmtRate(weeklyRate)+'/wk':'—',sub:'avg over history'},
+                {label:'Monthly Loss Rate',value:monthlyRate!=null?fmtRate(monthlyRate)+'/mo':'—',sub:'avg over history'},
+                {label:'Lowest Weight',value:fmt(lowest),sub:'all time'},
+                {label:'Largest Weekly Loss',value:bestWeek>0?fmtR(bestWeek):'—',sub:'best 7-day window'},
+                {label:'Avg Daily Fluctuation',value:avgFluc>0?fmtR(avgFluc)+'/day':'—',sub:'day-to-day noise'},
+            ];
+        }
+
+        function render(stats) {
+            grid.innerHTML='';
+            if(!stats){const msg=document.createElement('p');msg.style.cssText='color:rgba(255,200,220,0.5);text-align:center;grid-column:1/-1;padding:32px 0;margin:0';msg.textContent='No weight data yet.';grid.appendChild(msg);return;}
+            stats.forEach(s=>{const card=document.createElement('div');card.className='insight-card'+(s.wide?' insight-card-wide':'');card.innerHTML='<div class="insight-label">'+s.label+'</div><div class="insight-value">'+s.value+'</div><div class="insight-sub">'+s.sub+'</div>';grid.appendChild(card);});
+        }
+        function close() { modal.hidden=true; window.activeModal=null; modalClose(modal); }
+        async function openInsights() {
+            window.activeModal={tryClose:cb=>{close();if(cb)cb();}};
+            grid.innerHTML='<p style="color:rgba(255,200,220,0.4);text-align:center;grid-column:1/-1;padding:32px 0;margin:0">Loading…</p>';
+            modal.hidden=false; modalOpen(modal); render(await compute());
+        }
+        btn.addEventListener('click',()=>window.openExclusive(openInsights));
+        closeBtn.addEventListener('click',close);
+        modal.addEventListener('click',e=>{if(e.target===modal)close();});
+        document.addEventListener('keydown',e=>{if(e.key==='Escape'&&!modal.hidden)close();});
+    })();
+
+    /* ── Settings modal ── */
+    (() => {
+        const modal       = document.getElementById('settings-modal');
+        const saveBtn     = document.getElementById('settings-save');
+        const cancelBtn   = document.getElementById('settings-cancel');
+
+        const profCustomDays  = document.getElementById('prof-custom-days');
+        const profCustomWeeks = document.getElementById('prof-custom-weeks-setting');
+        let openState = null;
+
+        function getSelections() {
+            const landing = document.getElementById('prof-landing-table-weekly').classList.contains('active') ? 'table-weekly'
+                          : document.getElementById('prof-landing-table-daily').classList.contains('active')  ? 'table-daily'
+                          : document.getElementById('prof-landing-weekly').classList.contains('active')        ? 'weekly' : 'daily';
+            return {
+                unit:       document.getElementById('prof-kg-btn').classList.contains('active')?'kg':'lbs',
+                range:      document.querySelector('.profile-opt-btn[data-range].active')?.dataset.range||'7d',
+                customDays: profCustomDays.value,
+                weeklyRange:   document.querySelector('.profile-opt-btn[data-weeks].active')?.dataset.weeks||'4',
+                customWeeks:   profCustomWeeks.value,
+                defaultLanding: landing,
+                heightUnit: document.getElementById('prof-height-metric').classList.contains('active')?'metric':'us',
+                goalLine:        document.getElementById('prof-goal-line-on').classList.contains('active')?'1':'0',
+                maLine:          document.getElementById('prof-ma-line-on').classList.contains('active')?'1':'0',
+                trendLine:       document.getElementById('prof-trend-line-on').classList.contains('active')?'1':'0',
+                chartType:       document.getElementById('prof-chart-interp').classList.contains('active')?'interpolated':document.getElementById('prof-chart-actual').classList.contains('active')?'actual':document.getElementById('prof-chart-dots').classList.contains('active')?'dots-only':'no-data',
+                weeklyGoalLine:  document.getElementById('prof-weekly-goal-on').classList.contains('active')?'1':'0',
+                weeklyTrendLine: document.getElementById('prof-weekly-trend-on').classList.contains('active')?'1':'0',
+                weeklyMinMax:    document.getElementById('prof-weekly-minmax-on').classList.contains('active')?'1':'0',
+                weeklyMode:      document.getElementById('prof-weekly-mode-iso').classList.contains('active')?'iso':'rolling',
+                legend:          document.getElementById('prof-legend-on').classList.contains('active')?'1':'0',
+                weeklyLegend:    document.getElementById('prof-weekly-legend-on').classList.contains('active')?'1':'0',
+                healthBar:       document.getElementById('prof-healthbar-on').classList.contains('active')?'1':'0',
+                fighterName:     document.getElementById('prof-fighter-name-on').classList.contains('active')?'1':'0',
+                dateFormat:      document.getElementById('prof-date-dmy').classList.contains('active')?'dmy':'mdy',
+                weeklyTableExpanded: document.getElementById('prof-weekly-table-exp-on').classList.contains('active')
+            };
+        }
+
+        function hasChanges() {
+            if (!openState) return false;
+            const cur = getSelections();
+            return cur.unit!==openState.unit||cur.range!==openState.range||cur.customDays!==openState.customDays||cur.weeklyRange!==openState.weeklyRange||cur.customWeeks!==openState.customWeeks||cur.defaultLanding!==openState.defaultLanding||cur.heightUnit!==openState.heightUnit||cur.goalLine!==openState.goalLine||cur.maLine!==openState.maLine||cur.trendLine!==openState.trendLine||cur.chartType!==openState.chartType||cur.weeklyGoalLine!==openState.weeklyGoalLine||cur.weeklyTrendLine!==openState.weeklyTrendLine||cur.weeklyMinMax!==openState.weeklyMinMax||cur.weeklyMode!==openState.weeklyMode||cur.legend!==openState.legend||cur.weeklyLegend!==openState.weeklyLegend||cur.healthBar!==openState.healthBar||cur.fighterName!==openState.fighterName||cur.dateFormat!==openState.dateFormat;
+        }
+
+        function forceClose() { modal.hidden=true; openState=null; window.activeModal=null; modalClose(modal); }
+        function tryClose(onClosed) {
+            if (hasChanges()) {
+                window.showAppConfirm('Unsaved Changes','Close without saving your settings?','Save & Close',()=>{doSave();if(onClosed)onClosed();},()=>{forceClose();if(onClosed)onClosed();},'Close');
+            } else { forceClose(); if(onClosed)onClosed(); }
+        }
+
+        function openModal() {
+            const curUnit=localStorage.getItem('pref_unit')||'lbs';
+            const _cs=window.getChartRange?window.getChartRange():null, curRange=(_cs&&_cs.range)||localStorage.getItem('pref_range')||'7d', curCustomDays=localStorage.getItem('pref_custom_days')||'';
+            const _ws=window.getWeeklyChartRange?window.getWeeklyChartRange():null, curWeeklyRange=(_ws&&_ws.range)||localStorage.getItem('pref_weekly_range')||'4';
+            const curCustomWeeks=(_ws&&_ws.range==='custom'&&_ws.weeks)?String(_ws.weeks):(localStorage.getItem('pref_custom_weeks')||'');
+            const curDefaultLanding=localStorage.getItem('pref_default_landing')||'daily', curHeightUnit=localStorage.getItem('pref_height_unit')||'us';
+            const curGoalLine=localStorage.getItem('pref_goal_line')||'0', curMaLine=localStorage.getItem('pref_ma_line')||'1', curTrendLine=localStorage.getItem('pref_trend_line')||'0';
+            const curChartType=localStorage.getItem('pref_chart_type')||'interpolated', curHealthBar=localStorage.getItem('pref_healthbar')||'1', curFighterName=localStorage.getItem('pref_fighter_name')||'1';
+            const curWeeklyMinMax=localStorage.getItem('pref_weekly_minmax')||'1', curWeeklyGoalLine=localStorage.getItem('pref_weekly_goal_line')||'0', curWeeklyTrendLine=localStorage.getItem('pref_weekly_trend_line')||'0';
+            const curWeeklyTableExpanded=localStorage.getItem('pref_weekly_table_expanded')==='true', curWeeklyMode=localStorage.getItem('pref_weekly_mode')||'rolling';
+            const curLegend=localStorage.getItem('pref_legend')||'1', curWeeklyLegend=localStorage.getItem('pref_weekly_legend')||'1', curDateFormat=localStorage.getItem('pref_date_format')||'mdy';
+
+            document.getElementById('prof-lbs-btn').classList.toggle('active',curUnit==='lbs');
+            document.getElementById('prof-kg-btn').classList.toggle('active',curUnit==='kg');
+            document.getElementById('prof-landing-daily').classList.toggle('active',curDefaultLanding==='daily');
+            document.getElementById('prof-landing-weekly').classList.toggle('active',curDefaultLanding==='weekly');
+            document.getElementById('prof-landing-table-daily').classList.toggle('active',curDefaultLanding==='table-daily');
+            document.getElementById('prof-landing-table-weekly').classList.toggle('active',curDefaultLanding==='table-weekly');
+            document.getElementById('prof-height-us').classList.toggle('active',curHeightUnit==='us');
+            document.getElementById('prof-height-metric').classList.toggle('active',curHeightUnit==='metric');
+            document.getElementById('prof-goal-line-on').classList.toggle('active',curGoalLine==='1');
+            document.getElementById('prof-goal-line-off').classList.toggle('active',curGoalLine!=='1');
+            document.getElementById('prof-ma-line-on').classList.toggle('active',curMaLine==='1');
+            document.getElementById('prof-ma-line-off').classList.toggle('active',curMaLine!=='1');
+            document.getElementById('prof-trend-line-on').classList.toggle('active',curTrendLine==='1');
+            document.getElementById('prof-trend-line-off').classList.toggle('active',curTrendLine!=='1');
+            document.getElementById('prof-chart-interp').classList.toggle('active',curChartType==='interpolated');
+            document.getElementById('prof-chart-actual').classList.toggle('active',curChartType==='actual');
+            document.getElementById('prof-chart-dots').classList.toggle('active',curChartType==='dots-only');
+            document.getElementById('prof-chart-none').classList.toggle('active',curChartType==='no-data');
+            document.getElementById('prof-healthbar-on').classList.toggle('active',curHealthBar!=='0');
+            document.getElementById('prof-healthbar-off').classList.toggle('active',curHealthBar==='0');
+            document.getElementById('prof-fighter-name-on').classList.toggle('active',curFighterName!=='0');
+            document.getElementById('prof-fighter-name-off').classList.toggle('active',curFighterName==='0');
+            document.getElementById('prof-weekly-minmax-on').classList.toggle('active',curWeeklyMinMax==='1');
+            document.getElementById('prof-weekly-minmax-off').classList.toggle('active',curWeeklyMinMax!=='1');
+            document.getElementById('prof-weekly-goal-on').classList.toggle('active',curWeeklyGoalLine==='1');
+            document.getElementById('prof-weekly-goal-off').classList.toggle('active',curWeeklyGoalLine!=='1');
+            document.getElementById('prof-weekly-trend-on').classList.toggle('active',curWeeklyTrendLine==='1');
+            document.getElementById('prof-weekly-trend-off').classList.toggle('active',curWeeklyTrendLine!=='1');
+            document.getElementById('prof-weekly-table-exp-on').classList.toggle('active',curWeeklyTableExpanded);
+            document.getElementById('prof-weekly-table-exp-off').classList.toggle('active',!curWeeklyTableExpanded);
+            document.getElementById('prof-weekly-mode-rolling').classList.toggle('active',curWeeklyMode!=='iso');
+            document.getElementById('prof-weekly-mode-iso').classList.toggle('active',curWeeklyMode==='iso');
+            document.getElementById('prof-date-mdy').classList.toggle('active',curDateFormat==='mdy');
+            document.getElementById('prof-date-dmy').classList.toggle('active',curDateFormat==='dmy');
+            document.getElementById('prof-legend-on').classList.toggle('active',curLegend==='1');
+            document.getElementById('prof-legend-off').classList.toggle('active',curLegend!=='1');
+            document.getElementById('prof-weekly-legend-on').classList.toggle('active',curWeeklyLegend==='1');
+            document.getElementById('prof-weekly-legend-off').classList.toggle('active',curWeeklyLegend!=='1');
+            document.querySelectorAll('.profile-opt-btn[data-range]').forEach(b=>b.classList.toggle('active',b.dataset.range===curRange));
+            document.querySelectorAll('.profile-opt-btn[data-weeks]').forEach(b=>b.classList.toggle('active',b.dataset.weeks===curWeeklyRange));
+            document.getElementById('prof-custom-wrap-weekly').hidden=curWeeklyRange!=='custom';
+            profCustomDays.value=curCustomDays; profCustomWeeks.value=curCustomWeeks;
+            syncFighterNameToHealthBar();
+            modal.hidden=false; modalOpen(modal);
+            modal.querySelector('.settings-scroll-body').scrollTop=0;
+            openState=getSelections(); window.activeModal={tryClose};
+        }
+
+        window.openSettings = () => window.openExclusive(openModal);
+
+        function wireToggle(ids) {
+            ids.forEach(id=>{ document.getElementById(id).addEventListener('click',()=>{ ids.forEach(x=>document.getElementById(x).classList.remove('active')); document.getElementById(id).classList.add('active'); }); });
+        }
+        wireToggle(['prof-lbs-btn','prof-kg-btn']);
+        wireToggle(['prof-landing-daily','prof-landing-weekly','prof-landing-table-daily','prof-landing-table-weekly']);
+        wireToggle(['prof-height-us','prof-height-metric']);
+        wireToggle(['prof-date-mdy','prof-date-dmy']);
+        wireToggle(['prof-goal-line-on','prof-goal-line-off']);
+        wireToggle(['prof-ma-line-on','prof-ma-line-off']);
+        wireToggle(['prof-trend-line-on','prof-trend-line-off']);
+        wireToggle(['prof-chart-interp','prof-chart-actual','prof-chart-dots','prof-chart-none']);
+        wireToggle(['prof-fighter-name-on','prof-fighter-name-off']);
+        wireToggle(['prof-weekly-minmax-on','prof-weekly-minmax-off']);
+        wireToggle(['prof-weekly-goal-on','prof-weekly-goal-off']);
+        wireToggle(['prof-weekly-trend-on','prof-weekly-trend-off']);
+        wireToggle(['prof-weekly-table-exp-on','prof-weekly-table-exp-off']);
+        wireToggle(['prof-weekly-mode-rolling','prof-weekly-mode-iso']);
+        wireToggle(['prof-legend-on','prof-legend-off']);
+        wireToggle(['prof-weekly-legend-on','prof-weekly-legend-off']);
+
+        document.querySelectorAll('.profile-opt-btn[data-weeks]').forEach(b=>{
+            b.addEventListener('click',()=>{
+                document.querySelectorAll('.profile-opt-btn[data-weeks]').forEach(x=>x.classList.remove('active'));
+                b.classList.add('active');
+                const isCustom=b.dataset.weeks==='custom';
+                document.getElementById('prof-custom-wrap-weekly').hidden=!isCustom;
+                if(isCustom){profCustomWeeks.focus();profCustomWeeks.select();}
+            });
+        });
+        profCustomWeeks.addEventListener('change',()=>{ const v=parseInt(profCustomWeeks.value); if(!v||v<4)profCustomWeeks.value=4; else if(v>156)profCustomWeeks.value=156; });
+        document.querySelectorAll('.profile-opt-btn[data-range]').forEach(b=>{
+            b.addEventListener('click',()=>{
+                document.querySelectorAll('.profile-opt-btn[data-range]').forEach(x=>x.classList.remove('active'));
+                b.classList.add('active');
+                if(b.dataset.range==='custom'){profCustomDays.focus();profCustomDays.select();}
+            });
+        });
+        profCustomDays.addEventListener('change',()=>{ const v=parseInt(profCustomDays.value); if(v&&v<7)profCustomDays.value=7; else if(v>1095)profCustomDays.value=1095; });
+
+        document.querySelectorAll('#prof-healthbar-on,#prof-healthbar-off').forEach(b=>{
+            b.addEventListener('click',()=>{ wireToggle(['prof-healthbar-on','prof-healthbar-off']); b.classList.add('active'); syncFighterNameToHealthBar(); });
+        });
+
+        function syncFighterNameToHealthBar() {
+            const hudOff=document.getElementById('prof-healthbar-off').classList.contains('active');
+            const fnOn=document.getElementById('prof-fighter-name-on'), fnOff=document.getElementById('prof-fighter-name-off');
+            fnOn.disabled=hudOff; fnOff.disabled=hudOff;
+            if(hudOff){fnOn.classList.remove('active');fnOff.classList.add('active');}
+        }
+
+        function doSave() {
+            const _rangeNow=document.querySelector('.profile-opt-btn[data-range].active')?.dataset.range||'7d';
+            const _weeksNow=document.querySelector('.profile-opt-btn[data-weeks].active')?.dataset.weeks||'4';
+            if(_rangeNow==='custom'&&!profCustomDays.value){window.showAppConfirm('Missing Value','Custom range is selected — enter a number of days to save.','Enter Days',()=>{profCustomDays.focus();profCustomDays.select();},null,'Dismiss');return;}
+            if(_weeksNow==='custom'&&!profCustomWeeks.value){window.showAppConfirm('Missing Value','Custom range is selected — enter a number of weeks to save.','Enter Weeks',()=>{document.getElementById('prof-custom-wrap-weekly').hidden=false;profCustomWeeks.focus();profCustomWeeks.select();},null,'Dismiss');return;}
+
+            const newUnit=document.getElementById('prof-kg-btn').classList.contains('active')?'kg':'lbs';
+            const newRange=_rangeNow, _days=parseInt(profCustomDays.value), newCustomDays=_days?String(Math.min(Math.max(_days,7),1095)):'';
+            const newWeeklyRange=_weeksNow, _wks=parseInt(profCustomWeeks.value), newCustomWeeks=_wks?String(Math.min(Math.max(_wks,4),156)):'';
+            const newDefaultLanding=document.getElementById('prof-landing-table-weekly').classList.contains('active')?'table-weekly':document.getElementById('prof-landing-table-daily').classList.contains('active')?'table-daily':document.getElementById('prof-landing-weekly').classList.contains('active')?'weekly':'daily';
+            const newHeightUnit=document.getElementById('prof-height-metric').classList.contains('active')?'metric':'us';
+            const newGoalLine=document.getElementById('prof-goal-line-on').classList.contains('active')?'1':'0';
+            const newMaLine=document.getElementById('prof-ma-line-on').classList.contains('active')?'1':'0';
+            const newTrendLine=document.getElementById('prof-trend-line-on').classList.contains('active')?'1':'0';
+            const newChartType=document.getElementById('prof-chart-interp').classList.contains('active')?'interpolated':document.getElementById('prof-chart-actual').classList.contains('active')?'actual':document.getElementById('prof-chart-dots').classList.contains('active')?'dots-only':'no-data';
+            const newHealthBar=document.getElementById('prof-healthbar-on').classList.contains('active')?'1':'0';
+            const newFighterName=document.getElementById('prof-fighter-name-on').classList.contains('active')?'1':'0';
+            const newWeeklyMinMax=document.getElementById('prof-weekly-minmax-on').classList.contains('active')?'1':'0';
+            const newWeeklyGoal=document.getElementById('prof-weekly-goal-on').classList.contains('active')?'1':'0';
+            const newWeeklyTrend=document.getElementById('prof-weekly-trend-on').classList.contains('active')?'1':'0';
+            const newWeeklyTableExp=document.getElementById('prof-weekly-table-exp-on').classList.contains('active')?'true':'false';
+            const newWeeklyMode=document.getElementById('prof-weekly-mode-iso').classList.contains('active')?'iso':'rolling';
+            const newLegend=document.getElementById('prof-legend-on').classList.contains('active')?'1':'0';
+            const newWeeklyLegend=document.getElementById('prof-weekly-legend-on').classList.contains('active')?'1':'0';
+            const newDateFormat=document.getElementById('prof-date-dmy').classList.contains('active')?'dmy':'mdy';
+
+            window.savePref('pref_unit',newUnit); window.savePref('pref_range',newRange); window.savePref('pref_custom_days',newCustomDays);
+            window.savePref('pref_weekly_range',newWeeklyRange); window.savePref('pref_custom_weeks',newCustomWeeks);
+            window.savePref('pref_default_landing',newDefaultLanding); window.savePref('pref_height_unit',newHeightUnit);
+            window.savePref('pref_goal_line',newGoalLine); window.savePref('pref_ma_line',newMaLine); window.savePref('pref_trend_line',newTrendLine);
+            window.savePref('pref_chart_type',newChartType); window.savePref('pref_healthbar',newHealthBar); window.savePref('pref_fighter_name',newFighterName);
+            window.savePref('pref_weekly_minmax',newWeeklyMinMax); window.savePref('pref_weekly_goal_line',newWeeklyGoal);
+            window.savePref('pref_weekly_trend_line',newWeeklyTrend); window.savePref('pref_weekly_table_expanded',newWeeklyTableExp);
+            window.savePref('pref_weekly_mode',newWeeklyMode); window.savePref('pref_legend',newLegend);
+            window.savePref('pref_weekly_legend',newWeeklyLegend); window.savePref('pref_date_format',newDateFormat);
+
+            const _dlEl=document.getElementById('daily-chart-legend'), _wlEl=document.getElementById('weekly-chart-legend');
+            if(_dlEl)_dlEl.style.display=newLegend==='1'?'':'none';
+            if(_wlEl)_wlEl.style.display=newWeeklyLegend==='1'?'':'none';
+            const hud=document.getElementById('healthbar-hud');
+            if(hud)hud.style.display=newHealthBar==='1'?'':'none';
+            if(window.updateHealthBarName)window.updateHealthBarName();
+
+            if(newUnit!==window.activeUnit){
+                window.activeUnit=newUnit;
+                const _utb=document.getElementById('unit-toggle-btn');
+                if(_utb)_utb.textContent=newUnit==='lbs'?'KGS':'LBS';
+                if(window.applyPlateUnit)window.applyPlateUnit(newUnit);
+            }
+
+            const chartNeedsRefresh=!openState||newUnit!==openState.unit||newRange!==openState.range||String(newCustomDays)!==openState.customDays||newGoalLine!==openState.goalLine||newMaLine!==openState.maLine||newTrendLine!==openState.trendLine||newChartType!==openState.chartType||newDateFormat!==openState.dateFormat;
+            if(chartNeedsRefresh){
+                const days=newRange==='custom'?(parseInt(newCustomDays)||30):undefined;
+                document.querySelectorAll('.range-btn').forEach(b=>b.classList.remove('active'));
+                const rangeBtn=document.querySelector('.range-btn[data-range="'+newRange+'"]');
+                if(rangeBtn)rangeBtn.classList.add('active');
+                if(newRange==='custom'){const ci=document.getElementById('custom-days');if(ci)ci.value=newCustomDays;}
+                if(window.refreshChart)window.refreshChart(newRange,days);
+            }
+            if(window.applyChartNav)window.applyChartNav();
+            if(openState&&newDefaultLanding!==openState.defaultLanding){
+                const isTableLanding=newDefaultLanding==='table-daily'||newDefaultLanding==='table-weekly';
+                if(isTableLanding){if(window.setTablePage)window.setTablePage(newDefaultLanding==='table-weekly'?'weekly':'daily');if(window.setView)window.setView('table');}
+                else if(window.setView)window.setView('chart');
+            }
+            if(window.setWeeklyRange)window.setWeeklyRange(newWeeklyRange,newCustomWeeks);
+            if(openState){
+                const weeklyNeedsRefresh=window.weeklyChartLoaded&&(newUnit!==openState.unit||newWeeklyRange!==openState.weeklyRange||newCustomWeeks!==String(openState.customWeeks)||newWeeklyGoal!==openState.weeklyGoalLine||newWeeklyTrend!==openState.weeklyTrendLine||newWeeklyMinMax!==openState.weeklyMinMax||newWeeklyMode!==openState.weeklyMode||newDateFormat!==openState.dateFormat);
+                if(weeklyNeedsRefresh&&window.refreshWeeklyChart)window.refreshWeeklyChart();
+                if(window.renderTable){const tableNeedsRefresh=newUnit!==openState.unit||newWeeklyMode!==openState.weeklyMode||newDateFormat!==openState.dateFormat||newWeeklyRange!==openState.weeklyRange||newCustomWeeks!==String(openState.customWeeks);if(tableNeedsRefresh)window.renderTable();}
+            }
+            forceClose();
+        }
+
+        /* Collapsible section headers */
+        ['measurements','landing','overtime','weekly','hud'].forEach(key=>{
+            const hdr=document.querySelector('.settings-section-label[data-section="'+key+'"]');
+            const body=document.getElementById('ssb-'+key);
+            if(!hdr||!body)return;
+            hdr.setAttribute('role','button'); hdr.setAttribute('tabindex','0'); hdr.setAttribute('aria-controls','ssb-'+key);
+            const initCollapsed=localStorage.getItem('pref_section_'+key)==='0';
+            if(initCollapsed){body.style.height='0px';hdr.classList.add('collapsed');}
+            hdr.setAttribute('aria-expanded',initCollapsed?'false':'true');
+            hdr.addEventListener('click',()=>{
+                const nowCollapsed=!hdr.classList.contains('collapsed');
+                hdr.classList.toggle('collapsed',nowCollapsed); hdr.setAttribute('aria-expanded',nowCollapsed?'false':'true');
+                localStorage.setItem('pref_section_'+key,nowCollapsed?'0':'1');
+                if(nowCollapsed){body.style.height=body.scrollHeight+'px';body.offsetHeight;body.style.height='0px';}
+                else{body.style.height=body.scrollHeight+'px';body.addEventListener('transitionend',()=>{body.style.height='';},{once:true});}
+            });
+            hdr.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();hdr.click();}});
+        });
+
+        function resetDefaults() {
+            const activate=(onId,offId)=>{document.getElementById(onId).classList.add('active');document.getElementById(offId).classList.remove('active');};
+            activate('prof-lbs-btn','prof-kg-btn'); activate('prof-height-us','prof-height-metric'); activate('prof-date-mdy','prof-date-dmy');
+            ['prof-landing-daily','prof-landing-weekly','prof-landing-table-daily','prof-landing-table-weekly'].forEach(id=>document.getElementById(id).classList.remove('active'));
+            document.getElementById('prof-landing-daily').classList.add('active');
+            document.querySelectorAll('.profile-opt-btn[data-range]').forEach(b=>b.classList.remove('active'));
+            document.getElementById('prof-range-7d').classList.add('active'); profCustomDays.value='';
+            activate('prof-ma-line-on','prof-ma-line-off'); activate('prof-chart-interp','prof-chart-actual');
+            document.getElementById('prof-chart-dots').classList.remove('active'); document.getElementById('prof-chart-none').classList.remove('active');
+            activate('prof-trend-line-off','prof-trend-line-on'); activate('prof-goal-line-off','prof-goal-line-on');
+            document.querySelectorAll('.profile-opt-btn[data-weeks]').forEach(b=>b.classList.remove('active'));
+            document.getElementById('prof-wrange-4').classList.add('active'); document.getElementById('prof-custom-wrap-weekly').hidden=true; profCustomWeeks.value='';
+            activate('prof-weekly-trend-off','prof-weekly-trend-on'); activate('prof-weekly-goal-off','prof-weekly-goal-on');
+            activate('prof-weekly-minmax-on','prof-weekly-minmax-off'); activate('prof-weekly-table-exp-off','prof-weekly-table-exp-on');
+            activate('prof-weekly-mode-rolling','prof-weekly-mode-iso');
+            activate('prof-healthbar-on','prof-healthbar-off'); activate('prof-fighter-name-on','prof-fighter-name-off');
+            activate('prof-legend-on','prof-legend-off'); activate('prof-weekly-legend-on','prof-weekly-legend-off');
+            syncFighterNameToHealthBar();
+        }
+
+        document.getElementById('settings-reset').addEventListener('click',()=>{
+            window.showAppConfirm('Reset to Defaults','All settings will be restored to their original defaults. Click Save afterwards to make the changes permanent, or Cancel to discard.','Reset',resetDefaults,null,'Cancel');
+        });
+        cancelBtn.addEventListener('click',tryClose);
+        saveBtn.addEventListener('click',doSave);
+        modal.addEventListener('click',e=>{if(e.target===modal)tryClose();});
+        document.addEventListener('keydown',e=>{if(e.key==='Escape'&&!modal.hidden)tryClose();});
+    })();
+
+    /* ── Settings custom scrollbar ── */
+    (function () {
+        const scrollBody=document.querySelector('.settings-scroll-body');
+        const track=document.getElementById('settings-scrollbar-track');
+        const thumb=document.getElementById('settings-scrollbar-thumb');
+        const modal=document.getElementById('settings-modal');
+        function syncThumb(){
+            if(scrollBody.scrollHeight<=scrollBody.clientHeight){thumb.style.display='none';return;}
+            const thumbH=Math.max((scrollBody.clientHeight/scrollBody.scrollHeight)*track.clientHeight,30);
+            const maxTop=track.clientHeight-thumbH,maxScroll=scrollBody.scrollHeight-scrollBody.clientHeight;
+            thumb.style.display='block'; thumb.style.height=thumbH+'px'; thumb.style.top=(scrollBody.scrollTop/maxScroll)*maxTop+'px';
+        }
+        scrollBody.addEventListener('scroll',syncThumb,{passive:true});
+        new ResizeObserver(syncThumb).observe(scrollBody);
+        new MutationObserver(()=>{if(!modal.hidden)syncThumb();}).observe(modal,{attributes:true,attributeFilter:['hidden']});
+        let drag=false,dragY=0,dragScroll=0;
+        function startDrag(e){drag=true;dragY=e.clientY;dragScroll=scrollBody.scrollTop;e.preventDefault();}
+        thumb.addEventListener('mousedown',startDrag);
+        track.addEventListener('mousedown',e=>{
+            if(e.target===thumb)return;
+            const rect=track.getBoundingClientRect(),thumbH=parseFloat(thumb.style.height)||30,maxTop=track.clientHeight-thumbH,maxScroll=scrollBody.scrollHeight-scrollBody.clientHeight;
+            const clickY=Math.min(Math.max(e.clientY-rect.top-thumbH/2,0),maxTop);
+            scrollBody.scrollTop=(clickY/maxTop)*maxScroll; startDrag(e);
+        });
+        document.addEventListener('mousemove',e=>{
+            if(!drag)return;
+            const maxTop=track.clientHeight-parseFloat(thumb.style.height),maxScroll=scrollBody.scrollHeight-scrollBody.clientHeight;
+            scrollBody.scrollTop=Math.max(0,Math.min(maxScroll,dragScroll+(e.clientY-dragY)*(maxScroll/maxTop)));
+        });
+        document.addEventListener('mouseup',()=>{drag=false;});
+    })();
+
+    /* ── Coming soon tip ── */
+    (() => {
+        const tip=document.createElement('div');
+        tip.className='coming-soon-tip'; tip.textContent='Coming Soon'; document.body.appendChild(tip);
+        let hideTimer=null;
+        function showComingSoon(btn) {
+            const r=btn.getBoundingClientRect();
+            tip.style.top=(r.top+r.height/2)+'px'; tip.style.left=(r.left-10)+'px';
+            tip.classList.add('visible'); clearTimeout(hideTimer);
+            hideTimer=setTimeout(()=>tip.classList.remove('visible'),1500);
+        }
+        ['protein-btn'].forEach(id=>{ const el=document.getElementById(id); if(el)el.addEventListener('click',()=>showComingSoon(el)); });
+    })();
+
+    /* ── Click-anywhere-to-toggle for .is-toggle rows ── */
+    (function () {
+        document.querySelectorAll('.profile-toggle-row.is-toggle').forEach(function(row) {
+            var busy = false;
+            row.addEventListener('click', function(e) {
+                if (busy) return;
+                var clicked = e.target.closest('.profile-opt-btn');
+                if (clicked && !clicked.classList.contains('active')) return;
+                e.stopPropagation();
+                busy = true;
+                var onBtn = row.querySelector('.profile-opt-btn:first-child');
+                var offBtn = row.querySelector('.profile-opt-btn:last-child');
+                if (onBtn.classList.contains('active')) { offBtn.click(); } else { onBtn.click(); }
+                busy = false;
+            }, true);
+        });
+    })();
+</script>
+{% block page_js %}{% endblock %}
+</body>
+</html>

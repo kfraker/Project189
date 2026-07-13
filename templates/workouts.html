@@ -1,1068 +1,396 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <title>Workouts — Project 189</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link href="https://fonts.googleapis.com/css2?family=Pacifico&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="/static/style.css">
-    <style>
-        /* ── Workout Page Layout ── */
-        :root { --wp-hdr: 62px; --wp-ftr: 72px; }
-        html, body { height: 100%; overflow: hidden; }
+{% extends "base.html" %}
 
-        .wp-bg {
-            position: fixed;
-            inset: 0;
-            background: url('/static/workoutbackground7.png') center / cover no-repeat;
-            z-index: -1;
-            transition: background-position 0.6s ease;
-        }
-        .wp-bg::after {
-            content: '';
-            position: absolute;
-            inset: 0;
-            background: rgba(8, 0, 18, 0.72);
-        }
-        @media (max-width: 560px) {
-            .wp-bg { background-position: 30% center; }
-        }
+{% block page_title %}Workouts — Project 189{% endblock %}
 
-        .wp-shell {
-            display: flex;
-            flex-direction: column;
-            height: 100vh;
-        }
+{% block page_css %}
+<style>
+    /* ── Background ── */
+    .wp-bg {
+        position: fixed; inset: 0; z-index: -1;
+        background: url('/static/workoutbackground7.png') center / cover no-repeat;
+        transition: background-position 0.6s ease;
+    }
+    .wp-bg::after { content: ''; position: absolute; inset: 0; background: rgba(8,0,18,0.72); }
+    @media (max-width: 560px) { .wp-bg { background-position: 30% center; } }
 
-        /* ── Header ── */
-        .wp-header {
-            display: grid;
-            grid-template-columns: 1fr auto 1fr;
-            align-items: center;
-            height: 62px;
-            padding: 0 24px;
-            background: rgba(8, 0, 20, 0.75);
-            border-bottom: 1px solid rgba(255, 45, 120, 0.4);
-            backdrop-filter: blur(10px);
-            flex-shrink: 0;
-        }
-        .wp-back {
-            display: flex;
-            align-items: center;
-            gap: 6px;
-            padding: 6px 16px;
-            border: 1px solid rgba(255, 45, 120, 0.65);
-            border-radius: 8px;
-            background: transparent;
-            color: #ff2d78;
-            font-family: 'Arial Black', Impact, sans-serif;
-            font-size: 11px;
-            font-weight: 900;
-            letter-spacing: 1px;
-            text-transform: uppercase;
-            text-decoration: none;
-            transition: all 0.18s ease;
-            justify-self: start;
-        }
-        .wp-back:hover {
-            background: rgba(255, 45, 120, 0.12);
-            border-color: rgba(255, 45, 120, 0.8);
-            box-shadow: 0 0 14px rgba(255, 45, 120, 0.3);
-            color: #ff2d78;
-        }
-        .wp-title {
-            text-align: center;
-            font-family: 'Pacifico', cursive;
-            font-size: 26px;
-            color: #ffe0ee;
-            text-shadow: 0 0 10px #ff80aa, 0 0 28px #ff2d78;
-        }
-        .wp-stats {
-            display: flex;
-            gap: 24px;
-            justify-self: end;
-        }
-        .wp-stat { text-align: center; }
-        .wp-stat-num {
-            font-family: Impact, 'Arial Black', sans-serif;
-            font-size: 20px;
-            color: #fff;
-            line-height: 1;
-        }
-        .wp-stat-label {
-            font-size: 11px;
-            color: #fff;
-            font-family: Arial, sans-serif;
-            letter-spacing: 0.8px;
-            text-transform: uppercase;
-            margin-top: 2px;
-        }
+    /* ── Table area ── */
+    .wp-table-wrap {
+        position: fixed;
+        top: var(--site-hdr);
+        bottom: var(--site-ftr);
+        left: 0; right: 0;
+        overflow-y: auto;
+        padding: 20px 24px 0;
+        scrollbar-width: none;
+    }
+    .wp-table-wrap::-webkit-scrollbar { display: none; }
+    .wp-table-inner { max-width: 860px; margin: 0 auto; padding-bottom: 20px; }
+    .wp-empty {
+        text-align: center; color: rgba(255,255,255,0.7);
+        font-family: Arial, sans-serif; font-size: 17px; padding: 80px 0;
+    }
 
-        @media (max-width: 560px) {
-            .wp-header {
-                display: flex;
-                flex-wrap: wrap;
-                align-content: flex-start;
-                align-items: center;
-                height: auto;
-                padding: 10px 16px 8px;
-                gap: 0;
-            }
-            .wp-title {
-                flex: 1;
-                font-size: 20px;
-                align-self: flex-start;
-            }
-            .wp-stats {
-                width: 100%;
-                justify-self: auto;
-                justify-content: space-around;
-                gap: 0;
-                padding: 6px 0 2px;
-                border-top: 1px solid rgba(255, 45, 120, 0.3);
-            }
-            .wp-stat-num { font-size: 17px; }
-            .wp-stat-label { font-size: 10px; }
-        }
+    /* ── Page-edge scrollbar ── */
+    #wp-scrollbar-track {
+        position: fixed; right: 0; top: var(--site-hdr); bottom: var(--site-ftr);
+        width: 8px; background: transparent; z-index: 100; cursor: default;
+    }
+    #wp-scrollbar-thumb {
+        position: absolute; left: 0; width: 8px;
+        background: rgba(255,45,120,0.45); border-radius: 4px; display: none; cursor: grab;
+    }
+    #wp-scrollbar-thumb:active { cursor: grabbing; }
+    body:has(.wp-modal-overlay:not([hidden])) #wp-scrollbar-track,
+    body:has(.modal-overlay:not([hidden])) #wp-scrollbar-track { pointer-events: none; }
 
-        /* Extra-compact modal for very short viewports (iPhone with browser chrome visible) */
-        @media (max-height: 700px) {
-            .wp-modal-card { max-height: 96vh; }
-            .wp-modal-head { padding: 10px 20px 9px; }
-            .wp-modal-body { padding: 10px 20px; }
-            .wpm-date-wrap { margin-bottom: 8px; }
-            .wpm-day-section { margin-bottom: 8px; }
-            .wpm-day-heading { margin-bottom: 3px; }
-            .wpm-entries-wrap { height: 80px; }
-            .wpm-divider { margin: 7px 0 5px; }
-            .wpm-add-label { margin-bottom: 6px; }
-            .wpm-add-activity-btn { padding: 6px; margin-top: 6px; }
-            .wpm-note-section { margin-top: 8px; }
-            #workout-note-input { height: 38px; }
-            .wp-modal-foot { padding: 7px 20px 9px; }
-            .wp-modal-body .workout-form-field,
-            .wp-modal-body .workout-form-row { margin-bottom: 6px !important; }
-        }
+    /* ── Date groups ── */
+    .wp-date-group { margin-bottom: 18px; }
+    .wp-date-header-row {
+        display: flex; align-items: center; gap: 10px; padding: 7px 10px;
+        background: rgba(8,0,20,0.55); border: 1px solid rgba(255,45,120,0.45);
+        border-radius: 7px; margin-bottom: 4px; cursor: pointer;
+    }
+    .wp-date-heading {
+        font-family: Impact,'Arial Black',sans-serif; font-size: 13px; letter-spacing: 2.5px;
+        text-transform: uppercase; color: #fff; text-shadow: 0 0 16px rgba(255,45,120,0.55);
+        white-space: nowrap; min-width: 145px; cursor: pointer; transition: color 0.15s;
+    }
+    .wp-date-group:hover .wp-date-heading { color: #fff; text-shadow: 0 0 20px rgba(255,45,120,0.9); }
+    .wp-date-count {
+        font-family: Arial,sans-serif; font-size: 11px; letter-spacing: 0.5px;
+        color: rgba(255,255,255,0.55); font-weight: normal; flex: 1; min-width: 0; display: flex; align-items: center;
+    }
+    .wp-count-num { flex: 1; text-align: right; padding-right: 0.3em; font-variant-numeric: tabular-nums; }
+    .wp-count-word { flex: 1; text-align: left; }
+    .wp-header-values { display: flex; align-items: baseline; gap: 10px; }
+    .wp-header-dur { font-family: Arial,sans-serif; font-size: 14px; color: rgba(255,255,255,0.75); white-space: nowrap; min-width: 54px; text-align: right; }
+    .wp-header-kcal { font-family: Impact,'Arial Black',sans-serif; font-size: 17px; color: rgba(255,255,255,0.75); white-space: nowrap; min-width: 74px; text-align: right; }
+    .wp-header-kcal span { font-family: Arial,sans-serif; font-size: 12px; color: rgba(255,255,255,0.55); margin-left: 5px; }
+    .wp-day-note {
+        font-family: Arial,sans-serif; font-size: 12px; font-style: italic; color: rgba(255,255,255,0.88);
+        border-left: 3px solid rgba(255,45,120,0.85); padding: 2px 0 2px 10px; margin: 0 2px 8px 2px;
+    }
+    .wp-chevron { font-size: 15px; color: rgba(255,45,120,0.7); flex-shrink: 0; width: 32px; text-align: center; transition: transform 0.25s ease; display: inline-block; }
+    .wp-date-group.collapsed .wp-chevron { transform: rotate(-90deg); }
+    .wp-rows-wrap { overflow: hidden; max-height: 800px; opacity: 1; transition: max-height 0.3s ease, opacity 0.25s ease; }
+    .wp-date-group.collapsed .wp-rows-wrap { max-height: 0; opacity: 0; }
+    .wp-row {
+        display: flex; align-items: center; gap: 10px; padding: 7px 10px;
+        border-radius: 6px; border: 1px solid rgba(255,45,120,0.55); margin-bottom: 3px;
+        transition: background 0.15s, border-color 0.15s; cursor: pointer;
+    }
+    .wp-date-group:hover .wp-row { background: rgba(255,255,255,0.06); border-color: rgba(255,45,120,0.7); }
+    .wp-row:hover { border-color: rgba(255,45,120,0.85) !important; }
+    .wp-row-main { flex: 1; min-width: 0; }
+    .wp-row-values { display: flex; align-items: baseline; gap: 10px; }
+    .wp-row-dur { font-family: Arial,sans-serif; font-size: 14px; color: #fff; white-space: nowrap; }
+    .wp-row-kcal { font-family: Impact,'Arial Black',sans-serif; font-size: 17px; color: #fff; white-space: nowrap; min-width: 74px; text-align: right; }
+    .wp-row-kcal span { font-family: Arial,sans-serif; font-size: 12px; color: rgba(255,255,255,0.88); margin-left: 5px; }
 
-        /* ── Table area ── */
-        .wp-table-wrap {
-            flex: 1;
-            overflow-y: auto;
-            padding: 20px 24px 0;
-            scrollbar-width: none;
-        }
-        .wp-table-wrap::-webkit-scrollbar { display: none; }
+    /* ── Filter (now in header, opens DOWNWARD) ── */
+    .wp-filter-wrap { position: relative; }
+    .wp-filter-btn {
+        width: 44px; height: 44px; border-radius: 12px;
+        background: rgba(255,45,120,0.1); border: 1px solid rgba(255,45,120,0.4);
+        color: #ff2d78; font-size: 20px; display: flex; align-items: center; justify-content: center;
+        transition: all 0.2s;
+    }
+    .wp-filter-btn:hover, .wp-filter-btn.open {
+        background: rgba(255,45,120,0.22); border-color: rgba(255,45,120,0.75);
+        box-shadow: 0 4px 20px rgba(255,45,120,0.3);
+    }
+    .wp-range-menu {
+        position: absolute;
+        top: calc(100% + 10px);     /* opens BELOW the header button */
+        left: 0;
+        display: flex; flex-direction: column; gap: 5px;
+        background: rgba(8,0,20,0.97); border: 1px solid rgba(255,45,120,0.3);
+        border-radius: 10px; padding: 10px; min-width: 90px;
+        opacity: 0; transform: translateY(-10px); pointer-events: none;
+        transition: opacity 0.18s ease, transform 0.18s ease;
+        box-shadow: 0 8px 32px rgba(0,0,0,0.6);
+        z-index: 200;
+    }
+    .wp-range-menu.open { opacity: 1; transform: translateY(0); pointer-events: auto; }
+    .wp-range-btn {
+        padding: 7px 14px; background: transparent; border: 1px solid rgba(255,45,120,0.2);
+        border-radius: 6px; color: rgba(255,255,255,0.7); font-family: Arial,sans-serif;
+        font-size: 12px; letter-spacing: 0.5px; text-transform: uppercase; transition: all 0.15s; text-align: center;
+    }
+    .wp-range-btn:hover { background: rgba(255,45,120,0.12); color: #fff; border-color: rgba(255,45,120,0.45); }
+    .wp-range-btn.active { background: rgba(255,45,120,0.2); border-color: rgba(255,45,120,0.7); color: #ff2d78; }
+    .wp-custom-fields { display: flex; flex-direction: column; gap: 10px; margin: 2px 0 4px; }
+    .wp-custom-field-label { font-family: Arial,sans-serif; font-size: 11px; letter-spacing: 0.1em; text-transform: uppercase; color: rgba(255,255,255,0.5); margin-bottom: 5px; }
+    /* "To" calendar opens upward inside the modal to stay in viewport */
+    #wp-cr-end-cal { top: auto; bottom: calc(100% + 6px); }
 
-        /* ── Custom page-edge scrollbar (fixes cursor bleed-through from native scrollbar) ── */
-        #wp-scrollbar-track {
-            position: fixed;
-            right: 0;
-            top: var(--wp-hdr);
-            bottom: var(--wp-ftr);
-            width: 8px;
-            background: transparent;
-            z-index: 100;
-            cursor: default;
-        }
-        #wp-scrollbar-thumb {
-            position: absolute;
-            left: 0;
-            width: 8px;
-            background: rgba(255, 45, 120, 0.45);
-            border-radius: 4px;
-            display: none;
-            cursor: grab;
-        }
-        #wp-scrollbar-thumb:active { cursor: grabbing; }
-        /* Disable track while a modal is open */
-        body:has(.wp-modal-overlay:not([hidden])) #wp-scrollbar-track,
-        body:has(.modal-overlay:not([hidden])) #wp-scrollbar-track { pointer-events: none; }
+    /* ── Log Workout Modal ── */
+    .wp-modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.72); display: flex; align-items: center; justify-content: center; z-index: 1300; }
+    .wp-modal-overlay[hidden] { display: none; }
+    .wp-modal-card { background: linear-gradient(160deg,#18002e 0%,#0b001c 100%); border: 1px solid rgba(255,45,120,0.32); border-radius: 16px; width: clamp(340px,90vw,500px); max-height: 90vh; display: flex; flex-direction: column; box-shadow: 0 0 40px rgba(255,45,120,0.15),0 24px 64px rgba(0,0,0,0.8); }
+    .wp-modal-head { display: flex; align-items: center; justify-content: space-between; padding: 14px 20px 11px; border-bottom: 1px solid rgba(255,255,255,0.1); flex-shrink: 0; }
+    .wp-modal-title-text { font-family: Impact,'Arial Black',sans-serif; font-size: 19px; letter-spacing: 2.5px; color: #ff2d78; text-transform: uppercase; }
+    .wp-modal-x { background: none; border: none; color: rgba(255,255,255,0.85); font-size: 19px; padding: 4px 8px; border-radius: 4px; transition: color 0.2s; line-height: 1; }
+    .wp-modal-x:hover { color: #ff2d78; }
+    .wp-modal-body { flex: 1; overflow-y: auto; overflow-x: hidden; padding: 14px 20px; scrollbar-width: thin; scrollbar-color: rgba(255,45,120,0.35) transparent; box-sizing: border-box; }
+    .wp-modal-body::-webkit-scrollbar { width: 4px; }
+    .wp-modal-body::-webkit-scrollbar-track { background: transparent; }
+    .wp-modal-body::-webkit-scrollbar-thumb { background: rgba(255,45,120,0.45); border-radius: 2px; }
+    .wp-modal-body * { box-sizing: border-box; }
+    .wpm-date-wrap { margin-bottom: 14px; position: relative; }
+    .wpm-field-label { font-family: Arial,sans-serif; font-size: 12px; letter-spacing: 1.2px; text-transform: uppercase; color: rgba(255,255,255,0.88); margin-bottom: 5px; }
+    .wpm-date-input { width: 100%; background: #1a0035; border: 1px solid rgba(255,45,120,0.3); border-radius: 8px; padding: 9px 14px; font-size: 14px; font-family: Arial,sans-serif; color: #f4f4f4; outline: none; cursor: pointer; }
+    .wpm-date-input:focus { border-color: rgba(255,45,120,0.7); box-shadow: 0 0 12px rgba(255,45,120,0.25); }
+    .wpm-day-section { margin-bottom: 14px; }
+    .wpm-entries-wrap { display: flex; gap: 4px; height: 128px; }
+    #wpm-entries-scroll { flex: 1; min-width: 0; overflow-y: scroll; scrollbar-width: none; -ms-overflow-style: none; }
+    #wpm-entries-scroll::-webkit-scrollbar { display: none; }
+    .wpm-scroll-track { width: 4px; flex-shrink: 0; position: relative; border-radius: 2px; }
+    .wpm-scroll-thumb { position: absolute; left: 0; width: 4px; min-height: 16px; background: rgba(255,45,120,0.45); border-radius: 2px; display: none; cursor: none !important; }
+    .wpm-day-heading { font-family: Arial,sans-serif; font-size: 12px; letter-spacing: 1.2px; text-transform: uppercase; color: rgba(255,255,255,0.88); margin-bottom: 6px; }
+    .wpm-day-empty { font-family: Arial,sans-serif; font-size: 14px; color: rgba(255,255,255,0.65); font-style: italic; padding: 2px 0 6px; }
+    .wpm-day-row { display: flex; align-items: center; gap: 8px; padding: 5px 0; border-bottom: 1px solid rgba(255,255,255,0.08); }
+    .wpm-day-row:last-of-type { border-bottom: none; }
+    .wpm-day-row-info { flex: 1; min-width: 0; }
+    .wpm-day-dur { font-family: Arial,sans-serif; font-size: 13px; color: rgba(255,255,255,0.9); white-space: nowrap; }
+    .wpm-day-kcal { font-family: Impact,'Arial Black',sans-serif; font-size: 14px; color: #fff; white-space: nowrap; min-width: 58px; text-align: right; }
+    .wpm-staged-row { display: flex; align-items: center; gap: 8px; padding: 5px 0; border-bottom: 1px solid rgba(255,255,255,0.08); opacity: 0.75; }
+    .wpm-staged-row:last-of-type { border-bottom: none; }
+    .wpm-staged-row-info { flex: 1; min-width: 0; }
+    .wpm-divider { border: none; border-top: 1px solid rgba(255,45,120,0.25); margin: 10px 0 8px; }
+    .wpm-add-label { font-family: Arial,sans-serif; font-size: 12px; letter-spacing: 1.2px; text-transform: uppercase; color: rgba(255,255,255,0.88); margin-bottom: 10px; }
+    .wpm-add-activity-btn { width: 100%; padding: 8px; margin-top: 8px; background: rgba(255,45,120,0.12); border: 1px dashed rgba(255,45,120,0.45); border-radius: 8px; color: #ff2d78; font-family: Arial,sans-serif; font-size: 14px; letter-spacing: 0.5px; transition: all 0.15s; }
+    .wpm-add-activity-btn:hover { background: rgba(255,45,120,0.22); border-color: rgba(255,45,120,0.7); color: #ff5599; }
+    .wpm-add-activity-btn:disabled { opacity: 0.35; cursor: default; }
+    .wpm-add-activity-btn:disabled:hover { background: rgba(255,45,120,0.12); border-color: rgba(255,45,120,0.45); color: #ff2d78; }
+    .wp-modal-card .workout-selected-chip { margin-top: 0; }
+    .wpm-note-section { margin-top: 10px; }
+    .wp-row .table-delete-btn,
+    .wpm-day-row .table-delete-btn,
+    .wpm-staged-row .table-delete-btn { color: rgba(255,255,255,0.5); border-color: rgba(255,45,120,0.75); }
+    .wp-modal-foot { display: flex; justify-content: flex-end; gap: 8px; padding: 10px 20px 14px; border-top: 1px solid rgba(255,255,255,0.1); flex-shrink: 0; }
 
-        .wp-table-inner {
-            max-width: 860px;
-            margin: 0 auto;
-            padding-bottom: 20px;
-        }
-        .wp-empty {
-            text-align: center;
-            color: rgba(255, 255, 255, 0.7);
-            font-family: Arial, sans-serif;
-            font-size: 17px;
-            padding: 80px 0;
-        }
+    @media (max-height: 700px) {
+        .wp-modal-card { max-height: 96vh; }
+        .wp-modal-head { padding: 10px 20px 9px; }
+        .wp-modal-body { padding: 10px 20px; }
+        .wpm-date-wrap { margin-bottom: 8px; }
+        .wpm-day-section { margin-bottom: 8px; }
+        .wpm-day-heading { margin-bottom: 3px; }
+        .wpm-entries-wrap { height: 80px; }
+        .wpm-divider { margin: 7px 0 5px; }
+        .wpm-add-label { margin-bottom: 6px; }
+        .wpm-add-activity-btn { padding: 6px; margin-top: 6px; }
+        .wpm-note-section { margin-top: 8px; }
+        #workout-note-input { height: 38px; }
+        .wp-modal-foot { padding: 7px 20px 9px; }
+    }
+</style>
+{% endblock %}
 
-        /* Date group */
-        .wp-date-group { margin-bottom: 18px; }
-        .wp-date-header-row {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            padding: 7px 10px;
-            background: rgba(8, 0, 20, 0.55);
-            border: 1px solid rgba(255, 45, 120, 0.45);
-            border-radius: 7px;
-            margin-bottom: 4px;
-        }
-        .wp-date-heading {
-            font-family: Impact, 'Arial Black', sans-serif;
-            font-size: 13px;
-            letter-spacing: 2.5px;
-            text-transform: uppercase;
-            color: #fff;
-            text-shadow: 0 0 16px rgba(255, 45, 120, 0.55);
-            white-space: nowrap;
-            min-width: 145px;
-        }
-        .wp-date-count {
-            font-family: Arial, sans-serif;
-            font-size: 11px;
-            letter-spacing: 0.5px;
-            color: rgba(255, 255, 255, 0.55);
-            font-weight: normal;
-            flex: 1;
-            min-width: 0;
-            display: flex;
-            align-items: center;
-        }
-        .wp-count-num {
-            flex: 1;
-            text-align: right;
-            padding-right: 0.3em;
-            font-variant-numeric: tabular-nums;
-        }
-        .wp-count-word { flex: 1; text-align: left; }
-        .wp-header-values {
-            display: flex;
-            align-items: baseline;
-            gap: 10px;
-        }
-        .wp-header-dur {
-            font-family: Arial, sans-serif;
-            font-size: 14px;
-            color: rgba(255, 255, 255, 0.75);
-            white-space: nowrap;
-            min-width: 54px;
-            text-align: right;
-        }
-        .wp-header-kcal {
-            font-family: Impact, 'Arial Black', sans-serif;
-            font-size: 17px;
-            color: rgba(255, 255, 255, 0.75);
-            white-space: nowrap;
-            min-width: 74px;
-            text-align: right;
-        }
-        .wp-header-kcal span {
-            font-family: Arial, sans-serif;
-            font-size: 12px;
-            color: rgba(255, 255, 255, 0.55);
-            margin-left: 5px;
-        }
-        .wp-day-note {
-            font-family: Arial, sans-serif;
-            font-size: 12px;
-            font-style: italic;
-            color: rgba(255, 255, 255, 0.88);
-            border-left: 3px solid rgba(255, 45, 120, 0.85);
-            padding: 2px 0 2px 10px;
-            margin: 0 2px 8px 2px;
-        }
-        .wp-row {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            padding: 7px 10px;
-            border-radius: 6px;
-            border: 1px solid rgba(255, 45, 120, 0.55);
-            margin-bottom: 3px;
-            transition: background 0.15s, border-color 0.15s;
-        }
-        .wp-date-group:hover .wp-row { background: rgba(255, 255, 255, 0.06); border-color: rgba(255, 45, 120, 0.7); }
-        .wp-row:hover { border-color: rgba(255, 45, 120, 0.85) !important; }
-        .wp-row-main { flex: 1; min-width: 0; }
-        .wp-row-values {
-            display: flex;
-            align-items: baseline;
-            gap: 10px;
-        }
-        .wp-row-dur {
-            font-family: Arial, sans-serif;
-            font-size: 14px;
-            color: #fff;
-            white-space: nowrap;
-        }
-        .wp-row-kcal {
-            font-family: Impact, 'Arial Black', sans-serif;
-            font-size: 17px;
-            color: #fff;
-            white-space: nowrap;
-            min-width: 74px;
-            text-align: right;
-        }
-        .wp-row-kcal span {
-            font-family: Arial, sans-serif;
-            font-size: 12px;
-            color: rgba(255, 255, 255, 0.88);
-            margin-left: 5px;
-        }
+{% block bg %}<div class="wp-bg"></div>{% endblock %}
 
-        /* ── Footer ── */
-        .wp-footer {
-            display: grid;
-            grid-template-columns: 1fr auto 1fr;
-            align-items: center;
-            padding: 14px 16px;
-            flex-shrink: 0;
-            background: rgba(8, 0, 20, 0.6);
-            border-top: 1px solid rgba(255, 45, 120, 0.12);
-        }
+{% block header_left %}
+<div class="wp-filter-wrap">
+    <div class="wp-range-menu" id="wp-range-menu">
+        <button class="wp-range-btn active" data-range="all">All</button>
+        <button class="wp-range-btn" data-range="1y">1Y</button>
+        <button class="wp-range-btn" data-range="90d">90D</button>
+        <button class="wp-range-btn" data-range="30d">30D</button>
+        <button class="wp-range-btn" data-range="7d">7D</button>
+        <button class="wp-range-btn" data-range="custom">Custom</button>
+    </div>
+    <button class="wp-filter-btn" id="wp-filter-btn" aria-label="Filter by date range" data-tip="Filter by date range">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/>
+            <line x1="16" y1="2" x2="16" y2="6"/>
+            <line x1="8" y1="2" x2="8" y2="6"/>
+            <line x1="3" y1="10" x2="21" y2="10"/>
+        </svg>
+    </button>
+</div>
+{% endblock %}
 
-        /* Filter button + sliding range menu */
-        .wp-filter-wrap { position: relative; }
-        .wp-filter-btn {
-            width: 44px; height: 44px;
-            border-radius: 12px;
-            background: rgba(255, 45, 120, 0.1);
-            border: 1px solid rgba(255, 45, 120, 0.4);
-            color: #ff2d78;
-            font-size: 20px;
-            display: flex; align-items: center; justify-content: center;
-            transition: all 0.2s;
-        }
-        .wp-filter-btn:hover, .wp-filter-btn.open {
-            background: rgba(255, 45, 120, 0.22);
-            border-color: rgba(255, 45, 120, 0.75);
-            box-shadow: 0 4px 20px rgba(255, 45, 120, 0.3);
-        }
-        .wp-range-menu {
-            position: absolute;
-            bottom: calc(100% + 10px);
-            left: 0;
-            display: flex;
-            flex-direction: column;
-            gap: 5px;
-            background: rgba(8, 0, 20, 0.97);
-            border: 1px solid rgba(255, 45, 120, 0.3);
-            border-radius: 10px;
-            padding: 10px;
-            min-width: 90px;
-            opacity: 0;
-            transform: translateY(10px);
-            pointer-events: none;
-            transition: opacity 0.18s ease, transform 0.18s ease;
-            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.6);
-        }
-        .wp-range-menu.open {
-            opacity: 1;
-            transform: translateY(0);
-            pointer-events: auto;
-        }
-        .wp-range-btn {
-            padding: 7px 14px;
-            background: transparent;
-            border: 1px solid rgba(255, 45, 120, 0.2);
-            border-radius: 6px;
-            color: rgba(255, 255, 255, 0.7);
-            font-family: Arial, sans-serif;
-            font-size: 12px;
-            letter-spacing: 0.5px;
-            text-transform: uppercase;
-            transition: all 0.15s;
-            text-align: center;
-        }
-        .wp-range-btn:hover { background: rgba(255, 45, 120, 0.12); color: #fff; border-color: rgba(255,45,120,0.45); }
-        .wp-range-btn.active {
-            background: rgba(255, 45, 120, 0.2);
-            border-color: rgba(255, 45, 120, 0.7);
-            color: #ff2d78;
-        }
-        .wp-custom-fields {
-            display: flex;
-            flex-direction: column;
-            gap: 10px;
-            margin: 2px 0 4px;
-        }
-        .wp-custom-field-label {
-            font-family: Arial, sans-serif;
-            font-size: 11px;
-            letter-spacing: 0.1em;
-            text-transform: uppercase;
-            color: rgba(255, 255, 255, 0.5);
-            margin-bottom: 5px;
-        }
-        /* "To" calendar opens upward so it stays in viewport on mobile */
-        #wp-cr-end-cal { top: auto; bottom: calc(100% + 6px); }
+{% block header_title %}
+<h1 class="site-title">Workouts</h1>
+{% endblock %}
 
-        /* Collapsible rows */
-        .wp-rows-wrap {
-            overflow: hidden;
-            max-height: 800px;
-            opacity: 1;
-            transition: max-height 0.3s ease, opacity 0.25s ease;
-        }
-        .wp-date-group.collapsed .wp-rows-wrap {
-            max-height: 0;
-            opacity: 0;
-        }
-        .wp-date-header-row { cursor: pointer; }
-        .wp-chevron {
-            font-size: 15px;
-            color: rgba(255, 45, 120, 0.7);
-            flex-shrink: 0;
-            width: 32px;
-            text-align: center;
-            transition: transform 0.25s ease;
-            display: inline-block;
-        }
-        .wp-date-group.collapsed .wp-chevron { transform: rotate(-90deg); }
-        .wp-add-btn {
-            width: 44px;
-            height: 44px;
-            border-radius: 12px;
-            background: linear-gradient(135deg, #ff2d78, #c73862);
-            border: none;
-            color: #fff;
-            font-size: 30px;
-            line-height: 1;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            box-shadow: 0 4px 20px rgba(255, 45, 120, 0.4);
-            transition: all 0.2s;
-        }
-        .wp-add-btn:hover { box-shadow: 0 4px 28px rgba(255, 45, 120, 0.85); transform: scale(1.06); }
+{% block header_stats %}
+<div class="site-stat">
+    <div class="site-stat-num" id="wp-count">—</div>
+    <div class="site-stat-label">This Week</div>
+</div>
+<div class="site-stat">
+    <div class="site-stat-num" id="wp-kcal">—</div>
+    <div class="site-stat-label">Kcals Burned</div>
+</div>
+<div class="site-stat wp-stat--streak">
+    <div class="site-stat-num" id="wp-streak">—</div>
+    <div class="site-stat-label">Day Streak</div>
+</div>
+{% endblock %}
 
-        /* ── Log Workout Modal ── */
-        .wp-modal-overlay {
-            position: fixed;
-            inset: 0;
-            background: rgba(0, 0, 0, 0.72);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            z-index: 1300;
-        }
-        .wp-modal-overlay[hidden] { display: none; }
+{% block footer_add %}
+<button class="site-add-btn" id="wp-add-btn"
+        aria-label="Log a workout" data-tip="Log a workout">+</button>
+{% endblock %}
 
-        .wp-modal-card {
-            background: linear-gradient(160deg, #18002e 0%, #0b001c 100%);
-            border: 1px solid rgba(255, 45, 120, 0.32);
-            border-radius: 16px;
-            width: clamp(340px, 90vw, 500px);
-            max-height: 90vh;
-            display: flex;
-            flex-direction: column;
-            box-shadow: 0 0 40px rgba(255,45,120,0.15), 0 24px 64px rgba(0,0,0,0.8);
-        }
-        .wp-modal-head {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            padding: 14px 20px 11px;
-            border-bottom: 1px solid rgba(255,255,255,0.1);
-            flex-shrink: 0;
-        }
-        .wp-modal-title-text {
-            font-family: Impact, 'Arial Black', sans-serif;
-            font-size: 19px;
-            letter-spacing: 2.5px;
-            color: #ff2d78;
-            text-transform: uppercase;
-        }
-        .wp-modal-x {
-            background: none;
-            border: none;
-            color: rgba(255,255,255,0.85);
-            font-size: 19px;
-            padding: 4px 8px;
-            border-radius: 4px;
-            transition: color 0.2s;
-            line-height: 1;
-        }
-        .wp-modal-x:hover { color: #ff2d78; }
+{% block content %}
+<!-- Workout log table -->
+<div class="wp-table-wrap">
+    <div class="wp-table-inner" id="wp-table-inner">
+        <div class="wp-empty" id="wp-empty">No workouts logged yet. Hit + to add your first.</div>
+    </div>
+</div>
 
-        .wp-modal-body {
-            flex: 1;
-            overflow-y: auto;
-            overflow-x: hidden;
-            padding: 14px 20px;
-            scrollbar-width: thin;
-            scrollbar-color: rgba(255,45,120,0.35) transparent;
-            box-sizing: border-box;
-        }
-        .wp-modal-body::-webkit-scrollbar { width: 4px; cursor: none; }
-        .wp-modal-body::-webkit-scrollbar-track { background: transparent; cursor: none; }
-        .wp-modal-body::-webkit-scrollbar-thumb { background: rgba(255,45,120,0.45); border-radius: 2px; cursor: none; }
-        .wp-modal-body * { box-sizing: border-box; }
+<!-- Page-edge scrollbar -->
+<div id="wp-scrollbar-track"><div id="wp-scrollbar-thumb"></div></div>
 
-        /* Date picker */
-        .wpm-date-wrap { margin-bottom: 14px; position: relative; }
-        .wpm-field-label {
-            font-family: Arial, sans-serif;
-            font-size: 12px;
-            letter-spacing: 1.2px;
-            text-transform: uppercase;
-            color: rgba(255, 255, 255, 0.88);
-            margin-bottom: 5px;
-        }
-        /* custom date picker input reuses history-date-input style */
-        .wpm-date-input {
-            width: 100%;
-            background: #1a0035;
-            border: 1px solid rgba(255, 45, 120, 0.3);
-            border-radius: 8px;
-            padding: 9px 14px;
-            font-size: 14px;
-            font-family: Arial, sans-serif;
-            color: #f4f4f4;
-            outline: none;
-            cursor: pointer;
-        }
-        .wpm-date-input:focus { border-color: rgba(255,45,120,0.7); box-shadow: 0 0 12px rgba(255,45,120,0.25); }
-        /* clickable date heading */
-        .wp-date-heading {
-            cursor: pointer;
-            transition: color 0.15s;
-        }
-        .wp-date-group:hover .wp-date-heading { color: #fff; text-shadow: 0 0 20px rgba(255, 45, 120, 0.9); }
-
-        /* Day entries list */
-        .wpm-day-section { margin-bottom: 14px; }
-        .wpm-entries-wrap {
-            display: flex;
-            gap: 4px;
-            height: 128px;
-        }
-        #wpm-entries-scroll {
-            flex: 1;
-            min-width: 0;
-            overflow-y: scroll;
-            scrollbar-width: none;
-            -ms-overflow-style: none;
-        }
-        #wpm-entries-scroll::-webkit-scrollbar { display: none; }
-        .wpm-scroll-track {
-            width: 4px;
-            flex-shrink: 0;
-            position: relative;
-            border-radius: 2px;
-        }
-        .wpm-scroll-thumb {
-            position: absolute;
-            left: 0;
-            width: 4px;
-            min-height: 16px;
-            background: rgba(255,45,120,0.45);
-            border-radius: 2px;
-            display: none;
-            cursor: none !important;
-        }
-        .wpm-day-heading {
-            font-family: Arial, sans-serif;
-            font-size: 12px;
-            letter-spacing: 1.2px;
-            text-transform: uppercase;
-            color: rgba(255,255,255,0.88);
-            margin-bottom: 6px;
-        }
-        .wpm-day-empty {
-            font-family: Arial, sans-serif;
-            font-size: 14px;
-            color: rgba(255,255,255,0.65);
-            font-style: italic;
-            padding: 2px 0 6px;
-        }
-        .wpm-day-row {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            padding: 5px 0;
-            border-bottom: 1px solid rgba(255,255,255,0.08);
-        }
-        .wpm-day-row:last-of-type { border-bottom: none; }
-        .wpm-day-row-info { flex: 1; min-width: 0; }
-        .wpm-day-dur {
-            font-family: Arial, sans-serif;
-            font-size: 13px;
-            color: rgba(255,255,255,0.9);
-            white-space: nowrap;
-        }
-        .wpm-day-kcal {
-            font-family: Impact, 'Arial Black', sans-serif;
-            font-size: 14px;
-            color: #fff;
-            white-space: nowrap;
-            min-width: 58px;
-            text-align: right;
-        }
-
-        /* Staged (pending save) rows */
-        .wpm-staged-row {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            padding: 5px 0;
-            border-bottom: 1px solid rgba(255,255,255,0.08);
-            opacity: 0.75;
-        }
-        .wpm-staged-row:last-of-type { border-bottom: none; }
-        .wpm-staged-row-info { flex: 1; min-width: 0; }
-
-        /* Divider + add section */
-        .wpm-divider {
-            border: none;
-            border-top: 1px solid rgba(255,45,120,0.25);
-            margin: 10px 0 8px;
-        }
-        .wpm-add-label {
-            font-family: Arial, sans-serif;
-            font-size: 12px;
-            letter-spacing: 1.2px;
-            text-transform: uppercase;
-            color: rgba(255,255,255,0.88);
-            margin-bottom: 10px;
-        }
-        .wpm-add-activity-btn {
-            width: 100%;
-            padding: 8px;
-            margin-top: 8px;
-            background: rgba(255,45,120,0.12);
-            border: 1px dashed rgba(255,45,120,0.45);
-            border-radius: 8px;
-            color: #ff2d78;
-            font-family: Arial, sans-serif;
-            font-size: 14px;
-            letter-spacing: 0.5px;
-            transition: all 0.15s;
-        }
-        .wpm-add-activity-btn:hover {
-            background: rgba(255,45,120,0.22);
-            border-color: rgba(255,45,120,0.7);
-            color: #ff5599;
-        }
-        .wpm-add-activity-btn:disabled {
-            opacity: 0.35;
-            cursor: default;
-        }
-        .wpm-add-activity-btn:disabled:hover {
-            background: rgba(255,45,120,0.12);
-            border-color: rgba(255,45,120,0.45);
-            color: #ff2d78;
-        }
-        /* chip replaces input in-place; remove its top margin so heights match */
-        .wp-modal-card .workout-selected-chip { margin-top: 0; }
-        .wpm-note-section { margin-top: 10px; }
-
-        /* Delete buttons: match weights-table styling */
-        .wp-row .table-delete-btn,
-        .wpm-day-row .table-delete-btn,
-        .wpm-staged-row .table-delete-btn {
-            color: rgba(255, 255, 255, 0.5);
-            border-color: rgba(255, 45, 120, 0.75);
-        }
-
-        /* Modal footer */
-        .wp-modal-foot {
-            display: flex;
-            justify-content: flex-end;
-            gap: 8px;
-            padding: 10px 20px 14px;
-            border-top: 1px solid rgba(255,255,255,0.1);
-            flex-shrink: 0;
-        }
-    </style>
-</head>
-<body>
-    <div class="wp-bg"></div>
-    <div id="site-cursor"></div>
-
-    <!-- Page shell -->
-    <div class="wp-shell">
-
-        <!-- Header -->
-        <header class="wp-header">
-            <a class="wp-back" href="/" data-tip="Back to dashboard">&#8592; Dashboard</a>
-            <div class="wp-title">Workouts</div>
-            <div class="wp-stats">
-                <div class="wp-stat">
-                    <div class="wp-stat-num" id="wp-count">—</div>
-                    <div class="wp-stat-label">This Week</div>
-                </div>
-                <div class="wp-stat">
-                    <div class="wp-stat-num" id="wp-kcal">—</div>
-                    <div class="wp-stat-label">Kcals Burned</div>
-                </div>
-                <div class="wp-stat">
-                    <div class="wp-stat-num" id="wp-streak">—</div>
-                    <div class="wp-stat-label">Day Streak</div>
+<!-- Custom date range modal -->
+<div id="wp-custom-modal" class="modal-overlay" hidden role="dialog" aria-modal="true" aria-labelledby="wp-custom-modal-title">
+    <div class="modal-card">
+        <h2 class="modal-title" id="wp-custom-modal-title">Custom Range</h2>
+        <div class="wp-custom-fields">
+            <div>
+                <div class="wp-custom-field-label">From</div>
+                <div class="date-picker-wrap" id="wp-cr-start-wrap" style="margin-bottom:0;">
+                    <input type="text" class="history-date-input wpm-date-input" id="wp-cr-start-input" placeholder="Select date" readonly>
+                    <div class="date-picker-dropdown" id="wp-cr-start-cal" hidden>
+                        <div class="dp-header">
+                            <button type="button" class="dp-nav" id="wp-cr-start-prev">&#8249;</button>
+                            <span class="dp-month-year" id="wp-cr-start-month"></span>
+                            <button type="button" class="dp-nav" id="wp-cr-start-next">&#8250;</button>
+                        </div>
+                        <div class="dp-day-names"><span>Su</span><span>Mo</span><span>Tu</span><span>We</span><span>Th</span><span>Fr</span><span>Sa</span></div>
+                        <div class="dp-grid" id="wp-cr-start-grid"></div>
+                    </div>
                 </div>
             </div>
-        </header>
-
-        <!-- Workout log table -->
-        <div class="wp-table-wrap">
-            <div class="wp-table-inner" id="wp-table-inner">
-                <div class="wp-empty" id="wp-empty">No workouts logged yet. Hit + to add your first.</div>
+            <div>
+                <div class="wp-custom-field-label">To</div>
+                <div class="date-picker-wrap" id="wp-cr-end-wrap" style="margin-bottom:0;">
+                    <input type="text" class="history-date-input wpm-date-input" id="wp-cr-end-input" placeholder="Select date" readonly>
+                    <div class="date-picker-dropdown" id="wp-cr-end-cal" hidden>
+                        <div class="dp-header">
+                            <button type="button" class="dp-nav" id="wp-cr-end-prev">&#8249;</button>
+                            <span class="dp-month-year" id="wp-cr-end-month"></span>
+                            <button type="button" class="dp-nav" id="wp-cr-end-next">&#8250;</button>
+                        </div>
+                        <div class="dp-day-names"><span>Su</span><span>Mo</span><span>Tu</span><span>We</span><span>Th</span><span>Fr</span><span>Sa</span></div>
+                        <div class="dp-grid" id="wp-cr-end-grid"></div>
+                    </div>
+                </div>
             </div>
         </div>
-
-        <!-- Footer -->
-        <footer class="wp-footer">
-            <div class="wp-filter-wrap">
-                <div class="wp-range-menu" id="wp-range-menu">
-                    <button class="wp-range-btn active" data-range="all">All</button>
-                    <button class="wp-range-btn" data-range="1y">1Y</button>
-                    <button class="wp-range-btn" data-range="90d">90D</button>
-                    <button class="wp-range-btn" data-range="30d">30D</button>
-                    <button class="wp-range-btn" data-range="7d">7D</button>
-                    <button class="wp-range-btn" data-range="custom">Custom</button>
-                </div>
-                <button class="wp-filter-btn" id="wp-filter-btn" aria-label="Filter by date range" data-tip="Filter by date range">
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                        <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/>
-                        <line x1="16" y1="2" x2="16" y2="6"/>
-                        <line x1="8" y1="2" x2="8" y2="6"/>
-                        <line x1="3" y1="10" x2="21" y2="10"/>
-                    </svg>
-                </button>
-            </div>
-            <button class="wp-add-btn" id="wp-add-btn" aria-label="Log a workout" data-tip="Log a workout">+</button>
-            <div></div>
-        </footer>
-    </div>
-
-    <!-- Page-edge scrollbar for .wp-table-wrap -->
-    <div id="wp-scrollbar-track"><div id="wp-scrollbar-thumb"></div></div>
-
-    <!-- Delete confirm modal (reuses shared modal-overlay styles) -->
-    <div id="wp-confirm-modal" class="modal-overlay" hidden role="dialog" aria-modal="true" aria-labelledby="wp-confirm-title">
-        <div class="modal-card">
-            <h2 class="modal-title" id="wp-confirm-title">Confirm</h2>
-            <p id="wp-confirm-msg" class="overwrite-message"></p>
-            <div class="modal-actions">
-                <button class="modal-btn modal-cancel" id="wp-confirm-cancel">Cancel</button>
-                <button class="modal-btn modal-save"   id="wp-confirm-ok">Delete</button>
-            </div>
+        <div class="modal-actions">
+            <button class="modal-btn modal-cancel" id="wp-custom-cancel">Cancel</button>
+            <button class="modal-btn modal-save"   id="wp-custom-apply">Apply</button>
         </div>
     </div>
+</div>
 
-    <!-- Custom date range modal -->
-    <div id="wp-custom-modal" class="modal-overlay" hidden role="dialog" aria-modal="true" aria-labelledby="wp-custom-modal-title">
-        <div class="modal-card">
-            <h2 class="modal-title" id="wp-custom-modal-title">Custom Range</h2>
-            <div class="wp-custom-fields">
-                <div>
-                    <div class="wp-custom-field-label">From</div>
-                    <div class="date-picker-wrap" id="wp-cr-start-wrap" style="margin-bottom:0;">
-                        <input type="text" class="history-date-input wpm-date-input" id="wp-cr-start-input" placeholder="Select date" readonly>
-                        <div class="date-picker-dropdown" id="wp-cr-start-cal" hidden>
-                            <div class="dp-header">
-                                <button type="button" class="dp-nav" id="wp-cr-start-prev">&#8249;</button>
-                                <span class="dp-month-year" id="wp-cr-start-month"></span>
-                                <button type="button" class="dp-nav" id="wp-cr-start-next">&#8250;</button>
-                            </div>
-                            <div class="dp-day-names">
-                                <span>Su</span><span>Mo</span><span>Tu</span><span>We</span>
-                                <span>Th</span><span>Fr</span><span>Sa</span>
-                            </div>
-                            <div class="dp-grid" id="wp-cr-start-grid"></div>
-                        </div>
-                    </div>
-                </div>
-                <div>
-                    <div class="wp-custom-field-label">To</div>
-                    <div class="date-picker-wrap" id="wp-cr-end-wrap" style="margin-bottom:0;">
-                        <input type="text" class="history-date-input wpm-date-input" id="wp-cr-end-input" placeholder="Select date" readonly>
-                        <div class="date-picker-dropdown" id="wp-cr-end-cal" hidden>
-                            <div class="dp-header">
-                                <button type="button" class="dp-nav" id="wp-cr-end-prev">&#8249;</button>
-                                <span class="dp-month-year" id="wp-cr-end-month"></span>
-                                <button type="button" class="dp-nav" id="wp-cr-end-next">&#8250;</button>
-                            </div>
-                            <div class="dp-day-names">
-                                <span>Su</span><span>Mo</span><span>Tu</span><span>We</span>
-                                <span>Th</span><span>Fr</span><span>Sa</span>
-                            </div>
-                            <div class="dp-grid" id="wp-cr-end-grid"></div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            <div class="modal-actions">
-                <button class="modal-btn modal-cancel" id="wp-custom-cancel">Cancel</button>
-                <button class="modal-btn modal-save"   id="wp-custom-apply">Apply</button>
-            </div>
+<!-- Delete-with-checkboxes modal -->
+<div id="wp-del-check-modal" class="modal-overlay" hidden role="dialog" aria-modal="true" aria-labelledby="wp-del-check-title">
+    <div class="modal-card">
+        <h2 class="modal-title" id="wp-del-check-title">Delete Workouts</h2>
+        <p class="overwrite-message">Select workouts to remove. This cannot be undone.</p>
+        <div id="wp-del-checks"></div>
+        <div class="modal-actions">
+            <button class="modal-btn modal-cancel" id="wp-del-check-cancel">Cancel</button>
+            <button class="modal-btn modal-save"   id="wp-del-check-ok">Delete selected</button>
         </div>
     </div>
+</div>
 
-    <!-- Delete-with-checkboxes modal (save with pending deletes) -->
-    <div id="wp-del-check-modal" class="modal-overlay" hidden role="dialog" aria-modal="true" aria-labelledby="wp-del-check-title">
-        <div class="modal-card">
-            <h2 class="modal-title" id="wp-del-check-title">Delete Workouts</h2>
-            <p class="overwrite-message">Select workouts to remove. This cannot be undone.</p>
-            <div id="wp-del-checks"></div>
-            <div class="modal-actions">
-                <button class="modal-btn modal-cancel" id="wp-del-check-cancel">Cancel</button>
-                <button class="modal-btn modal-save"   id="wp-del-check-ok">Delete selected</button>
-            </div>
+<!-- Log Workout Modal -->
+<div id="wp-log-modal" class="wp-modal-overlay" hidden role="dialog" aria-modal="true" aria-labelledby="wp-log-modal-title">
+    <div class="wp-modal-card">
+        <div class="wp-modal-head">
+            <div class="wp-modal-title-text" id="wp-log-modal-title">Log Workout</div>
+            <button class="wp-modal-x" id="wp-modal-x" aria-label="Close">&#10005;</button>
         </div>
-    </div>
-
-    <!-- Log Workout Modal -->
-    <div id="wp-log-modal" class="wp-modal-overlay" hidden role="dialog" aria-modal="true" aria-labelledby="wp-log-modal-title">
-        <div class="wp-modal-card">
-            <div class="wp-modal-head">
-                <div class="wp-modal-title-text" id="wp-log-modal-title">Log Workout</div>
-                <button class="wp-modal-x" id="wp-modal-x" aria-label="Close">&#10005;</button>
+        <div class="wp-modal-body">
+            <div class="wpm-date-wrap">
+                <div class="wpm-field-label">Date</div>
+                <div class="date-picker-wrap" id="wpm-dp-wrap" style="margin-bottom:0;">
+                    <input type="text" class="history-date-input wpm-date-input" id="wp-date-input" placeholder="Select a date" readonly>
+                    <div class="date-picker-dropdown" id="wpm-calendar" hidden>
+                        <div class="dp-header">
+                            <button type="button" class="dp-nav" id="wpm-dp-prev">&#8249;</button>
+                            <span class="dp-month-year" id="wpm-dp-month-label"></span>
+                            <button type="button" class="dp-nav" id="wpm-dp-next">&#8250;</button>
+                        </div>
+                        <div class="dp-day-names"><span>Su</span><span>Mo</span><span>Tu</span><span>We</span><span>Th</span><span>Fr</span><span>Sa</span></div>
+                        <div class="dp-grid" id="wpm-dp-grid"></div>
+                    </div>
+                </div>
             </div>
-
-            <div class="wp-modal-body">
-
-                <!-- Date picker (custom themed) -->
-                <div class="wpm-date-wrap">
-                    <div class="wpm-field-label">Date</div>
-                    <div class="date-picker-wrap" id="wpm-dp-wrap" style="margin-bottom:0;">
-                        <input type="text" class="history-date-input wpm-date-input" id="wp-date-input"
-                               placeholder="Select a date" readonly>
-                        <div class="date-picker-dropdown" id="wpm-calendar" hidden>
-                            <div class="dp-header">
-                                <button type="button" class="dp-nav" id="wpm-dp-prev">&#8249;</button>
-                                <span class="dp-month-year" id="wpm-dp-month-label"></span>
-                                <button type="button" class="dp-nav" id="wpm-dp-next">&#8250;</button>
-                            </div>
-                            <div class="dp-day-names">
-                                <span>Su</span><span>Mo</span><span>Tu</span><span>We</span>
-                                <span>Th</span><span>Fr</span><span>Sa</span>
-                            </div>
-                            <div class="dp-grid" id="wpm-dp-grid"></div>
+            <div class="wpm-day-section">
+                <div class="wpm-day-heading" id="wpm-day-heading">Logged for today</div>
+                <div class="wpm-entries-wrap">
+                    <div id="wpm-entries-scroll">
+                        <div id="wpm-day-entries">
+                            <div class="wpm-day-empty" id="wpm-day-empty">No workouts logged for this day yet.</div>
                         </div>
+                        <div id="wpm-staged-entries"></div>
                     </div>
+                    <div class="wpm-scroll-track"><div class="wpm-scroll-thumb" id="wpm-scroll-thumb"></div></div>
                 </div>
-
-                <!-- Existing + staged workouts for selected date -->
-                <div class="wpm-day-section">
-                    <div class="wpm-day-heading" id="wpm-day-heading">Logged for today</div>
-                    <div class="wpm-entries-wrap">
-                        <div id="wpm-entries-scroll">
-                            <div id="wpm-day-entries">
-                                <div class="wpm-day-empty" id="wpm-day-empty">No workouts logged for this day yet.</div>
-                            </div>
-                            <div id="wpm-staged-entries"></div>
-                        </div>
-                        <div class="wpm-scroll-track">
-                            <div class="wpm-scroll-thumb" id="wpm-scroll-thumb"></div>
-                        </div>
-                    </div>
+            </div>
+            <hr class="wpm-divider">
+            <div class="wpm-add-label">Add Activity</div>
+            <div class="workout-search-wrap">
+                <input type="text" id="workout-type-input" class="wpm-date-input" placeholder="Search workout types…" autocomplete="off" spellcheck="false">
+                <div class="workout-selected-chip" id="workout-selected-chip" hidden>
+                    <span class="workout-chip-tier" id="workout-chip-tier"></span>
+                    <span id="workout-selected-label"></span>
+                    <button type="button" class="workout-chip-clear" id="workout-chip-clear" aria-label="Clear">&#10005;</button>
                 </div>
-
-                <hr class="wpm-divider">
-                <div class="wpm-add-label">Add activity</div>
-
-                <!-- Type search -->
-                <div class="workout-form-field" style="position:relative; margin-bottom:10px;">
-                    <div class="workout-search-wrap">
-                        <input type="text" class="workout-search-input" id="workout-type-input"
-                               placeholder="Search workout types…" autocomplete="off" spellcheck="false">
-                        <div class="workout-search-dropdown" id="workout-search-dropdown" hidden></div>
-                    </div>
-                    <div class="workout-selected-chip" id="workout-selected-chip" hidden>
-                        <span class="workout-chip-tier" id="workout-chip-tier"></span>
-                        <span id="workout-selected-label"></span>
-                        <button type="button" class="workout-chip-clear" id="workout-chip-clear" aria-label="Clear">&#10005;</button>
-                    </div>
+                <div class="workout-search-dropdown" id="workout-search-dropdown" hidden></div>
+            </div>
+            <div class="workout-form-field" id="workout-speed-field" style="margin-bottom:10px;">
+                <div class="workout-form-label">Speed</div>
+                <div class="workout-stepper-row">
+                    <button class="workout-stepper-btn" id="workout-speed-down" type="button">&#8722;</button>
+                    <div class="workout-dur-val" id="workout-speed-val">5.0</div>
+                    <button class="workout-stepper-btn" id="workout-speed-up" type="button">+</button>
+                    <span class="workout-dur-unit">mph</span>
                 </div>
-
-                <!-- Speed -->
-                <div class="workout-form-field" id="workout-speed-field" style="margin-bottom:10px;">
-                    <div class="workout-form-label">Speed</div>
+            </div>
+            <div class="workout-form-row" style="margin-bottom:10px;">
+                <div class="workout-form-field" id="workout-dur-field">
+                    <div class="workout-form-label">Duration</div>
                     <div class="workout-stepper-row">
-                        <button class="workout-stepper-btn" id="workout-speed-down" type="button">&#8722;</button>
-                        <div class="workout-dur-val" id="workout-speed-val">5.0</div>
-                        <button class="workout-stepper-btn" id="workout-speed-up" type="button">+</button>
-                        <span class="workout-dur-unit">mph</span>
+                        <button class="workout-stepper-btn" id="workout-dur-down" type="button">&#8722;</button>
+                        <div class="workout-dur-val" id="workout-dur-val">30</div>
+                        <button class="workout-stepper-btn" id="workout-dur-up" type="button">+</button>
+                        <span class="workout-dur-unit">min</span>
                     </div>
                 </div>
-
-                <!-- Duration + Kcal -->
-                <div class="workout-form-row" style="margin-bottom:10px;">
-                    <div class="workout-form-field" id="workout-dur-field">
-                        <div class="workout-form-label">Duration</div>
-                        <div class="workout-stepper-row">
-                            <button class="workout-stepper-btn" id="workout-dur-down" type="button">&#8722;</button>
-                            <div class="workout-dur-val" id="workout-dur-val">30</div>
-                            <button class="workout-stepper-btn" id="workout-dur-up" type="button">+</button>
-                            <span class="workout-dur-unit">min</span>
-                        </div>
-                    </div>
-                    <div class="workout-form-field workout-kcal-preview-wrap">
-                        <div class="workout-form-label">Est. Calories</div>
-                        <div class="workout-kcal-preview">
-                            <span class="workout-kcal-num" id="workout-kcal-num">&#8212;</span>
-                            <span class="workout-kcal-unit">kcal</span>
-                        </div>
+                <div class="workout-form-field workout-kcal-preview-wrap">
+                    <div class="workout-form-label">Est. Calories</div>
+                    <div class="workout-kcal-preview">
+                        <span class="workout-kcal-num" id="workout-kcal-num">&#8212;</span>
+                        <span class="workout-kcal-unit">kcal</span>
                     </div>
                 </div>
-
-                <!-- Add Activity button -->
-                <button type="button" class="wpm-add-activity-btn" id="wpm-add-activity-btn">+ Add Activity</button>
-
-                <!-- Day note -->
-                <div class="wpm-note-section">
-                    <div class="workout-form-label">Day note (optional)</div>
-                    <textarea class="workout-note-input" id="workout-note-input"
-                              placeholder="e.g. Push day — chest and triceps"
-                              rows="2" maxlength="300"></textarea>
-                </div>
-
-            </div><!-- /wp-modal-body -->
-
-            <div class="wp-modal-foot">
-                <button class="modal-btn modal-cancel" id="wp-modal-cancel">Cancel</button>
-                <button class="modal-btn modal-save"   id="wp-modal-save">Save</button>
+            </div>
+            <button type="button" class="wpm-add-activity-btn" id="wpm-add-activity-btn">+ Add Activity</button>
+            <div class="wpm-note-section">
+                <div class="workout-form-label">Day note (optional)</div>
+                <textarea class="workout-note-input" id="workout-note-input" placeholder="e.g. Push day — chest and triceps" rows="2" maxlength="300"></textarea>
             </div>
         </div>
+        <div class="wp-modal-foot">
+            <button class="modal-btn modal-cancel" id="wp-modal-cancel">Cancel</button>
+            <button class="modal-btn modal-save"   id="wp-modal-save">Save</button>
+        </div>
     </div>
+</div>
+{% endblock %}
 
-    <script>
-    /* Hydrate localStorage from server-rendered prefs */
-    (function () {
-        const prefs = {{ prefs | tojson }};
-        Object.entries(prefs).forEach(([k, v]) => {
-            if (localStorage.getItem(k) === null) localStorage.setItem(k, v);
-        });
-    })();
-
-    /* ── Streak temperature glow ── */
-    const STREAK_STOPS = [
-        [ 60, 120, 255],
-        [100, 175, 255],
-        [155, 215, 255],
-        [255, 245, 110],
-        [255, 225,  40],
-        [255, 155,  30],
-        [255,  90,  30],
-        [255,  60,  60],
-    ];
-    function applyStreakGlow(numEl, labelEl, val) {
-        numEl.classList.remove('streak-flame-num');
-        if (labelEl) labelEl.classList.remove('streak-flame-label');
-        if (val >= 7) {
-            numEl.style.color = '';
-            numEl.style.textShadow = '';
-            numEl.classList.add('streak-flame-num');
-            if (labelEl) {
-                labelEl.style.color = '';
-                labelEl.style.textShadow = '';
-                labelEl.classList.add('streak-flame-label');
-            }
-        } else {
-            const [r, g, b] = STREAK_STOPS[Math.min(Math.max(Math.round(val), 0), 7)];
-            const color = `rgb(${r},${g},${b})`;
-            const fade  = `rgba(${r},${g},${b},0.35)`;
-            numEl.style.color = color;
-            numEl.style.textShadow = `0 0 6px ${color}, 0 0 18px ${color}, 0 0 36px ${fade}`;
-            if (labelEl) {
-                labelEl.style.color = color;
-                labelEl.style.textShadow = `0 0 5px ${color}, 0 0 14px ${fade}`;
-            }
-        }
-    }
-
-    /* ── Custom cursor ── */
-    (function () {
-        const el = document.getElementById('site-cursor');
-        const cursors = {};
-        let activeKey = 'normal';
-        let mouseInDoc = false;
-        let activeCursorSet = localStorage.getItem('pref_profile_pic') || '1';
-
-        const CURSOR_SETS = {
-            '1': [['/static/pointer.png',  240, 10, 48], ['/static/editpointer.png',  650, 30, 64]],
-            '2': [['/static/pointer2.png', 198, 10, 48], ['/static/editpointer2.png',  460, 30, 64]],
-            '3': [['/static/pointer3.png', 198, 10, 48], ['/static/editpointer3.png',  460, 30, 64]],
-            '4': [['/static/pointer4.png', 198, 10, 48], ['/static/editpointer4.png',  460, 30, 64]],
-        };
-
-        function processImg(src, origHotX, origHotY, key, renderH) {
-            const img = new Image();
-            img.onload = function () {
-                const h = renderH || 48, scale = h / img.height, w = Math.round(img.width * scale);
-                const cv = document.createElement('canvas');
-                cv.width = w; cv.height = h;
-                const ctx = cv.getContext('2d');
-                ctx.drawImage(img, 0, 0, w, h);
-                const id = ctx.getImageData(0, 0, w, h), d = id.data;
-                for (let i = 0; i < d.length; i += 4) {
-                    if (d[i] > 240 && d[i+1] > 240 && d[i+2] > 240) d[i+3] = 0;
-                }
-                ctx.putImageData(id, 0, 0);
-                const entry = { url: cv.toDataURL(), hotX: Math.round(origHotX * scale), hotY: Math.round(origHotY * scale), w, h };
-                cursors[key] = entry;
-                if (key === 'normal' + activeCursorSet) {
-                    cursors['normal'] = entry;
-                    applyCursor('normal');
-                    if (mouseInDoc) el.style.display = 'block';
-                }
-                if (key === 'edit' + activeCursorSet) {
-                    cursors['edit'] = entry;
-                    if (activeKey === 'edit') applyCursor('edit');
-                }
-            };
-            img.src = src;
-        }
-
-        function applyCursor(key) {
-            const c = cursors[key]; if (!c) return;
-            el.style.width = c.w + 'px'; el.style.height = c.h + 'px';
-            el.style.backgroundImage = `url(${c.url})`;
-        }
-
-        Object.keys(CURSOR_SETS).forEach(n => {
-            const [nSrc, nHx, nHy, nRh] = CURSOR_SETS[n][0];
-            const [eSrc, eHx, eHy, eRh] = CURSOR_SETS[n][1];
-            processImg(nSrc, nHx, nHy, 'normal' + n, nRh);
-            processImg(eSrc, eHx, eHy, 'edit'   + n, eRh);
-        });
-
-        document.addEventListener('mousemove', e => {
-            const c = cursors[activeKey]; if (!c) return;
-            el.style.left = (e.clientX - c.hotX) + 'px';
-            el.style.top  = (e.clientY - c.hotY) + 'px';
-        });
-        document.addEventListener('mouseleave', () => { mouseInDoc = false; el.style.display = 'none'; });
-        document.addEventListener('mouseenter', () => { mouseInDoc = true; if (cursors['normal']) el.style.display = 'block'; });
-    })();
-
-    /* ── Tooltip ── */
-    (function () {
-        const ttEl = document.createElement('div');
-        ttEl.id = 'site-tooltip';
-        document.body.appendChild(ttEl);
-        function pos(x, y) {
-            const w = ttEl.offsetWidth, h = ttEl.offsetHeight;
-            ttEl.style.top  = Math.round(y - h / 2) + 'px';
-            ttEl.style.left = Math.max(8, Math.round(x - 12 - w)) + 'px';
-        }
-        document.addEventListener('mouseover', e => {
-            const t = e.target.closest('[data-tip]');
-            if (t) { ttEl.textContent = t.dataset.tip; ttEl.style.opacity = '1'; }
-            else { ttEl.style.opacity = '0'; }
-        });
-        document.addEventListener('mousemove', e => { if (ttEl.style.opacity === '1') pos(e.clientX, e.clientY); });
-        document.addEventListener('mouseleave', () => { ttEl.style.opacity = '0'; });
-    })();
-
-    /* ── Confirm modal ── */
-    function showConfirm(title, message, okLabel, onOk) {
-        const modal = document.getElementById('wp-confirm-modal');
-        document.getElementById('wp-confirm-title').textContent  = title;
-        document.getElementById('wp-confirm-msg').textContent    = message;
-        document.getElementById('wp-confirm-ok').textContent     = okLabel;
-        modal.hidden = false;
-        document.getElementById('wp-confirm-ok').onclick     = () => { modal.hidden = true; onOk(); };
-        document.getElementById('wp-confirm-cancel').onclick  = () => { modal.hidden = true; };
-    }
-
+{% block page_js %}
+<script>
     /* ── Workout data ── */
     const WORKOUTS = [
         { name: 'Aerobics Class',                  met: 6.5  },
@@ -1152,57 +480,25 @@
         { name: 'Yoga',                            met: 2.5  },
         { name: 'Zumba',                           met: 6.5  },
     ];
-
     const SPEED_TABLES = {
-        running: [
-            [0.5,1.8],[1.0,2.3],[1.5,2.8],[2.0,3.0],[2.5,3.3],
-            [3.0,3.8],[3.5,4.3],[4.0,5.0],[4.5,6.3],[5.0,8.3],
-            [5.5,9.0],[6.0,9.8],[6.5,10.5],[7.0,11.0],[7.5,11.5],
-            [8.0,11.8],[8.5,12.3],[9.0,12.8],[9.5,13.5],[10.0,14.5],
-            [11.0,16.0],[12.0,19.0]
-        ],
-        cycling: [
-            [3.0,3.5],[5.0,4.0],[8.0,5.0],[10.0,6.8],
-            [12.0,8.0],[14.0,10.0],[16.0,12.0],[19.0,14.0],[22.0,16.0],[25.0,19.0]
-        ],
-        walking: [
-            [0.5,1.5],[1.0,2.0],[1.5,2.3],[2.0,2.5],[2.5,3.0],
-            [3.0,3.5],[3.5,4.3],[4.0,5.0],[4.5,6.0],[5.0,7.0]
-        ]
+        running: [[0.5,1.8],[1.0,2.3],[1.5,2.8],[2.0,3.0],[2.5,3.3],[3.0,3.8],[3.5,4.3],[4.0,5.0],[4.5,6.3],[5.0,8.3],[5.5,9.0],[6.0,9.8],[6.5,10.5],[7.0,11.0],[7.5,11.5],[8.0,11.8],[8.5,12.3],[9.0,12.8],[9.5,13.5],[10.0,14.5],[11.0,16.0],[12.0,19.0]],
+        cycling: [[3.0,3.5],[5.0,4.0],[8.0,5.0],[10.0,6.8],[12.0,8.0],[14.0,10.0],[16.0,12.0],[19.0,14.0],[22.0,16.0],[25.0,19.0]],
+        walking: [[0.5,1.5],[1.0,2.0],[1.5,2.3],[2.0,2.5],[2.5,3.0],[3.0,3.5],[3.5,4.3],[4.0,5.0],[4.5,6.0],[5.0,7.0]]
     };
-
     function speedToMet(mph, table) {
         const pts = SPEED_TABLES[table] || SPEED_TABLES.running;
         for (let i = 0; i < pts.length - 1; i++) {
-            const [lo, loM] = pts[i], [hi, hiM] = pts[i + 1];
-            if (mph >= lo && mph <= hi) {
-                const t = (mph - lo) / (hi - lo);
-                return Math.round((loM + t * (hiM - loM)) * 10) / 10;
-            }
+            const [lo,loM] = pts[i], [hi,hiM] = pts[i+1];
+            if (mph >= lo && mph <= hi) { const t=(mph-lo)/(hi-lo); return Math.round((loM+t*(hiM-loM))*10)/10; }
         }
-        return mph < pts[0][0] ? pts[0][1] : pts[pts.length - 1][1];
+        return mph < pts[0][0] ? pts[0][1] : pts[pts.length-1][1];
     }
-
-    function tierClass(met) {
-        if (met >= 9)   return 'tier-intense';
-        if (met >= 6)   return 'tier-hard';
-        if (met >= 3.5) return 'tier-moderate';
-        return 'tier-light';
-    }
-
-    function tierClassByName(name) {
-        const w = WORKOUTS.find(e => e.name === name);
-        return tierClass(w ? w.met : 5);
-    }
-
+    function tierClass(met) { if (met >= 9) return 'tier-intense'; if (met >= 6) return 'tier-hard'; if (met >= 3.5) return 'tier-moderate'; return 'tier-light'; }
+    function tierClassByName(name) { const w = WORKOUTS.find(e => e.name === name); return tierClass(w ? w.met : 5); }
     function todayISO() { return new Date().toLocaleDateString('en-CA'); }
+    function fmtDate(iso) { const d=new Date(iso+'T00:00:00'); return d.toLocaleDateString('en-US',{weekday:'short',month:'short',day:'numeric'}); }
 
-    function fmtDate(iso) {
-        const d = new Date(iso + 'T00:00:00');
-        return d.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
-    }
-
-    /* ── Page table ── */
+    /* ── Table render ── */
     const tableInner = document.getElementById('wp-table-inner');
     const emptyMsg   = document.getElementById('wp-empty');
 
@@ -1211,79 +507,45 @@
         tableInner.querySelectorAll('.wp-date-group').forEach(el => el.remove());
         if (!rows.length) { emptyMsg.hidden = false; return; }
         emptyMsg.hidden = true;
-
         const groups = {};
         rows.forEach(w => { (groups[w.date] || (groups[w.date] = [])).push(w); });
-
-        Object.keys(groups).sort((a, b) => b.localeCompare(a)).forEach(date => {
+        Object.keys(groups).sort((a,b) => b.localeCompare(a)).forEach(date => {
             const group = document.createElement('div');
             group.className = 'wp-date-group';
-
-            // Header row: heading · totals · chevron
             const dayRows = groups[date];
-            const totalDur  = dayRows.reduce((s, w) => s + w.duration_min, 0);
-            const totalKcal = dayRows.reduce((s, w) => s + w.kcal, 0);
-
+            const totalDur  = dayRows.reduce((s,w) => s+w.duration_min, 0);
+            const totalKcal = dayRows.reduce((s,w) => s+w.kcal, 0);
             const headerRow = document.createElement('div');
             headerRow.className = 'wp-date-header-row';
-
             const heading = document.createElement('div');
-            heading.className = 'wp-date-heading';
-            heading.textContent = fmtDate(date);
-
+            heading.className = 'wp-date-heading'; heading.textContent = fmtDate(date);
             const count = document.createElement('div');
             count.className = 'wp-date-count';
-            count.innerHTML = `<span class="wp-count-num">${dayRows.length}</span><span class="wp-count-word">&nbsp;${dayRows.length === 1 ? 'workout' : 'workouts'}</span>`;
-
+            count.innerHTML = `<span class="wp-count-num">${dayRows.length}</span><span class="wp-count-word">&nbsp;${dayRows.length===1?'workout':'workouts'}</span>`;
             const headerValues = document.createElement('div');
             headerValues.className = 'wp-header-values';
             headerValues.innerHTML = `<div class="wp-header-dur">${totalDur} min</div><div class="wp-header-kcal">${totalKcal.toLocaleString()}<span>kcal</span></div>`;
-
             const chevron = document.createElement('span');
-            chevron.className = 'wp-chevron';
-            chevron.textContent = '▾';
-
-            headerRow.appendChild(heading);
-            headerRow.appendChild(count);
-            headerRow.appendChild(headerValues);
-            headerRow.appendChild(chevron);
-
+            chevron.className = 'wp-chevron'; chevron.textContent = '▾';
+            headerRow.appendChild(heading); headerRow.appendChild(count); headerRow.appendChild(headerValues); headerRow.appendChild(chevron);
             headerRow.addEventListener('click', () => group.classList.toggle('collapsed'));
             group.appendChild(headerRow);
-
-            // Collapsible section: note + activity rows
             const rowsWrap = document.createElement('div');
             rowsWrap.className = 'wp-rows-wrap';
-
             if (dayNotes[date]) {
                 const noteEl = document.createElement('div');
-                noteEl.className = 'wp-day-note';
-                noteEl.textContent = dayNotes[date];
+                noteEl.className = 'wp-day-note'; noteEl.textContent = dayNotes[date];
                 rowsWrap.appendChild(noteEl);
             }
-
             dayRows.forEach(w => {
                 const row = document.createElement('div');
-                row.className = 'wp-row';
-                row.dataset.wid = w.id;
-                row.style.cursor = 'pointer';
-                row.innerHTML = `
-                    <div class="wp-row-main">
-                        <span class="workout-badge ${tierClassByName(w.type)}">${w.type.replace(/</g,'&lt;')}</span>
-                    </div>
-                    <div class="wp-row-values">
-                        <div class="wp-row-dur">${w.duration_min} min</div>
-                        <div class="wp-row-kcal">${w.kcal.toLocaleString()}<span>kcal</span></div>
-                    </div>
-                    <button class="table-delete-btn wp-del-btn" aria-label="Delete workout" data-tip="Delete workout">&#10005;</button>`;
-
-                row.addEventListener('click', e => {
-                    if (!e.target.closest('.wp-del-btn')) openModal(date);
-                });
+                row.className = 'wp-row'; row.dataset.wid = w.id;
+                row.innerHTML = `<div class="wp-row-main"><span class="workout-badge ${tierClassByName(w.type)}">${w.type.replace(/</g,'&lt;')}</span></div><div class="wp-row-values"><div class="wp-row-dur">${w.duration_min} min</div><div class="wp-row-kcal">${w.kcal.toLocaleString()}<span>kcal</span></div></div><button class="table-delete-btn wp-del-btn" aria-label="Delete workout" data-tip="Delete workout">&#10005;</button>`;
+                row.addEventListener('click', e => { if (!e.target.closest('.wp-del-btn')) openModal(date); });
                 row.querySelector('.wp-del-btn').addEventListener('click', e => {
                     e.stopPropagation();
-                    showConfirm('Delete Workout', `Delete "${w.type}" (${w.duration_min} min)?\n\nThis cannot be undone.`, 'Delete', async () => {
-                        await fetch('/api/workout/' + w.id, { method: 'DELETE' });
+                    window.showAppConfirm('Delete Workout', `Delete "${w.type}" (${w.duration_min} min)?\n\nThis cannot be undone.`, 'Delete', async () => {
+                        await fetch('/api/workout/'+w.id, {method:'DELETE'});
                         row.remove();
                         allWorkouts = allWorkouts.filter(x => x.id !== w.id);
                         if (!rowsWrap.querySelectorAll('.wp-row').length) group.remove();
@@ -1293,7 +555,6 @@
                 });
                 rowsWrap.appendChild(row);
             });
-
             group.appendChild(rowsWrap);
             tableInner.appendChild(group);
         });
@@ -1304,24 +565,14 @@
 
     function filterRows(rows, range) {
         if (range === 'all') return rows;
-        if (range === 'custom') {
-            return rows.filter(r =>
-                (!customStart || r.date >= customStart) &&
-                (!customEnd   || r.date <= customEnd)
-            );
-        }
-        const days = { '7d': 7, '30d': 30, '90d': 90, '1y': 365 }[range];
-        const cutoff = new Date(Date.now() - (days - 1) * 86400000).toLocaleDateString('en-CA');
+        if (range === 'custom') return rows.filter(r => (!customStart || r.date >= customStart) && (!customEnd || r.date <= customEnd));
+        const days = {'7d':7,'30d':30,'90d':90,'1y':365}[range];
+        const cutoff = new Date(Date.now()-(days-1)*86400000).toLocaleDateString('en-CA');
         return rows.filter(r => r.date >= cutoff);
     }
-
     function applyFilter() { renderTable(filterRows(allWorkouts, currentRange), allDayNotes); }
-
     async function loadTable() {
-        [allWorkouts, allDayNotes] = await Promise.all([
-            fetch('/api/workouts').then(r => r.json()),
-            fetch('/api/workout-day-notes').then(r => r.json())
-        ]);
+        [allWorkouts, allDayNotes] = await Promise.all([fetch('/api/workouts').then(r=>r.json()), fetch('/api/workout-day-notes').then(r=>r.json())]);
         applyFilter();
     }
 
@@ -1330,150 +581,47 @@
         const filterBtn   = document.getElementById('wp-filter-btn');
         const rangeMenu   = document.getElementById('wp-range-menu');
         const customModal = document.getElementById('wp-custom-modal');
+        const DP_MONTHS   = ['January','February','March','April','May','June','July','August','September','October','November','December'];
 
-        function closeMenu() {
-            filterBtn.classList.remove('open');
-            rangeMenu.classList.remove('open');
-        }
+        function closeMenu() { filterBtn.classList.remove('open'); rangeMenu.classList.remove('open'); }
 
-        /* ── Range date picker factory (mirrors Log Workout calendar) ── */
+        function dpIsoFromParts(y,m,d){return y+'-'+String(m+1).padStart(2,'0')+'-'+String(d).padStart(2,'0');}
+        function dpDisplayFromISO(iso){const[y,m,d]=iso.split('-');return DP_MONTHS[parseInt(m)-1]+' '+parseInt(d)+', '+y;}
+
         function makeRangePicker(wrapId, inputId, calId, prevId, nextId, monthId, gridId) {
-            const input    = document.getElementById(inputId);
-            const calEl    = document.getElementById(calId);
-            const gridEl   = document.getElementById(gridId);
-            const monthLbl = document.getElementById(monthId);
-            const dayNames = calEl.querySelector('.dp-day-names');
-            let viewDate = new Date();
-            let selected = '';
-            let calMode  = 'days';
-            let yearPage = new Date().getFullYear() - 5;
-
-            function renderCal() {
-                calMode = 'days';
-                dayNames.style.display = '';
-                gridEl.style.gridTemplateColumns = 'repeat(7, 1fr)';
-                const y = viewDate.getFullYear(), m = viewDate.getMonth();
-                monthLbl.textContent = DP_MONTHS[m] + ' ' + y;
-                const firstDow    = new Date(y, m, 1).getDay();
-                const daysInMonth = new Date(y, m + 1, 0).getDate();
-                const daysInPrev  = new Date(y, m, 0).getDate();
-                gridEl.innerHTML = '';
-                for (let i = firstDow - 1; i >= 0; i--) {
-                    const btn = document.createElement('button');
-                    btn.type = 'button'; btn.className = 'dp-day dp-other-month';
-                    btn.textContent = daysInPrev - i; btn.disabled = true;
-                    gridEl.appendChild(btn);
-                }
-                for (let day = 1; day <= daysInMonth; day++) {
-                    const iso = dpIsoFromParts(y, m, day);
-                    const btn = document.createElement('button');
-                    btn.type = 'button'; btn.className = 'dp-day';
-                    btn.textContent = day;
-                    if (iso === selected) btn.classList.add('dp-selected');
-                    btn.addEventListener('click', () => {
-                        selected = iso;
-                        input.value = dpDisplayFromISO(iso);
-                        calEl.hidden = true;
-                    });
-                    gridEl.appendChild(btn);
-                }
-                const rem = (firstDow + daysInMonth) % 7;
-                if (rem > 0) for (let i = 1; i <= 7 - rem; i++) {
-                    const btn = document.createElement('button');
-                    btn.type = 'button'; btn.className = 'dp-day dp-other-month';
-                    btn.textContent = i; btn.disabled = true;
-                    gridEl.appendChild(btn);
-                }
-            }
-
-            function renderYears() {
-                calMode = 'years';
-                dayNames.style.display = 'none';
-                gridEl.style.gridTemplateColumns = 'repeat(3, 1fr)';
-                const todayY = new Date().getFullYear();
-                monthLbl.textContent = yearPage + ' – ' + (yearPage + 11);
-                gridEl.innerHTML = '';
-                for (let i = 0; i < 12; i++) {
-                    const yr  = yearPage + i;
-                    const btn = document.createElement('button');
-                    btn.type = 'button'; btn.className = 'dp-day dp-year';
-                    btn.textContent = yr;
-                    if (yr === todayY)                 btn.classList.add('dp-today');
-                    if (yr === viewDate.getFullYear()) btn.classList.add('dp-selected');
-                    btn.addEventListener('click', () => {
-                        viewDate = new Date(yr, viewDate.getMonth(), 1);
-                        renderCal();
-                    });
-                    gridEl.appendChild(btn);
-                }
-            }
-
-            monthLbl.addEventListener('click', () => {
-                if (calMode === 'days') { yearPage = viewDate.getFullYear() - 5; renderYears(); }
-                else renderCal();
-            });
-            input.addEventListener('click', () => {
-                if (calEl.hidden) {
-                    viewDate = selected ? new Date(selected + 'T12:00:00') : new Date();
-                    renderCal(); calEl.hidden = false;
-                } else { calEl.hidden = true; }
-            });
-            document.getElementById(prevId).addEventListener('click', () => {
-                if (calMode === 'years') { yearPage -= 12; renderYears(); }
-                else { viewDate = new Date(viewDate.getFullYear(), viewDate.getMonth() - 1, 1); renderCal(); }
-            });
-            document.getElementById(nextId).addEventListener('click', () => {
-                if (calMode === 'years') { yearPage += 12; renderYears(); }
-                else { viewDate = new Date(viewDate.getFullYear(), viewDate.getMonth() + 1, 1); renderCal(); }
-            });
-            document.addEventListener('click', e => {
-                const wrap = document.getElementById(wrapId);
-                if (!calEl.hidden && !e.composedPath().includes(wrap)) calEl.hidden = true;
-            });
-
-            return { getSelected: () => selected };
+            const input=document.getElementById(inputId),calEl=document.getElementById(calId);
+            const gridEl=document.getElementById(gridId),monthLbl=document.getElementById(monthId);
+            const dayNames=calEl.querySelector('.dp-day-names');
+            let viewDate=new Date(),selected='',calMode='days',yearPage=new Date().getFullYear()-5;
+            function renderCal(){calMode='days';dayNames.style.display='';gridEl.style.gridTemplateColumns='repeat(7,1fr)';const y=viewDate.getFullYear(),m=viewDate.getMonth();monthLbl.textContent=DP_MONTHS[m]+' '+y;const firstDow=new Date(y,m,1).getDay(),daysInMonth=new Date(y,m+1,0).getDate(),daysInPrev=new Date(y,m,0).getDate();gridEl.innerHTML='';for(let i=firstDow-1;i>=0;i--){const btn=document.createElement('button');btn.type='button';btn.className='dp-day dp-other-month';btn.textContent=daysInPrev-i;btn.disabled=true;gridEl.appendChild(btn);}for(let day=1;day<=daysInMonth;day++){const iso=dpIsoFromParts(y,m,day),btn=document.createElement('button');btn.type='button';btn.className='dp-day';btn.textContent=day;if(iso===selected)btn.classList.add('dp-selected');btn.addEventListener('click',()=>{selected=iso;input.value=dpDisplayFromISO(iso);calEl.hidden=true;});gridEl.appendChild(btn);}const rem=(firstDow+daysInMonth)%7;if(rem>0)for(let i=1;i<=7-rem;i++){const btn=document.createElement('button');btn.type='button';btn.className='dp-day dp-other-month';btn.textContent=i;btn.disabled=true;gridEl.appendChild(btn);}}
+            function renderYears(){calMode='years';dayNames.style.display='none';gridEl.style.gridTemplateColumns='repeat(3,1fr)';const todayY=new Date().getFullYear();monthLbl.textContent=yearPage+' – '+(yearPage+11);gridEl.innerHTML='';for(let i=0;i<12;i++){const yr=yearPage+i,btn=document.createElement('button');btn.type='button';btn.className='dp-day dp-year';btn.textContent=yr;if(yr===todayY)btn.classList.add('dp-today');if(yr===viewDate.getFullYear())btn.classList.add('dp-selected');btn.addEventListener('click',()=>{viewDate=new Date(yr,viewDate.getMonth(),1);renderCal();});gridEl.appendChild(btn);}}
+            monthLbl.addEventListener('click',()=>{if(calMode==='days'){yearPage=viewDate.getFullYear()-5;renderYears();}else renderCal();});
+            input.addEventListener('click',()=>{if(calEl.hidden){viewDate=selected?new Date(selected+'T12:00:00'):new Date();renderCal();calEl.hidden=false;}else{calEl.hidden=true;}});
+            document.getElementById(prevId).addEventListener('click',()=>{if(calMode==='years'){yearPage-=12;renderYears();}else{viewDate=new Date(viewDate.getFullYear(),viewDate.getMonth()-1,1);renderCal();}});
+            document.getElementById(nextId).addEventListener('click',()=>{if(calMode==='years'){yearPage+=12;renderYears();}else{viewDate=new Date(viewDate.getFullYear(),viewDate.getMonth()+1,1);renderCal();}});
+            document.addEventListener('click',e=>{const wrap=document.getElementById(wrapId);if(!calEl.hidden&&!e.composedPath().includes(wrap))calEl.hidden=true;});
+            return {getSelected:()=>selected};
         }
 
-        const crStart = makeRangePicker('wp-cr-start-wrap', 'wp-cr-start-input', 'wp-cr-start-cal',
-                                         'wp-cr-start-prev', 'wp-cr-start-next', 'wp-cr-start-month', 'wp-cr-start-grid');
-        const crEnd   = makeRangePicker('wp-cr-end-wrap',   'wp-cr-end-input',   'wp-cr-end-cal',
-                                         'wp-cr-end-prev',   'wp-cr-end-next',   'wp-cr-end-month',   'wp-cr-end-grid');
+        const crStart = makeRangePicker('wp-cr-start-wrap','wp-cr-start-input','wp-cr-start-cal','wp-cr-start-prev','wp-cr-start-next','wp-cr-start-month','wp-cr-start-grid');
+        const crEnd   = makeRangePicker('wp-cr-end-wrap','wp-cr-end-input','wp-cr-end-cal','wp-cr-end-prev','wp-cr-end-next','wp-cr-end-month','wp-cr-end-grid');
 
-        filterBtn.addEventListener('click', e => {
-            e.stopPropagation();
-            filterBtn.classList.toggle('open');
-            rangeMenu.classList.toggle('open');
-        });
-
+        filterBtn.addEventListener('click', e => { e.stopPropagation(); filterBtn.classList.toggle('open'); rangeMenu.classList.toggle('open'); });
         rangeMenu.querySelectorAll('.wp-range-btn').forEach(btn => {
             btn.addEventListener('click', e => {
                 e.stopPropagation();
-                if (btn.dataset.range === 'custom') {
-                    closeMenu();
-                    customModal.hidden = false;
-                    return;
-                }
+                if (btn.dataset.range === 'custom') { closeMenu(); customModal.hidden = false; return; }
                 rangeMenu.querySelectorAll('.wp-range-btn').forEach(b => b.classList.remove('active'));
-                btn.classList.add('active');
-                currentRange = btn.dataset.range;
-                applyFilter();
+                btn.classList.add('active'); currentRange = btn.dataset.range; applyFilter();
             });
         });
-
-        document.getElementById('wp-custom-cancel').addEventListener('click', () => {
-            customModal.hidden = true;
-        });
-
+        document.getElementById('wp-custom-cancel').addEventListener('click', () => { customModal.hidden = true; });
         document.getElementById('wp-custom-apply').addEventListener('click', () => {
-            customStart = crStart.getSelected();
-            customEnd   = crEnd.getSelected();
-            currentRange = 'custom';
+            customStart = crStart.getSelected(); customEnd = crEnd.getSelected(); currentRange = 'custom';
             rangeMenu.querySelectorAll('.wp-range-btn').forEach(b => b.classList.remove('active'));
             rangeMenu.querySelector('[data-range="custom"]').classList.add('active');
-            customModal.hidden = true;
-            applyFilter();
+            customModal.hidden = true; applyFilter();
         });
-
         document.addEventListener('click', closeMenu);
     })();
 
@@ -1481,596 +629,93 @@
     async function refreshStats() {
         const rows = await fetch('/api/workouts').then(r => r.json());
         const today = todayISO();
-        const weekAgo = new Date(Date.now() - 6 * 86400000).toLocaleDateString('en-CA');
+        const weekAgo = new Date(Date.now()-6*86400000).toLocaleDateString('en-CA');
         const thisWeek = rows.filter(r => r.date >= weekAgo && r.date <= today);
-        document.getElementById('wp-count').textContent  = thisWeek.length;
-        document.getElementById('wp-kcal').textContent   = thisWeek.reduce((s,r) => s + r.kcal, 0).toLocaleString();
+        document.getElementById('wp-count').textContent = thisWeek.length;
+        document.getElementById('wp-kcal').textContent  = thisWeek.reduce((s,r) => s+r.kcal, 0).toLocaleString();
         const dateSet = new Set(rows.map(r => r.date));
         let streak = 0, d = new Date();
-        if (!dateSet.has(d.toLocaleDateString('en-CA'))) d.setDate(d.getDate() - 1);
-        while (dateSet.has(d.toLocaleDateString('en-CA'))) { streak++; d.setDate(d.getDate() - 1); }
+        if (!dateSet.has(d.toLocaleDateString('en-CA'))) d.setDate(d.getDate()-1);
+        while (dateSet.has(d.toLocaleDateString('en-CA'))) { streak++; d.setDate(d.getDate()-1); }
         const wpStreakEl = document.getElementById('wp-streak');
         wpStreakEl.textContent = streak;
-        applyStreakGlow(wpStreakEl, wpStreakEl.nextElementSibling, streak);
+        applyStreakGlow(wpStreakEl, wpStreakEl.closest('.wp-stat--streak')?.querySelector('.site-stat-label'), streak);
     }
 
-    /* ── Custom date picker for Log Workout modal ── */
-    const dpInput    = document.getElementById('wp-date-input');
-    const dpCalEl    = document.getElementById('wpm-calendar');
-    const dpGridEl   = document.getElementById('wpm-dp-grid');
-    const dpMonthLbl = document.getElementById('wpm-dp-month-label');
-    const dpDayNames = dpCalEl.querySelector('.dp-day-names');
-    const DP_MONTHS  = ['January','February','March','April','May','June',
-                        'July','August','September','October','November','December'];
-    let dpViewDate   = new Date();
-    let dpSelected   = '';   // ISO string of selected date
-    let dpCalMode    = 'days';
-    let dpYearPage   = new Date().getFullYear() - 5;
-
-    function dpIsoFromParts(y, m, d) {
-        return y + '-' + String(m + 1).padStart(2, '0') + '-' + String(d).padStart(2, '0');
-    }
-    function dpDisplayFromISO(iso) {
-        const [y, m, d] = iso.split('-');
-        return DP_MONTHS[parseInt(m) - 1] + ' ' + parseInt(d) + ', ' + y;
-    }
-    function dpRenderCalendar() {
-        dpCalMode = 'days';
-        dpDayNames.style.display = '';
-        dpGridEl.style.gridTemplateColumns = 'repeat(7, 1fr)';
-        const today = todayISO();
-        const y = dpViewDate.getFullYear(), m = dpViewDate.getMonth();
-        dpMonthLbl.textContent = DP_MONTHS[m] + ' ' + y;
-        const firstDow    = new Date(y, m, 1).getDay();
-        const daysInMonth = new Date(y, m + 1, 0).getDate();
-        const daysInPrev  = new Date(y, m, 0).getDate();
-        dpGridEl.innerHTML = '';
-        for (let i = firstDow - 1; i >= 0; i--) {
-            const btn = document.createElement('button');
-            btn.type = 'button'; btn.className = 'dp-day dp-other-month';
-            btn.textContent = daysInPrev - i; btn.disabled = true;
-            dpGridEl.appendChild(btn);
-        }
-        for (let day = 1; day <= daysInMonth; day++) {
-            const iso = dpIsoFromParts(y, m, day);
-            const btn = document.createElement('button');
-            btn.type = 'button'; btn.className = 'dp-day';
-            btn.textContent = day;
-            if (iso === today)      btn.classList.add('dp-today');
-            if (iso === dpSelected) btn.classList.add('dp-selected');
-            if (iso > today) {
-                btn.disabled = true;
-            } else {
-                btn.addEventListener('click', () => {
-                    dpSelected = iso;
-                    dpInput.value = dpDisplayFromISO(iso);
-                    dpCalEl.hidden = true;
-                    loadDayEntries(iso);
-                });
-            }
-            dpGridEl.appendChild(btn);
-        }
-        const rem = (firstDow + daysInMonth) % 7;
-        if (rem > 0) {
-            for (let i = 1; i <= 7 - rem; i++) {
-                const btn = document.createElement('button');
-                btn.type = 'button'; btn.className = 'dp-day dp-other-month';
-                btn.textContent = i; btn.disabled = true;
-                dpGridEl.appendChild(btn);
-            }
-        }
-    }
-    function dpRenderYearGrid() {
-        dpCalMode = 'years';
-        dpDayNames.style.display = 'none';
-        dpGridEl.style.gridTemplateColumns = 'repeat(3, 1fr)';
-        const todayY = new Date().getFullYear();
-        dpMonthLbl.textContent = dpYearPage + ' – ' + (dpYearPage + 11);
-        dpGridEl.innerHTML = '';
-        for (let i = 0; i < 12; i++) {
-            const yr  = dpYearPage + i;
-            const btn = document.createElement('button');
-            btn.type = 'button'; btn.className = 'dp-day dp-year';
-            btn.textContent = yr;
-            if (yr === todayY)                   btn.classList.add('dp-today');
-            if (yr === dpViewDate.getFullYear()) btn.classList.add('dp-selected');
-            if (yr > todayY) {
-                btn.disabled = true;
-            } else {
-                btn.addEventListener('click', () => {
-                    dpViewDate = new Date(yr, dpViewDate.getMonth(), 1);
-                    dpRenderCalendar();
-                });
-            }
-            dpGridEl.appendChild(btn);
-        }
-    }
-    dpMonthLbl.addEventListener('click', () => {
-        if (dpCalMode === 'days') { dpYearPage = dpViewDate.getFullYear() - 5; dpRenderYearGrid(); }
-        else dpRenderCalendar();
-    });
-    dpInput.addEventListener('click', () => {
-        if (dpCalEl.hidden) {
-            dpViewDate = dpSelected ? new Date(dpSelected + 'T12:00:00') : new Date();
-            dpRenderCalendar(); dpCalEl.hidden = false;
-        } else { dpCalEl.hidden = true; }
-    });
-    document.getElementById('wpm-dp-prev').addEventListener('click', () => {
-        if (dpCalMode === 'years') { dpYearPage -= 12; dpRenderYearGrid(); }
-        else { dpViewDate = new Date(dpViewDate.getFullYear(), dpViewDate.getMonth() - 1, 1); dpRenderCalendar(); }
-    });
-    document.getElementById('wpm-dp-next').addEventListener('click', () => {
-        if (dpCalMode === 'years') { dpYearPage += 12; dpRenderYearGrid(); }
-        else { dpViewDate = new Date(dpViewDate.getFullYear(), dpViewDate.getMonth() + 1, 1); dpRenderCalendar(); }
-    });
-    document.addEventListener('click', e => {
-        const wrap = document.getElementById('wpm-dp-wrap');
-        if (!dpCalEl.hidden && !e.composedPath().includes(wrap)) dpCalEl.hidden = true;
-    });
-    function dpSetDate(isoDate) {
-        dpSelected = isoDate;
-        dpInput.value = isoDate ? dpDisplayFromISO(isoDate) : '';
-        dpCalEl.hidden = true;
-    }
+    /* ── Log Workout Modal calendar ── */
+    const dpInput=document.getElementById('wp-date-input'), dpCalEl=document.getElementById('wpm-calendar');
+    const dpGridEl=document.getElementById('wpm-dp-grid'), dpMonthLbl=document.getElementById('wpm-dp-month-label');
+    const dpDayNames=dpCalEl.querySelector('.dp-day-names');
+    const DP_MONTHS=['January','February','March','April','May','June','July','August','September','October','November','December'];
+    let dpViewDate=new Date(), dpSelected='', dpCalMode='days', dpYearPage=new Date().getFullYear()-5;
+    function dpIsoFromParts(y,m,d){return y+'-'+String(m+1).padStart(2,'0')+'-'+String(d).padStart(2,'0');}
+    function dpDisplayFromISO(iso){const[y,m,d]=iso.split('-');return DP_MONTHS[parseInt(m)-1]+' '+parseInt(d)+', '+y;}
+    function dpRenderCalendar(){dpCalMode='days';dpDayNames.style.display='';dpGridEl.style.gridTemplateColumns='repeat(7,1fr)';const today=todayISO(),y=dpViewDate.getFullYear(),m=dpViewDate.getMonth();dpMonthLbl.textContent=DP_MONTHS[m]+' '+y;const firstDow=new Date(y,m,1).getDay(),daysInMonth=new Date(y,m+1,0).getDate(),daysInPrev=new Date(y,m,0).getDate();dpGridEl.innerHTML='';for(let i=firstDow-1;i>=0;i--){const btn=document.createElement('button');btn.type='button';btn.className='dp-day dp-other-month';btn.textContent=daysInPrev-i;btn.disabled=true;dpGridEl.appendChild(btn);}for(let day=1;day<=daysInMonth;day++){const iso=dpIsoFromParts(y,m,day),btn=document.createElement('button');btn.type='button';btn.className='dp-day';btn.textContent=day;if(iso===today)btn.classList.add('dp-today');if(iso===dpSelected)btn.classList.add('dp-selected');if(iso>today){btn.disabled=true;}else{btn.addEventListener('click',()=>{dpSelected=iso;dpInput.value=dpDisplayFromISO(iso);dpCalEl.hidden=true;loadDayEntries(iso);});}dpGridEl.appendChild(btn);}const rem=(firstDow+daysInMonth)%7;if(rem>0)for(let i=1;i<=7-rem;i++){const btn=document.createElement('button');btn.type='button';btn.className='dp-day dp-other-month';btn.textContent=i;btn.disabled=true;dpGridEl.appendChild(btn);}}
+    function dpRenderYearGrid(){dpCalMode='years';dpDayNames.style.display='none';dpGridEl.style.gridTemplateColumns='repeat(3,1fr)';const todayY=new Date().getFullYear();dpMonthLbl.textContent=dpYearPage+' – '+(dpYearPage+11);dpGridEl.innerHTML='';for(let i=0;i<12;i++){const yr=dpYearPage+i,btn=document.createElement('button');btn.type='button';btn.className='dp-day dp-year';btn.textContent=yr;if(yr===todayY)btn.classList.add('dp-today');if(yr===dpViewDate.getFullYear())btn.classList.add('dp-selected');if(yr>todayY){btn.disabled=true;}else{btn.addEventListener('click',()=>{dpViewDate=new Date(yr,dpViewDate.getMonth(),1);dpRenderCalendar();});}dpGridEl.appendChild(btn);}}
+    dpMonthLbl.addEventListener('click',()=>{if(dpCalMode==='days'){dpYearPage=dpViewDate.getFullYear()-5;dpRenderYearGrid();}else dpRenderCalendar();});
+    dpInput.addEventListener('click',()=>{if(dpCalEl.hidden){dpViewDate=dpSelected?new Date(dpSelected+'T12:00:00'):new Date();dpRenderCalendar();dpCalEl.hidden=false;}else{dpCalEl.hidden=true;}});
+    document.getElementById('wpm-dp-prev').addEventListener('click',()=>{if(dpCalMode==='years'){dpYearPage-=12;dpRenderYearGrid();}else{dpViewDate=new Date(dpViewDate.getFullYear(),dpViewDate.getMonth()-1,1);dpRenderCalendar();}});
+    document.getElementById('wpm-dp-next').addEventListener('click',()=>{if(dpCalMode==='years'){dpYearPage+=12;dpRenderYearGrid();}else{dpViewDate=new Date(dpViewDate.getFullYear(),dpViewDate.getMonth()+1,1);dpRenderCalendar();}});
+    document.addEventListener('click',e=>{const wrap=document.getElementById('wpm-dp-wrap');if(!dpCalEl.hidden&&!e.composedPath().includes(wrap))dpCalEl.hidden=true;});
+    function dpSetDate(iso){dpSelected=iso;dpInput.value=iso?dpDisplayFromISO(iso):'';dpCalEl.hidden=true;}
 
     /* ── Log Workout Modal ── */
-    const logModal    = document.getElementById('wp-log-modal');
-    const dayHeading  = document.getElementById('wpm-day-heading');
-    const dayEntries  = document.getElementById('wpm-day-entries');
-    const dayEmpty    = document.getElementById('wpm-day-empty');
-
-    // Form state
-    let duration      = 30;
-    let selectedMet   = null;
-    let selectedLabel = null;
-    let isSpeedBased  = false;
-    let speedMph      = 5.0;
-    let speedTable    = 'running';
-    let weightKg      = 80;
-    let dropdownIdx   = -1;
-
-    const speedField  = document.getElementById('workout-speed-field');
-    const speedVal    = document.getElementById('workout-speed-val');
-    const durVal      = document.getElementById('workout-dur-val');
-    const kcalNum     = document.getElementById('workout-kcal-num');
-    const noteInput   = document.getElementById('workout-note-input');
-    const typeInput   = document.getElementById('workout-type-input');
-    const dropdown    = document.getElementById('workout-search-dropdown');
-    const chip        = document.getElementById('workout-selected-chip');
-    const chipLabel   = document.getElementById('workout-selected-label');
-    const chipTier    = document.getElementById('workout-chip-tier');
-    const chipClear   = document.getElementById('workout-chip-clear');
-
-    const durField      = document.getElementById('workout-dur-field');
-    const addActivityBtn = document.getElementById('wpm-add-activity-btn');
-
-    function calcKcal() { return Math.round(selectedMet * weightKg * (duration / 60)); }
-    function refreshKcal() { kcalNum.textContent = selectedMet ? calcKcal().toLocaleString() : '—'; }
-
-    function setFormActive(active) {
-        durField.classList.toggle('speed-inactive', !active);
-        addActivityBtn.disabled = !active;
-    }
-
-    // Init form state
-    chip.style.display = 'none';
-    speedField.classList.add('speed-inactive');
-    document.getElementById('workout-speed-up').disabled   = true;
-    document.getElementById('workout-speed-down').disabled = true;
+    const logModal=document.getElementById('wp-log-modal'), dayHeading=document.getElementById('wpm-day-heading');
+    const dayEntries=document.getElementById('wpm-day-entries'), dayEmpty=document.getElementById('wpm-day-empty');
+    let duration=30, selectedMet=null, selectedLabel=null, isSpeedBased=false, speedMph=5.0, speedTable='running', weightKg=80, dropdownIdx=-1;
+    const speedField=document.getElementById('workout-speed-field'), speedVal=document.getElementById('workout-speed-val');
+    const durVal=document.getElementById('workout-dur-val'), kcalNum=document.getElementById('workout-kcal-num');
+    const noteInput=document.getElementById('workout-note-input'), typeInput=document.getElementById('workout-type-input');
+    const dropdown=document.getElementById('workout-search-dropdown'), chip=document.getElementById('workout-selected-chip');
+    const chipLabel=document.getElementById('workout-selected-label'), chipTier=document.getElementById('workout-chip-tier');
+    const chipClear=document.getElementById('workout-chip-clear'), durField=document.getElementById('workout-dur-field');
+    const addActivityBtn=document.getElementById('wpm-add-activity-btn');
+    function calcKcal(){return Math.round(selectedMet*weightKg*(duration/60));}
+    function refreshKcal(){kcalNum.textContent=selectedMet?calcKcal().toLocaleString():'—';}
+    function setFormActive(active){durField.classList.toggle('speed-inactive',!active);addActivityBtn.disabled=!active;}
+    chip.hidden=true; speedField.classList.add('speed-inactive');
+    document.getElementById('workout-speed-up').disabled=true; document.getElementById('workout-speed-down').disabled=true;
     setFormActive(false);
-
-    // Speed steppers
-    document.getElementById('workout-speed-up').addEventListener('click', () => {
-        speedMph = Math.round((speedMph + 0.5) * 10) / 10;
-        speedVal.textContent = speedMph.toFixed(1);
-        if (isSpeedBased) { selectedMet = speedToMet(speedMph, speedTable); refreshKcal(); }
-    });
-    document.getElementById('workout-speed-down').addEventListener('click', () => {
-        speedMph = Math.max(0.5, Math.round((speedMph - 0.5) * 10) / 10);
-        speedVal.textContent = speedMph.toFixed(1);
-        if (isSpeedBased) { selectedMet = speedToMet(speedMph, speedTable); refreshKcal(); }
-    });
-
-    // Duration steppers
-    document.getElementById('workout-dur-up').addEventListener('click', () => {
-        duration = Math.min(duration + 5, 300);
-        durVal.textContent = duration;
-        refreshKcal();
-    });
-    document.getElementById('workout-dur-down').addEventListener('click', () => {
-        duration = Math.max(duration - 5, 5);
-        durVal.textContent = duration;
-        refreshKcal();
-    });
-
-    // Autocomplete
-    function buildDropdown(results) {
-        dropdown.innerHTML = '';
-        results.forEach((w, i) => {
-            const item = document.createElement('div');
-            item.className = 'wsd-item';
-            item.dataset.idx = i;
-            item.innerHTML = `<span>${w.name}</span><span class="wsd-met">${w.speedBased ? 'speed-based' : w.met + ' MET'}</span>`;
-            item.addEventListener('mousedown', e => { e.preventDefault(); selectWorkout(w); });
-            dropdown.appendChild(item);
-        });
-        dropdownIdx = -1;
-    }
-
-    function selectWorkout(w) {
-        isSpeedBased  = !!w.speedBased;
-        selectedLabel = w.name;
-        const speedUp   = document.getElementById('workout-speed-up');
-        const speedDown = document.getElementById('workout-speed-down');
-        if (isSpeedBased) {
-            speedTable           = w.speedTable || 'running';
-            speedMph             = w.defaultSpeed || 5.0;
-            speedVal.textContent = speedMph.toFixed(1);
-            selectedMet          = speedToMet(speedMph, speedTable);
-            speedField.classList.remove('speed-inactive');
-            speedUp.disabled   = false;
-            speedDown.disabled = false;
-        } else {
-            selectedMet = w.met;
-            speedField.classList.add('speed-inactive');
-            speedUp.disabled   = true;
-            speedDown.disabled = true;
-        }
-        chipLabel.textContent       = w.name;
-        chipTier.className          = 'workout-chip-tier ' + tierClass(selectedMet);
-        typeInput.style.display     = 'none';
-        chip.style.display          = 'flex';
-        typeInput.value             = '';
-        dropdown.hidden             = true;
-        refreshKcal();
-        setFormActive(true);
-    }
-
-    chipClear.addEventListener('click', () => {
-        chip.style.display      = 'none';
-        typeInput.style.display = '';
-        speedField.classList.add('speed-inactive');
-        typeInput.value    = '';
-        selectedMet        = null;
-        selectedLabel      = null;
-        isSpeedBased       = false;
-        refreshKcal();
-        setFormActive(false);
-    });
-
-    typeInput.addEventListener('input', () => {
-        const q = typeInput.value.trim().toLowerCase();
-        if (!q) { dropdown.hidden = true; return; }
-        const matches = WORKOUTS.filter(w => w.name.toLowerCase().includes(q));
-        matches.sort((a, b) => {
-            const rank = n => {
-                const lo = n.toLowerCase();
-                if (lo.startsWith(q)) return 0;
-                if (lo.split(/[\s(/]/).some(w => w.startsWith(q))) return 1;
-                return 2;
-            };
-            return rank(a.name) - rank(b.name);
-        });
-        const results = matches.slice(0, 10);
-        if (!results.length) { dropdown.hidden = true; return; }
-        buildDropdown(results);
-        dropdown.hidden = false;
-    });
-
-    typeInput.addEventListener('keydown', e => {
-        const items = dropdown.querySelectorAll('.wsd-item');
-        if (e.key === 'ArrowDown') {
-            e.preventDefault();
-            dropdownIdx = Math.min(dropdownIdx + 1, items.length - 1);
-            items.forEach((el, i) => el.classList.toggle('highlighted', i === dropdownIdx));
-        } else if (e.key === 'ArrowUp') {
-            e.preventDefault();
-            dropdownIdx = Math.max(dropdownIdx - 1, 0);
-            items.forEach((el, i) => el.classList.toggle('highlighted', i === dropdownIdx));
-        } else if (e.key === 'Enter' && dropdownIdx >= 0) {
-            e.preventDefault();
-            const q = typeInput.value.trim().toLowerCase();
-            const results = WORKOUTS.filter(w => w.name.toLowerCase().includes(q));
-            if (results[dropdownIdx]) selectWorkout(results[dropdownIdx]);
-        } else if (e.key === 'Escape') {
-            dropdown.hidden = true;
-        }
-    });
-
-    document.addEventListener('click', e => {
-        if (!e.target.closest('#workout-type-input, #workout-search-dropdown, .workout-search-wrap'))
-            dropdown.hidden = true;
-    });
-
-    dropdown.addEventListener('wheel', e => {
-        e.preventDefault();
-        dropdown.scrollTop += e.deltaY;
-    }, { passive: false });
-
-    /* Day entries in modal */
-    const stagedEntriesEl = document.getElementById('wpm-staged-entries');
-    let stagedActivities  = [];
-    let pendingDeletes    = [];
-    let loadedNote        = '';
-
-    function renderStagedRow(item, idx) {
-        const el = document.createElement('div');
-        el.className = 'wpm-staged-row';
-        el.dataset.idx = idx;
-        el.innerHTML = `
-            <div class="wpm-staged-row-info">
-                <span class="workout-badge ${tierClassByName(item.type)}">${item.type.replace(/</g,'&lt;')}</span>
-            </div>
-            <div class="wpm-day-dur">${item.duration_min} min</div>
-            <div class="wpm-day-kcal">${item.kcal.toLocaleString()} kcal</div>
-            <button class="table-delete-btn" aria-label="Remove" data-tip="Remove">&#10005;</button>`;
-        el.querySelector('.table-delete-btn').addEventListener('click', () => {
-            const i = parseInt(el.dataset.idx, 10);
-            stagedActivities.splice(i, 1);
-            el.remove();
-            stagedEntriesEl.querySelectorAll('.wpm-staged-row').forEach((r, j) => { r.dataset.idx = j; });
-            if (!dayEntries.querySelectorAll('.wpm-day-row').length && !stagedActivities.length) dayEmpty.hidden = false;
-        });
-        stagedEntriesEl.appendChild(el);
-    }
-
-    async function loadDayEntries(isoDate) {
-        const isToday = isoDate === todayISO();
-        dayHeading.textContent = isToday ? 'Logged today' : `Logged for ${fmtDate(isoDate)}`;
-
-        // Clear saved rows + staged rows
-        dayEntries.querySelectorAll('.wpm-day-row').forEach(el => el.remove());
-        stagedEntriesEl.innerHTML = '';
-        stagedActivities = [];
-        pendingDeletes   = [];
-        dayEmpty.hidden = false;
-
-        const [rows, noteData] = await Promise.all([
-            fetch('/api/workouts?date=' + isoDate).then(r => r.json()),
-            fetch('/api/workout-day-note?date=' + isoDate).then(r => r.json())
-        ]);
-
-        loadedNote      = noteData.note || '';
-        noteInput.value = loadedNote;
-
-        if (rows.length) {
-            dayEmpty.hidden = true;
-            rows.forEach(w => {
-                const el = document.createElement('div');
-                el.className = 'wpm-day-row';
-                el.dataset.wid = w.id;
-                el.innerHTML = `
-                    <div class="wpm-day-row-info">
-                        <span class="workout-badge ${tierClassByName(w.type)}">${w.type.replace(/</g,'&lt;')}</span>
-                    </div>
-                    <div class="wpm-day-dur">${w.duration_min} min</div>
-                    <div class="wpm-day-kcal">${w.kcal.toLocaleString()} kcal</div>
-                    <button class="table-delete-btn" aria-label="Delete" data-tip="Delete workout">&#10005;</button>`;
-                el.querySelector('.table-delete-btn').addEventListener('click', () => {
-                    pendingDeletes.push({ id: w.id, type: w.type, duration_min: w.duration_min });
-                    el.remove();
-                    if (!dayEntries.querySelectorAll('.wpm-day-row').length && !stagedActivities.length) dayEmpty.hidden = false;
-                });
-                dayEntries.appendChild(el);
-            });
-        }
-    }
-
-    /* Modal open/close */
-    function clearActivityForm() {
-        typeInput.value         = '';
-        typeInput.style.display = '';
-        chip.style.display      = 'none';
-        speedField.classList.add('speed-inactive');
-        document.getElementById('workout-speed-up').disabled   = true;
-        document.getElementById('workout-speed-down').disabled = true;
-        selectedMet   = null;
-        selectedLabel = null;
-        isSpeedBased  = false;
-        speedMph      = 5.0;
-        speedVal.textContent = '5.0';
-        duration      = 30;
-        durVal.textContent   = '30';
-        setFormActive(false);
-        refreshKcal();
-        dropdown.hidden = true;
-    }
-
-    function resetForm() {
-        clearActivityForm();
-        noteInput.value = '';
-    }
-
-    async function openModal(isoDate) {
-        // Fetch latest weight for kcal estimate
-        try {
-            const w = await fetch('/api/latest-weight').then(r => r.json());
-            weightKg = w.weight_lbs ? w.weight_lbs / 2.2046 : 80;
-        } catch { weightKg = 80; }
-
-        dpSetDate(isoDate || todayISO());
-        resetForm();
-        await loadDayEntries(dpSelected);
-        logModal.hidden = false;
-        requestAnimationFrame(() => document.getElementById('wpm-entries-scroll').dispatchEvent(new Event('scroll')));
-        typeInput.focus();
-    }
-
-    function closeModal() { logModal.hidden = true; dpCalEl.hidden = true; dropdown.hidden = true; }
-
-    function hasUnsavedChanges() {
-        return stagedActivities.length > 0 || pendingDeletes.length > 0 || noteInput.value.trim() !== loadedNote;
-    }
-
-    function maybeClose() {
-        if (!hasUnsavedChanges()) { closeModal(); return; }
-        showConfirm('Discard changes?', 'You have unsaved changes. Discard them?', 'Discard', closeModal);
-    }
-
+    document.getElementById('workout-speed-up').addEventListener('click',()=>{speedMph=Math.round((speedMph+0.5)*10)/10;speedVal.textContent=speedMph.toFixed(1);if(isSpeedBased){selectedMet=speedToMet(speedMph,speedTable);refreshKcal();}});
+    document.getElementById('workout-speed-down').addEventListener('click',()=>{speedMph=Math.max(0.5,Math.round((speedMph-0.5)*10)/10);speedVal.textContent=speedMph.toFixed(1);if(isSpeedBased){selectedMet=speedToMet(speedMph,speedTable);refreshKcal();}});
+    document.getElementById('workout-dur-up').addEventListener('click',()=>{duration=Math.min(duration+5,300);durVal.textContent=duration;refreshKcal();});
+    document.getElementById('workout-dur-down').addEventListener('click',()=>{duration=Math.max(duration-5,5);durVal.textContent=duration;refreshKcal();});
+    function buildDropdown(results){dropdown.innerHTML='';results.forEach((w,i)=>{const item=document.createElement('div');item.className='wsd-item';item.dataset.idx=i;item.innerHTML=`<span>${w.name}</span><span class="wsd-met">${w.speedBased?'speed-based':w.met+' MET'}</span>`;item.addEventListener('mousedown',e=>{e.preventDefault();selectWorkout(w);});dropdown.appendChild(item);});dropdownIdx=-1;}
+    function selectWorkout(w){isSpeedBased=!!w.speedBased;selectedLabel=w.name;const su=document.getElementById('workout-speed-up'),sd=document.getElementById('workout-speed-down');if(isSpeedBased){speedTable=w.speedTable||'running';speedMph=w.defaultSpeed||5.0;speedVal.textContent=speedMph.toFixed(1);selectedMet=speedToMet(speedMph,speedTable);speedField.classList.remove('speed-inactive');su.disabled=false;sd.disabled=false;}else{selectedMet=w.met;speedField.classList.add('speed-inactive');su.disabled=true;sd.disabled=true;}chipLabel.textContent=w.name;chipTier.className='workout-chip-tier '+tierClass(selectedMet);typeInput.style.display='none';chip.hidden=false;chip.style.display='flex';typeInput.value='';dropdown.hidden=true;refreshKcal();setFormActive(true);}
+    chipClear.addEventListener('click',()=>{chip.hidden=true;chip.style.display='none';typeInput.style.display='';speedField.classList.add('speed-inactive');typeInput.value='';selectedMet=null;selectedLabel=null;isSpeedBased=false;refreshKcal();setFormActive(false);});
+    typeInput.addEventListener('input',()=>{const q=typeInput.value.trim().toLowerCase();if(!q){dropdown.hidden=true;return;}const matches=WORKOUTS.filter(w=>w.name.toLowerCase().includes(q));matches.sort((a,b)=>{const rank=n=>{const lo=n.toLowerCase();if(lo.startsWith(q))return 0;if(lo.split(/[\s(/]/).some(w=>w.startsWith(q)))return 1;return 2;};return rank(a.name)-rank(b.name);});const results=matches.slice(0,10);if(!results.length){dropdown.hidden=true;return;}buildDropdown(results);dropdown.hidden=false;});
+    typeInput.addEventListener('keydown',e=>{const items=dropdown.querySelectorAll('.wsd-item');if(e.key==='ArrowDown'){e.preventDefault();dropdownIdx=Math.min(dropdownIdx+1,items.length-1);items.forEach((el,i)=>el.classList.toggle('highlighted',i===dropdownIdx));}else if(e.key==='ArrowUp'){e.preventDefault();dropdownIdx=Math.max(dropdownIdx-1,0);items.forEach((el,i)=>el.classList.toggle('highlighted',i===dropdownIdx));}else if(e.key==='Enter'&&dropdownIdx>=0){e.preventDefault();const q=typeInput.value.trim().toLowerCase();const results=WORKOUTS.filter(w=>w.name.toLowerCase().includes(q));if(results[dropdownIdx])selectWorkout(results[dropdownIdx]);}else if(e.key==='Escape'){dropdown.hidden=true;}});
+    document.addEventListener('click',e=>{if(!e.target.closest('#workout-type-input,#workout-search-dropdown,.workout-search-wrap'))dropdown.hidden=true;});
+    dropdown.addEventListener('wheel',e=>{e.preventDefault();dropdown.scrollTop+=e.deltaY;},{passive:false});
+    const stagedEntriesEl=document.getElementById('wpm-staged-entries');
+    let stagedActivities=[],pendingDeletes=[],loadedNote='';
+    function renderStagedRow(item,idx){const el=document.createElement('div');el.className='wpm-staged-row';el.dataset.idx=idx;el.innerHTML=`<div class="wpm-staged-row-info"><span class="workout-badge ${tierClassByName(item.type)}">${item.type.replace(/</g,'&lt;')}</span></div><div class="wpm-day-dur">${item.duration_min} min</div><div class="wpm-day-kcal">${item.kcal.toLocaleString()} kcal</div><button class="table-delete-btn" aria-label="Remove" data-tip="Remove">&#10005;</button>`;el.querySelector('.table-delete-btn').addEventListener('click',()=>{const i=parseInt(el.dataset.idx,10);stagedActivities.splice(i,1);el.remove();stagedEntriesEl.querySelectorAll('.wpm-staged-row').forEach((r,j)=>{r.dataset.idx=j;});if(!dayEntries.querySelectorAll('.wpm-day-row').length&&!stagedActivities.length)dayEmpty.hidden=false;});stagedEntriesEl.appendChild(el);}
+    async function loadDayEntries(isoDate){const isToday=isoDate===todayISO();dayHeading.textContent=isToday?'Logged today':`Logged for ${fmtDate(isoDate)}`;dayEntries.querySelectorAll('.wpm-day-row').forEach(el=>el.remove());stagedEntriesEl.innerHTML='';stagedActivities=[];pendingDeletes=[];dayEmpty.hidden=false;const[rows,noteData]=await Promise.all([fetch('/api/workouts?date='+isoDate).then(r=>r.json()),fetch('/api/workout-day-note?date='+isoDate).then(r=>r.json())]);loadedNote=noteData.note||'';noteInput.value=loadedNote;if(rows.length){dayEmpty.hidden=true;rows.forEach(w=>{const el=document.createElement('div');el.className='wpm-day-row';el.dataset.wid=w.id;el.innerHTML=`<div class="wpm-day-row-info"><span class="workout-badge ${tierClassByName(w.type)}">${w.type.replace(/</g,'&lt;')}</span></div><div class="wpm-day-dur">${w.duration_min} min</div><div class="wpm-day-kcal">${w.kcal.toLocaleString()} kcal</div><button class="table-delete-btn" aria-label="Delete" data-tip="Delete workout">&#10005;</button>`;el.querySelector('.table-delete-btn').addEventListener('click',()=>{pendingDeletes.push({id:w.id,type:w.type,duration_min:w.duration_min});el.remove();if(!dayEntries.querySelectorAll('.wpm-day-row').length&&!stagedActivities.length)dayEmpty.hidden=false;});dayEntries.appendChild(el);});}}
+    function clearActivityForm(){typeInput.value='';typeInput.style.display='';chip.hidden=true;chip.style.display='none';speedField.classList.add('speed-inactive');document.getElementById('workout-speed-up').disabled=true;document.getElementById('workout-speed-down').disabled=true;selectedMet=null;selectedLabel=null;isSpeedBased=false;speedMph=5.0;speedVal.textContent='5.0';duration=30;durVal.textContent='30';setFormActive(false);refreshKcal();dropdown.hidden=true;}
+    async function openModal(isoDate){try{const w=await fetch('/api/latest-weight').then(r=>r.json());weightKg=w.weight_lbs?w.weight_lbs/2.2046:80;}catch{weightKg=80;}dpSetDate(isoDate||todayISO());clearActivityForm();noteInput.value='';await loadDayEntries(dpSelected);logModal.hidden=false;requestAnimationFrame(()=>document.getElementById('wpm-entries-scroll').dispatchEvent(new Event('scroll')));typeInput.focus();}
+    function closeModal(){logModal.hidden=true;dpCalEl.hidden=true;dropdown.hidden=true;}
+    function hasUnsavedChanges(){return stagedActivities.length>0||pendingDeletes.length>0||noteInput.value.trim()!==loadedNote;}
+    function maybeClose(){if(!hasUnsavedChanges()){closeModal();return;}window.showAppConfirm('Discard changes?','You have unsaved changes. Discard them?','Discard',closeModal);}
     document.getElementById('wp-add-btn').addEventListener('click', () => openModal(todayISO()));
     document.getElementById('wp-modal-x').addEventListener('click', maybeClose);
     document.getElementById('wp-modal-cancel').addEventListener('click', maybeClose);
-    logModal.addEventListener('click', e => { if (e.target === logModal) maybeClose(); });
-    logModal.addEventListener('keydown', e => { if (e.key === 'Escape') maybeClose(); });
-
-    /* Add Activity — stages an entry without saving yet */
-    document.getElementById('wpm-add-activity-btn').addEventListener('click', () => {
-        if (!selectedLabel) return;
-        const kcal      = calcKcal();
-        const typeLabel = isSpeedBased ? `${selectedLabel} (${speedMph.toFixed(1)} mph)` : selectedLabel;
-        const item = { type: typeLabel, duration_min: duration, kcal };
-        const idx  = stagedActivities.length;
-        stagedActivities.push(item);
-        renderStagedRow(item, idx);
-        dayEmpty.hidden = true;
-        clearActivityForm();
-    });
-
-    /* Delete-with-checkboxes modal */
-    function showDeleteConfirm(onCommit) {
-        const modal   = document.getElementById('wp-del-check-modal');
-        const checks  = document.getElementById('wp-del-checks');
-        const okBtn   = document.getElementById('wp-del-check-ok');
-        checks.innerHTML = '';
-
-        pendingDeletes.forEach((d, i) => {
-            const lbl = document.createElement('label');
-            lbl.className = 'row-delete-check-label';
-            const cb = document.createElement('input');
-            cb.type = 'checkbox'; cb.checked = true; cb.dataset.idx = i;
-            lbl.append(cb, document.createTextNode(`${d.type} (${d.duration_min} min)`));
-            checks.appendChild(lbl);
-        });
-
-        function syncOk() {
-            okBtn.disabled = checks.querySelectorAll('input:checked').length === 0;
-        }
-        checks.querySelectorAll('input[type="checkbox"]').forEach(cb => cb.addEventListener('change', syncOk));
-        okBtn.disabled = false;
-        modal.hidden = false;
-
-        document.getElementById('wp-del-check-cancel').onclick = () => { modal.hidden = true; };
-        okBtn.onclick = () => {
-            modal.hidden = true;
-            const kept = new Set();
-            checks.querySelectorAll('input[type="checkbox"]').forEach(cb => {
-                if (!cb.checked) kept.add(parseInt(cb.dataset.idx, 10));
-            });
-            pendingDeletes = pendingDeletes.filter((_, i) => kept.has(i));
-            onCommit();
-        };
-    }
-
-    /* Save — optionally confirm pending deletes, then commit everything */
+    logModal.addEventListener('click', e => { if (e.target===logModal) maybeClose(); });
+    logModal.addEventListener('keydown', e => { if (e.key==='Escape') maybeClose(); });
+    document.getElementById('wpm-add-activity-btn').addEventListener('click',()=>{if(!selectedLabel)return;const kcal=calcKcal(),typeLabel=isSpeedBased?`${selectedLabel} (${speedMph.toFixed(1)} mph)`:selectedLabel;const item={type:typeLabel,duration_min:duration,kcal};stagedActivities.push(item);renderStagedRow(item,stagedActivities.length-1);dayEmpty.hidden=true;clearActivityForm();});
+    function showDeleteConfirm(onCommit){const modal=document.getElementById('wp-del-check-modal'),checks=document.getElementById('wp-del-checks'),okBtn=document.getElementById('wp-del-check-ok');checks.innerHTML='';pendingDeletes.forEach((d,i)=>{const lbl=document.createElement('label');lbl.className='row-delete-check-label';const cb=document.createElement('input');cb.type='checkbox';cb.checked=true;cb.dataset.idx=i;lbl.append(cb,document.createTextNode(`${d.type} (${d.duration_min} min)`));checks.appendChild(lbl);});function syncOk(){okBtn.disabled=checks.querySelectorAll('input:checked').length===0;}checks.querySelectorAll('input[type="checkbox"]').forEach(cb=>cb.addEventListener('change',syncOk));okBtn.disabled=false;modal.hidden=false;document.getElementById('wp-del-check-cancel').onclick=()=>{modal.hidden=true;};okBtn.onclick=()=>{modal.hidden=true;const kept=new Set();checks.querySelectorAll('input[type="checkbox"]').forEach(cb=>{if(!cb.checked)kept.add(parseInt(cb.dataset.idx,10));});pendingDeletes=pendingDeletes.filter((_,i)=>kept.has(i));onCommit();};}
     document.getElementById('wp-modal-save').addEventListener('click', async () => {
         const isoDate = dpSelected || todayISO();
-
-        async function commitSave() {
-            for (const d of pendingDeletes) {
-                await fetch('/api/workout/' + d.id, { method: 'DELETE' });
-            }
-            for (const item of stagedActivities) {
-                await fetch('/api/workout', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ date: isoDate, type: item.type, duration_min: item.duration_min, kcal: item.kcal, note: '' })
-                });
-            }
-            await fetch('/api/workout-day-note', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ date: isoDate, note: noteInput.value.trim() })
-            });
-            closeModal();
-            await Promise.all([loadTable(), refreshStats()]);
-        }
-
-        if (pendingDeletes.length > 0) {
-            showDeleteConfirm(commitSave);
-        } else {
-            await commitSave();
-        }
+        async function commitSave(){for(const d of pendingDeletes)await fetch('/api/workout/'+d.id,{method:'DELETE'});for(const item of stagedActivities)await fetch('/api/workout',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({date:isoDate,type:item.type,duration_min:item.duration_min,kcal:item.kcal,note:''})});await fetch('/api/workout-day-note',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({date:isoDate,note:noteInput.value.trim()})});closeModal();await Promise.all([loadTable(),refreshStats()]);}
+        if(pendingDeletes.length>0){showDeleteConfirm(commitSave);}else{await commitSave();}
     });
 
-    /* ── Logged-entries custom scrollbar ── */
-    (function () {
-        const scroll = document.getElementById('wpm-entries-scroll');
-        const thumb  = document.getElementById('wpm-scroll-thumb');
-
-        function sync() {
-            const track = thumb.parentElement;
-            if (scroll.scrollHeight <= scroll.clientHeight) { thumb.style.display = 'none'; return; }
-            thumb.style.display = 'block';
-            const ratio  = scroll.clientHeight / scroll.scrollHeight;
-            const thumbH = Math.max(16, ratio * track.clientHeight);
-            const maxTop = track.clientHeight - thumbH;
-            const pct    = scroll.scrollTop / (scroll.scrollHeight - scroll.clientHeight);
-            thumb.style.height = thumbH + 'px';
-            thumb.style.top    = (pct * maxTop) + 'px';
-        }
-
-        scroll.addEventListener('scroll', sync);
-        new MutationObserver(sync).observe(scroll, { childList: true, subtree: true });
-
-        let drag = false, dragY = 0, dragTop = 0;
-        thumb.addEventListener('mousedown', e => {
-            drag = true; dragY = e.clientY; dragTop = scroll.scrollTop;
-            e.preventDefault(); e.stopPropagation();
-        });
-        document.addEventListener('mousemove', e => {
-            if (!drag) return;
-            const track    = thumb.parentElement;
-            const thumbH   = parseFloat(thumb.style.height) || 16;
-            const maxTop   = track.clientHeight - thumbH;
-            const maxScroll = scroll.scrollHeight - scroll.clientHeight;
-            scroll.scrollTop = Math.max(0, Math.min(dragTop + (maxTop > 0 ? (e.clientY - dragY) / maxTop : 0) * maxScroll, maxScroll));
-        });
-        document.addEventListener('mouseup', () => { drag = false; });
-    })();
+    /* ── Logged-entries scrollbar ── */
+    (function(){const scroll=document.getElementById('wpm-entries-scroll'),thumb=document.getElementById('wpm-scroll-thumb');function sync(){const track=thumb.parentElement;if(scroll.scrollHeight<=scroll.clientHeight){thumb.style.display='none';return;}thumb.style.display='block';const ratio=scroll.clientHeight/scroll.scrollHeight,thumbH=Math.max(16,ratio*track.clientHeight),maxTop=track.clientHeight-thumbH,pct=scroll.scrollTop/(scroll.scrollHeight-scroll.clientHeight);thumb.style.height=thumbH+'px';thumb.style.top=(pct*maxTop)+'px';}scroll.addEventListener('scroll',sync);new MutationObserver(sync).observe(scroll,{childList:true,subtree:true});let drag=false,dragY=0,dragTop=0;thumb.addEventListener('mousedown',e=>{drag=true;dragY=e.clientY;dragTop=scroll.scrollTop;e.preventDefault();e.stopPropagation();});document.addEventListener('mousemove',e=>{if(!drag)return;const track=thumb.parentElement,thumbH=parseFloat(thumb.style.height)||16,maxTop=track.clientHeight-thumbH,maxScroll=scroll.scrollHeight-scroll.clientHeight;scroll.scrollTop=Math.max(0,Math.min(dragTop+(maxTop>0?(e.clientY-dragY)/maxTop:0)*maxScroll,maxScroll));});document.addEventListener('mouseup',()=>{drag=false;});})();
 
     /* ── Table page-edge scrollbar ── */
-    (function(){
-        const wrap=document.querySelector('.wp-table-wrap');
-        const track=document.getElementById('wp-scrollbar-track');
-        const thumb=document.getElementById('wp-scrollbar-thumb');
-        function sync(){
-            if(wrap.scrollHeight<=wrap.clientHeight){thumb.style.display='none';return;}
-            const thumbH=Math.max((wrap.clientHeight/wrap.scrollHeight)*track.clientHeight,30);
-            const maxTop=track.clientHeight-thumbH,maxScroll=wrap.scrollHeight-wrap.clientHeight;
-            thumb.style.display='block';thumb.style.height=thumbH+'px';
-            thumb.style.top=(wrap.scrollTop/maxScroll)*maxTop+'px';
-        }
-        wrap.addEventListener('scroll',sync);
-        /* Observe inner content, not wrap — wrap is fixed-height flex child, inner grows with rows */
-        new ResizeObserver(sync).observe(document.getElementById('wp-table-inner'));
-
-        /* Keep scrollbar top flush with the actual header — header grows at narrow widths */
-        const wpHeaderEl=document.querySelector('.wp-header');
-        function syncTrackTop(){track.style.top=wpHeaderEl.offsetHeight+'px';}
-        new ResizeObserver(syncTrackTop).observe(wpHeaderEl);
-        syncTrackTop();
-        let drag=false,dragY=0,dragScroll=0;
-        function startDrag(e){drag=true;dragY=e.clientY;dragScroll=wrap.scrollTop;e.preventDefault();}
-        thumb.addEventListener('mousedown',startDrag);
-        track.addEventListener('mousedown',e=>{
-            if(e.target===thumb)return;
-            const tr=track.getBoundingClientRect(),th=parseFloat(thumb.style.height)||30;
-            const mt=track.clientHeight-th,ms=wrap.scrollHeight-wrap.clientHeight;
-            const cy=Math.min(Math.max(e.clientY-tr.top-th/2,0),mt);
-            wrap.scrollTop=(cy/mt)*ms;startDrag(e);
-        });
-        document.addEventListener('mousemove',e=>{
-            if(!drag)return;
-            const mt=track.clientHeight-parseFloat(thumb.style.height),ms=wrap.scrollHeight-wrap.clientHeight;
-            wrap.scrollTop=Math.max(0,Math.min(ms,dragScroll+(e.clientY-dragY)*(ms/mt)));
-        });
-        document.addEventListener('mouseup',()=>{drag=false;});
-    })();
+    (function(){const wrap=document.querySelector('.wp-table-wrap'),track=document.getElementById('wp-scrollbar-track'),thumb=document.getElementById('wp-scrollbar-thumb');function sync(){if(wrap.scrollHeight<=wrap.clientHeight){thumb.style.display='none';return;}const thumbH=Math.max((wrap.clientHeight/wrap.scrollHeight)*track.clientHeight,30),maxTop=track.clientHeight-thumbH,maxScroll=wrap.scrollHeight-wrap.clientHeight;thumb.style.display='block';thumb.style.height=thumbH+'px';thumb.style.top=(wrap.scrollTop/maxScroll)*maxTop+'px';}wrap.addEventListener('scroll',sync);new ResizeObserver(sync).observe(document.getElementById('wp-table-inner'));let drag=false,dragY=0,dragScroll=0;function startDrag(e){drag=true;dragY=e.clientY;dragScroll=wrap.scrollTop;e.preventDefault();}thumb.addEventListener('mousedown',startDrag);track.addEventListener('mousedown',e=>{if(e.target===thumb)return;const tr=track.getBoundingClientRect(),th=parseFloat(thumb.style.height)||30,mt=track.clientHeight-th,ms=wrap.scrollHeight-wrap.clientHeight,cy=Math.min(Math.max(e.clientY-tr.top-th/2,0),mt);wrap.scrollTop=(cy/mt)*ms;startDrag(e);});document.addEventListener('mousemove',e=>{if(!drag)return;const mt=track.clientHeight-parseFloat(thumb.style.height),ms=wrap.scrollHeight-wrap.clientHeight;wrap.scrollTop=Math.max(0,Math.min(ms,dragScroll+(e.clientY-dragY)*(ms/mt)));});document.addEventListener('mouseup',()=>{drag=false;});})();
 
     /* ── Init ── */
-    (async () => {
-        await Promise.all([loadTable(), refreshStats()]);
-    })();
-    </script>
-</body>
-</html>
+    (async () => { await Promise.all([loadTable(), refreshStats()]); })();
+</script>
+{% endblock %}
