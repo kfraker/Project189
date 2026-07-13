@@ -196,15 +196,6 @@ html::-webkit-scrollbar { display: none; }
     transition-delay: 0s;
 }
 
-#site-cursor {
-    position: fixed;
-    top: 0;
-    left: 0;
-    pointer-events: none;
-    z-index: 2147483647;
-    display: none;
-    background: no-repeat top left / contain;
-}
 
 body {
     font-family: Arial, sans-serif;

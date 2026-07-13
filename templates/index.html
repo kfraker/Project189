@@ -390,24 +390,34 @@
                 </div>
                 <div id="workout-search-dropdown" class="workout-search-dropdown" hidden></div>
             </div>
-            <div id="workout-speed-field" class="workout-speed-field speed-inactive">
-                <span class="workout-speed-label">Speed</span>
-                <button id="workout-speed-down" class="stepper-btn stepper-down" aria-label="Decrease speed"></button>
-                <span id="workout-speed-val" class="workout-speed-val">5.0</span>
-                <span class="workout-speed-unit">mph</span>
-                <button id="workout-speed-up" class="stepper-btn stepper-up" aria-label="Increase speed"></button>
+            <div class="workout-form-field" id="workout-speed-field" style="margin-bottom:10px;">
+                <div class="workout-form-label">Speed</div>
+                <div class="workout-stepper-row">
+                    <button class="workout-stepper-btn" id="workout-speed-down" type="button" aria-label="Decrease speed">&#8722;</button>
+                    <div class="workout-dur-val" id="workout-speed-val">5.0</div>
+                    <button class="workout-stepper-btn" id="workout-speed-up" type="button" aria-label="Increase speed">+</button>
+                    <span class="workout-dur-unit">mph</span>
+                </div>
             </div>
-            <div id="workout-dur-field" class="workout-dur-field">
-                <span class="workout-dur-label">Duration</span>
-                <button id="workout-dur-down" class="stepper-btn stepper-down" aria-label="Decrease duration"></button>
-                <span id="workout-dur-val" class="workout-dur-val">30</span>
-                <span class="workout-dur-unit">min</span>
-                <button id="workout-dur-up" class="stepper-btn stepper-up" aria-label="Increase duration"></button>
-                <span class="workout-kcal-eq">=</span>
-                <span id="workout-kcal-num" class="workout-kcal-num">—</span>
-                <span class="workout-kcal-unit">kcal</span>
+            <div class="workout-form-row" style="margin-bottom:10px;">
+                <div class="workout-form-field" id="workout-dur-field">
+                    <div class="workout-form-label">Duration</div>
+                    <div class="workout-stepper-row">
+                        <button class="workout-stepper-btn" id="workout-dur-down" type="button" aria-label="Decrease duration">&#8722;</button>
+                        <div class="workout-dur-val" id="workout-dur-val">30</div>
+                        <button class="workout-stepper-btn" id="workout-dur-up" type="button" aria-label="Increase duration">+</button>
+                        <span class="workout-dur-unit">min</span>
+                    </div>
+                </div>
+                <div class="workout-form-field workout-kcal-preview-wrap">
+                    <div class="workout-form-label">Est. Calories</div>
+                    <div class="workout-kcal-preview">
+                        <span class="workout-kcal-num" id="workout-kcal-num">—</span>
+                        <span class="workout-kcal-unit">kcal</span>
+                    </div>
+                </div>
             </div>
-            <button id="wpm-add-activity-btn" class="wpm-add-activity-btn" disabled>+ Add to day</button>
+            <button id="wpm-add-activity-btn" class="wpm-add-activity-btn" disabled>+ Add Activity</button>
             <div class="wpm-note-section">
                 <div class="wpm-field-label">Day note (optional)</div>
                 <textarea id="workout-note-input" class="wpm-date-input" rows="2" placeholder="How did it go?…" style="resize:none;height:54px;"></textarea>
@@ -793,12 +803,18 @@
         function trySave(){const dt=selectedDateISO,raw=parseFloat(weightIn.value);if(!dt){if(dateIn)dateIn.focus();return;}if(isNaN(raw)||raw<=0){weightIn.focus();return;}const lbs=isKgMode()?parseFloat((raw*2.2046).toFixed(1)):raw;doSave(dt,lbs,false);}
         function step(amount){const kg=isKgMode(),min=kg?20:50,max=kg?450:999,cur=parseFloat(weightIn.value)||0;weightIn.value=Math.min(max,Math.max(min,Math.round((cur+amount)*10)/10));updatePreview();}
 
-        window.openWeightModal = function() {
+        window.openWeightModal = async function() {
             const kg=isKgMode();
             if(labelEl)labelEl.textContent=baseLabel+(kg?' (kgs)':' (lbs)');
             if(unitTag)unitTag.textContent=kg?'kgs':'lbs';
             weightIn.min=kg?'20':'50'; weightIn.max=kg?'450':'999';
-            selectedDateISO=''; if(dateIn)dateIn.value=''; weightIn.value=''; preview.textContent='';
+            let startDate='';
+            try{
+                const today=getTodayISO();
+                const rows=await fetch('/api/weights?range=7d').then(r=>r.json());
+                if(!rows.some(r=>r.date===today))startDate=today;
+            }catch{}
+            selectedDateISO=startDate; if(dateIn)dateIn.value=startDate?displayFromISO(startDate):''; weightIn.value=''; preview.textContent='';
             const si=document.getElementById('history-screen-input'),sc=document.getElementById('history-screen-confirm');
             if(si)si.hidden=false; if(sc)sc.hidden=true;
             modal.hidden=false; modalOpen(modal);
@@ -979,15 +995,16 @@
         function closeModal(){logModal.hidden=true;dpCalEl.hidden=true;dropdown.hidden=true;}
         function hasUnsavedChanges(){return stagedActivities.length>0||pendingDeletes.length>0||noteInput.value.trim()!==loadedNote;}
         function maybeClose(){if(!hasUnsavedChanges()){closeModal();return;}window.showAppConfirm('Discard changes?','You have unsaved changes. Discard them?','Discard',closeModal);}
-        async function openModal(isoDate){try{const w=await fetch('/api/latest-weight').then(r=>r.json());weightKg=w.weight_lbs?w.weight_lbs/2.2046:80;}catch{weightKg=80;}dpSetDate(isoDate||getTodayISO());clearActivityForm();noteInput.value='';await loadDayEntries(dpSelected);logModal.hidden=false;requestAnimationFrame(()=>document.getElementById('wpm-entries-scroll').dispatchEvent(new Event('scroll')));typeInput.focus();}
-        window.openWorkoutModal = function(){openModal(getTodayISO());};
+        function clearDayView(){dayHeading.textContent='Select a date';dayEntries.querySelectorAll('.wpm-day-row').forEach(el=>el.remove());stagedEntriesEl.innerHTML='';stagedActivities=[];pendingDeletes=[];loadedNote='';noteInput.value='';dayEmpty.hidden=false;}
+        async function openModal(isoDate){try{const w=await fetch('/api/latest-weight').then(r=>r.json());weightKg=w.weight_lbs?w.weight_lbs/2.2046:80;}catch{weightKg=80;}let startDate=isoDate;if(!startDate){const today=getTodayISO();const todayRows=await fetch('/api/workouts?date='+today).then(r=>r.json());startDate=todayRows.length?'':today;}dpSetDate(startDate);clearActivityForm();if(startDate)await loadDayEntries(startDate);else clearDayView();logModal.hidden=false;requestAnimationFrame(()=>document.getElementById('wpm-entries-scroll').dispatchEvent(new Event('scroll')));typeInput.focus();}
+        window.openWorkoutModal = function(){openModal();};
         document.getElementById('wp-modal-x').addEventListener('click',maybeClose);
         document.getElementById('wp-modal-cancel').addEventListener('click',maybeClose);
         logModal.addEventListener('click',e=>{if(e.target===logModal)maybeClose();});
         logModal.addEventListener('keydown',e=>{if(e.key==='Escape')maybeClose();});
         document.getElementById('wpm-add-activity-btn').addEventListener('click',()=>{if(!selectedLabel)return;const kcal=calcKcal(),typeLabel=isSpeedBased?`${selectedLabel} (${speedMph.toFixed(1)} mph)`:selectedLabel;const item={type:typeLabel,duration_min:duration,kcal};const idx=stagedActivities.length;stagedActivities.push(item);renderStagedRow(item,idx);dayEmpty.hidden=true;clearActivityForm();});
         function showDeleteConfirm(onCommit){const modal=document.getElementById('idx-del-check-modal'),checks=document.getElementById('idx-del-checks'),okBtn=document.getElementById('idx-del-check-ok');checks.innerHTML='';pendingDeletes.forEach((d,i)=>{const lbl=document.createElement('label');lbl.className='row-delete-check-label';const cb=document.createElement('input');cb.type='checkbox';cb.checked=true;cb.dataset.idx=i;lbl.append(cb,document.createTextNode(`${d.type} (${d.duration_min} min)`));checks.appendChild(lbl);});function syncOk(){okBtn.disabled=checks.querySelectorAll('input:checked').length===0;}checks.querySelectorAll('input[type="checkbox"]').forEach(cb=>cb.addEventListener('change',syncOk));okBtn.disabled=false;modal.hidden=false;document.getElementById('idx-del-check-cancel').onclick=()=>{modal.hidden=true;};okBtn.onclick=()=>{modal.hidden=true;const kept=new Set();checks.querySelectorAll('input[type="checkbox"]').forEach(cb=>{if(!cb.checked)kept.add(parseInt(cb.dataset.idx,10));});pendingDeletes=pendingDeletes.filter((_,i)=>kept.has(i));onCommit();};}
-        document.getElementById('wp-modal-save').addEventListener('click',async()=>{const isoDate=dpSelected||getTodayISO();async function commitSave(){for(const d of pendingDeletes)await fetch('/api/workout/'+d.id,{method:'DELETE'});for(const item of stagedActivities)await fetch('/api/workout',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({date:isoDate,type:item.type,duration_min:item.duration_min,kcal:item.kcal,note:''})});await fetch('/api/workout-day-note',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({date:isoDate,note:noteInput.value.trim()})});closeModal();}if(pendingDeletes.length>0){showDeleteConfirm(commitSave);}else{await commitSave();}});
+        document.getElementById('wp-modal-save').addEventListener('click',async()=>{if(!dpSelected){dpInput.focus();return;}const isoDate=dpSelected;async function commitSave(){for(const d of pendingDeletes)await fetch('/api/workout/'+d.id,{method:'DELETE'});for(const item of stagedActivities)await fetch('/api/workout',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({date:isoDate,type:item.type,duration_min:item.duration_min,kcal:item.kcal,note:''})});await fetch('/api/workout-day-note',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({date:isoDate,note:noteInput.value.trim()})});closeModal();}if(pendingDeletes.length>0){showDeleteConfirm(commitSave);}else{await commitSave();}});
         (function(){const scroll=document.getElementById('wpm-entries-scroll'),thumb=document.getElementById('wpm-scroll-thumb');function sync(){const track=thumb.parentElement;if(scroll.scrollHeight<=scroll.clientHeight){thumb.style.display='none';return;}thumb.style.display='block';const ratio=scroll.clientHeight/scroll.scrollHeight,thumbH=Math.max(16,ratio*track.clientHeight),maxTop=track.clientHeight-thumbH,pct=scroll.scrollTop/(scroll.scrollHeight-scroll.clientHeight);thumb.style.height=thumbH+'px';thumb.style.top=(pct*maxTop)+'px';}scroll.addEventListener('scroll',sync);new MutationObserver(sync).observe(scroll,{childList:true,subtree:true});let drag=false,dragY=0,dragTop=0;thumb.addEventListener('mousedown',e=>{drag=true;dragY=e.clientY;dragTop=scroll.scrollTop;e.preventDefault();e.stopPropagation();});document.addEventListener('mousemove',e=>{if(!drag)return;const track=thumb.parentElement,thumbH=parseFloat(thumb.style.height)||16,maxTop=track.clientHeight-thumbH,maxScroll=scroll.scrollHeight-scroll.clientHeight;scroll.scrollTop=Math.max(0,Math.min(dragTop+(maxTop>0?(e.clientY-dragY)/maxTop:0)*maxScroll,maxScroll));});document.addEventListener('mouseup',()=>{drag=false;});})();
     })();
 

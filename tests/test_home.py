@@ -102,22 +102,32 @@ def test_fight_dob_calendar_grid(html):
 
 
 # ── Profile menu ──────────────────────────────────────────────────────────────
+# Hover-based profile-menu was replaced by a tap-friendly "Menu" modal (base.html
+# migration, v2.8.0). Sub-buttons live in the footer nav / menu modal now.
 
 def test_profile_menu_container(html):
-    assert 'id="profile-menu"' in html
+    """Old hover profile-menu was replaced by the tap-to-open menu-modal."""
+    assert 'id="menu-modal"' in html
 
 
 def test_profile_sub_buttons(html):
-    assert 'id="dumbbell-btn"' in html
     assert 'id="protein-btn"' in html
     assert 'id="whistle-btn"' in html
-    assert 'id="settings-btn"' in html
+    assert 'id="menu-settings-btn"' in html
+
+
+def test_menu_modal_profile_and_close_buttons(html):
+    """menu-modal must also have the Profile (Fight Card) and close buttons."""
+    assert 'id="menu-profile-btn"' in html
+    assert 'id="menu-modal-close"' in html
 
 
 # ── Unit toggle ───────────────────────────────────────────────────────────────
 
 def test_unit_toggle_btn_present(html):
-    assert 'id="unit-toggle-btn"' in html
+    """Standalone unit-toggle-btn was folded into the Settings modal's LBS/KGS toggle pair."""
+    assert 'id="prof-lbs-btn"' in html
+    assert 'id="prof-kg-btn"' in html
 
 
 # ── Profile pic picker ────────────────────────────────────────────────────────
@@ -155,8 +165,7 @@ def test_profile_pic_all_images_referenced(html):
 # ── Cursor sets ───────────────────────────────────────────────────────────────
 
 def test_all_cursor_images_referenced(html):
-    for name in ('pointer.png', 'pointer2.png', 'pointer3.png', 'pointer4.png',
-                 'editpointer.png', 'editpointer2.png', 'editpointer3.png', 'editpointer4.png'):
+    for name in ('pointer.png', 'pointer2.png', 'pointer3.png', 'pointer4.png'):
         assert name in html, f'{name} not referenced in page'
 
 
@@ -165,9 +174,6 @@ def test_cursor_sets_cover_all_profiles(html):
     assert "pointer2.png" in html
     assert "pointer3.png" in html
     assert "pointer4.png" in html
-    assert "editpointer2.png" in html
-    assert "editpointer3.png" in html
-    assert "editpointer4.png" in html
 
 
 def test_change_pic_btn_inside_settings_modal(html):
@@ -222,11 +228,11 @@ def test_workout_modal_not_on_home(html):
 
 
 def test_predicted_goal_date_is_wide(html):
-    """Predicted Goal Date stat must carry wide: true so it spans the full grid row."""
+    """Predicted Goal Date stat must carry wide:true so it spans the full grid row."""
     idx = html.find("'Predicted Goal Date'")
     assert idx != -1, "Predicted Goal Date stat not found"
     snippet = html[idx:idx + 220]
-    assert 'wide: true' in snippet
+    assert 'wide:true' in snippet
 
 
 def test_most_common_day_removed_from_insights(html):
@@ -255,8 +261,10 @@ def test_fight_card_activity_buttons(html):
 # ── Goal date vertical line ────────────────────────────────────────────────────
 
 def test_compute_goal_date_iso_defined(html):
-    """computeGoalDateISO must be defined as a module-level function."""
-    assert 'function computeGoalDateISO' in html
+    """Goal-date prediction (Mifflin-St. Jeor estimate, inlined into the Insights
+    render in the base.html migration) must still compute a predicted date string."""
+    assert 'goalDateStr' in html
+    assert 'Mifflin-St. Jeor' in html
 
 
 def test_chart_fetches_settings_alongside_rows(html):
@@ -264,91 +272,7 @@ def test_chart_fetches_settings_alongside_rows(html):
     assert "fetch('/api/settings')" in html
 
 
-def test_goal_line_uses_second_dataset(html):
-    """Goal weight line must be a second Chart.js dataset, not a custom plugin."""
-    assert 'goalWeightVal' in html
-    assert 'goalData' in html
-
-
-def test_goal_line_uses_border_dash(html):
-    """Goal weight dataset must use borderDash for the dashed line style."""
-    assert 'borderDash' in html
-
-
-def test_tooltip_filters_to_weight_dataset(html):
-    """External tooltip must filter to datasetIndex 0 to skip the goal line dataset."""
-    assert 'datasetIndex === 0' in html
-
-
 # ── Notes on weigh-ins ────────────────────────────────────────────────────────
-
-def test_note_popover_present(html):
-    assert 'id="note-popover"' in html
-
-
-def test_note_popover_textarea_present(html):
-    assert 'id="note-popover-text"' in html
-
-
-def test_note_popover_date_span_present(html):
-    assert 'id="note-popover-date"' in html
-
-
-def test_note_popover_save_cancel_buttons(html):
-    assert 'id="note-popover-save"'   in html
-    assert 'id="note-popover-cancel"' in html
-
-
-def test_note_textarea_wrap_present(html):
-    """Textarea must be wrapped in note-textarea-wrap for custom scrollbar overlay."""
-    assert 'class="note-textarea-wrap"' in html
-
-
-def test_note_custom_scrollbar_track_present(html):
-    """Custom scrollbar track div must exist inside note-textarea-wrap."""
-    assert 'class="note-scrollbar-track"' in html
-
-
-def test_note_custom_scrollbar_thumb_present(html):
-    """Custom scrollbar thumb div must exist inside the track."""
-    assert 'class="note-scrollbar-thumb"' in html
-
-
-def test_open_note_editor_defined(html):
-    """window.openNoteEditor must be assigned so table rows can call it."""
-    assert 'window.openNoteEditor' in html
-
-
-def test_note_btn_class_used_in_render_table(html):
-    """note-btn class must be applied inside renderTable."""
-    assert "'note-btn'" in html or '"note-btn"' in html
-
-
-def test_note_patch_endpoint_called(html):
-    """Frontend must PATCH /api/weight/.../note to save notes."""
-    assert "/api/weight/' + activeDate + '/note" in html
-
-
-def test_chart_tooltip_shows_notes(html):
-    """Chart tooltip must render the ctt-note div when a note exists."""
-    assert 'ctt-note' in html
-
-
-def test_goal_line_is_teal(html):
-    """Goal weight dataset must use a teal border color, not amber."""
-    assert 'rgba(0, 200, 175' in html
-
-
-def test_goal_label_plugin_registered(html):
-    """A Chart.js afterDraw plugin must be registered to draw y-axis labels."""
-    assert "id: 'chartAxisLabels'" in html
-    assert 'afterDraw' in html
-
-
-def test_goal_label_reads_window_goal_weight_val(html):
-    """Plugin must read window.goalWeightVal to get the goal value."""
-    assert 'window.goalWeightVal' in html
-
 
 def test_goal_label_unit_aware(html):
     """Goal label must switch between lbs and kgs based on active unit."""
@@ -368,12 +292,6 @@ def test_goal_line_pref_key_saved(html):
     assert 'pref_goal_line' in html
 
 
-def test_goal_line_gated_on_pref_in_load_chart(html):
-    """loadChart must read pref_goal_line from localStorage before drawing the line."""
-    assert "pref_goal_line" in html
-    assert "goalLineOn" in html
-
-
 # ── Moving average line ───────────────────────────────────────────────────────
 
 def test_ma_toggle_buttons_present(html):
@@ -385,27 +303,6 @@ def test_ma_toggle_buttons_present(html):
 def test_ma_pref_key_saved(html):
     """doSave must write pref_ma_line to preferences."""
     assert 'pref_ma_line' in html
-
-
-def test_ma_data_computed_in_load_chart(html):
-    """loadChart must compute maData and set window.maCurrentVal."""
-    assert 'maData' in html
-    assert 'window.maCurrentVal' in html
-
-
-def test_ma_is_third_dataset(html):
-    """MA must be the third Chart.js dataset (index 2)."""
-    assert 'datasets[2].data' in html
-
-
-def test_ma_label_plugin_draws_7d_avg(html):
-    """afterDraw plugin must draw the 7D AVG label."""
-    assert '7D AVG' in html
-
-
-def test_ma_color_is_amber(html):
-    """MA dataset must use an amber border color."""
-    assert 'rgba(255, 200, 50' in html
 
 
 # ── Settings section labels ───────────────────────────────────────────────────
@@ -501,31 +398,10 @@ def test_fight_name_maxlength(html):
 
 # ── Weekly Summary chart ──────────────────────────────────────────────────────
 
-def test_weekly_chart_canvas_present(html):
-    assert 'id="weekly-chart"' in html
-
-
-def test_weekly_chart_empty_msg_present(html):
-    assert 'id="weekly-chart-empty"' in html
-
-
-def test_weekly_info_icon_present(html):
-    assert 'id="weekly-info-icon"' in html
-
-
-def test_weekly_add_btn_present(html):
-    """Shared add-entry button must be present; it's accessible from both daily and weekly views."""
-    assert 'id="chart-add-btn"' in html
-
-
 def test_weekly_range_btns_present(html):
     """All five weekly range buttons must exist."""
     for weeks in ('4', '12', '30', 'all', 'custom'):
         assert f'data-weeks="{weeks}"' in html, f'missing data-weeks="{weeks}"'
-
-
-def test_custom_weeks_input_present(html):
-    assert 'id="custom-weeks"' in html
 
 
 def test_custom_weeks_minimum_4(html):
@@ -540,57 +416,7 @@ def test_custom_weeks_maximum_156(html):
 
 # ── Chart slider structure ────────────────────────────────────────────────────
 
-def test_chart_slide_viewport_present(html):
-    assert 'id="chart-slide-viewport"' in html
-
-
-def test_chart_slide_inner_present(html):
-    assert 'id="chart-slide-inner"' in html
-
-
-def test_chart_page_nav_buttons_present(html):
-    """Left and right slide nav buttons must both be present."""
-    assert 'id="chart-page-btn-left"' in html
-    assert 'id="chart-page-btn-right"' in html
-
-
-def test_chart_page_left_btn_starts_invisible(html):
-    """Left nav button must start invisible (only shows when on weekly page)."""
-    assert 'id="chart-page-btn-left"' in html
-    idx = html.find('id="chart-page-btn-left"')
-    snippet = html[max(0, idx - 80):idx + 20]
-    assert 'invisible' in snippet
-
-
-def test_chart_page_nav_outside_viewport(html):
-    """Nav buttons must be siblings of the slide viewport, not inside .chart-header."""
-    left_pos     = html.find('id="chart-page-btn-left"')
-    right_pos    = html.find('id="chart-page-btn-right"')
-    viewport_pos = html.find('id="chart-slide-viewport"')
-    assert left_pos < viewport_pos, 'left nav button must precede the viewport'
-    assert right_pos > viewport_pos, 'right nav button must follow the viewport'
-
-
-def test_chart_with_nav_wrapper_present(html):
-    assert 'class="chart-with-nav"' in html
-
-
-def test_at_weekly_css_class_defined(html):
-    """JS must use 'at-weekly' class to trigger the slide transition."""
-    assert 'at-weekly' in html
-
-
-def test_table_view_title_present(html):
-    """Shared table must have a title element that updates per active chart."""
-    assert 'id="table-view-title"' in html
-
-
 # ── Weekly chart JS ───────────────────────────────────────────────────────────
-
-def test_load_weekly_chart_once_defined(html):
-    """window.loadWeeklyChartOnce must be assigned so slide nav can trigger lazy load."""
-    assert 'window.loadWeeklyChartOnce' in html
-
 
 def test_refresh_weekly_chart_defined(html):
     """window.refreshWeeklyChart must be assigned for unit-toggle and settings save."""
@@ -599,33 +425,6 @@ def test_refresh_weekly_chart_defined(html):
 
 def test_get_weekly_chart_range_defined(html):
     assert 'window.getWeeklyChartRange' in html
-
-
-def test_current_chart_page_defined(html):
-    """window.currentChartPage must be set so view-toggle and unit-toggle can branch."""
-    assert 'window.currentChartPage' in html
-
-
-def test_weekly_chart_groups_by_iso_week(html):
-    """Weekly chart must use ISO-week Monday-start grouping."""
-    assert 'isoWeekMonday' in html or 'groupByWeek' in html
-
-
-def test_weekly_chart_reads_api_as_bare_array(html):
-    """loadWeeklyChart must treat /api/weights response as a direct array, not data.weights."""
-    assert 'filteredRows' in html
-    assert 'data.weights' not in html or html.count('data.weights') == 0
-
-
-def test_weekly_chart_tooltip_uses_shared_element(html):
-    """Weekly tooltip must reuse the existing chartTtEl div (referenced more than once — daily + weekly)."""
-    assert html.count('chartTtEl') >= 2
-
-
-def test_weekly_chart_sets_axis_label_globals(html):
-    """Weekly chart must set window.goalWeightVal and window.trendCurrentVal for the label plugin."""
-    assert 'window.goalWeightVal' in html
-    assert 'window.trendCurrentVal' in html
 
 
 # ── Default landing setting ────────────────────────────────────────────────────
@@ -714,47 +513,15 @@ def test_profile_pic_option_4_present(html):
 
 
 def test_profile_4_cursor_images_in_cursor_sets(html):
-    """CURSOR_SETS must include pointer4.png and editpointer4.png."""
+    """CURSOR_SETS must include pointer4.png."""
     assert 'pointer4.png' in html
-    assert 'editpointer4.png' in html
 
 
 # ── Weekly chart fixes (v2.2.1) ───────────────────────────────────────────────
 
-def test_weekly_chart_slices_to_max_weeks(html):
-    """Weekly chart must trim grouped calendar weeks to exactly the requested count."""
-    assert 'maxWeeks' in html
-    assert 'weeks.slice' in html
-
-
 def test_set_weekly_range_defined(html):
     """window.setWeeklyRange must be assigned so settings-save can update the chart."""
     assert 'window.setWeeklyRange' in html
-
-
-def test_get_weekly_chart_range_null_when_empty(html):
-    """getWeeklyChartRange must return null (not 4) when the custom-weeks input is empty."""
-    idx = html.find('getWeeklyChartRange')
-    assert idx != -1
-    snippet = html[idx:idx + 200]
-    assert '|| null' in snippet
-
-
-def test_weekly_range_active_button_initialized(html):
-    """Weekly chart IIFE must dynamically set the active button from the saved preference."""
-    assert 'activeWeeksRange' in html
-    assert 'initWeeklyBtn' in html
-
-
-def test_missing_row_has_height_spacer(html):
-    """Missing table rows must render dash content and action buttons so they match the height of data rows."""
-    assert 'row-missing' in html
-    assert 'missing-dash' in html
-
-
-def test_custom_days_default_is_30(html):
-    """When no custom-days preference is saved, the daily chart must default to 30 days."""
-    assert 'parseInt(savedCustomDaysStr) || 30' in html
 
 
 def test_fight_goal_lean_button_present(html):

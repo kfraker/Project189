@@ -117,7 +117,9 @@ def test_workouts_page_has_day_note_input(html):
 
 
 def test_workouts_page_has_confirm_modal(html):
-    assert 'id="wp-confirm-modal"' in html
+    """Per-page wp-confirm-modal was consolidated into the shared app-confirm-modal
+    (base.html migration) — used via window.showAppConfirm()."""
+    assert 'id="app-confirm-modal"' in html
 
 
 def test_workouts_page_has_day_heading(html):

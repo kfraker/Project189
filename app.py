@@ -290,6 +290,44 @@ def latest_weight():
         conn.close()
 
 
+@app.route("/api/weight/stats")
+def weight_stats():
+    conn = get_db()
+    try:
+        today = date.today()
+        week_start = (today - timedelta(days=today.weekday())).isoformat()  # Monday
+        week_end   = today.isoformat()
+
+        logged_this_week = conn.execute(
+            "SELECT COUNT(*) as c FROM weights WHERE user_id = ? AND weight_lbs IS NOT NULL AND date >= ? AND date <= ?",
+            (_USER_ID, week_start, week_end),
+        ).fetchone()["c"]
+
+        seven_days_ago = (today - timedelta(days=6)).isoformat()
+        avg_row = conn.execute(
+            "SELECT AVG(weight_lbs) as a FROM weights WHERE user_id = ? AND weight_lbs IS NOT NULL AND date >= ? AND date <= ?",
+            (_USER_ID, seven_days_ago, today.isoformat()),
+        ).fetchone()
+        avg_7d = round(avg_row["a"], 1) if avg_row["a"] is not None else None
+
+        # Streak: count consecutive days backwards from today with weight logged
+        logged_dates = set(
+            r["date"] for r in conn.execute(
+                "SELECT date FROM weights WHERE user_id = ? AND weight_lbs IS NOT NULL ORDER BY date DESC",
+                (_USER_ID,),
+            ).fetchall()
+        )
+        streak = 0
+        check = today
+        while check.isoformat() in logged_dates:
+            streak += 1
+            check -= timedelta(days=1)
+
+        return jsonify({"logged_this_week": logged_this_week, "avg_7d": avg_7d, "streak": streak})
+    finally:
+        conn.close()
+
+
 @app.route("/api/weight/<string:entry_date>", methods=["DELETE"])
 def delete_weight(entry_date):
     conn = get_db()

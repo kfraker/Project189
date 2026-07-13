@@ -1724,7 +1724,7 @@
                     parent.classList.remove('streak-hot');
                     if (s >= 7) parent.classList.add('streak-hot');
                 }
-                if (s > 0) applyStreakGlow(streakEl, s);
+                if (s > 0) applyStreakGlow(streakEl, streakEl.nextElementSibling, s);
             }
         }
 

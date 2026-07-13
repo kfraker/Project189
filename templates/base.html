@@ -12,6 +12,17 @@
         :root { --site-hdr: 62px; --site-ftr: 72px; }
         html, body { height: 100%; margin: 0; overflow: hidden; }
 
+        #site-cursor {
+            position: fixed;
+            top: 0;
+            left: 0;
+            pointer-events: none;
+            z-index: 2147483647;
+            display: none;
+            background: no-repeat top left / contain;
+            will-change: transform;
+        }
+
         /* ── Fixed header ── */
         .site-header {
             position: fixed; top: 0; left: 0; right: 0;
@@ -246,10 +257,9 @@
 
 <body class="preload">
 
+<div id="site-cursor"></div>
 <a href="#main-content" class="sr-only skip-link">Skip to main content</a>
 <div id="status-announce" aria-live="polite" aria-atomic="true" class="sr-only"></div>
-<div id="site-cursor"></div>
-
 {% block bg %}{% endblock %}
 
 <header class="site-header" role="banner">
@@ -719,7 +729,9 @@
 
     function fmtLbs(n) { return n === Math.round(n) ? Math.round(n) : parseFloat(n.toFixed(1)); }
 
-    /* ── Custom cursor ── */
+    /* ── Custom cursor: DOM element follows the mouse (rAF-throttled) so it
+       never gets clipped/suppressed near viewport edges the way a native
+       CSS cursor: url() does, and still works over scrollbars. ── */
     (function () {
         const el = document.getElementById('site-cursor');
         const cursors = {};
@@ -746,15 +758,23 @@
                     if (dat[i] > 240 && dat[i+1] > 240 && dat[i+2] > 240) dat[i+3] = 0;
                 }
                 ctx.putImageData(id, 0, 0);
-                cursors[key] = { url: cv.toDataURL(), hotX: Math.round(origHotX * scale), hotY: Math.round(origHotY * scale), w, h };
+                const entry = { url: cv.toDataURL(), hotX: Math.round(origHotX * scale), hotY: Math.round(origHotY * scale), w, h };
+                cursors[key] = entry;
                 if (key === activeCursorSet) {
-                    const c = cursors[key];
-                    el.style.width = c.w + 'px'; el.style.height = c.h + 'px';
-                    el.style.backgroundImage = `url(${c.url})`;
+                    cursors.active = entry;
+                    applyCursor();
                     if (mouseInDoc) el.style.display = 'block';
                 }
             };
             img.src = src;
+        }
+
+        function applyCursor() {
+            const c = cursors.active;
+            if (!c) return;
+            el.style.width = c.w + 'px';
+            el.style.height = c.h + 'px';
+            el.style.backgroundImage = `url(${c.url})`;
         }
 
         Object.keys(CURSOR_SETS).forEach(n => {
@@ -765,19 +785,26 @@
         window.applyCursorSet = function(n) {
             const sn = String(n);
             activeCursorSet = sn;
-            const c = cursors[sn]; if (!c) return;
-            el.style.width = c.w + 'px'; el.style.height = c.h + 'px';
-            el.style.backgroundImage = `url(${c.url})`;
-            if (mouseInDoc) el.style.display = 'block';
+            if (cursors[sn]) cursors.active = cursors[sn];
+            applyCursor();
+            if (cursors.active && mouseInDoc) el.style.display = 'block';
         };
 
+        let lastMX = 0, lastMY = 0, rafPending = false;
         document.addEventListener('mousemove', e => {
-            const c = cursors[activeCursorSet]; if (!c) return;
-            el.style.left = (e.clientX - c.hotX) + 'px';
-            el.style.top  = (e.clientY - c.hotY) + 'px';
+            lastMX = e.clientX; lastMY = e.clientY;
+            if (rafPending) return;
+            rafPending = true;
+            requestAnimationFrame(() => {
+                rafPending = false;
+                const c = cursors.active;
+                if (!c) return;
+                el.style.transform = `translate3d(${lastMX - c.hotX}px, ${lastMY - c.hotY}px, 0)`;
+            });
         });
+
         document.addEventListener('mouseleave', () => { mouseInDoc = false; el.style.display = 'none'; });
-        document.addEventListener('mouseenter', () => { mouseInDoc = true; if (cursors[activeCursorSet]) el.style.display = 'block'; });
+        document.addEventListener('mouseenter', () => { mouseInDoc = true; if (cursors.active) el.style.display = 'block'; });
     })();
 
     /* ── Nav button images: strip black backgrounds via canvas ── */
@@ -798,7 +825,7 @@
                 } catch (e) {}
             }
             if (img.complete && img.naturalWidth) process();
-            else img.addEventListener('load', process);
+            else img.addEventListener('load', process, { once: true });
         });
     })();
 
@@ -841,27 +868,38 @@
         ttEl.id = 'site-tooltip';
         document.body.appendChild(ttEl);
 
+        let ttW = 0, ttH = 0, ttVisible = false;
+
+        function measure() { ttW = ttEl.offsetWidth; ttH = ttEl.offsetHeight; }
+
         function position(x, y) {
-            const w = ttEl.offsetWidth, h = ttEl.offsetHeight;
-            ttEl.style.top  = Math.round(y - h / 2) + 'px';
-            ttEl.style.left = Math.max(8, Math.round(x - 12 - w)) + 'px';
+            ttEl.style.top  = Math.round(y - ttH / 2) + 'px';
+            ttEl.style.left = Math.max(8, Math.round(x - 12 - ttW)) + 'px';
         }
 
         document.addEventListener('mouseover', e => {
             const t = e.target.closest('[data-tip]');
-            if (t) { ttEl.textContent = t.dataset.tip; ttEl.style.opacity = '1'; }
-            else   { ttEl.style.opacity = '0'; }
+            if (t) { ttEl.textContent = t.dataset.tip; ttEl.style.opacity = '1'; ttVisible = true; measure(); }
+            else   { ttEl.style.opacity = '0'; ttVisible = false; }
         });
         document.addEventListener('focusin', e => {
             const t = e.target.closest('[data-tip]');
             if (!t) return;
-            ttEl.textContent = t.dataset.tip; ttEl.style.opacity = '1';
+            ttEl.textContent = t.dataset.tip; ttEl.style.opacity = '1'; ttVisible = true;
+            measure();
             const r = t.getBoundingClientRect();
             position(r.right, r.top + r.height / 2);
         });
-        document.addEventListener('focusout', () => { ttEl.style.opacity = '0'; });
-        document.addEventListener('mousemove', e => { if (ttEl.style.opacity === '1') position(e.clientX, e.clientY); });
-        document.addEventListener('mouseleave', () => { ttEl.style.opacity = '0'; });
+        document.addEventListener('focusout', () => { ttEl.style.opacity = '0'; ttVisible = false; });
+        let ttRafPending = false, ttLastX = 0, ttLastY = 0;
+        document.addEventListener('mousemove', e => {
+            if (!ttVisible) return;
+            ttLastX = e.clientX; ttLastY = e.clientY;
+            if (ttRafPending) return;
+            ttRafPending = true;
+            requestAnimationFrame(() => { ttRafPending = false; if (ttVisible) position(ttLastX, ttLastY); });
+        });
+        document.addEventListener('mouseleave', () => { ttEl.style.opacity = '0'; ttVisible = false; });
         document.addEventListener('wheel', () => {
             ttEl.style.opacity = '0';
             const ct = document.getElementById('chart-tooltip');
@@ -1523,8 +1561,6 @@
 
             if(newUnit!==window.activeUnit){
                 window.activeUnit=newUnit;
-                const _utb=document.getElementById('unit-toggle-btn');
-                if(_utb)_utb.textContent=newUnit==='lbs'?'KGS':'LBS';
                 if(window.applyPlateUnit)window.applyPlateUnit(newUnit);
             }
 
