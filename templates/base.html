@@ -3,6 +3,7 @@
 <head>
     <title>{% block page_title %}Project 189{% endblock %}</title>
     <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="color-scheme" content="dark">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link href="https://fonts.googleapis.com/css2?family=Pacifico&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}?v=151">
@@ -11,6 +12,7 @@
         /* ── Shared layout ── */
         :root { --site-hdr: 72px; --site-ftr: 72px; }
         html, body { height: 100%; margin: 0; overflow: hidden; }
+        :root { color-scheme: dark; }
 
         #site-cursor {
             position: fixed;
@@ -75,10 +77,10 @@
                 flex-shrink: 0; align-self: flex-start; padding-top: 6px;
                 min-width: 44px;
             }
-            .site-header-left .site-nav { gap: 4px; }
+            .site-header-left .site-nav { gap: 2px; }
             .site-header-left .site-nav-btn { width: 38px; height: 42px; border-radius: 9px; }
-            .site-header-left .site-nav-btn img { width: 26px; height: 26px; }
-            .site-header-left .site-nav-btn.active::after { width: 32px; height: 32px; border-width: 1.5px; }
+            .site-header-left .site-nav-btn img { width: 30px; height: 30px; }
+            .site-header-left .site-nav-btn.active::after { width: 30px; height: 30px; border-width: 1.5px; }
             .site-title {
                 flex: 1; font-size: clamp(16px, 5vw, 22px);
                 padding: 10px 0 8px; align-self: flex-start; text-align: center;
@@ -94,8 +96,8 @@
         /* Slightly narrower phones have room for the header nav buttons to grow a bit more */
         @media (min-width: 360px) and (max-width: 560px) {
             .site-header-left .site-nav-btn { width: 44px; height: 48px; border-radius: 10px; }
-            .site-header-left .site-nav-btn img { width: 32px; height: 32px; }
-            .site-header-left .site-nav-btn.active::after { width: 38px; height: 38px; }
+            .site-header-left .site-nav-btn img { width: 36px; height: 36px; }
+            .site-header-left .site-nav-btn.active::after { width: 36px; height: 36px; }
         }
 
         /* ── Fixed footer ── */
@@ -111,27 +113,30 @@
 
         /* ── Nav buttons ── */
         .site-nav {
-            display: flex; align-items: center; gap: 6px;
+            display: flex; align-items: center; gap: 3px;
             flex: 1;
         }
         .site-nav-btn {
             display: flex; flex-direction: column; align-items: center; justify-content: center;
-            width: 60px; height: 66px; border-radius: 14px;
+            width: 56px; height: 62px; border-radius: 14px;
             background: transparent; border: none;
             color: rgba(255,255,255,0.8); text-decoration: none;
-            transition: all 0.18s; position: relative;
+            position: relative;
             cursor: pointer; padding: 0;
+            -webkit-tap-highlight-color: transparent;
+            outline: none;
         }
+        .site-nav-btn::-moz-focus-inner { border: 0; }
+        .site-nav-btn:focus-visible { outline: 2px solid rgba(255,45,120,0.7); outline-offset: 2px; }
         .site-nav-btn img {
-            width: 46px; height: 46px; object-fit: contain;
-            opacity: 0.9; transition: opacity 0.18s;
+            width: 52px; height: 52px; object-fit: contain;
+            opacity: 1;
             display: block;
         }
-        .site-nav-btn:hover img { opacity: 1; }
-        .site-nav-btn.active img { opacity: 1; }
         .site-nav-btn.active::after {
             content: ''; position: absolute; top: 50%; left: 50%;
             transform: translate(-50%, -50%);
+            box-sizing: border-box;
             width: 52px; height: 52px; border-radius: 50%;
             border: 2px solid #ff2d78;
             box-shadow: 0 0 8px rgba(255,45,120,0.6);
@@ -731,6 +736,17 @@
        never gets clipped/suppressed near viewport edges the way a native
        CSS cursor: url() does, and still works over scrollbars. ── */
     (function () {
+        /* Chromium/Windows quirk: on a fresh page load (e.g. after clicking a
+           header nav link) the OS-drawn cursor icon isn't refreshed until the
+           next real hardware mouse move, so the native pointer can linger
+           visibly over our `cursor:none` page until the user moves the mouse.
+           Forcing a CSS `cursor` value change (even with no real movement)
+           makes the browser push a fresh cursor state to the OS immediately. */
+        document.documentElement.style.setProperty('cursor', 'default', 'important');
+        requestAnimationFrame(function () {
+            document.documentElement.style.removeProperty('cursor');
+        });
+
         const el = document.getElementById('site-cursor');
         const cursors = {};
         let mouseInDoc = false;

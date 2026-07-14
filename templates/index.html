@@ -1028,7 +1028,7 @@
             const stats = await fetch('/api/home-stats').then(r => r.json());
             const streakNumEl = document.getElementById('mp-active-streak');
             const streakLblEl = streakNumEl.closest('.mp-stat--streak').querySelector('.site-stat-label');
-            streakNumEl.textContent = stats.streak;
+            streakNumEl.textContent = stats.streak + (stats.streak === 1 ? ' day' : ' days');
             applyStreakGlow(streakNumEl, streakLblEl, stats.streak);
             document.getElementById('mp-kcal-week').textContent = stats.kcal_week.toLocaleString();
             const trendEl = document.getElementById('mp-trend');

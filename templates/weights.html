@@ -1739,7 +1739,15 @@
             try { const r = await fetch('/api/weight/stats'); data = await r.json(); }
             catch { return; }
 
-            if (weekEl) weekEl.textContent = (data.logged_this_week ?? 0) + '/7';
+            if (weekEl) {
+                const raw = data.week_change;
+                if (raw == null) { weekEl.textContent = '--'; }
+                else {
+                    const kg = window.activeUnit === 'kg';
+                    const val = kg ? raw / 2.2046 : raw;
+                    weekEl.textContent = (val > 0 ? '+' : '') + val.toFixed(1) + (kg ? ' kg' : ' lbs');
+                }
+            }
 
             if (avgEl) {
                 const raw = data.avg_7d;
@@ -1754,7 +1762,7 @@
 
             if (streakEl) {
                 const s = data.streak ?? 0;
-                streakEl.textContent = s + (s === 1 ? ' day' : ' days');
+                streakEl.textContent = s;
                 const parent = streakEl.closest('.wt-stat--streak');
                 if (parent) {
                     parent.classList.remove('streak-hot');

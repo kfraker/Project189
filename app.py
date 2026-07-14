@@ -295,15 +295,14 @@ def weight_stats():
     conn = get_db()
     try:
         today = date.today()
-        week_start = (today - timedelta(days=today.weekday())).isoformat()  # Monday
-        week_end   = today.isoformat()
-
-        logged_this_week = conn.execute(
-            "SELECT COUNT(*) as c FROM weights WHERE user_id = ? AND weight_lbs IS NOT NULL AND date >= ? AND date <= ?",
-            (_USER_ID, week_start, week_end),
-        ).fetchone()["c"]
 
         seven_days_ago = (today - timedelta(days=6)).isoformat()
+        week_rows = conn.execute(
+            "SELECT weight_lbs FROM weights WHERE user_id = ? AND weight_lbs IS NOT NULL AND date >= ? AND date <= ? ORDER BY date ASC",
+            (_USER_ID, seven_days_ago, today.isoformat()),
+        ).fetchall()
+        week_change = round(week_rows[-1]["weight_lbs"] - week_rows[0]["weight_lbs"], 1) if len(week_rows) >= 2 else None
+
         avg_row = conn.execute(
             "SELECT AVG(weight_lbs) as a FROM weights WHERE user_id = ? AND weight_lbs IS NOT NULL AND date >= ? AND date <= ?",
             (_USER_ID, seven_days_ago, today.isoformat()),
@@ -323,7 +322,7 @@ def weight_stats():
             streak += 1
             check -= timedelta(days=1)
 
-        return jsonify({"logged_this_week": logged_this_week, "avg_7d": avg_7d, "streak": streak})
+        return jsonify({"week_change": week_change, "avg_7d": avg_7d, "streak": streak})
     finally:
         conn.close()
 
