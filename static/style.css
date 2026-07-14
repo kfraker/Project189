@@ -2735,6 +2735,7 @@ body.note-open .custom-scrollbar-track {
 }
 
 .insight-card {
+    min-width: 0;
     background: rgba(255, 45, 120, 0.06);
     border: 1px solid rgba(255, 45, 120, 0.18);
     border-radius: 12px;
@@ -2773,6 +2774,15 @@ body.note-open .custom-scrollbar-track {
     color: rgba(255, 200, 220, 0.5);
     margin-top: 5px;
     letter-spacing: 0.04em;
+}
+
+@media (max-width: 560px) {
+    .insights-modal-card { width: min(94vw, 420px); padding: 28px 14px 20px; }
+    .insights-grid { gap: 8px; }
+    .insight-card { padding: 14px 4px 10px; }
+    .insight-label { font-size: 10.5px; margin-bottom: 8px; }
+    .insight-value { font-size: 15px; }
+    .insight-sub { font-size: 10.5px; }
 }
 
 /* ── Fight Card width + activity buttons ─────────────────── */

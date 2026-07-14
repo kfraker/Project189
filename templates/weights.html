@@ -256,6 +256,27 @@
     .week-toggle-icon.expanded { transform: rotate(0deg) !important; }
     .week-day-table { border-spacing: 0 3px; width: 100%; border-collapse: separate !important; }
 
+    /* Missing-data "!" indicator (used in week header + day rows) */
+    .cell-weight, .week-header-row td:nth-child(2) { position: relative; }
+    .missing-excl-btn {
+        all: unset;
+        box-sizing: border-box;
+        cursor: pointer;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        flex: none;
+        width: 16px; height: 16px;
+        color: #f0a500;
+        font-family: Arial, sans-serif;
+        font-size: 14px; font-weight: 700; line-height: 1;
+        position: absolute;
+        right: -16px;
+        top: 50%;
+        transform: translateY(-50%);
+    }
+    .missing-excl-btn:hover { color: #ffbe33; }
+
     /* Week day rows */
     .week-day-row td {
         padding: 7px 10px !important; font-size: 14px !important;
@@ -1248,13 +1269,13 @@
                 const icon=document.createElement('span'); icon.className='week-toggle-icon'+(defaultExpanded?' expanded':''); icon.textContent='▾';
                 const lbl=document.createElement('span'); lbl.textContent=week.label;
                 dateInner.append(lbl); dateTd.appendChild(dateInner);
-                const primTd=document.createElement('td'); primTd.textContent=primAvg;
+                const primTd=document.createElement('td'); primTd.appendChild(document.createTextNode(primAvg));
                 let hdrExcl=null;
-                if (missingDates.length>0){hdrExcl=document.createElement('button');hdrExcl.className='missing-excl-btn';hdrExcl.textContent='!';hdrExcl.dataset.tip='Missing data';}
+                if (missingDates.length>0){hdrExcl=document.createElement('button');hdrExcl.className='missing-excl-btn';hdrExcl.textContent='!';hdrExcl.dataset.tip='Missing data';primTd.appendChild(hdrExcl);}
                 const cntTd=document.createElement('td'); cntTd.className='week-count-cell';
                 const cntInner=document.createElement('span'); cntInner.className='week-count-inner';
                 const cntSpan=document.createElement('span'); cntSpan.textContent=String(week.days.filter(d=>d.weight_lbs!=null).length);
-                const cntOuter=document.createElement('span');cntOuter.className='week-count-outer';if(hdrExcl)cntOuter.appendChild(hdrExcl); cntInner.append(cntSpan,icon); cntOuter.appendChild(cntInner); cntTd.appendChild(cntOuter);
+                const cntOuter=document.createElement('span');cntOuter.className='week-count-outer'; cntInner.append(cntSpan,icon); cntOuter.appendChild(cntInner); cntTd.appendChild(cntOuter);
                 headerTr.append(dateTd,primTd,cntTd); tableBody.appendChild(headerTr);
 
                 const collapseTr=document.createElement('tr'); collapseTr.className='week-collapse-row';
@@ -1272,12 +1293,12 @@
                     if (missing){
                         wtTd.className='cell-weight cell-missing'; wtTd.dataset.lbs=''; wtTd.dataset.kg='';
                         wtTd.innerHTML='<span class="missing-dash">—</span>';
+                        const eb=document.createElement('button');eb.className='missing-excl-btn';eb.textContent='!';eb.dataset.tip='Missing data';eb.addEventListener('click',e=>{e.stopPropagation();if(window.openWeightModal)window.openWeightModal(date,null);});wtTd.appendChild(eb);
                     } else {
                         wtTd.className='cell-weight'; wtTd.dataset.lbs=entry.weight_lbs; wtTd.dataset.kg=entry.weight_kg;
                         wtTd.textContent=(unit==='lbs'?fmtLbs(entry.weight_lbs):fmtLbs(entry.weight_kg))+' '+unit;
                     }
                     const actTd=document.createElement('td'); actTd.className='action-cell';
-                    if(missing){const eb=document.createElement('button');eb.className='missing-excl-btn';eb.textContent='!';eb.dataset.tip='Missing data';eb.addEventListener('click',e=>{e.stopPropagation();if(window.openWeightModal)window.openWeightModal(date,null);});actTd.appendChild(eb);}
                     const noteText=entry&&entry.notes?entry.notes:'', hasNote=!!(noteText.trim());
                     const noteBtn=document.createElement('button'); noteBtn.className='note-btn'+(hasNote?' has-note':''); noteBtn.dataset.tip=hasNote?'Edit note':'Add note';
                     noteBtn.innerHTML='<svg viewBox="0 0 16 16" xmlns="http://www.w3.org/2000/svg"><path d="M13 1H3C2.45 1 2 1.45 2 2v9c0 .55.45 1 1 1h1.5l2.5 2.5L9.5 12H13c.55 0 1-.45 1-1V2c0-.55-.45-1-1-1z"/></svg>';
@@ -1333,8 +1354,8 @@
                 wtTd.dataset.lbs=(!missing&&entry)?entry.weight_lbs:''; wtTd.dataset.kg=(!missing&&entry)?entry.weight_kg:'';
                 const primaryVal=(!missing&&entry)?(unit==='lbs'?fmtLbs(entry.weight_lbs)+' '+unit:fmtLbs(entry.weight_kg)+' '+unit):null;
                 wtTd.innerHTML=missing?'<span class="missing-dash">—</span>':primaryVal;
+                if(missing){const eb=document.createElement('button');eb.className='missing-excl-btn';eb.textContent='!';eb.dataset.tip='Log weight for this day';eb.addEventListener('click',e=>{e.stopPropagation();if(window.openWeightModal)window.openWeightModal(date,null);});wtTd.appendChild(eb);}
                 const stTd=document.createElement('td'); stTd.className='action-cell';
-                if(missing){const eb=document.createElement('button');eb.className='missing-excl-btn';eb.textContent='!';eb.dataset.tip='Log weight for this day';eb.addEventListener('click',e=>{e.stopPropagation();if(window.openWeightModal)window.openWeightModal(date,null);});stTd.appendChild(eb);}
                 const noteText=entry&&entry.notes?entry.notes:'',hasNote=!!(noteText.trim());
                 const noteBtn=document.createElement('button'); noteBtn.className='note-btn'+(hasNote?' has-note':''); noteBtn.dataset.tip=hasNote?'Edit note':'Add note';
                 noteBtn.innerHTML='<svg viewBox="0 0 16 16" xmlns="http://www.w3.org/2000/svg"><path d="M13 1H3C2.45 1 2 1.45 2 2v9c0 .55.45 1 1 1h1.5l2.5 2.5L9.5 12H13c.55 0 1-.45 1-1V2c0-.55-.45-1-1-1z"/></svg>';

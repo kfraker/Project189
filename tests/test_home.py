@@ -112,14 +112,22 @@ def test_profile_menu_container(html):
 
 def test_profile_sub_buttons(html):
     assert 'id="protein-btn"' in html
-    assert 'id="whistle-btn"' in html
     assert 'id="menu-settings-btn"' in html
 
 
 def test_menu_modal_profile_and_close_buttons(html):
-    """menu-modal must also have the Profile (Fight Card) and close buttons."""
+    """menu-modal must also have the Insights, Profile (Fight Card) and close buttons."""
+    assert 'id="menu-insights-btn"' in html
     assert 'id="menu-profile-btn"' in html
     assert 'id="menu-modal-close"' in html
+
+
+def test_menu_modal_insights_appears_first(html):
+    """Insights must be the first option in the menu modal, before Profile and Settings."""
+    insights_pos = html.index('id="menu-insights-btn"')
+    profile_pos  = html.index('id="menu-profile-btn"')
+    settings_pos = html.index('id="menu-settings-btn"')
+    assert insights_pos < profile_pos < settings_pos
 
 
 # ── Unit toggle ───────────────────────────────────────────────────────────────
@@ -204,12 +212,6 @@ def test_insights_modal_before_settings_modal(html):
     assert html.index('id="insights-modal"') < html.index('id="settings-modal"')
 
 
-def test_whistle_btn_not_in_coming_soon(html):
-    """whistle-btn must not appear in the coming-soon forEach list."""
-    assert "'protein-btn'" in html
-    assert 'whistle' not in html[html.find("'protein-btn'"):html.find("'protein-btn'") + 60]
-
-
 def test_dumbbell_btn_not_in_coming_soon(html):
     """dumbbell-btn must not be in the coming-soon list — it opens the workout modal."""
     protein_idx = html.find("'protein-btn'")
@@ -242,7 +244,7 @@ def test_most_common_day_removed_from_insights(html):
 
 def test_insights_uses_open_exclusive(html):
     """Insights button must open via openExclusive, not a manual activeModal guard."""
-    assert 'openExclusive(openInsights)' in html
+    assert 'openExclusive(window.openInsights)' in html
 
 
 def test_insight_card_wide_class_in_render(html):
