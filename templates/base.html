@@ -250,11 +250,11 @@
             <a href="/" class="site-nav-btn{% if request.path == '/' %} active{% endif %}" aria-label="Home" data-tip="Home">
                 <img src="/static/insightsbutton.png" alt="Home">
             </a>
+            <a href="/weights" class="site-nav-btn{% if request.path == '/weights' %} active{% endif %}" aria-label="Weigh-ins" data-tip="Weigh-ins">
+                <img src="/static/weightbutton.png" alt="Weigh-ins">
+            </a>
             <a href="/workouts" class="site-nav-btn{% if request.path == '/workouts' %} active{% endif %}" aria-label="Workouts" data-tip="Workouts">
                 <img src="/static/dumbbellbutton.png" alt="Workouts">
-            </a>
-            <a href="/weights" class="site-nav-btn{% if request.path == '/weights' %} active{% endif %}" aria-label="Weights" data-tip="Weights">
-                <img src="/static/weightbutton.png" alt="Weights">
             </a>
             <button class="site-nav-btn" id="protein-btn" aria-label="Nutrition" data-tip="Nutrition">
                 <img src="/static/proteinshakebutton.png" alt="Nutrition">
@@ -539,6 +539,25 @@
                     <div class="profile-toggle-row is-toggle">
                         <button class="profile-opt-btn" id="prof-weekly-legend-on">On</button>
                         <button class="profile-opt-btn" id="prof-weekly-legend-off">Off</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="settings-section-label" data-section="workouts">Workouts <span class="section-caret">▾</span></div>
+        <div class="settings-section-body" id="ssb-workouts">
+            <div class="profile-setting-group">
+                <label class="profile-setting-label">Range</label>
+                <div class="profile-toggle-row">
+                    <button class="profile-opt-btn" id="prof-wp-range-7d"     data-wp-range="7d">7D</button>
+                    <button class="profile-opt-btn" id="prof-wp-range-30d"    data-wp-range="30d">30D</button>
+                    <button class="profile-opt-btn" id="prof-wp-range-90d"    data-wp-range="90d">90D</button>
+                    <button class="profile-opt-btn" id="prof-wp-range-1y"     data-wp-range="1y">1Y</button>
+                    <button class="profile-opt-btn" id="prof-wp-range-all"    data-wp-range="all">All</button>
+                    <button class="profile-opt-btn" id="prof-wp-range-custom" data-wp-range="custom">Custom</button>
+                    <div id="prof-wp-custom-wrap" class="prof-custom-wrap">
+                        <input type="number" id="prof-wp-custom-days" class="profile-custom-input" min="7" max="1095" placeholder="—">
+                        <span class="profile-custom-unit">days</span>
                     </div>
                 </div>
             </div>
@@ -1354,6 +1373,7 @@
 
         const profCustomDays  = document.getElementById('prof-custom-days');
         const profCustomWeeks = document.getElementById('prof-custom-weeks-setting');
+        const profCustomWorkoutsDays = document.getElementById('prof-wp-custom-days');
         let openState = null;
 
         function getSelections() {
@@ -1366,6 +1386,8 @@
                 customDays: profCustomDays.value,
                 weeklyRange:   document.querySelector('.profile-opt-btn[data-weeks].active')?.dataset.weeks||'4',
                 customWeeks:   profCustomWeeks.value,
+                workoutsRange: document.querySelector('.profile-opt-btn[data-wp-range].active')?.dataset.wpRange||'7d',
+                customWorkoutsDays: profCustomWorkoutsDays.value,
                 defaultLanding: landing,
                 heightUnit: document.getElementById('prof-height-metric').classList.contains('active')?'metric':'us',
                 goalLine:        document.getElementById('prof-goal-line-on').classList.contains('active')?'1':'0',
@@ -1388,7 +1410,7 @@
         function hasChanges() {
             if (!openState) return false;
             const cur = getSelections();
-            return cur.unit!==openState.unit||cur.range!==openState.range||cur.customDays!==openState.customDays||cur.weeklyRange!==openState.weeklyRange||cur.customWeeks!==openState.customWeeks||cur.defaultLanding!==openState.defaultLanding||cur.heightUnit!==openState.heightUnit||cur.goalLine!==openState.goalLine||cur.maLine!==openState.maLine||cur.trendLine!==openState.trendLine||cur.chartType!==openState.chartType||cur.weeklyGoalLine!==openState.weeklyGoalLine||cur.weeklyTrendLine!==openState.weeklyTrendLine||cur.weeklyMinMax!==openState.weeklyMinMax||cur.weeklyMode!==openState.weeklyMode||cur.legend!==openState.legend||cur.weeklyLegend!==openState.weeklyLegend||cur.healthBar!==openState.healthBar||cur.fighterName!==openState.fighterName||cur.dateFormat!==openState.dateFormat;
+            return cur.unit!==openState.unit||cur.range!==openState.range||cur.customDays!==openState.customDays||cur.weeklyRange!==openState.weeklyRange||cur.customWeeks!==openState.customWeeks||cur.workoutsRange!==openState.workoutsRange||cur.customWorkoutsDays!==openState.customWorkoutsDays||cur.defaultLanding!==openState.defaultLanding||cur.heightUnit!==openState.heightUnit||cur.goalLine!==openState.goalLine||cur.maLine!==openState.maLine||cur.trendLine!==openState.trendLine||cur.chartType!==openState.chartType||cur.weeklyGoalLine!==openState.weeklyGoalLine||cur.weeklyTrendLine!==openState.weeklyTrendLine||cur.weeklyMinMax!==openState.weeklyMinMax||cur.weeklyMode!==openState.weeklyMode||cur.legend!==openState.legend||cur.weeklyLegend!==openState.weeklyLegend||cur.healthBar!==openState.healthBar||cur.fighterName!==openState.fighterName||cur.dateFormat!==openState.dateFormat;
         }
 
         function forceClose() { modal.hidden=true; openState=null; window.activeModal=null; modalClose(modal); window.__consumeReturnToMenu(); }
@@ -1403,6 +1425,7 @@
             const _cs=window.getChartRange?window.getChartRange():null, curRange=(_cs&&_cs.range)||localStorage.getItem('pref_range')||'7d', curCustomDays=localStorage.getItem('pref_custom_days')||'';
             const _ws=window.getWeeklyChartRange?window.getWeeklyChartRange():null, curWeeklyRange=(_ws&&_ws.range)||localStorage.getItem('pref_weekly_range')||'4';
             const curCustomWeeks=(_ws&&_ws.range==='custom'&&_ws.weeks)?String(_ws.weeks):(localStorage.getItem('pref_custom_weeks')||'');
+            const curWorkoutsRange=localStorage.getItem('pref_workouts_range')||'7d', curCustomWorkoutsDays=localStorage.getItem('pref_workouts_custom_days')||'';
             const curDefaultLanding=localStorage.getItem('pref_default_landing')||'daily', curHeightUnit=localStorage.getItem('pref_height_unit')||'us';
             const curGoalLine=localStorage.getItem('pref_goal_line')||'0', curMaLine=localStorage.getItem('pref_ma_line')||'1', curTrendLine=localStorage.getItem('pref_trend_line')||'0';
             const curChartType=localStorage.getItem('pref_chart_type')||'interpolated', curHealthBar=localStorage.getItem('pref_healthbar')||'1', curFighterName=localStorage.getItem('pref_fighter_name')||'1';
@@ -1450,8 +1473,9 @@
             document.getElementById('prof-weekly-legend-off').classList.toggle('active',curWeeklyLegend!=='1');
             document.querySelectorAll('.profile-opt-btn[data-range]').forEach(b=>b.classList.toggle('active',b.dataset.range===curRange));
             document.querySelectorAll('.profile-opt-btn[data-weeks]').forEach(b=>b.classList.toggle('active',b.dataset.weeks===curWeeklyRange));
+            document.querySelectorAll('.profile-opt-btn[data-wp-range]').forEach(b=>b.classList.toggle('active',b.dataset.wpRange===curWorkoutsRange));
             document.getElementById('prof-custom-wrap-weekly').hidden=curWeeklyRange!=='custom';
-            profCustomDays.value=curCustomDays; profCustomWeeks.value=curCustomWeeks;
+            profCustomDays.value=curCustomDays; profCustomWeeks.value=curCustomWeeks; profCustomWorkoutsDays.value=curCustomWorkoutsDays;
             syncFighterNameToHealthBar();
             modal.hidden=false; modalOpen(modal);
             modal.querySelector('.settings-scroll-body').scrollTop=0;
@@ -1498,6 +1522,14 @@
             });
         });
         profCustomDays.addEventListener('change',()=>{ const v=parseInt(profCustomDays.value); if(v&&v<7)profCustomDays.value=7; else if(v>1095)profCustomDays.value=1095; });
+        document.querySelectorAll('.profile-opt-btn[data-wp-range]').forEach(b=>{
+            b.addEventListener('click',()=>{
+                document.querySelectorAll('.profile-opt-btn[data-wp-range]').forEach(x=>x.classList.remove('active'));
+                b.classList.add('active');
+                if(b.dataset.wpRange==='custom'){profCustomWorkoutsDays.focus();profCustomWorkoutsDays.select();}
+            });
+        });
+        profCustomWorkoutsDays.addEventListener('change',()=>{ const v=parseInt(profCustomWorkoutsDays.value); if(v&&v<7)profCustomWorkoutsDays.value=7; else if(v>1095)profCustomWorkoutsDays.value=1095; });
 
         document.querySelectorAll('#prof-healthbar-on,#prof-healthbar-off').forEach(b=>{
             b.addEventListener('click',()=>{ wireToggle(['prof-healthbar-on','prof-healthbar-off']); b.classList.add('active'); syncFighterNameToHealthBar(); });
@@ -1513,12 +1545,15 @@
         function doSave() {
             const _rangeNow=document.querySelector('.profile-opt-btn[data-range].active')?.dataset.range||'7d';
             const _weeksNow=document.querySelector('.profile-opt-btn[data-weeks].active')?.dataset.weeks||'4';
+            const _wpRangeNow=document.querySelector('.profile-opt-btn[data-wp-range].active')?.dataset.wpRange||'7d';
             if(_rangeNow==='custom'&&!profCustomDays.value){window.showAppConfirm('Missing Value','Custom range is selected — enter a number of days to save.','Enter Days',()=>{profCustomDays.focus();profCustomDays.select();},null,'Dismiss');return;}
             if(_weeksNow==='custom'&&!profCustomWeeks.value){window.showAppConfirm('Missing Value','Custom range is selected — enter a number of weeks to save.','Enter Weeks',()=>{document.getElementById('prof-custom-wrap-weekly').hidden=false;profCustomWeeks.focus();profCustomWeeks.select();},null,'Dismiss');return;}
+            if(_wpRangeNow==='custom'&&!profCustomWorkoutsDays.value){window.showAppConfirm('Missing Value','Custom range is selected — enter a number of days to save.','Enter Days',()=>{profCustomWorkoutsDays.focus();profCustomWorkoutsDays.select();},null,'Dismiss');return;}
 
             const newUnit=document.getElementById('prof-kg-btn').classList.contains('active')?'kg':'lbs';
             const newRange=_rangeNow, _days=parseInt(profCustomDays.value), newCustomDays=_days?String(Math.min(Math.max(_days,7),1095)):'';
             const newWeeklyRange=_weeksNow, _wks=parseInt(profCustomWeeks.value), newCustomWeeks=_wks?String(Math.min(Math.max(_wks,4),156)):'';
+            const newWorkoutsRange=_wpRangeNow, _wpDays=parseInt(profCustomWorkoutsDays.value), newCustomWorkoutsDays=_wpDays?String(Math.min(Math.max(_wpDays,7),1095)):'';
             const newDefaultLanding=document.getElementById('prof-landing-table-weekly').classList.contains('active')?'table-weekly':document.getElementById('prof-landing-table-daily').classList.contains('active')?'table-daily':document.getElementById('prof-landing-weekly').classList.contains('active')?'weekly':'daily';
             const newHeightUnit=document.getElementById('prof-height-metric').classList.contains('active')?'metric':'us';
             const newGoalLine=document.getElementById('prof-goal-line-on').classList.contains('active')?'1':'0';
@@ -1538,6 +1573,7 @@
 
             window.savePref('pref_unit',newUnit); window.savePref('pref_range',newRange); window.savePref('pref_custom_days',newCustomDays);
             window.savePref('pref_weekly_range',newWeeklyRange); window.savePref('pref_custom_weeks',newCustomWeeks);
+            window.savePref('pref_workouts_range',newWorkoutsRange); window.savePref('pref_workouts_custom_days',newCustomWorkoutsDays);
             window.savePref('pref_default_landing',newDefaultLanding); window.savePref('pref_height_unit',newHeightUnit);
             window.savePref('pref_goal_line',newGoalLine); window.savePref('pref_ma_line',newMaLine); window.savePref('pref_trend_line',newTrendLine);
             window.savePref('pref_chart_type',newChartType); window.savePref('pref_healthbar',newHealthBar); window.savePref('pref_fighter_name',newFighterName);
@@ -1574,6 +1610,7 @@
                 else if(window.setView)window.setView('chart');
             }
             if(window.setWeeklyRange)window.setWeeklyRange(newWeeklyRange,newCustomWeeks);
+            if(window.setWorkoutsRange)window.setWorkoutsRange(newWorkoutsRange,newWorkoutsRange==='custom'?(parseInt(newCustomWorkoutsDays)||30):undefined);
             if(openState){
                 const weeklyNeedsRefresh=window.weeklyChartLoaded&&(newUnit!==openState.unit||newWeeklyRange!==openState.weeklyRange||newCustomWeeks!==String(openState.customWeeks)||newWeeklyGoal!==openState.weeklyGoalLine||newWeeklyTrend!==openState.weeklyTrendLine||newWeeklyMinMax!==openState.weeklyMinMax||newWeeklyMode!==openState.weeklyMode||newDateFormat!==openState.dateFormat);
                 if(weeklyNeedsRefresh&&window.refreshWeeklyChart)window.refreshWeeklyChart();
@@ -1583,7 +1620,7 @@
         }
 
         /* Collapsible section headers */
-        ['measurements','landing','overtime','weekly','hud'].forEach(key=>{
+        ['measurements','landing','overtime','weekly','workouts','hud'].forEach(key=>{
             const hdr=document.querySelector('.settings-section-label[data-section="'+key+'"]');
             const body=document.getElementById('ssb-'+key);
             if(!hdr||!body)return;
@@ -1613,6 +1650,8 @@
             activate('prof-trend-line-off','prof-trend-line-on'); activate('prof-goal-line-off','prof-goal-line-on');
             document.querySelectorAll('.profile-opt-btn[data-weeks]').forEach(b=>b.classList.remove('active'));
             document.getElementById('prof-wrange-4').classList.add('active'); document.getElementById('prof-custom-wrap-weekly').hidden=true; profCustomWeeks.value='';
+            document.querySelectorAll('.profile-opt-btn[data-wp-range]').forEach(b=>b.classList.remove('active'));
+            document.getElementById('prof-wp-range-7d').classList.add('active'); profCustomWorkoutsDays.value='';
             activate('prof-weekly-trend-off','prof-weekly-trend-on'); activate('prof-weekly-goal-off','prof-weekly-goal-on');
             activate('prof-weekly-minmax-on','prof-weekly-minmax-off'); activate('prof-weekly-table-exp-off','prof-weekly-table-exp-on');
             activate('prof-weekly-mode-rolling','prof-weekly-mode-iso');

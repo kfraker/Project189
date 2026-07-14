@@ -141,35 +141,29 @@ def test_workouts_page_has_all_range_buttons(html):
         assert f'data-range="{label}"' in html
 
 
-def test_workouts_page_has_custom_modal(html):
-    assert 'id="wp-custom-modal"' in html
+def test_workouts_page_has_no_custom_range_modal(html):
+    """The old start/end calendar-based Custom Range modal was replaced by a rolling days input."""
+    assert 'id="wp-custom-modal"' not in html
+    assert 'id="wp-cr-start-input"' not in html
+    assert 'id="wp-cr-end-input"' not in html
+    assert 'makeRangePicker' not in html
 
 
-def test_workouts_page_has_custom_range_start_input(html):
-    assert 'id="wp-cr-start-input"' in html
+def test_workouts_page_has_custom_days_input(html):
+    assert 'id="wp-custom-days-wrap"' in html
+    assert 'id="wp-custom-days"' in html
 
 
-def test_workouts_page_has_custom_range_end_input(html):
-    assert 'id="wp-cr-end-input"' in html
+def test_workouts_page_custom_days_default_is_30(html):
+    """When no custom-days preference is saved, the workouts filter must default to 30 days."""
+    assert 'parseInt(savedCustomDaysStr) || 30' in html
 
 
-def test_workouts_page_has_custom_range_calendars(html):
-    assert 'id="wp-cr-start-cal"' in html
-    assert 'id="wp-cr-end-cal"' in html
-
-
-def test_workouts_page_has_custom_modal_actions(html):
-    assert 'id="wp-custom-cancel"' in html
-    assert 'id="wp-custom-apply"' in html
-
-
-def test_workouts_page_custom_modal_is_dialog(html):
-    assert 'role="dialog"' in html
-    assert 'aria-modal="true"' in html
-
-
-def test_workouts_page_has_make_range_picker(html):
-    assert 'makeRangePicker' in html
+def test_workouts_page_range_persists_to_prefs(html):
+    """Selecting a range or custom day count must persist under workouts-specific pref keys."""
+    assert "savePref('pref_workouts_range'" in html
+    assert "savePref('pref_workouts_custom_days'" in html
+    assert "localStorage.getItem('pref_workouts_range')" in html
 
 
 def test_workouts_page_filter_btn_has_aria_label(html):

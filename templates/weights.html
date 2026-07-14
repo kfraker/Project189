@@ -1,5 +1,7 @@
 {% extends "base.html" %}
 
+{% block page_title %}Weigh-ins — Project 189{% endblock %}
+
 {% block extra_head %}
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 {% endblock %}
@@ -469,7 +471,7 @@
 {% endblock %}
 
 {% block header_title %}
-<h1 class="site-title">Weights</h1>
+<h1 class="site-title">Weigh-ins</h1>
 {% endblock %}
 
 {% block header_stats %}
@@ -488,7 +490,7 @@
 {% endblock %}
 
 {% block footer_add %}
-<button class="site-add-btn" id="chart-add-btn" aria-label="Log a past weight" data-tip="Log a past weight">+</button>
+<button class="site-add-btn" id="chart-add-btn" aria-label="Log a weigh-in" data-tip="Log a weigh-in">+</button>
 {% endblock %}
 
 {% block content %}
@@ -554,7 +556,7 @@
 <div id="history-modal" class="modal-overlay" hidden>
     <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="history-modal-title">
         <div id="history-screen-input">
-            <h2 class="modal-title" id="history-modal-title">Log Past Weight</h2>
+            <h2 class="modal-title" id="history-modal-title">Log a Weigh-in</h2>
             <label class="modal-label" for="history-date">Date</label>
             <div class="date-picker-wrap" id="history-date-wrap">
                 <input type="text" id="history-date" class="history-date-input" placeholder="Select a date" readonly>
@@ -1681,12 +1683,18 @@
         function step(amount){const kg=isKgMode(),min=kg?20:50,max=kg?450:999,cur=parseFloat(weightIn.value)||0;weightIn.value=Math.min(max,Math.max(min,Math.round((cur+amount)*10)/10));updatePreview();}
 
         const addBtn=document.getElementById('chart-add-btn');
-        if(addBtn)addBtn.addEventListener('click',()=>{
+        if(addBtn)addBtn.addEventListener('click',async()=>{
             const kg=isKgMode();
             if(labelEl)labelEl.textContent=baseLabel+(kg?' (kgs)':' (lbs)');
             if(unitTag)unitTag.textContent=kg?'kgs':'lbs';
             weightIn.min=kg?'20':'50'; weightIn.max=kg?'450':'999';
-            selectedDateISO=''; if(dateIn)dateIn.value=''; weightIn.value=''; preview.textContent='';
+            let startDate='';
+            try{
+                const today=getTodayISO();
+                const rows=await fetch('/api/weights?range=7d').then(r=>r.json());
+                if(!rows.some(r=>r.date===today))startDate=today;
+            }catch{}
+            selectedDateISO=startDate; if(dateIn)dateIn.value=startDate?displayFromISO(startDate):''; weightIn.value=''; preview.textContent='';
             close(); modal.hidden=false; modalOpen(modal);
             setTimeout(()=>{if(dateIn)dateIn.focus();},50);
         });

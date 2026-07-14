@@ -119,10 +119,20 @@
     }
     .wp-range-btn:hover { background: rgba(255,45,120,0.12); color: #fff; border-color: rgba(255,45,120,0.45); }
     .wp-range-btn.active { background: rgba(255,45,120,0.2); border-color: rgba(255,45,120,0.7); color: #ff2d78; }
-    .wp-custom-fields { display: flex; flex-direction: column; gap: 10px; margin: 2px 0 4px; }
-    .wp-custom-field-label { font-family: Arial,sans-serif; font-size: 11px; letter-spacing: 0.1em; text-transform: uppercase; color: rgba(255,255,255,0.5); margin-bottom: 5px; }
-    /* "To" calendar opens upward inside the modal to stay in viewport */
-    #wp-cr-end-cal { top: auto; bottom: calc(100% + 6px); }
+    .wp-custom-days-wrap {
+        padding: 6px 4px 2px;
+        display: flex; align-items: center; gap: 6px;
+    }
+    .wp-custom-days-wrap input {
+        width: 52px; background: rgba(255,255,255,0.08);
+        border: 1px solid rgba(255,45,120,0.3); border-radius: 6px;
+        color: #fff; font-family: Arial, sans-serif; font-size: 12px;
+        padding: 4px 6px; text-align: center;
+    }
+    .wp-custom-days-wrap span {
+        font-family: Arial, sans-serif; font-size: 11px;
+        color: rgba(255,255,255,0.5);
+    }
 
     /* ── Log Workout Modal ── */
     .wp-modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.72); display: flex; align-items: center; justify-content: center; z-index: 1300; }
@@ -193,12 +203,16 @@
 {% block footer_left %}
 <div class="wp-filter-wrap">
     <div class="wp-range-menu" id="wp-range-menu">
-        <button class="wp-range-btn active" data-range="all">All</button>
-        <button class="wp-range-btn" data-range="1y">1Y</button>
-        <button class="wp-range-btn" data-range="90d">90D</button>
+        <button class="wp-range-btn active" data-range="7d">7D</button>
         <button class="wp-range-btn" data-range="30d">30D</button>
-        <button class="wp-range-btn" data-range="7d">7D</button>
+        <button class="wp-range-btn" data-range="90d">90D</button>
+        <button class="wp-range-btn" data-range="1y">1Y</button>
+        <button class="wp-range-btn" data-range="all">All</button>
         <button class="wp-range-btn" data-range="custom">Custom</button>
+        <div class="wp-custom-days-wrap" id="wp-custom-days-wrap" hidden>
+            <input type="number" id="wp-custom-days" class="custom-days-input" min="7" max="1095" placeholder="—" data-tip="Min 7 days">
+            <span>days</span>
+        </div>
     </div>
     <button class="wp-filter-btn" id="wp-filter-btn" aria-label="Filter by date range" data-tip="Filter by date range">
         <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
@@ -242,49 +256,6 @@
 
 <!-- Page-edge scrollbar -->
 <div id="wp-scrollbar-track"><div id="wp-scrollbar-thumb"></div></div>
-
-<!-- Custom date range modal -->
-<div id="wp-custom-modal" class="modal-overlay" hidden role="dialog" aria-modal="true" aria-labelledby="wp-custom-modal-title">
-    <div class="modal-card">
-        <h2 class="modal-title" id="wp-custom-modal-title">Custom Range</h2>
-        <div class="wp-custom-fields">
-            <div>
-                <div class="wp-custom-field-label">From</div>
-                <div class="date-picker-wrap" id="wp-cr-start-wrap" style="margin-bottom:0;">
-                    <input type="text" class="history-date-input wpm-date-input" id="wp-cr-start-input" placeholder="Select date" readonly>
-                    <div class="date-picker-dropdown" id="wp-cr-start-cal" hidden>
-                        <div class="dp-header">
-                            <button type="button" class="dp-nav" id="wp-cr-start-prev">&#8249;</button>
-                            <span class="dp-month-year" id="wp-cr-start-month"></span>
-                            <button type="button" class="dp-nav" id="wp-cr-start-next">&#8250;</button>
-                        </div>
-                        <div class="dp-day-names"><span>Su</span><span>Mo</span><span>Tu</span><span>We</span><span>Th</span><span>Fr</span><span>Sa</span></div>
-                        <div class="dp-grid" id="wp-cr-start-grid"></div>
-                    </div>
-                </div>
-            </div>
-            <div>
-                <div class="wp-custom-field-label">To</div>
-                <div class="date-picker-wrap" id="wp-cr-end-wrap" style="margin-bottom:0;">
-                    <input type="text" class="history-date-input wpm-date-input" id="wp-cr-end-input" placeholder="Select date" readonly>
-                    <div class="date-picker-dropdown" id="wp-cr-end-cal" hidden>
-                        <div class="dp-header">
-                            <button type="button" class="dp-nav" id="wp-cr-end-prev">&#8249;</button>
-                            <span class="dp-month-year" id="wp-cr-end-month"></span>
-                            <button type="button" class="dp-nav" id="wp-cr-end-next">&#8250;</button>
-                        </div>
-                        <div class="dp-day-names"><span>Su</span><span>Mo</span><span>Tu</span><span>We</span><span>Th</span><span>Fr</span><span>Sa</span></div>
-                        <div class="dp-grid" id="wp-cr-end-grid"></div>
-                    </div>
-                </div>
-            </div>
-        </div>
-        <div class="modal-actions">
-            <button class="modal-btn modal-cancel" id="wp-custom-cancel">Cancel</button>
-            <button class="modal-btn modal-save"   id="wp-custom-apply">Apply</button>
-        </div>
-    </div>
-</div>
 
 <!-- Delete-with-checkboxes modal -->
 <div id="wp-del-check-modal" class="modal-overlay" hidden role="dialog" aria-modal="true" aria-labelledby="wp-del-check-title">
@@ -557,13 +528,12 @@
         });
     }
 
-    let allWorkouts = [], allDayNotes = {}, currentRange = 'all';
-    let customStart = '', customEnd = '';
+    let allWorkouts = [], allDayNotes = {}, currentRange = '7d';
+    let customDays = 30;
 
     function filterRows(rows, range) {
         if (range === 'all') return rows;
-        if (range === 'custom') return rows.filter(r => (!customStart || r.date >= customStart) && (!customEnd || r.date <= customEnd));
-        const days = {'7d':7,'30d':30,'90d':90,'1y':365}[range];
+        const days = range === 'custom' ? customDays : {'7d':7,'30d':30,'90d':90,'1y':365}[range];
         const cutoff = new Date(Date.now()-(days-1)*86400000).toLocaleDateString('en-CA');
         return rows.filter(r => r.date >= cutoff);
     }
@@ -575,51 +545,69 @@
 
     /* ── Filter button / range menu ── */
     (function () {
-        const filterBtn   = document.getElementById('wp-filter-btn');
-        const rangeMenu   = document.getElementById('wp-range-menu');
-        const customModal = document.getElementById('wp-custom-modal');
-        const DP_MONTHS   = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+        const filterBtn  = document.getElementById('wp-filter-btn');
+        const rangeMenu  = document.getElementById('wp-range-menu');
+        const customWrap = document.getElementById('wp-custom-days-wrap');
+        const customIn   = document.getElementById('wp-custom-days');
 
         function closeMenu() { filterBtn.classList.remove('open'); rangeMenu.classList.remove('open'); }
 
-        function dpIsoFromParts(y,m,d){return y+'-'+String(m+1).padStart(2,'0')+'-'+String(d).padStart(2,'0');}
-        function dpDisplayFromISO(iso){const[y,m,d]=iso.split('-');return DP_MONTHS[parseInt(m)-1]+' '+parseInt(d)+', '+y;}
-
-        function makeRangePicker(wrapId, inputId, calId, prevId, nextId, monthId, gridId) {
-            const input=document.getElementById(inputId),calEl=document.getElementById(calId);
-            const gridEl=document.getElementById(gridId),monthLbl=document.getElementById(monthId);
-            const dayNames=calEl.querySelector('.dp-day-names');
-            let viewDate=new Date(),selected='',calMode='days',yearPage=new Date().getFullYear()-5;
-            function renderCal(){calMode='days';dayNames.style.display='';gridEl.style.gridTemplateColumns='repeat(7,1fr)';const y=viewDate.getFullYear(),m=viewDate.getMonth();monthLbl.textContent=DP_MONTHS[m]+' '+y;const firstDow=new Date(y,m,1).getDay(),daysInMonth=new Date(y,m+1,0).getDate(),daysInPrev=new Date(y,m,0).getDate();gridEl.innerHTML='';for(let i=firstDow-1;i>=0;i--){const btn=document.createElement('button');btn.type='button';btn.className='dp-day dp-other-month';btn.textContent=daysInPrev-i;btn.disabled=true;gridEl.appendChild(btn);}for(let day=1;day<=daysInMonth;day++){const iso=dpIsoFromParts(y,m,day),btn=document.createElement('button');btn.type='button';btn.className='dp-day';btn.textContent=day;if(iso===selected)btn.classList.add('dp-selected');btn.addEventListener('click',()=>{selected=iso;input.value=dpDisplayFromISO(iso);calEl.hidden=true;});gridEl.appendChild(btn);}const rem=(firstDow+daysInMonth)%7;if(rem>0)for(let i=1;i<=7-rem;i++){const btn=document.createElement('button');btn.type='button';btn.className='dp-day dp-other-month';btn.textContent=i;btn.disabled=true;gridEl.appendChild(btn);}}
-            function renderYears(){calMode='years';dayNames.style.display='none';gridEl.style.gridTemplateColumns='repeat(3,1fr)';const todayY=new Date().getFullYear();monthLbl.textContent=yearPage+' – '+(yearPage+11);gridEl.innerHTML='';for(let i=0;i<12;i++){const yr=yearPage+i,btn=document.createElement('button');btn.type='button';btn.className='dp-day dp-year';btn.textContent=yr;if(yr===todayY)btn.classList.add('dp-today');if(yr===viewDate.getFullYear())btn.classList.add('dp-selected');btn.addEventListener('click',()=>{viewDate=new Date(yr,viewDate.getMonth(),1);renderCal();});gridEl.appendChild(btn);}}
-            monthLbl.addEventListener('click',()=>{if(calMode==='days'){yearPage=viewDate.getFullYear()-5;renderYears();}else renderCal();});
-            input.addEventListener('click',()=>{if(calEl.hidden){viewDate=selected?new Date(selected+'T12:00:00'):new Date();renderCal();calEl.hidden=false;}else{calEl.hidden=true;}});
-            document.getElementById(prevId).addEventListener('click',()=>{if(calMode==='years'){yearPage-=12;renderYears();}else{viewDate=new Date(viewDate.getFullYear(),viewDate.getMonth()-1,1);renderCal();}});
-            document.getElementById(nextId).addEventListener('click',()=>{if(calMode==='years'){yearPage+=12;renderYears();}else{viewDate=new Date(viewDate.getFullYear(),viewDate.getMonth()+1,1);renderCal();}});
-            document.addEventListener('click',e=>{const wrap=document.getElementById(wrapId);if(!calEl.hidden&&!e.composedPath().includes(wrap))calEl.hidden=true;});
-            return {getSelected:()=>selected};
-        }
-
-        const crStart = makeRangePicker('wp-cr-start-wrap','wp-cr-start-input','wp-cr-start-cal','wp-cr-start-prev','wp-cr-start-next','wp-cr-start-month','wp-cr-start-grid');
-        const crEnd   = makeRangePicker('wp-cr-end-wrap','wp-cr-end-input','wp-cr-end-cal','wp-cr-end-prev','wp-cr-end-next','wp-cr-end-month','wp-cr-end-grid');
-
         filterBtn.addEventListener('click', e => { e.stopPropagation(); filterBtn.classList.toggle('open'); rangeMenu.classList.toggle('open'); });
+
         rangeMenu.querySelectorAll('.wp-range-btn').forEach(btn => {
             btn.addEventListener('click', e => {
                 e.stopPropagation();
-                if (btn.dataset.range === 'custom') { closeMenu(); customModal.hidden = false; return; }
                 rangeMenu.querySelectorAll('.wp-range-btn').forEach(b => b.classList.remove('active'));
-                btn.classList.add('active'); currentRange = btn.dataset.range; applyFilter();
+                btn.classList.add('active');
+                currentRange = btn.dataset.range;
+                window.savePref('pref_workouts_range', currentRange);
+                if (currentRange === 'custom') {
+                    customWrap.hidden = false;
+                    customIn.focus(); customIn.select();
+                    customDays = Math.min(Math.max(parseInt(customIn.value) || 30, 7), 1095);
+                } else {
+                    customWrap.hidden = true;
+                }
+                applyFilter();
             });
         });
-        document.getElementById('wp-custom-cancel').addEventListener('click', () => { customModal.hidden = true; });
-        document.getElementById('wp-custom-apply').addEventListener('click', () => {
-            customStart = crStart.getSelected(); customEnd = crEnd.getSelected(); currentRange = 'custom';
-            rangeMenu.querySelectorAll('.wp-range-btn').forEach(b => b.classList.remove('active'));
-            rangeMenu.querySelector('[data-range="custom"]').classList.add('active');
-            customModal.hidden = true; applyFilter();
+
+        function applyCustom() {
+            customDays = Math.min(Math.max(parseInt(customIn.value) || 30, 7), 1095);
+            customIn.value = customDays;
+            window.savePref('pref_workouts_custom_days', String(customDays));
+            applyFilter();
+        }
+        customIn.addEventListener('keydown', e => { if (e.key === 'Enter') applyCustom(); });
+        customIn.addEventListener('change', applyCustom);
+
+        document.addEventListener('click', e => {
+            if (!rangeMenu.classList.contains('open')) return;
+            if (!e.composedPath().includes(rangeMenu) && !e.composedPath().includes(filterBtn)) closeMenu();
         });
-        document.addEventListener('click', closeMenu);
+        document.addEventListener('keydown', e => { if (e.key === 'Escape') closeMenu(); });
+
+        const savedRange         = localStorage.getItem('pref_workouts_range') || '7d';
+        const savedCustomDaysStr = localStorage.getItem('pref_workouts_custom_days');
+        customDays = parseInt(savedCustomDaysStr) || 30;
+        const savedBtn = rangeMenu.querySelector(`.wp-range-btn[data-range="${savedRange}"]`);
+        if (savedBtn) {
+            rangeMenu.querySelectorAll('.wp-range-btn').forEach(b => b.classList.remove('active'));
+            savedBtn.classList.add('active');
+        }
+        customWrap.hidden = savedRange !== 'custom';
+        if (savedRange === 'custom') customIn.value = savedCustomDaysStr || '';
+        currentRange = savedRange;
+
+        /* Called from the Settings modal when the Workouts default range is saved. */
+        window.setWorkoutsRange = function (range, days) {
+            currentRange = range;
+            if (range === 'custom' && days) customDays = days;
+            rangeMenu.querySelectorAll('.wp-range-btn').forEach(b => b.classList.toggle('active', b.dataset.range === range));
+            customWrap.hidden = range !== 'custom';
+            if (range === 'custom' && days) customIn.value = days;
+            applyFilter();
+        };
     })();
 
     /* ── Stats ── */
