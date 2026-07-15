@@ -4,6 +4,8 @@ import os
 import re
 from datetime import date, timedelta
 
+from db_migrations import run_migrations
+
 app = Flask(__name__)
 DB_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'weights.db')
 app.config['DB_PATH'] = DB_PATH
@@ -29,112 +31,8 @@ def get_db():
 
 def init_db():
     conn = get_db()
-
-    conn.execute('''
-        CREATE TABLE IF NOT EXISTS users (
-            id            INTEGER PRIMARY KEY AUTOINCREMENT,
-            username      TEXT    UNIQUE NOT NULL,
-            password_hash TEXT    NOT NULL DEFAULT ''
-        )
-    ''')
-
-    conn.execute('''
-        CREATE TABLE IF NOT EXISTS weights (
-            id          INTEGER PRIMARY KEY AUTOINCREMENT,
-            user_id     INTEGER NOT NULL DEFAULT 1 REFERENCES users(id),
-            date        TEXT    NOT NULL,
-            weight_lbs  REAL,
-            weight_kg   REAL,
-            UNIQUE(user_id, date)
-        )
-    ''')
-
-    conn.execute('''
-        CREATE TABLE IF NOT EXISTS settings (
-            user_id   INTEGER NOT NULL DEFAULT 1 REFERENCES users(id),
-            key       TEXT    NOT NULL,
-            value_lbs REAL    NOT NULL,
-            value_kg  REAL    NOT NULL,
-            PRIMARY KEY (user_id, key)
-        )
-    ''')
-
-    conn.execute('''
-        CREATE TABLE IF NOT EXISTS preferences (
-            user_id INTEGER NOT NULL DEFAULT 1 REFERENCES users(id),
-            key     TEXT    NOT NULL,
-            value   TEXT    NOT NULL,
-            PRIMARY KEY (user_id, key)
-        )
-    ''')
-
-    conn.execute('''
-        CREATE TABLE IF NOT EXISTS workouts (
-            id           INTEGER PRIMARY KEY AUTOINCREMENT,
-            user_id      INTEGER NOT NULL DEFAULT 1 REFERENCES users(id),
-            date         TEXT    NOT NULL,
-            type         TEXT    NOT NULL,
-            duration_min INTEGER NOT NULL,
-            kcal         INTEGER NOT NULL,
-            note         TEXT    NOT NULL DEFAULT ''
-        )
-    ''')
-
-    conn.execute('''
-        CREATE TABLE IF NOT EXISTS workout_day_notes (
-            user_id INTEGER NOT NULL DEFAULT 1 REFERENCES users(id),
-            date    TEXT    NOT NULL,
-            note    TEXT    NOT NULL DEFAULT '',
-            PRIMARY KEY (user_id, date)
-        )
-    ''')
-
-    # Seed default user
-    conn.execute(
-        "INSERT OR IGNORE INTO users (id, username, password_hash) VALUES (1, 'default', '')"
-    )
-
-    # Migrate existing tables that predate user_id
-    _migrate(conn)
-
-    conn.commit()
+    run_migrations(conn)
     conn.close()
-
-
-def _migrate(conn: sqlite3.Connection) -> None:
-    """Add columns to pre-existing tables that were created without them."""
-    for table in ('weights', 'settings'):
-        cols = {row[1] for row in conn.execute(f"PRAGMA table_info({table})")}
-        if 'user_id' not in cols:
-            conn.execute(
-                f"ALTER TABLE {table} ADD COLUMN user_id INTEGER NOT NULL DEFAULT 1"
-            )
-    cols = {row[1] for row in conn.execute("PRAGMA table_info(weights)")}
-    if 'notes' not in cols:
-        conn.execute("ALTER TABLE weights ADD COLUMN notes TEXT NOT NULL DEFAULT ''")
-    # Make weight columns nullable so note-only entries (no weigh-in) can be stored
-    pragma = conn.execute("PRAGMA table_info(weights)").fetchall()
-    wt_col = next((r for r in pragma if r['name'] == 'weight_lbs'), None)
-    if wt_col and wt_col['notnull'] == 1:
-        conn.execute("DROP TABLE IF EXISTS weights_v1")
-        conn.execute("ALTER TABLE weights RENAME TO weights_v1")
-        conn.execute('''
-            CREATE TABLE weights (
-                id          INTEGER PRIMARY KEY AUTOINCREMENT,
-                user_id     INTEGER NOT NULL DEFAULT 1 REFERENCES users(id),
-                date        TEXT    NOT NULL,
-                weight_lbs  REAL,
-                weight_kg   REAL,
-                notes       TEXT    NOT NULL DEFAULT '',
-                UNIQUE(user_id, date)
-            )
-        ''')
-        conn.execute("""
-            INSERT INTO weights (id, user_id, date, weight_lbs, weight_kg, notes)
-            SELECT id, user_id, date, weight_lbs, weight_kg, COALESCE(notes, '')
-            FROM weights_v1
-        """)
-        conn.execute("DROP TABLE weights_v1")
 
 
 init_db()

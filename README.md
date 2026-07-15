@@ -96,6 +96,10 @@ Open `http://127.0.0.1:5000` in your browser.
 
 The SQLite database (`weights.db`) is created automatically on first run in the project root.
 
+## Database Migrations
+
+Schema changes are managed by a small hand-rolled migration system in `db_migrations/` — no ORM, no external migration library, consistent with the rest of the app's stdlib-only `sqlite3` style. Each numbered module (`m0001_baseline.py`, `m0002_...`, `m0003_...`) exposes a `VERSION` and an `up(conn)` function; `run_migrations()` (called from `init_db()` on every app startup) applies any migration whose version isn't yet recorded in the `schema_migrations` table, in order. Migrations are forward-only — to make a schema change, add a new `db_migrations/m000N_description.py` file rather than editing an existing one; it'll run automatically the next time the app starts.
+
 ## Project Structure
 
 ```
@@ -103,6 +107,11 @@ project-189/
 ├── app.py                      # Flask app and REST API routes
 ├── requirements.txt            # Runtime + test dependencies
 ├── weights.db                  # SQLite database (auto-created)
+├── db_migrations/
+│   ├── __init__.py              # run_migrations() runner + schema_migrations tracking
+│   ├── m0001_baseline.py        # VERSION 1 — core tables (users, weights, settings, preferences, workouts, workout_day_notes)
+│   ├── m0002_baseline_notes_and_nullable.py  # VERSION 2 — weights.notes column, nullable weight_lbs/weight_kg
+│   └── m0003_settings_composite_pk.py        # VERSION 3 — settings PK becomes (user_id, key)
 ├── templates/
 │   ├── base.html                # Shared header/footer shell, menu/settings/fight-card/insights modals, cursor + tooltip JS
 │   ├── index.html                # Home dashboard (health bar, weight plates, Quick Add)
@@ -138,7 +147,8 @@ project-189/
     ├── test_api_preferences.py
     ├── test_api_workouts.py
     ├── test_business_logic.py
-    └── test_db_init.py
+    ├── test_db_init.py
+    └── test_db_migrations.py
 ```
 
 A few other `static/` PNGs (`editpointer*.png`, `settingsbutton.png`, `homebutton.png`, `leanmachine.png`, `musclemonster.png`, various `workoutbackgroundtest*.png`) are earlier iterations no longer referenced by any template — left in place but not wired up.
@@ -175,4 +185,4 @@ A few other `static/` PNGs (`editpointer*.png`, `settingsbutton.png`, `homebutto
 python -m pytest tests/ -v
 ```
 
-367 tests covering all API endpoints, business logic, date range boundaries, and page structure across Home, Weigh-ins, and Workouts.
+376 tests covering all API endpoints, business logic, date range boundaries, page structure across Home/Weigh-ins/Workouts, and the migration runner.
