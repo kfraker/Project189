@@ -6,6 +6,8 @@ then call init_db() so tables exist. No monkeypatching needed — get_db()
 reads from app.config at call time, so the override takes effect for every
 route handler called through the test client.
 """
+import sqlite3
+
 import pytest
 import app as app_module
 from app import app as flask_app
@@ -23,10 +25,39 @@ def test_db(tmp_path):
 
 @pytest.fixture()
 def client(test_db):
-    """Flask test client wired to the isolated test DB."""
+    """Flask test client wired to the isolated test DB, pre-authenticated as user 1.
+
+    Deliberately not opened via `with flask_app.test_client() as c:` — that
+    form preserves the request context after each response, which corrupts
+    Werkzeug's context stack when two such clients (see `other_client`) make
+    interleaved requests within the same test.
+    """
     flask_app.config["TESTING"] = True
-    with flask_app.test_client() as c:
-        yield c
+    c = flask_app.test_client()
+    with c.session_transaction() as sess:
+        sess['user_id'] = 1
+    yield c
+
+
+@pytest.fixture()
+def other_client(test_db):
+    """A second authenticated client (user 2) sharing the same test_db as `client`."""
+    flask_app.config["TESTING"] = True
+    c = flask_app.test_client()
+    conn = sqlite3.connect(test_db)
+    conn.execute("INSERT OR IGNORE INTO users (id, username, password_hash) VALUES (2, 'user2', '')")
+    conn.commit()
+    conn.close()
+    with c.session_transaction() as sess:
+        sess['user_id'] = 2
+    yield c
+
+
+@pytest.fixture()
+def unauthenticated_client(test_db):
+    """A client with no session at all, for testing the login-required gate."""
+    flask_app.config["TESTING"] = True
+    yield flask_app.test_client()
 
 
 # ── Seed helpers ─────────────────────────────────────────────────────────────

@@ -1,12 +1,18 @@
-from flask import Flask, render_template, request, jsonify
+from flask import Flask, render_template, request, jsonify, session, redirect, url_for
 import sqlite3
 import os
 import re
 from datetime import date, timedelta
+from functools import wraps
+from dotenv import load_dotenv
+from authlib.integrations.flask_client import OAuth
 
 from db_migrations import run_migrations
 
+load_dotenv()
+
 app = Flask(__name__)
+app.secret_key = os.environ['FLASK_SECRET_KEY']
 DB_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'weights.db')
 app.config['DB_PATH'] = DB_PATH
 
@@ -37,16 +43,94 @@ def init_db():
 
 init_db()
 
-# Current user — hardcoded until auth is added
-_USER_ID = 1
+
+def current_user_id():
+    return session['user_id']
+
+
+def login_required(view):
+    @wraps(view)
+    def wrapped(*args, **kwargs):
+        if 'user_id' not in session:
+            if request.path.startswith('/api/'):
+                return jsonify({"error": "authentication required"}), 401
+            return redirect(url_for('login_page', next=request.path))
+        return view(*args, **kwargs)
+    return wrapped
+
+
+oauth = OAuth(app)
+oauth.register(
+    name='google',
+    server_metadata_url='https://accounts.google.com/.well-known/openid-configuration',
+    client_id=os.environ['GOOGLE_CLIENT_ID'],
+    client_secret=os.environ['GOOGLE_CLIENT_SECRET'],
+    client_kwargs={'scope': 'openid email profile'},
+)
+ALLOWED_EMAILS = {e.strip().lower() for e in os.environ.get('ALLOWED_EMAILS', '').split(',') if e.strip()}
+
+
+@app.route('/login')
+def login_page():
+    if 'user_id' in session:
+        return redirect(url_for('home'))
+    return render_template('login.html')
+
+
+@app.route('/auth/google')
+def auth_google():
+    return oauth.google.authorize_redirect(url_for('auth_google_callback', _external=True))
+
+
+@app.route('/auth/google/callback')
+def auth_google_callback():
+    token = oauth.google.authorize_access_token()
+    userinfo = token['userinfo']
+    sub, email = userinfo['sub'], (userinfo.get('email') or '').lower()
+    name, picture = userinfo.get('name'), userinfo.get('picture')
+
+    if email not in ALLOWED_EMAILS:
+        return render_template('access_denied.html', owner_email=os.environ.get('OWNER_EMAIL', '')), 403
+
+    conn = get_db()
+    try:
+        row = conn.execute("SELECT id FROM users WHERE google_sub = ?", (sub,)).fetchone()
+        if row:
+            user_id = row['id']
+            conn.execute(
+                "UPDATE users SET email=?, name=?, picture=? WHERE id=?",
+                (email, name, picture, user_id),
+            )
+        else:
+            cur = conn.execute(
+                "INSERT INTO users (username, password_hash, google_sub, email, name, picture) "
+                "VALUES (?, '', ?, ?, ?, ?)",
+                (email or sub, sub, email, name, picture),
+            )
+            user_id = cur.lastrowid
+        conn.commit()
+    finally:
+        conn.close()
+
+    session['user_id'] = user_id
+    session.permanent = True
+    return redirect(url_for('home'))
+
+
+@app.route('/logout')
+def logout():
+    session.clear()
+    return redirect(url_for('login_page'))
 
 
 @app.route("/")
 def home():
+    if 'user_id' not in session:
+        return render_template("login.html")
     conn = get_db()
     try:
         rows = conn.execute(
-            "SELECT key, value FROM preferences WHERE user_id = ?", (_USER_ID,)
+            "SELECT key, value FROM preferences WHERE user_id = ?", (current_user_id(),)
         ).fetchall()
         prefs = {r["key"]: r["value"] for r in rows}
     finally:
@@ -55,11 +139,12 @@ def home():
 
 
 @app.route("/workouts")
+@login_required
 def workouts_page():
     conn = get_db()
     try:
         rows = conn.execute(
-            "SELECT key, value FROM preferences WHERE user_id = ?", (_USER_ID,)
+            "SELECT key, value FROM preferences WHERE user_id = ?", (current_user_id(),)
         ).fetchall()
         prefs = {r["key"]: r["value"] for r in rows}
     finally:
@@ -68,11 +153,12 @@ def workouts_page():
 
 
 @app.route("/weights")
+@login_required
 def weights_page():
     conn = get_db()
     try:
         rows = conn.execute(
-            "SELECT key, value FROM preferences WHERE user_id = ?", (_USER_ID,)
+            "SELECT key, value FROM preferences WHERE user_id = ?", (current_user_id(),)
         ).fetchall()
         prefs = {r["key"]: r["value"] for r in rows}
     finally:
@@ -81,6 +167,7 @@ def weights_page():
 
 
 @app.route("/api/weight", methods=["POST"])
+@login_required
 def save_weight():
     data = request.get_json(silent=True) or {}
 
@@ -107,7 +194,7 @@ def save_weight():
     try:
         existing = conn.execute(
             "SELECT id, weight_lbs FROM weights WHERE user_id = ? AND date = ?",
-            (_USER_ID, entry_date),
+            (current_user_id(), entry_date),
         ).fetchone()
 
         note_only = existing and existing['weight_lbs'] is None
@@ -117,12 +204,12 @@ def save_weight():
         if existing:
             conn.execute(
                 "UPDATE weights SET weight_lbs = ?, weight_kg = ? WHERE user_id = ? AND date = ?",
-                (weight_lbs, weight_kg, _USER_ID, entry_date),
+                (weight_lbs, weight_kg, current_user_id(), entry_date),
             )
         else:
             conn.execute(
                 "INSERT INTO weights (user_id, date, weight_lbs, weight_kg, notes) VALUES (?, ?, ?, ?, ?)",
-                (_USER_ID, entry_date, weight_lbs, weight_kg, notes),
+                (current_user_id(), entry_date, weight_lbs, weight_kg, notes),
             )
         conn.commit()
         return jsonify({"success": True})
@@ -131,6 +218,7 @@ def save_weight():
 
 
 @app.route("/api/weights")
+@login_required
 def get_weights():
     range_param = request.args.get("range", "all")
     custom_days = request.args.get("days", type=int)
@@ -140,7 +228,7 @@ def get_weights():
         if range_param == "all":
             rows = conn.execute(
                 "SELECT date, weight_lbs, weight_kg, notes FROM weights WHERE user_id = ? ORDER BY date",
-                (_USER_ID,),
+                (current_user_id(),),
             ).fetchall()
         else:
             if   range_param == "7d":  days = 7
@@ -151,14 +239,14 @@ def get_weights():
 
             latest = conn.execute(
                 "SELECT MAX(date) as d FROM weights WHERE user_id = ? AND weight_lbs IS NOT NULL",
-                (_USER_ID,),
+                (current_user_id(),),
             ).fetchone()["d"]
             anchor = date.fromisoformat(latest) if latest else date.today()
             start = (anchor - timedelta(days=days - 1)).isoformat()
             rows = conn.execute(
                 "SELECT date, weight_lbs, weight_kg, notes FROM weights "
                 "WHERE user_id = ? AND date >= ? ORDER BY date",
-                (_USER_ID, start),
+                (current_user_id(), start),
             ).fetchall()
 
         return jsonify([dict(r) for r in rows])
@@ -167,15 +255,16 @@ def get_weights():
 
 
 @app.route("/api/latest-weight")
+@login_required
 def latest_weight():
     conn = get_db()
     try:
         row = conn.execute(
             "SELECT weight_lbs, weight_kg FROM weights WHERE user_id = ? AND weight_lbs IS NOT NULL ORDER BY date DESC LIMIT 1",
-            (_USER_ID,),
+            (current_user_id(),),
         ).fetchone()
         oldest = conn.execute(
-            "SELECT MIN(date) as d FROM weights WHERE user_id = ?", (_USER_ID,)
+            "SELECT MIN(date) as d FROM weights WHERE user_id = ?", (current_user_id(),)
         ).fetchone()["d"]
         if row:
             return jsonify({
@@ -189,6 +278,7 @@ def latest_weight():
 
 
 @app.route("/api/weight/stats")
+@login_required
 def weight_stats():
     conn = get_db()
     try:
@@ -197,13 +287,13 @@ def weight_stats():
         seven_days_ago = (today - timedelta(days=6)).isoformat()
         week_rows = conn.execute(
             "SELECT weight_lbs FROM weights WHERE user_id = ? AND weight_lbs IS NOT NULL AND date >= ? AND date <= ? ORDER BY date ASC",
-            (_USER_ID, seven_days_ago, today.isoformat()),
+            (current_user_id(), seven_days_ago, today.isoformat()),
         ).fetchall()
         week_change = round(week_rows[-1]["weight_lbs"] - week_rows[0]["weight_lbs"], 1) if len(week_rows) >= 2 else None
 
         avg_row = conn.execute(
             "SELECT AVG(weight_lbs) as a FROM weights WHERE user_id = ? AND weight_lbs IS NOT NULL AND date >= ? AND date <= ?",
-            (_USER_ID, seven_days_ago, today.isoformat()),
+            (current_user_id(), seven_days_ago, today.isoformat()),
         ).fetchone()
         avg_7d = round(avg_row["a"], 1) if avg_row["a"] is not None else None
 
@@ -211,7 +301,7 @@ def weight_stats():
         logged_dates = set(
             r["date"] for r in conn.execute(
                 "SELECT date FROM weights WHERE user_id = ? AND weight_lbs IS NOT NULL ORDER BY date DESC",
-                (_USER_ID,),
+                (current_user_id(),),
             ).fetchall()
         )
         streak = 0
@@ -226,18 +316,19 @@ def weight_stats():
 
 
 @app.route("/api/weight/<string:entry_date>", methods=["DELETE"])
+@login_required
 def delete_weight(entry_date):
     conn = get_db()
     try:
         cursor = conn.execute(
-            "DELETE FROM weights WHERE user_id = ? AND date = ?", (_USER_ID, entry_date)
+            "DELETE FROM weights WHERE user_id = ? AND date = ?", (current_user_id(), entry_date)
         )
         conn.commit()
         if cursor.rowcount == 0:
             return jsonify({"error": "No entry found for that date"}), 404
         row = conn.execute(
             "SELECT weight_lbs, weight_kg FROM weights WHERE user_id = ? ORDER BY date DESC LIMIT 1",
-            (_USER_ID,),
+            (current_user_id(),),
         ).fetchone()
         latest = {"weight_lbs": row["weight_lbs"], "weight_kg": row["weight_kg"]} if row else {}
         return jsonify({"success": True, "latest": latest})
@@ -246,6 +337,7 @@ def delete_weight(entry_date):
 
 
 @app.route("/api/weight/<string:entry_date>/weight", methods=["DELETE"])
+@login_required
 def clear_weight(entry_date):
     if not _valid_date(entry_date):
         return jsonify({"error": "date must be a valid ISO date (YYYY-MM-DD)"}), 400
@@ -253,24 +345,24 @@ def clear_weight(entry_date):
     try:
         row = conn.execute(
             "SELECT notes FROM weights WHERE user_id = ? AND date = ?",
-            (_USER_ID, entry_date),
+            (current_user_id(), entry_date),
         ).fetchone()
         if not row:
             return jsonify({"error": "No entry found for that date"}), 404
         if row["notes"]:
             conn.execute(
                 "UPDATE weights SET weight_lbs = NULL, weight_kg = NULL WHERE user_id = ? AND date = ?",
-                (_USER_ID, entry_date),
+                (current_user_id(), entry_date),
             )
         else:
             conn.execute(
                 "DELETE FROM weights WHERE user_id = ? AND date = ?",
-                (_USER_ID, entry_date),
+                (current_user_id(), entry_date),
             )
         conn.commit()
         latest_row = conn.execute(
             "SELECT weight_lbs, weight_kg FROM weights WHERE user_id = ? AND weight_lbs IS NOT NULL ORDER BY date DESC LIMIT 1",
-            (_USER_ID,),
+            (current_user_id(),),
         ).fetchone()
         latest = {"weight_lbs": latest_row["weight_lbs"], "weight_kg": latest_row["weight_kg"]} if latest_row else {}
         return jsonify({"success": True, "latest": latest})
@@ -279,6 +371,7 @@ def clear_weight(entry_date):
 
 
 @app.route("/api/weight/<string:entry_date>/note", methods=["PATCH"])
+@login_required
 def save_note(entry_date):
     if not _valid_date(entry_date):
         return jsonify({"error": "date must be a valid ISO date (YYYY-MM-DD)"}), 400
@@ -288,7 +381,7 @@ def save_note(entry_date):
     try:
         cursor = conn.execute(
             "UPDATE weights SET notes = ? WHERE user_id = ? AND date = ?",
-            (notes, _USER_ID, entry_date),
+            (notes, current_user_id(), entry_date),
         )
         conn.commit()
         if cursor.rowcount == 0:
@@ -296,14 +389,14 @@ def save_note(entry_date):
                 conn.execute(
                     "INSERT INTO weights (user_id, date, weight_lbs, weight_kg, notes) "
                     "VALUES (?, ?, NULL, NULL, ?)",
-                    (_USER_ID, entry_date, notes),
+                    (current_user_id(), entry_date, notes),
                 )
                 conn.commit()
             return jsonify({"success": True})
         if not notes:
             conn.execute(
                 "DELETE FROM weights WHERE user_id = ? AND date = ? AND weight_lbs IS NULL",
-                (_USER_ID, entry_date),
+                (current_user_id(), entry_date),
             )
             conn.commit()
         return jsonify({"success": True})
@@ -312,11 +405,12 @@ def save_note(entry_date):
 
 
 @app.route("/api/settings")
+@login_required
 def get_settings():
     conn = get_db()
     try:
         rows = conn.execute(
-            "SELECT key, value_lbs, value_kg FROM settings WHERE user_id = ?", (_USER_ID,)
+            "SELECT key, value_lbs, value_kg FROM settings WHERE user_id = ?", (current_user_id(),)
         ).fetchall()
         return jsonify({r["key"]: {"value_lbs": r["value_lbs"], "value_kg": r["value_kg"]} for r in rows})
     finally:
@@ -324,6 +418,7 @@ def get_settings():
 
 
 @app.route("/api/setting", methods=["POST"])
+@login_required
 def save_setting():
     data = request.get_json(silent=True) or {}
 
@@ -345,7 +440,7 @@ def save_setting():
     conn = get_db()
     try:
         existing = conn.execute(
-            "SELECT key FROM settings WHERE user_id = ? AND key = ?", (_USER_ID, key)
+            "SELECT key FROM settings WHERE user_id = ? AND key = ?", (current_user_id(), key)
         ).fetchone()
 
         if existing and not overwrite:
@@ -354,12 +449,12 @@ def save_setting():
         if existing:
             conn.execute(
                 "UPDATE settings SET value_lbs = ?, value_kg = ? WHERE user_id = ? AND key = ?",
-                (value_lbs, value_kg, _USER_ID, key),
+                (value_lbs, value_kg, current_user_id(), key),
             )
         else:
             conn.execute(
                 "INSERT INTO settings (user_id, key, value_lbs, value_kg) VALUES (?, ?, ?, ?)",
-                (_USER_ID, key, value_lbs, value_kg),
+                (current_user_id(), key, value_lbs, value_kg),
             )
         conn.commit()
         return jsonify({"success": True})
@@ -368,11 +463,12 @@ def save_setting():
 
 
 @app.route("/api/preferences")
+@login_required
 def get_preferences():
     conn = get_db()
     try:
         rows = conn.execute(
-            "SELECT key, value FROM preferences WHERE user_id = ?", (_USER_ID,)
+            "SELECT key, value FROM preferences WHERE user_id = ?", (current_user_id(),)
         ).fetchall()
         return jsonify({r["key"]: r["value"] for r in rows})
     finally:
@@ -380,6 +476,7 @@ def get_preferences():
 
 
 @app.route("/api/preference", methods=["POST"])
+@login_required
 def save_preference():
     data = request.get_json(silent=True) or {}
 
@@ -397,7 +494,7 @@ def save_preference():
         conn.execute(
             "INSERT INTO preferences (user_id, key, value) VALUES (?, ?, ?) "
             "ON CONFLICT(user_id, key) DO UPDATE SET value = excluded.value",
-            (_USER_ID, key, value),
+            (current_user_id(), key, value),
         )
         conn.commit()
         return jsonify({"success": True})
@@ -406,6 +503,7 @@ def save_preference():
 
 
 @app.route("/api/home-stats")
+@login_required
 def home_stats():
     conn = get_db()
     try:
@@ -414,11 +512,11 @@ def home_stats():
         # Active streak: union of weight-logged and workout dates
         weight_dates = {r["date"] for r in conn.execute(
             "SELECT DISTINCT date FROM weights WHERE user_id = ? AND weight_lbs IS NOT NULL",
-            (_USER_ID,)
+            (current_user_id(),)
         ).fetchall()}
         workout_dates = {r["date"] for r in conn.execute(
             "SELECT DISTINCT date FROM workouts WHERE user_id = ?",
-            (_USER_ID,)
+            (current_user_id(),)
         ).fetchall()}
         active_dates = weight_dates | workout_dates
         streak = 0
@@ -433,7 +531,7 @@ def home_stats():
         week_ago = (today - timedelta(days=6)).isoformat()
         kcal_week = conn.execute(
             "SELECT COALESCE(SUM(kcal), 0) as total FROM workouts WHERE user_id = ? AND date >= ?",
-            (_USER_ID, week_ago)
+            (current_user_id(), week_ago)
         ).fetchone()["total"]
 
         # 7-day weight trend (avg last 7 days vs avg prior 7 days)
@@ -441,11 +539,11 @@ def home_stats():
         d14 = (today - timedelta(days=14)).isoformat()
         last7 = conn.execute(
             "SELECT weight_lbs, weight_kg FROM weights WHERE user_id = ? AND weight_lbs IS NOT NULL AND date > ?",
-            (_USER_ID, d7)
+            (current_user_id(), d7)
         ).fetchall()
         prev7 = conn.execute(
             "SELECT weight_lbs, weight_kg FROM weights WHERE user_id = ? AND weight_lbs IS NOT NULL AND date > ? AND date <= ?",
-            (_USER_ID, d14, d7)
+            (current_user_id(), d14, d7)
         ).fetchall()
         trend_lbs = trend_kg = None
         if last7 and prev7:
@@ -461,6 +559,7 @@ def home_stats():
 
 
 @app.route("/api/workouts")
+@login_required
 def get_workouts():
     date_filter = request.args.get("date", "").strip()
     conn = get_db()
@@ -469,13 +568,13 @@ def get_workouts():
             rows = conn.execute(
                 "SELECT id, date, type, duration_min, kcal, note FROM workouts "
                 "WHERE user_id = ? AND date = ? ORDER BY id DESC",
-                (_USER_ID, date_filter)
+                (current_user_id(), date_filter)
             ).fetchall()
         else:
             rows = conn.execute(
                 "SELECT id, date, type, duration_min, kcal, note FROM workouts "
                 "WHERE user_id = ? ORDER BY date DESC, id DESC",
-                (_USER_ID,)
+                (current_user_id(),)
             ).fetchall()
         return jsonify([dict(r) for r in rows])
     finally:
@@ -483,6 +582,7 @@ def get_workouts():
 
 
 @app.route("/api/workout", methods=["POST"])
+@login_required
 def save_workout():
     data = request.get_json(silent=True) or {}
     date_val     = data.get("date", "")
@@ -505,7 +605,7 @@ def save_workout():
         cur = conn.execute(
             "INSERT INTO workouts (user_id, date, type, duration_min, kcal, note) "
             "VALUES (?, ?, ?, ?, ?, ?)",
-            (_USER_ID, date_val, workout_type, duration, kcal, note)
+            (current_user_id(), date_val, workout_type, duration, kcal, note)
         )
         conn.commit()
         return jsonify({"success": True, "id": cur.lastrowid})
@@ -514,12 +614,13 @@ def save_workout():
 
 
 @app.route("/api/workout/<int:workout_id>", methods=["DELETE"])
+@login_required
 def delete_workout(workout_id):
     conn = get_db()
     try:
         conn.execute(
             "DELETE FROM workouts WHERE id = ? AND user_id = ?",
-            (workout_id, _USER_ID)
+            (workout_id, current_user_id())
         )
         conn.commit()
         return jsonify({"success": True})
@@ -528,6 +629,7 @@ def delete_workout(workout_id):
 
 
 @app.route("/api/workout-day-note")
+@login_required
 def get_workout_day_note():
     date_str = request.args.get("date", "").strip()
     if not date_str or not _valid_date(date_str):
@@ -536,7 +638,7 @@ def get_workout_day_note():
     try:
         row = conn.execute(
             "SELECT note FROM workout_day_notes WHERE user_id = ? AND date = ?",
-            (_USER_ID, date_str)
+            (current_user_id(), date_str)
         ).fetchone()
         return jsonify({"note": row["note"] if row else ""})
     finally:
@@ -544,6 +646,7 @@ def get_workout_day_note():
 
 
 @app.route("/api/workout-day-note", methods=["POST"])
+@login_required
 def save_workout_day_note():
     data = request.get_json(silent=True) or {}
     date_str = data.get("date", "").strip()
@@ -555,7 +658,7 @@ def save_workout_day_note():
         conn.execute(
             "INSERT INTO workout_day_notes (user_id, date, note) VALUES (?, ?, ?) "
             "ON CONFLICT(user_id, date) DO UPDATE SET note = excluded.note",
-            (_USER_ID, date_str, note)
+            (current_user_id(), date_str, note)
         )
         conn.commit()
         return jsonify({"success": True})
@@ -564,12 +667,13 @@ def save_workout_day_note():
 
 
 @app.route("/api/workout-day-notes")
+@login_required
 def get_workout_day_notes():
     conn = get_db()
     try:
         rows = conn.execute(
             "SELECT date, note FROM workout_day_notes WHERE user_id = ? AND note != ''",
-            (_USER_ID,)
+            (current_user_id(),)
         ).fetchall()
         return jsonify({r["date"]: r["note"] for r in rows})
     finally:
@@ -577,4 +681,4 @@ def get_workout_day_notes():
 
 
 if __name__ == "__main__":
-    app.run(debug=True)
+    app.run(debug=os.environ.get("FLASK_DEBUG") == "1")

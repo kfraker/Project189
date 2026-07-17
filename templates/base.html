@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <title>{% block page_title %}Project 189{% endblock %}</title>
+    <title>{% block page_title %}Sweat Equity{% endblock %}</title>
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="color-scheme" content="dark">
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -266,7 +266,7 @@
             </button>
         </nav>
     </div>
-    {% block header_title %}<h1 class="site-title">Project 189</h1>{% endblock %}
+    {% block header_title %}<h1 class="site-title">Sweat Equity</h1>{% endblock %}
     <div class="site-header-stats" aria-label="Page stats">{% block header_stats %}{% endblock %}</div>
 </header>
 
@@ -654,6 +654,9 @@
             </button>
             <button class="menu-modal-btn" id="menu-settings-btn">
                 <span class="menu-modal-btn-label">Settings</span>
+            </button>
+            <button class="menu-modal-btn" id="menu-logout-btn">
+                <span class="menu-modal-btn-label">Log Out</span>
             </button>
         </div>
         <button class="menu-modal-close" id="menu-modal-close" aria-label="Close menu">✕</button>
@@ -1231,6 +1234,7 @@
         const insightsBtn = document.getElementById('menu-insights-btn');
         const profileBtn = document.getElementById('menu-profile-btn');
         const settingsBtn = document.getElementById('menu-settings-btn');
+        const logoutBtn = document.getElementById('menu-logout-btn');
 
         function close() { modal.hidden = true; modalClose(modal); }
         function reopenMenu() { modal.hidden = false; modalOpen(modal); }
@@ -1253,6 +1257,9 @@
             close();
             window.__returnToMenu = reopenMenu;
             if (window.openSettings) window.openSettings();
+        });
+        logoutBtn.addEventListener('click', () => {
+            window.location.href = '/logout';
         });
     })();
 

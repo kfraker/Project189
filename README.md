@@ -1,4 +1,4 @@
-# Project 189 — Weight Loss Dashboard
+# Sweat Equity — Weight Loss Dashboard
 
 A personal weight tracking dashboard built with Flask and SQLite. A gamified Home screen (health bar HUD, weight-plate stat cards) links out to a dedicated Weigh-ins page for charting/logging weight and a Workouts page for logging exercise — all sharing one Jinja2 header/footer shell.
 

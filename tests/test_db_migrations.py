@@ -8,7 +8,7 @@ def test_fresh_db_records_all_migration_versions(test_db):
     conn = sqlite3.connect(test_db)
     versions = {r[0] for r in conn.execute("SELECT version FROM schema_migrations").fetchall()}
     conn.close()
-    assert versions == {1, 2, 3}
+    assert versions == {1, 2, 3, 4}
 
 
 def test_running_twice_is_idempotent(test_db):
@@ -35,7 +35,7 @@ def test_init_db_twice_is_idempotent(test_db):
     conn = sqlite3.connect(test_db)
     versions = {r[0] for r in conn.execute("SELECT version FROM schema_migrations").fetchall()}
     conn.close()
-    assert versions == {1, 2, 3}
+    assert versions == {1, 2, 3, 4}
 
 
 def test_weight_columns_are_nullable(test_db):
