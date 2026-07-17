@@ -1,8 +1,7 @@
 """Google OAuth login flow: gating of existing routes, the login/logout
 routes themselves, and the /auth/google/callback exchange."""
-import sqlite3
-
 import app as app_module
+from tests.conftest import connect
 
 
 def _fake_token(email, sub="sub-test-1", name="Test User", picture="http://pic"):
@@ -69,9 +68,8 @@ def test_callback_allowed_email_creates_user_and_sets_session(unauthenticated_cl
     assert r.status_code == 302
     assert r.headers["Location"] == "/"
 
-    conn = sqlite3.connect(test_db)
-    conn.row_factory = sqlite3.Row
-    row = conn.execute("SELECT id, email FROM users WHERE google_sub = ?", ("sub-new-1",)).fetchone()
+    conn = connect()
+    row = conn.execute("SELECT id, email FROM users WHERE google_sub = %s", ("sub-new-1",)).fetchone()
     conn.close()
     assert row is not None
     assert row["email"] == "you@example.com"
@@ -95,10 +93,10 @@ def test_callback_repeat_login_reuses_same_user(unauthenticated_client, test_db,
 
     assert first_user_id == second_user_id
 
-    conn = sqlite3.connect(test_db)
+    conn = connect()
     count = conn.execute(
-        "SELECT COUNT(*) FROM users WHERE google_sub = ?", ("sub-repeat-1",)
-    ).fetchone()[0]
+        "SELECT COUNT(*) AS c FROM users WHERE google_sub = %s", ("sub-repeat-1",)
+    ).fetchone()["c"]
     conn.close()
     assert count == 1
 
@@ -112,8 +110,8 @@ def test_callback_denies_non_allowlisted_email(unauthenticated_client, test_db, 
     assert r.status_code == 403
     assert b"Access Denied" in r.data
 
-    conn = sqlite3.connect(test_db)
-    row = conn.execute("SELECT id FROM users WHERE google_sub = ?", ("sub-stranger",)).fetchone()
+    conn = connect()
+    row = conn.execute("SELECT id FROM users WHERE google_sub = %s", ("sub-stranger",)).fetchone()
     conn.close()
     assert row is None
 

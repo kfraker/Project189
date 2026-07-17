@@ -1,5 +1,6 @@
 from flask import Flask, render_template, request, jsonify, session, redirect, url_for
-import sqlite3
+import psycopg
+from psycopg.rows import dict_row
 import os
 import re
 from datetime import date, timedelta
@@ -13,8 +14,7 @@ load_dotenv()
 
 app = Flask(__name__)
 app.secret_key = os.environ['FLASK_SECRET_KEY']
-DB_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'weights.db')
-app.config['DB_PATH'] = DB_PATH
+DATABASE_URL = os.environ['DATABASE_URL']
 
 _DATE_RE = re.compile(r'^\d{4}-\d{2}-\d{2}$')
 
@@ -30,8 +30,9 @@ def _valid_date(s: str) -> bool:
 
 
 def get_db():
-    conn = sqlite3.connect(app.config['DB_PATH'])
-    conn.row_factory = sqlite3.Row
+    conn = psycopg.connect(DATABASE_URL, row_factory=dict_row)
+    schema = app.config.get('DB_SCHEMA', 'public')
+    conn.execute(f"SET search_path TO {schema}")
     return conn
 
 
@@ -94,20 +95,20 @@ def auth_google_callback():
 
     conn = get_db()
     try:
-        row = conn.execute("SELECT id FROM users WHERE google_sub = ?", (sub,)).fetchone()
+        row = conn.execute("SELECT id FROM users WHERE google_sub = %s", (sub,)).fetchone()
         if row:
             user_id = row['id']
             conn.execute(
-                "UPDATE users SET email=?, name=?, picture=? WHERE id=?",
+                "UPDATE users SET email=%s, name=%s, picture=%s WHERE id=%s",
                 (email, name, picture, user_id),
             )
         else:
             cur = conn.execute(
                 "INSERT INTO users (username, password_hash, google_sub, email, name, picture) "
-                "VALUES (?, '', ?, ?, ?, ?)",
+                "VALUES (%s, '', %s, %s, %s, %s) RETURNING id",
                 (email or sub, sub, email, name, picture),
             )
-            user_id = cur.lastrowid
+            user_id = cur.fetchone()['id']
         conn.commit()
     finally:
         conn.close()
@@ -130,7 +131,7 @@ def home():
     conn = get_db()
     try:
         rows = conn.execute(
-            "SELECT key, value FROM preferences WHERE user_id = ?", (current_user_id(),)
+            "SELECT key, value FROM preferences WHERE user_id = %s", (current_user_id(),)
         ).fetchall()
         prefs = {r["key"]: r["value"] for r in rows}
     finally:
@@ -144,7 +145,7 @@ def workouts_page():
     conn = get_db()
     try:
         rows = conn.execute(
-            "SELECT key, value FROM preferences WHERE user_id = ?", (current_user_id(),)
+            "SELECT key, value FROM preferences WHERE user_id = %s", (current_user_id(),)
         ).fetchall()
         prefs = {r["key"]: r["value"] for r in rows}
     finally:
@@ -158,7 +159,7 @@ def weights_page():
     conn = get_db()
     try:
         rows = conn.execute(
-            "SELECT key, value FROM preferences WHERE user_id = ?", (current_user_id(),)
+            "SELECT key, value FROM preferences WHERE user_id = %s", (current_user_id(),)
         ).fetchall()
         prefs = {r["key"]: r["value"] for r in rows}
     finally:
@@ -193,7 +194,7 @@ def save_weight():
     conn = get_db()
     try:
         existing = conn.execute(
-            "SELECT id, weight_lbs FROM weights WHERE user_id = ? AND date = ?",
+            "SELECT id, weight_lbs FROM weights WHERE user_id = %s AND date = %s",
             (current_user_id(), entry_date),
         ).fetchone()
 
@@ -203,12 +204,12 @@ def save_weight():
 
         if existing:
             conn.execute(
-                "UPDATE weights SET weight_lbs = ?, weight_kg = ? WHERE user_id = ? AND date = ?",
+                "UPDATE weights SET weight_lbs = %s, weight_kg = %s WHERE user_id = %s AND date = %s",
                 (weight_lbs, weight_kg, current_user_id(), entry_date),
             )
         else:
             conn.execute(
-                "INSERT INTO weights (user_id, date, weight_lbs, weight_kg, notes) VALUES (?, ?, ?, ?, ?)",
+                "INSERT INTO weights (user_id, date, weight_lbs, weight_kg, notes) VALUES (%s, %s, %s, %s, %s)",
                 (current_user_id(), entry_date, weight_lbs, weight_kg, notes),
             )
         conn.commit()
@@ -227,7 +228,7 @@ def get_weights():
     try:
         if range_param == "all":
             rows = conn.execute(
-                "SELECT date, weight_lbs, weight_kg, notes FROM weights WHERE user_id = ? ORDER BY date",
+                "SELECT date, weight_lbs, weight_kg, notes FROM weights WHERE user_id = %s ORDER BY date",
                 (current_user_id(),),
             ).fetchall()
         else:
@@ -238,14 +239,14 @@ def get_weights():
             else:                      days = min(custom_days or 30, 1095)
 
             latest = conn.execute(
-                "SELECT MAX(date) as d FROM weights WHERE user_id = ? AND weight_lbs IS NOT NULL",
+                "SELECT MAX(date) as d FROM weights WHERE user_id = %s AND weight_lbs IS NOT NULL",
                 (current_user_id(),),
             ).fetchone()["d"]
             anchor = date.fromisoformat(latest) if latest else date.today()
             start = (anchor - timedelta(days=days - 1)).isoformat()
             rows = conn.execute(
                 "SELECT date, weight_lbs, weight_kg, notes FROM weights "
-                "WHERE user_id = ? AND date >= ? ORDER BY date",
+                "WHERE user_id = %s AND date >= %s ORDER BY date",
                 (current_user_id(), start),
             ).fetchall()
 
@@ -260,11 +261,11 @@ def latest_weight():
     conn = get_db()
     try:
         row = conn.execute(
-            "SELECT weight_lbs, weight_kg FROM weights WHERE user_id = ? AND weight_lbs IS NOT NULL ORDER BY date DESC LIMIT 1",
+            "SELECT weight_lbs, weight_kg FROM weights WHERE user_id = %s AND weight_lbs IS NOT NULL ORDER BY date DESC LIMIT 1",
             (current_user_id(),),
         ).fetchone()
         oldest = conn.execute(
-            "SELECT MIN(date) as d FROM weights WHERE user_id = ?", (current_user_id(),)
+            "SELECT MIN(date) as d FROM weights WHERE user_id = %s", (current_user_id(),)
         ).fetchone()["d"]
         if row:
             return jsonify({
@@ -286,13 +287,13 @@ def weight_stats():
 
         seven_days_ago = (today - timedelta(days=6)).isoformat()
         week_rows = conn.execute(
-            "SELECT weight_lbs FROM weights WHERE user_id = ? AND weight_lbs IS NOT NULL AND date >= ? AND date <= ? ORDER BY date ASC",
+            "SELECT weight_lbs FROM weights WHERE user_id = %s AND weight_lbs IS NOT NULL AND date >= %s AND date <= %s ORDER BY date ASC",
             (current_user_id(), seven_days_ago, today.isoformat()),
         ).fetchall()
         week_change = round(week_rows[-1]["weight_lbs"] - week_rows[0]["weight_lbs"], 1) if len(week_rows) >= 2 else None
 
         avg_row = conn.execute(
-            "SELECT AVG(weight_lbs) as a FROM weights WHERE user_id = ? AND weight_lbs IS NOT NULL AND date >= ? AND date <= ?",
+            "SELECT AVG(weight_lbs) as a FROM weights WHERE user_id = %s AND weight_lbs IS NOT NULL AND date >= %s AND date <= %s",
             (current_user_id(), seven_days_ago, today.isoformat()),
         ).fetchone()
         avg_7d = round(avg_row["a"], 1) if avg_row["a"] is not None else None
@@ -300,7 +301,7 @@ def weight_stats():
         # Streak: count consecutive days backwards from today with weight logged
         logged_dates = set(
             r["date"] for r in conn.execute(
-                "SELECT date FROM weights WHERE user_id = ? AND weight_lbs IS NOT NULL ORDER BY date DESC",
+                "SELECT date FROM weights WHERE user_id = %s AND weight_lbs IS NOT NULL ORDER BY date DESC",
                 (current_user_id(),),
             ).fetchall()
         )
@@ -321,13 +322,13 @@ def delete_weight(entry_date):
     conn = get_db()
     try:
         cursor = conn.execute(
-            "DELETE FROM weights WHERE user_id = ? AND date = ?", (current_user_id(), entry_date)
+            "DELETE FROM weights WHERE user_id = %s AND date = %s", (current_user_id(), entry_date)
         )
         conn.commit()
         if cursor.rowcount == 0:
             return jsonify({"error": "No entry found for that date"}), 404
         row = conn.execute(
-            "SELECT weight_lbs, weight_kg FROM weights WHERE user_id = ? ORDER BY date DESC LIMIT 1",
+            "SELECT weight_lbs, weight_kg FROM weights WHERE user_id = %s ORDER BY date DESC LIMIT 1",
             (current_user_id(),),
         ).fetchone()
         latest = {"weight_lbs": row["weight_lbs"], "weight_kg": row["weight_kg"]} if row else {}
@@ -344,24 +345,24 @@ def clear_weight(entry_date):
     conn = get_db()
     try:
         row = conn.execute(
-            "SELECT notes FROM weights WHERE user_id = ? AND date = ?",
+            "SELECT notes FROM weights WHERE user_id = %s AND date = %s",
             (current_user_id(), entry_date),
         ).fetchone()
         if not row:
             return jsonify({"error": "No entry found for that date"}), 404
         if row["notes"]:
             conn.execute(
-                "UPDATE weights SET weight_lbs = NULL, weight_kg = NULL WHERE user_id = ? AND date = ?",
+                "UPDATE weights SET weight_lbs = NULL, weight_kg = NULL WHERE user_id = %s AND date = %s",
                 (current_user_id(), entry_date),
             )
         else:
             conn.execute(
-                "DELETE FROM weights WHERE user_id = ? AND date = ?",
+                "DELETE FROM weights WHERE user_id = %s AND date = %s",
                 (current_user_id(), entry_date),
             )
         conn.commit()
         latest_row = conn.execute(
-            "SELECT weight_lbs, weight_kg FROM weights WHERE user_id = ? AND weight_lbs IS NOT NULL ORDER BY date DESC LIMIT 1",
+            "SELECT weight_lbs, weight_kg FROM weights WHERE user_id = %s AND weight_lbs IS NOT NULL ORDER BY date DESC LIMIT 1",
             (current_user_id(),),
         ).fetchone()
         latest = {"weight_lbs": latest_row["weight_lbs"], "weight_kg": latest_row["weight_kg"]} if latest_row else {}
@@ -380,7 +381,7 @@ def save_note(entry_date):
     conn  = get_db()
     try:
         cursor = conn.execute(
-            "UPDATE weights SET notes = ? WHERE user_id = ? AND date = ?",
+            "UPDATE weights SET notes = %s WHERE user_id = %s AND date = %s",
             (notes, current_user_id(), entry_date),
         )
         conn.commit()
@@ -388,14 +389,14 @@ def save_note(entry_date):
             if notes:
                 conn.execute(
                     "INSERT INTO weights (user_id, date, weight_lbs, weight_kg, notes) "
-                    "VALUES (?, ?, NULL, NULL, ?)",
+                    "VALUES (%s, %s, NULL, NULL, %s)",
                     (current_user_id(), entry_date, notes),
                 )
                 conn.commit()
             return jsonify({"success": True})
         if not notes:
             conn.execute(
-                "DELETE FROM weights WHERE user_id = ? AND date = ? AND weight_lbs IS NULL",
+                "DELETE FROM weights WHERE user_id = %s AND date = %s AND weight_lbs IS NULL",
                 (current_user_id(), entry_date),
             )
             conn.commit()
@@ -410,7 +411,7 @@ def get_settings():
     conn = get_db()
     try:
         rows = conn.execute(
-            "SELECT key, value_lbs, value_kg FROM settings WHERE user_id = ?", (current_user_id(),)
+            "SELECT key, value_lbs, value_kg FROM settings WHERE user_id = %s", (current_user_id(),)
         ).fetchall()
         return jsonify({r["key"]: {"value_lbs": r["value_lbs"], "value_kg": r["value_kg"]} for r in rows})
     finally:
@@ -440,7 +441,7 @@ def save_setting():
     conn = get_db()
     try:
         existing = conn.execute(
-            "SELECT key FROM settings WHERE user_id = ? AND key = ?", (current_user_id(), key)
+            "SELECT key FROM settings WHERE user_id = %s AND key = %s", (current_user_id(), key)
         ).fetchone()
 
         if existing and not overwrite:
@@ -448,12 +449,12 @@ def save_setting():
 
         if existing:
             conn.execute(
-                "UPDATE settings SET value_lbs = ?, value_kg = ? WHERE user_id = ? AND key = ?",
+                "UPDATE settings SET value_lbs = %s, value_kg = %s WHERE user_id = %s AND key = %s",
                 (value_lbs, value_kg, current_user_id(), key),
             )
         else:
             conn.execute(
-                "INSERT INTO settings (user_id, key, value_lbs, value_kg) VALUES (?, ?, ?, ?)",
+                "INSERT INTO settings (user_id, key, value_lbs, value_kg) VALUES (%s, %s, %s, %s)",
                 (current_user_id(), key, value_lbs, value_kg),
             )
         conn.commit()
@@ -468,7 +469,7 @@ def get_preferences():
     conn = get_db()
     try:
         rows = conn.execute(
-            "SELECT key, value FROM preferences WHERE user_id = ?", (current_user_id(),)
+            "SELECT key, value FROM preferences WHERE user_id = %s", (current_user_id(),)
         ).fetchall()
         return jsonify({r["key"]: r["value"] for r in rows})
     finally:
@@ -492,8 +493,8 @@ def save_preference():
     conn = get_db()
     try:
         conn.execute(
-            "INSERT INTO preferences (user_id, key, value) VALUES (?, ?, ?) "
-            "ON CONFLICT(user_id, key) DO UPDATE SET value = excluded.value",
+            "INSERT INTO preferences (user_id, key, value) VALUES (%s, %s, %s) "
+            "ON CONFLICT (user_id, key) DO UPDATE SET value = EXCLUDED.value",
             (current_user_id(), key, value),
         )
         conn.commit()
@@ -511,11 +512,11 @@ def home_stats():
 
         # Active streak: union of weight-logged and workout dates
         weight_dates = {r["date"] for r in conn.execute(
-            "SELECT DISTINCT date FROM weights WHERE user_id = ? AND weight_lbs IS NOT NULL",
+            "SELECT DISTINCT date FROM weights WHERE user_id = %s AND weight_lbs IS NOT NULL",
             (current_user_id(),)
         ).fetchall()}
         workout_dates = {r["date"] for r in conn.execute(
-            "SELECT DISTINCT date FROM workouts WHERE user_id = ?",
+            "SELECT DISTINCT date FROM workouts WHERE user_id = %s",
             (current_user_id(),)
         ).fetchall()}
         active_dates = weight_dates | workout_dates
@@ -530,7 +531,7 @@ def home_stats():
         # Kcal this week (last 7 calendar days)
         week_ago = (today - timedelta(days=6)).isoformat()
         kcal_week = conn.execute(
-            "SELECT COALESCE(SUM(kcal), 0) as total FROM workouts WHERE user_id = ? AND date >= ?",
+            "SELECT COALESCE(SUM(kcal), 0) as total FROM workouts WHERE user_id = %s AND date >= %s",
             (current_user_id(), week_ago)
         ).fetchone()["total"]
 
@@ -538,11 +539,11 @@ def home_stats():
         d7  = (today - timedelta(days=7)).isoformat()
         d14 = (today - timedelta(days=14)).isoformat()
         last7 = conn.execute(
-            "SELECT weight_lbs, weight_kg FROM weights WHERE user_id = ? AND weight_lbs IS NOT NULL AND date > ?",
+            "SELECT weight_lbs, weight_kg FROM weights WHERE user_id = %s AND weight_lbs IS NOT NULL AND date > %s",
             (current_user_id(), d7)
         ).fetchall()
         prev7 = conn.execute(
-            "SELECT weight_lbs, weight_kg FROM weights WHERE user_id = ? AND weight_lbs IS NOT NULL AND date > ? AND date <= ?",
+            "SELECT weight_lbs, weight_kg FROM weights WHERE user_id = %s AND weight_lbs IS NOT NULL AND date > %s AND date <= %s",
             (current_user_id(), d14, d7)
         ).fetchall()
         trend_lbs = trend_kg = None
@@ -567,13 +568,13 @@ def get_workouts():
         if date_filter and _valid_date(date_filter):
             rows = conn.execute(
                 "SELECT id, date, type, duration_min, kcal, note FROM workouts "
-                "WHERE user_id = ? AND date = ? ORDER BY id DESC",
+                "WHERE user_id = %s AND date = %s ORDER BY id DESC",
                 (current_user_id(), date_filter)
             ).fetchall()
         else:
             rows = conn.execute(
                 "SELECT id, date, type, duration_min, kcal, note FROM workouts "
-                "WHERE user_id = ? ORDER BY date DESC, id DESC",
+                "WHERE user_id = %s ORDER BY date DESC, id DESC",
                 (current_user_id(),)
             ).fetchall()
         return jsonify([dict(r) for r in rows])
@@ -604,11 +605,12 @@ def save_workout():
     try:
         cur = conn.execute(
             "INSERT INTO workouts (user_id, date, type, duration_min, kcal, note) "
-            "VALUES (?, ?, ?, ?, ?, ?)",
+            "VALUES (%s, %s, %s, %s, %s, %s) RETURNING id",
             (current_user_id(), date_val, workout_type, duration, kcal, note)
         )
+        new_id = cur.fetchone()["id"]
         conn.commit()
-        return jsonify({"success": True, "id": cur.lastrowid})
+        return jsonify({"success": True, "id": new_id})
     finally:
         conn.close()
 
@@ -619,7 +621,7 @@ def delete_workout(workout_id):
     conn = get_db()
     try:
         conn.execute(
-            "DELETE FROM workouts WHERE id = ? AND user_id = ?",
+            "DELETE FROM workouts WHERE id = %s AND user_id = %s",
             (workout_id, current_user_id())
         )
         conn.commit()
@@ -637,7 +639,7 @@ def get_workout_day_note():
     conn = get_db()
     try:
         row = conn.execute(
-            "SELECT note FROM workout_day_notes WHERE user_id = ? AND date = ?",
+            "SELECT note FROM workout_day_notes WHERE user_id = %s AND date = %s",
             (current_user_id(), date_str)
         ).fetchone()
         return jsonify({"note": row["note"] if row else ""})
@@ -656,8 +658,8 @@ def save_workout_day_note():
     conn = get_db()
     try:
         conn.execute(
-            "INSERT INTO workout_day_notes (user_id, date, note) VALUES (?, ?, ?) "
-            "ON CONFLICT(user_id, date) DO UPDATE SET note = excluded.note",
+            "INSERT INTO workout_day_notes (user_id, date, note) VALUES (%s, %s, %s) "
+            "ON CONFLICT (user_id, date) DO UPDATE SET note = EXCLUDED.note",
             (current_user_id(), date_str, note)
         )
         conn.commit()
@@ -672,7 +674,7 @@ def get_workout_day_notes():
     conn = get_db()
     try:
         rows = conn.execute(
-            "SELECT date, note FROM workout_day_notes WHERE user_id = ? AND note != ''",
+            "SELECT date, note FROM workout_day_notes WHERE user_id = %s AND note != ''",
             (current_user_id(),)
         ).fetchall()
         return jsonify({r["date"]: r["note"] for r in rows})
