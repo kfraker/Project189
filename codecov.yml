@@ -1,6 +1,8 @@
 # Codecov settings. Python coverage arrives with flag "python"; page-code (JavaScript)
 # coverage will arrive with flag "javascript" once browser tests measure it (Epic T4).
 coverage:
+  precision: 1
+  round: down          # never overstate: 99.07% shows as 99.0%, not 100%
   status:
     project:
       default:
