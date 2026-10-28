@@ -1,0 +1,19 @@
+# Python coverage settings — used automatically by every pytest run (see pytest.ini).
+[run]
+# The app's own code only: app.py + db_migrations/ (not tests, not installed packages).
+source = .
+omit =
+    tests/*
+    .venv/*
+branch = True
+
+[report]
+show_missing = True
+skip_empty = True
+
+[html]
+directory = coverage/python-html
+title = Sweat Equity: Python coverage
+
+[lcov]
+output = coverage/python.lcov

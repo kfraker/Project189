@@ -83,8 +83,10 @@ source .venv/bin/activate
 **3. Install dependencies**
 
 ```bash
-pip install -r requirements.txt
+pip install -r requirements-dev.txt
 ```
+
+`requirements-dev.txt` pulls in the runtime packages from `requirements.txt` plus the test tools. Vercel installs only `requirements.txt`, and `.vercelignore` keeps tests and tooling out of the deployment.
 
 **4. Run the app**
 
@@ -105,7 +107,9 @@ Schema changes are managed by a small hand-rolled migration system in `db_migrat
 ```
 project-189/
 ├── app.py                      # Flask app and REST API routes
-├── requirements.txt            # Runtime + test dependencies
+├── requirements.txt            # Runtime dependencies (what Vercel installs)
+├── requirements-dev.txt        # + test/dev tools for local development and CI
+├── .vercelignore               # Keeps tests/tooling out of the deployment
 ├── weights.db                  # SQLite database (auto-created)
 ├── db_migrations/
 │   ├── __init__.py              # run_migrations() runner + schema_migrations tracking
@@ -181,10 +185,19 @@ A few other `static/` PNGs (`editpointer*.png`, `settingsbutton.png`, `homebutto
 | `POST` | `/api/workout-day-note` | Upsert the day note for a date |
 | `GET` | `/api/workout-day-notes` | Get all non-empty day notes as a `{date: note}` map |
 
-## Running Tests
+## Running Tests & Viewing Coverage
 
 ```bash
-python -m pytest tests/ -v
+python -m pytest              # full suite (~9 min — tests talk to Neon over the network)
+python -m pytest tests/test_auth.py   # one file
 ```
 
-376 tests covering all API endpoints, business logic, date range boundaries, page structure across Home/Weigh-ins/Workouts, and the migration runner.
+414 tests covering all API endpoints (including the Home header stats), sign-in and multi-user isolation, business logic, date-range boundaries, page structure across Home/Weigh-ins/Workouts, and the migration runner. Tests run in an isolated `test` schema that is wiped before every test, so real data is never touched.
+
+**Coverage is measured on every run** (settings in `.coveragerc`, switched on in `pytest.ini`). After any run:
+
+- `coverage/python-html/index.html`: open in a browser for a line-by-line view of what the tests exercised
+- `coverage/python.lcov`: machine-readable copy for CI/Codecov
+- a short summary is printed at the end of the test output
+
+**Baseline (2026-10-28): 98% of Python code** (`app.py` + `db_migrations/`, branch coverage; up from 88% after adding `/api/home-stats` and clear-weight tests). The few uncovered lines are the redirect to Google sign-in, two invalid-date error returns on the workout day-note routes, and the `python app.py` dev-server entry point. Browser-side (JavaScript) coverage is not measured yet.
