@@ -191,11 +191,19 @@ A few other `static/` PNGs (`editpointer*.png`, `settingsbutton.png`, `homebutto
 ## Running Tests & Viewing Coverage
 
 ```bash
-python -m pytest              # full suite (~9 min — tests talk to Neon over the network)
+python -m pytest                      # everything (~10 min locally — tests talk to Neon over the network)
+python -m pytest -m "not browser"     # skip the browser tests
+python -m pytest -m browser           # browser tests only
 python -m pytest tests/test_auth.py   # one file
 ```
 
-414 tests covering all API endpoints (including the Home header stats), sign-in and multi-user isolation, business logic, date-range boundaries, page structure across Home/Weigh-ins/Workouts, and the migration runner. Tests run in an isolated `test` schema that is wiped before every test, so real data is never touched.
+First-time setup for browser tests: `python -m playwright install chromium`.
+
+**Browser tests** (`tests/browser/`, Playwright) open the real app in Chromium against the same isolated test schema. They sign in with a test-only session cookie, and every test fails automatically on any JavaScript error, failed request or error response. The live test server refuses all requests unless the test schema is active, so browser tests can never touch real data.
+
+**CI:** every push to `dev`/`main` runs the full suite on GitHub Actions against a throwaway Postgres (about 1–2 minutes). Coverage is uploaded to Codecov. When a browser test fails, screenshots and Playwright traces are attached to the run (`browser-test-failures` artifact; open a trace at https://trace.playwright.dev).
+
+414 API/server tests covering all API endpoints (including the Home header stats), sign-in and multi-user isolation, business logic, date-range boundaries, page structure across Home/Weigh-ins/Workouts, and the migration runner. Tests run in an isolated `test` schema that is wiped before every test, so real data is never touched.
 
 **Coverage is measured on every run** (settings in `.coveragerc`, switched on in `pytest.ini`). After any run:
 

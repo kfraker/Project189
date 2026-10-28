@@ -49,8 +49,11 @@ jobs:
       - name: Install dependencies
         run: pip install -r requirements-dev.txt
 
-      - name: Run tests with coverage
-        run: python -m pytest
+      - name: Install Chromium for browser tests
+        run: python -m playwright install --with-deps chromium
+
+      - name: Run tests with coverage (API + browser)
+        run: python -m pytest --tracing=retain-on-failure --screenshot=only-on-failure --output=test-results
 
       - name: Upload Python coverage to Codecov
         if: always()
@@ -67,4 +70,12 @@ jobs:
         with:
           name: coverage-report
           path: coverage/
+          if-no-files-found: ignore
+
+      - name: Upload browser-test failure evidence (screenshots + traces)
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: browser-test-failures
+          path: test-results/
           if-no-files-found: ignore
