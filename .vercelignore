@@ -6,3 +6,5 @@ Notes/
 requirements-dev.txt
 pytest.ini
 .coveragerc
+codecov.yml
+.github/
