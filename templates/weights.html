@@ -503,11 +503,10 @@
                     <!-- Page 0: Daily Summary -->
                     <div class="chart-slide-page">
                         <div class="chart-header">
-                            <h2 class="chart-title">Daily Summary</h2>
+                            <h2 class="chart-title">Daily Summary<span id="chart-info-icon" class="chart-info-icon" tabindex="0">i</span></h2>
                         </div>
                         <div class="chart-wrap">
                             <canvas id="weight-chart" role="img" aria-label="Daily weight chart. Switch to Table view for accessible data."></canvas>
-                            <div id="chart-info-icon">i</div>
                         </div>
                         <div class="chart-legend" id="daily-chart-legend"></div>
                         <p class="chart-empty" id="chart-empty" hidden>No weight data yet — start logging!</p>
@@ -516,11 +515,10 @@
                     <!-- Page 1: Weekly Summary -->
                     <div class="chart-slide-page">
                         <div class="chart-header">
-                            <h2 class="chart-title">Weekly Summary</h2>
+                            <h2 class="chart-title">Weekly Summary<span id="weekly-info-icon" class="chart-info-icon" tabindex="0">i</span></h2>
                         </div>
                         <div class="chart-wrap">
                             <canvas id="weekly-chart" role="img" aria-label="Weekly weight chart. Switch to Table view for accessible data."></canvas>
-                            <div id="weekly-info-icon">i</div>
                         </div>
                         <div class="chart-legend" id="weekly-chart-legend"></div>
                         <p class="chart-empty" id="weekly-chart-empty" hidden>No weight data yet — start logging!</p>
@@ -776,8 +774,10 @@
                 const nReq = activeRange === '7d' ? 7 : activeRange === '30d' ? 30 :
                              activeRange === '90d' ? 90 : activeRange === '1y' ? 365 : (activeDays || 30);
                 if (allDates.length < nReq - 1) {
-                    infoIcon.setAttribute('aria-label','Showing max data - ' + weightRows.length + (weightRows.length !== 1 ? ' entries' : ' entry') + ' logged');
-                    infoIcon.style.display = 'flex';
+                    const info = 'Showing max data — ' + weightRows.length + (weightRows.length !== 1 ? ' entries' : ' entry') + ' logged';
+                    infoIcon.dataset.info = info;
+                    infoIcon.setAttribute('aria-label', info);
+                    infoIcon.style.display = 'inline-flex';
                 } else { infoIcon.style.display = 'none'; }
             } else { infoIcon.style.display = 'none'; }
 
@@ -1039,7 +1039,7 @@
             if (days!=null) {
                 const cutoff=new Date(); cutoff.setDate(cutoff.getDate()-days);
                 const oldestD=new Date(filteredRows[0].date+'T00:00:00');
-                if (oldestD>cutoff) { infoIconEl.setAttribute('aria-label','Showing max data — '+filteredRows.length+' entries logged'); infoIconEl.style.display='flex'; }
+                if (oldestD>cutoff) { const info='Showing max data — '+filteredRows.length+(filteredRows.length!==1?' entries':' entry')+' logged'; infoIconEl.dataset.info=info; infoIconEl.setAttribute('aria-label',info); infoIconEl.style.display='inline-flex'; }
                 else infoIconEl.style.display='none';
             } else infoIconEl.style.display='none';
 

@@ -854,11 +854,13 @@ h1 {
 
 /* ── Chart info icon ── */
 
-#chart-info-icon,
-#weekly-info-icon {
-    position: absolute;
-    top: 24px;
-    right: 22px;
+.chart-info-icon {
+    position: relative;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    vertical-align: middle;
+    margin-left: 12px;
     width: 24px;
     height: 24px;
     border-radius: 50%;
@@ -866,15 +868,38 @@ h1 {
     border: 1px solid rgba(255, 45, 120, 0.65);
     box-shadow: 0 0 8px rgba(255, 45, 120, 0.25);
     color: #ff2d78;
+    text-shadow: none;
     font-family: Georgia, serif;
     font-style: italic;
     font-size: 13px;
     font-weight: bold;
-    display: none;
-    align-items: center;
-    justify-content: center;
-    z-index: 10;
+    outline: none;
 }
+.chart-info-icon:focus-visible { outline: 2px solid rgba(255,45,120,0.7); outline-offset: 2px; }
+
+/* Hover/keyboard-focus explanation — the only hover text left in the app (deliberately). */
+.chart-info-icon::after {
+    content: attr(data-info);
+    position: absolute;
+    top: calc(100% + 8px);
+    left: -12px;
+    z-index: 20;
+    pointer-events: none;
+    white-space: nowrap;
+    background: #0d0020;
+    border: 1px solid rgba(255, 45, 120, 0.5);
+    border-radius: 8px;
+    padding: 10px 12px;
+    color: #ccc;
+    font-family: Arial, sans-serif;
+    font-style: normal;
+    font-weight: normal;
+    font-size: 13px;
+    opacity: 0;
+    transition: opacity 0.1s;
+}
+.chart-info-icon:hover::after,
+.chart-info-icon:focus-visible::after { opacity: 1; }
 
 
 /* ── Weight chart ───────────────────────────────────────────── */
