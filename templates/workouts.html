@@ -210,11 +210,11 @@
         <button class="wp-range-btn" data-range="all">All</button>
         <button class="wp-range-btn" data-range="custom">Custom</button>
         <div class="wp-custom-days-wrap" id="wp-custom-days-wrap" hidden>
-            <input type="number" id="wp-custom-days" class="custom-days-input" min="7" max="1095" placeholder="—" data-tip="Min 7 days">
+            <input type="number" id="wp-custom-days" class="custom-days-input" min="7" max="1095" placeholder="—">
             <span>days</span>
         </div>
     </div>
-    <button class="wp-filter-btn" id="wp-filter-btn" aria-label="Filter by date range" data-tip="Filter by date range">
+    <button class="wp-filter-btn" id="wp-filter-btn" aria-label="Filter by date range">
         <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
             <path d="M22 3H2l8 9.46V19l4 2V12.46L22 3z"/>
         </svg>
@@ -243,7 +243,7 @@
 
 {% block footer_add %}
 <button class="site-add-btn" id="wp-add-btn"
-        aria-label="Log a workout" data-tip="Log a workout">+</button>
+        aria-label="Log a workout">+</button>
 {% endblock %}
 
 {% block content %}
@@ -508,7 +508,7 @@
             dayRows.forEach(w => {
                 const row = document.createElement('div');
                 row.className = 'wp-row'; row.dataset.wid = w.id;
-                row.innerHTML = `<div class="wp-row-main"><span class="workout-badge ${tierClassByName(w.type)}">${w.type.replace(/</g,'&lt;')}</span></div><div class="wp-row-values"><div class="wp-row-dur">${w.duration_min} min</div><div class="wp-row-kcal">${w.kcal.toLocaleString()}<span>kcal</span></div></div><button class="table-delete-btn wp-del-btn" aria-label="Delete workout" data-tip="Delete workout">&#10005;</button>`;
+                row.innerHTML = `<div class="wp-row-main"><span class="workout-badge ${tierClassByName(w.type)}">${w.type.replace(/</g,'&lt;')}</span></div><div class="wp-row-values"><div class="wp-row-dur">${w.duration_min} min</div><div class="wp-row-kcal">${w.kcal.toLocaleString()}<span>kcal</span></div></div><button class="table-delete-btn wp-del-btn" aria-label="Delete workout">&#10005;</button>`;
                 row.addEventListener('click', e => { if (!e.target.closest('.wp-del-btn')) openModal(date); });
                 row.querySelector('.wp-del-btn').addEventListener('click', e => {
                     e.stopPropagation();
@@ -674,8 +674,8 @@
     dropdown.addEventListener('wheel',e=>{e.preventDefault();dropdown.scrollTop+=e.deltaY;},{passive:false});
     const stagedEntriesEl=document.getElementById('wpm-staged-entries');
     let stagedActivities=[],pendingDeletes=[],loadedNote='';
-    function renderStagedRow(item,idx){const el=document.createElement('div');el.className='wpm-staged-row';el.dataset.idx=idx;el.innerHTML=`<div class="wpm-staged-row-info"><span class="workout-badge ${tierClassByName(item.type)}">${item.type.replace(/</g,'&lt;')}</span></div><div class="wpm-day-dur">${item.duration_min} min</div><div class="wpm-day-kcal">${item.kcal.toLocaleString()} kcal</div><button class="table-delete-btn" aria-label="Remove" data-tip="Remove">&#10005;</button>`;el.querySelector('.table-delete-btn').addEventListener('click',()=>{const i=parseInt(el.dataset.idx,10);stagedActivities.splice(i,1);el.remove();stagedEntriesEl.querySelectorAll('.wpm-staged-row').forEach((r,j)=>{r.dataset.idx=j;});if(!dayEntries.querySelectorAll('.wpm-day-row').length&&!stagedActivities.length)dayEmpty.hidden=false;});stagedEntriesEl.appendChild(el);}
-    async function loadDayEntries(isoDate){const isToday=isoDate===todayISO();dayHeading.textContent=isToday?'Logged today':`Logged for ${fmtDate(isoDate)}`;dayEntries.querySelectorAll('.wpm-day-row').forEach(el=>el.remove());stagedEntriesEl.innerHTML='';stagedActivities=[];pendingDeletes=[];dayEmpty.hidden=false;const[rows,noteData]=await Promise.all([fetch('/api/workouts?date='+isoDate).then(r=>r.json()),fetch('/api/workout-day-note?date='+isoDate).then(r=>r.json())]);loadedNote=noteData.note||'';noteInput.value=loadedNote;if(rows.length){dayEmpty.hidden=true;rows.forEach(w=>{const el=document.createElement('div');el.className='wpm-day-row';el.dataset.wid=w.id;el.innerHTML=`<div class="wpm-day-row-info"><span class="workout-badge ${tierClassByName(w.type)}">${w.type.replace(/</g,'&lt;')}</span></div><div class="wpm-day-dur">${w.duration_min} min</div><div class="wpm-day-kcal">${w.kcal.toLocaleString()} kcal</div><button class="table-delete-btn" aria-label="Delete" data-tip="Delete workout">&#10005;</button>`;el.querySelector('.table-delete-btn').addEventListener('click',()=>{pendingDeletes.push({id:w.id,type:w.type,duration_min:w.duration_min});el.remove();if(!dayEntries.querySelectorAll('.wpm-day-row').length&&!stagedActivities.length)dayEmpty.hidden=false;});dayEntries.appendChild(el);});}}
+    function renderStagedRow(item,idx){const el=document.createElement('div');el.className='wpm-staged-row';el.dataset.idx=idx;el.innerHTML=`<div class="wpm-staged-row-info"><span class="workout-badge ${tierClassByName(item.type)}">${item.type.replace(/</g,'&lt;')}</span></div><div class="wpm-day-dur">${item.duration_min} min</div><div class="wpm-day-kcal">${item.kcal.toLocaleString()} kcal</div><button class="table-delete-btn" aria-label="Remove">&#10005;</button>`;el.querySelector('.table-delete-btn').addEventListener('click',()=>{const i=parseInt(el.dataset.idx,10);stagedActivities.splice(i,1);el.remove();stagedEntriesEl.querySelectorAll('.wpm-staged-row').forEach((r,j)=>{r.dataset.idx=j;});if(!dayEntries.querySelectorAll('.wpm-day-row').length&&!stagedActivities.length)dayEmpty.hidden=false;});stagedEntriesEl.appendChild(el);}
+    async function loadDayEntries(isoDate){const isToday=isoDate===todayISO();dayHeading.textContent=isToday?'Logged today':`Logged for ${fmtDate(isoDate)}`;dayEntries.querySelectorAll('.wpm-day-row').forEach(el=>el.remove());stagedEntriesEl.innerHTML='';stagedActivities=[];pendingDeletes=[];dayEmpty.hidden=false;const[rows,noteData]=await Promise.all([fetch('/api/workouts?date='+isoDate).then(r=>r.json()),fetch('/api/workout-day-note?date='+isoDate).then(r=>r.json())]);loadedNote=noteData.note||'';noteInput.value=loadedNote;if(rows.length){dayEmpty.hidden=true;rows.forEach(w=>{const el=document.createElement('div');el.className='wpm-day-row';el.dataset.wid=w.id;el.innerHTML=`<div class="wpm-day-row-info"><span class="workout-badge ${tierClassByName(w.type)}">${w.type.replace(/</g,'&lt;')}</span></div><div class="wpm-day-dur">${w.duration_min} min</div><div class="wpm-day-kcal">${w.kcal.toLocaleString()} kcal</div><button class="table-delete-btn" aria-label="Delete">&#10005;</button>`;el.querySelector('.table-delete-btn').addEventListener('click',()=>{pendingDeletes.push({id:w.id,type:w.type,duration_min:w.duration_min});el.remove();if(!dayEntries.querySelectorAll('.wpm-day-row').length&&!stagedActivities.length)dayEmpty.hidden=false;});dayEntries.appendChild(el);});}}
     function clearActivityForm(){typeInput.value='';typeInput.style.display='';chip.hidden=true;chip.style.display='none';speedField.classList.add('speed-inactive');document.getElementById('workout-speed-up').disabled=true;document.getElementById('workout-speed-down').disabled=true;selectedMet=null;selectedLabel=null;isSpeedBased=false;speedMph=5.0;speedVal.textContent='5.0';duration=30;durVal.textContent='30';setFormActive(false);refreshKcal();dropdown.hidden=true;}
     function clearDayView(){dayHeading.textContent='Select a date';dayEntries.querySelectorAll('.wpm-day-row').forEach(el=>el.remove());stagedEntriesEl.innerHTML='';stagedActivities=[];pendingDeletes=[];loadedNote='';noteInput.value='';dayEmpty.hidden=false;}
     async function openModal(isoDate){try{const w=await fetch('/api/latest-weight').then(r=>r.json());weightKg=w.weight_lbs?w.weight_lbs/2.2046:80;}catch{weightKg=80;}let startDate=isoDate;if(!startDate){const today=todayISO();const todayRows=await fetch('/api/workouts?date='+today).then(r=>r.json());startDate=todayRows.length?'':today;}dpSetDate(startDate);clearActivityForm();if(startDate)await loadDayEntries(startDate);else clearDayView();logModal.hidden=false;requestAnimationFrame(()=>document.getElementById('wpm-entries-scroll').dispatchEvent(new Event('scroll')));typeInput.focus();}

@@ -39,13 +39,13 @@ All three share a fixed header (page nav + per-page stats) and footer (context-a
 - **Header stats** — workouts logged this week, total kcal burned, and current day streak.
 
 ### Shared / site-wide
-- **Menu modal** — footer profile button opens a menu with Insights, Profile, and Settings.
+- **Menu modal** — footer profile button opens a menu with Insights, Settings, and Profile.
 - **Settings** — collapsible accordion sections: Default Formats (weight/height/date display), Chart Landing (default chart + view), Daily Summary (range, moving avg, trend, goal line, legend), Weekly Summary (range, min/max range, trend, goal line, table expanded, week mode, legend), Workouts (range), and HUD (health bar, fighter name).
 - **Fight Card modal** — record fighter profile info (name, sex, date of birth, height, activity level) with a themed date picker for DOB. Age is calculated automatically. Activity level is used for BMR calculations. Includes a **Goal Mode** toggle: **Lean Machine** (lose weight) or **Muscle Monster** (gain weight) — dynamically updates the lost/gained plate label, health bar fill direction, and goal weight validation.
 - **Insights modal** — 10 stats computed from full weight history: Predicted Goal Date (Mifflin-St. Jeor BMR simulation), Total Weigh-ins, Longest Streak, Current Streak, Current Trend, Weekly Loss Rate, Monthly Loss Rate, Lowest Weight, Largest Weekly Loss, and Avg Daily Fluctuation.
 - **Profile system** — four selectable profile pictures, each linked to its own custom cursor. Selection is persisted server-side and restored on every page load.
-- **Custom cursor** — profile-linked pointer rendered as a DOM element positioned via `transform: translate3d()` (GPU-composited, never native `cursor: url()`, which Chromium/Edge silently suppress near viewport edges).
-- **Site-wide tooltips** — hover help on buttons and icons, consistent styling across pages.
+- **Custom cursor** — profile-linked pointer rendered as a DOM element positioned via `transform: translate3d()` (GPU-composited, never native `cursor: url()`, which Chromium/Edge silently suppress near viewport edges). Its last position is carried across page loads via `sessionStorage` so it doesn't vanish after a nav click.
+- **No hover tooltips** — removed by design (they covered the button art); icon-only buttons carry `aria-label`s for screen readers instead.
 - **Persistent preferences & storage** — unit choice, date ranges, default views, chart line toggles, fight card data, and profile selection are stored server-side in SQLite and hydrated into every page on load.
 
 ## Stack
@@ -113,13 +113,15 @@ project-189/
 │   ├── m0002_baseline_notes_and_nullable.py  # VERSION 2 — weights.notes column, nullable weight_lbs/weight_kg
 │   └── m0003_settings_composite_pk.py        # VERSION 3 — settings PK becomes (user_id, key)
 ├── templates/
-│   ├── base.html                # Shared header/footer shell, menu/settings/fight-card/insights modals, cursor + tooltip JS
+│   ├── base.html                # Shared header/footer shell, menu/settings/fight-card/insights modals, cursor JS
 │   ├── index.html                # Home dashboard (health bar, weight plates, Quick Add)
 │   ├── weights.html              # Weigh-ins page (charts + table)
 │   └── workouts.html             # Workout tracking page
 ├── static/
 │   ├── style.css                # All styles
-│   ├── pointer.png / pointer2-4.png       # Profile-linked custom cursors
+│   ├── pointer.png / pointer2-4.png       # Profile-linked custom cursors (source art)
+│   ├── cursor-pointer*.png      # Pre-baked cursors actually served (transparent, 96px tall)
+│   ├── nav-*.png                # Pre-baked header nav icons actually served (transparent, 128px)
 │   ├── profilebutton.png / profile2-4button.png            # Profile avatars (default)
 │   ├── profilebuttonsmile.png / profile2-4buttonsmile.png  # Profile avatars (hover)
 │   ├── insightsbutton.png      # Home nav icon

@@ -852,23 +852,6 @@ h1 {
     color: rgba(255, 200, 50, 0.9);
 }
 
-#site-tooltip {
-    position: fixed;
-    z-index: 9999;
-    pointer-events: none;
-    background: #0d0020;
-    border: 1px solid rgba(255, 45, 120, 0.5);
-    border-radius: 8px;
-    padding: 12px 14px;
-    opacity: 0;
-    transition: opacity 0.1s;
-    white-space: nowrap;
-    color: #ccc;
-    font-family: Arial, sans-serif;
-    font-size: 13px;
-}
-
-
 /* ── Chart info icon ── */
 
 #chart-info-icon,

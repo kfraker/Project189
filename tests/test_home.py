@@ -123,11 +123,11 @@ def test_menu_modal_profile_and_close_buttons(html):
 
 
 def test_menu_modal_insights_appears_first(html):
-    """Insights must be the first option in the menu modal, before Profile and Settings."""
+    """Insights must be the first option in the menu modal, then Settings, then Profile."""
     insights_pos = html.index('id="menu-insights-btn"')
     profile_pos  = html.index('id="menu-profile-btn"')
     settings_pos = html.index('id="menu-settings-btn"')
-    assert insights_pos < profile_pos < settings_pos
+    assert insights_pos < settings_pos < profile_pos
 
 
 # ── Unit toggle ───────────────────────────────────────────────────────────────
@@ -481,9 +481,6 @@ def test_date_format_buttons_present(html):
     assert 'id="prof-date-dmy"' in html
 
 
-def test_date_format_button_tips(html):
-    assert 'data-tip="MM-DD-YYYY"' in html
-    assert 'data-tip="DD-MM-YYYY"' in html
 
 
 def test_pref_date_format_saved(html):

@@ -6,7 +6,7 @@
     <meta name="color-scheme" content="dark">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link href="https://fonts.googleapis.com/css2?family=Pacifico&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}?v=151">
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}?v=152">
     {% block extra_head %}{% endblock %}
     <style>
         /* ── Shared layout ── */
@@ -252,17 +252,17 @@
 <header class="site-header" role="banner">
     <div class="site-header-left">
         <nav class="site-nav" aria-label="Pages">
-            <a href="/" class="site-nav-btn{% if request.path == '/' %} active{% endif %}" aria-label="Home" data-tip="Home">
-                <img src="/static/insightsbutton.png" alt="Home">
+            <a href="/" class="site-nav-btn{% if request.path == '/' %} active{% endif %}" aria-label="Home">
+                <img src="/static/nav-insightsbutton.png" alt="Home">
             </a>
-            <a href="/weights" class="site-nav-btn{% if request.path == '/weights' %} active{% endif %}" aria-label="Weigh-ins" data-tip="Weigh-ins">
-                <img src="/static/weightbutton.png" alt="Weigh-ins">
+            <a href="/weights" class="site-nav-btn{% if request.path == '/weights' %} active{% endif %}" aria-label="Weigh-ins">
+                <img src="/static/nav-weightbutton.png" alt="Weigh-ins">
             </a>
-            <a href="/workouts" class="site-nav-btn{% if request.path == '/workouts' %} active{% endif %}" aria-label="Workouts" data-tip="Workouts">
-                <img src="/static/dumbbellbutton.png" alt="Workouts">
+            <a href="/workouts" class="site-nav-btn{% if request.path == '/workouts' %} active{% endif %}" aria-label="Workouts">
+                <img src="/static/nav-dumbbellbutton.png" alt="Workouts">
             </a>
-            <button class="site-nav-btn" id="protein-btn" aria-label="Nutrition" data-tip="Nutrition">
-                <img src="/static/proteinshakebutton.png" alt="Nutrition">
+            <button class="site-nav-btn" id="protein-btn" aria-label="Nutrition">
+                <img src="/static/nav-proteinshakebutton.png" alt="Nutrition">
             </button>
         </nav>
     </div>
@@ -347,8 +347,8 @@
         <div class="profile-setting-group">
             <label class="profile-setting-label">Goal</label>
             <div class="profile-toggle-row fight-goal-row">
-                <button class="profile-opt-btn" id="fight-goal-lean"   data-tip="Lose weight">Lean Machine</button>
-                <button class="profile-opt-btn" id="fight-goal-muscle" data-tip="Gain weight">Muscle Monster</button>
+                <button class="profile-opt-btn" id="fight-goal-lean">Lean Machine</button>
+                <button class="profile-opt-btn" id="fight-goal-muscle">Muscle Monster</button>
             </div>
         </div>
 
@@ -398,8 +398,8 @@
                 <div class="overlay-item">
                     <label class="profile-setting-label">Dates</label>
                     <div class="profile-toggle-row">
-                        <button class="profile-opt-btn" id="prof-date-mdy" data-tip="MM-DD-YYYY">MDY</button>
-                        <button class="profile-opt-btn" id="prof-date-dmy" data-tip="DD-MM-YYYY">DMY</button>
+                        <button class="profile-opt-btn" id="prof-date-mdy">MDY</button>
+                        <button class="profile-opt-btn" id="prof-date-dmy">DMY</button>
                     </div>
                 </div>
             </div>
@@ -533,8 +533,8 @@
                 <div class="overlay-item">
                     <label class="profile-setting-label">Week Mode</label>
                     <div class="profile-toggle-row is-toggle">
-                        <button class="profile-opt-btn" id="prof-weekly-mode-rolling" data-tip="7-day windows ending today">Rolling</button>
-                        <button class="profile-opt-btn" id="prof-weekly-mode-iso" data-tip="Calendar weeks (Mon–Sun)">ISO</button>
+                        <button class="profile-opt-btn" id="prof-weekly-mode-rolling">Rolling</button>
+                        <button class="profile-opt-btn" id="prof-weekly-mode-iso">ISO</button>
                     </div>
                 </div>
             </div>
@@ -649,11 +649,11 @@
             <button class="menu-modal-btn" id="menu-insights-btn">
                 <span class="menu-modal-btn-label">Insights</span>
             </button>
-            <button class="menu-modal-btn" id="menu-profile-btn">
-                <span class="menu-modal-btn-label">Profile</span>
-            </button>
             <button class="menu-modal-btn" id="menu-settings-btn">
                 <span class="menu-modal-btn-label">Settings</span>
+            </button>
+            <button class="menu-modal-btn" id="menu-profile-btn">
+                <span class="menu-modal-btn-label">Profile</span>
             </button>
             <button class="menu-modal-btn" id="menu-logout-btn">
                 <span class="menu-modal-btn-label">Log Out</span>
@@ -671,7 +671,7 @@
         <button class="site-add-btn" id="site-add-btn" aria-label="Quick add" aria-haspopup="true" aria-expanded="false">+</button>
         {% endblock %}
     </div>
-    <button class="site-profile-btn" id="profile-btn" aria-label="Menu" data-tip="Menu">
+    <button class="site-profile-btn" id="profile-btn" aria-label="Menu">
         <img id="profile-btn-img" src="/static/profilebutton.png" alt="Profile">
     </button>
 </footer>
@@ -751,99 +751,63 @@
         });
 
         const el = document.getElementById('site-cursor');
-        const cursors = {};
-        let mouseInDoc = false;
-        let activeCursorSet = localStorage.getItem('pref_profile_pic') || '1';
 
+        /* Pre-baked images (white background already transparent, 2x res) —
+           no per-page canvas processing, so the cursor is usable immediately.
+           [src, hotX, hotY] with the hotspot in display px (88x48 render). */
+        const CURSOR_W = 88, CURSOR_H = 48;
         const CURSOR_SETS = {
-            '1': ['/static/pointer.png',  240, 10, 48],
-            '2': ['/static/pointer2.png', 198, 10, 48],
-            '3': ['/static/pointer3.png', 198, 10, 48],
-            '4': ['/static/pointer4.png', 198, 10, 48],
+            '1': ['/static/cursor-pointer.png',  15, 1],
+            '2': ['/static/cursor-pointer2.png', 17, 1],
+            '3': ['/static/cursor-pointer3.png', 17, 1],
+            '4': ['/static/cursor-pointer4.png', 17, 1],
         };
+        let active = CURSOR_SETS[localStorage.getItem('pref_profile_pic')] || CURSOR_SETS['1'];
+        let lastMX = 0, lastMY = 0, mouseInDoc = false, rafPending = false;
 
-        function processImg(src, origHotX, origHotY, key, renderH) {
-            const img = new Image();
-            img.onload = function () {
-                const h = renderH || 48, scale = h / img.height, w = Math.round(img.width * scale);
-                const cv = document.createElement('canvas');
-                cv.width = w; cv.height = h;
-                const ctx = cv.getContext('2d');
-                ctx.drawImage(img, 0, 0, w, h);
-                const id = ctx.getImageData(0, 0, w, h), dat = id.data;
-                for (let i = 0; i < dat.length; i += 4) {
-                    if (dat[i] > 240 && dat[i+1] > 240 && dat[i+2] > 240) dat[i+3] = 0;
-                }
-                ctx.putImageData(id, 0, 0);
-                const entry = { url: cv.toDataURL(), hotX: Math.round(origHotX * scale), hotY: Math.round(origHotY * scale), w, h };
-                cursors[key] = entry;
-                if (key === activeCursorSet) {
-                    cursors.active = entry;
-                    applyCursor();
-                    if (mouseInDoc) el.style.display = 'block';
-                }
-            };
-            img.src = src;
+        el.style.width = CURSOR_W + 'px';
+        el.style.height = CURSOR_H + 'px';
+
+        function applyCursor() { el.style.backgroundImage = `url(${active[0]})`; }
+        function place() {
+            el.style.transform = `translate3d(${lastMX - active[1]}px, ${lastMY - active[2]}px, 0)`;
         }
-
-        function applyCursor() {
-            const c = cursors.active;
-            if (!c) return;
-            el.style.width = c.w + 'px';
-            el.style.height = c.h + 'px';
-            el.style.backgroundImage = `url(${c.url})`;
-        }
-
-        Object.keys(CURSOR_SETS).forEach(n => {
-            const [src, hx, hy, rh] = CURSOR_SETS[n];
-            processImg(src, hx, hy, n, rh);
-        });
+        applyCursor();
 
         window.applyCursorSet = function(n) {
-            const sn = String(n);
-            activeCursorSet = sn;
-            if (cursors[sn]) cursors.active = cursors[sn];
+            active = CURSOR_SETS[String(n)] || active;
             applyCursor();
-            if (cursors.active && mouseInDoc) el.style.display = 'block';
+            place();
         };
 
-        let lastMX = 0, lastMY = 0, rafPending = false;
+        /* Every nav click is a full page load, and mouseenter/mousemove don't
+           fire until the mouse physically moves — so the cursor used to vanish
+           after each click. Carry the last position across pages instead. */
+        try {
+            const saved = JSON.parse(sessionStorage.getItem('cursor_pos'));
+            if (saved) {
+                lastMX = saved.x; lastMY = saved.y; mouseInDoc = true;
+                place();
+                el.style.display = 'block';
+            }
+        } catch (e) {}
+        window.addEventListener('pagehide', () => {
+            try {
+                if (mouseInDoc) sessionStorage.setItem('cursor_pos', JSON.stringify({ x: lastMX, y: lastMY }));
+                else sessionStorage.removeItem('cursor_pos');
+            } catch (e) {}
+        });
+
         document.addEventListener('mousemove', e => {
             lastMX = e.clientX; lastMY = e.clientY;
+            if (!mouseInDoc) { mouseInDoc = true; el.style.display = 'block'; }
             if (rafPending) return;
             rafPending = true;
-            requestAnimationFrame(() => {
-                rafPending = false;
-                const c = cursors.active;
-                if (!c) return;
-                el.style.transform = `translate3d(${lastMX - c.hotX}px, ${lastMY - c.hotY}px, 0)`;
-            });
+            requestAnimationFrame(() => { rafPending = false; place(); });
         });
 
         document.addEventListener('mouseleave', () => { mouseInDoc = false; el.style.display = 'none'; });
-        document.addEventListener('mouseenter', () => { mouseInDoc = true; if (cursors.active) el.style.display = 'block'; });
-    })();
-
-    /* ── Nav button images: strip black backgrounds via canvas ── */
-    (function () {
-        document.querySelectorAll('.site-nav-btn img').forEach(function (img) {
-            function process() {
-                try {
-                    var cv = document.createElement('canvas');
-                    cv.width = img.naturalWidth; cv.height = img.naturalHeight;
-                    var ctx = cv.getContext('2d');
-                    ctx.drawImage(img, 0, 0);
-                    var id = ctx.getImageData(0, 0, cv.width, cv.height), dat = id.data;
-                    for (var i = 0; i < dat.length; i += 4) {
-                        if (dat[i] < 60 && dat[i+1] < 60 && dat[i+2] < 60) dat[i+3] = 0;
-                    }
-                    ctx.putImageData(id, 0, 0);
-                    img.src = cv.toDataURL();
-                } catch (e) {}
-            }
-            if (img.complete && img.naturalWidth) process();
-            else img.addEventListener('load', process, { once: true });
-        });
+        document.addEventListener('mouseenter', () => { mouseInDoc = true; el.style.display = 'block'; });
     })();
 
     /* ── Accessibility: toggle-group roles + aria-pressed sync ── */
@@ -879,50 +843,11 @@
         pressedBtns.forEach(btn => obs.observe(btn, { attributes: true, attributeFilter: ['class'] }));
     })();
 
-    /* ── Tooltip ── */
-    (function () {
-        const ttEl = document.createElement('div');
-        ttEl.id = 'site-tooltip';
-        document.body.appendChild(ttEl);
-
-        let ttW = 0, ttH = 0, ttVisible = false;
-
-        function measure() { ttW = ttEl.offsetWidth; ttH = ttEl.offsetHeight; }
-
-        function position(x, y) {
-            ttEl.style.top  = Math.round(y - ttH / 2) + 'px';
-            ttEl.style.left = Math.max(8, Math.round(x - 12 - ttW)) + 'px';
-        }
-
-        document.addEventListener('mouseover', e => {
-            const t = e.target.closest('[data-tip]');
-            if (t) { ttEl.textContent = t.dataset.tip; ttEl.style.opacity = '1'; ttVisible = true; measure(); }
-            else   { ttEl.style.opacity = '0'; ttVisible = false; }
-        });
-        document.addEventListener('focusin', e => {
-            const t = e.target.closest('[data-tip]');
-            if (!t) return;
-            ttEl.textContent = t.dataset.tip; ttEl.style.opacity = '1'; ttVisible = true;
-            measure();
-            const r = t.getBoundingClientRect();
-            position(r.right, r.top + r.height / 2);
-        });
-        document.addEventListener('focusout', () => { ttEl.style.opacity = '0'; ttVisible = false; });
-        let ttRafPending = false, ttLastX = 0, ttLastY = 0;
-        document.addEventListener('mousemove', e => {
-            if (!ttVisible) return;
-            ttLastX = e.clientX; ttLastY = e.clientY;
-            if (ttRafPending) return;
-            ttRafPending = true;
-            requestAnimationFrame(() => { ttRafPending = false; if (ttVisible) position(ttLastX, ttLastY); });
-        });
-        document.addEventListener('mouseleave', () => { ttEl.style.opacity = '0'; ttVisible = false; });
-        document.addEventListener('wheel', () => {
-            ttEl.style.opacity = '0';
-            const ct = document.getElementById('chart-tooltip');
-            if (ct) ct.style.opacity = '0';
-        }, { passive: true });
-    })();
+    /* ── Hide the chart's data tooltip on scroll ── */
+    document.addEventListener('wheel', () => {
+        const ct = document.getElementById('chart-tooltip');
+        if (ct) ct.style.opacity = '0';
+    }, { passive: true });
 
     /* ── Streak temperature glow (shared across all pages) ── */
     const STREAK_STOPS = [

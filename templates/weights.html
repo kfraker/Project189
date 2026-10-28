@@ -417,7 +417,7 @@
 {% block footer_left %}
 <div class="wt-ctrl-group">
     <div class="mp-filter-wrap">
-        <button class="mp-filter-btn" id="mp-filter-btn" aria-label="Filter by date range" data-tip="Filter by date range">
+        <button class="mp-filter-btn" id="mp-filter-btn" aria-label="Filter by date range">
             <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
                 <path d="M22 3H2l8 9.46V19l4 2V12.46L22 3z"/>
             </svg>
@@ -431,7 +431,7 @@
                 <button class="range-btn" data-range="all">All</button>
                 <button class="range-btn" data-range="custom">Custom</button>
                 <div class="mp-custom-days-wrap" id="custom-days-wrap" hidden>
-                    <input type="number" id="custom-days" class="custom-days-input" min="7" max="1095" placeholder="—" data-tip="Min 7 days">
+                    <input type="number" id="custom-days" class="custom-days-input" min="7" max="1095" placeholder="—">
                     <span>days</span>
                 </div>
             </div>
@@ -442,13 +442,13 @@
                 <button class="weekly-range-btn" data-weeks="all">All</button>
                 <button class="weekly-range-btn" data-weeks="custom">Custom</button>
                 <div class="mp-custom-days-wrap" id="custom-weeks-wrap" hidden>
-                    <input type="number" id="custom-weeks" class="custom-days-input" min="4" max="156" placeholder="—" data-tip="Min 4 weeks">
+                    <input type="number" id="custom-weeks" class="custom-days-input" min="4" max="156" placeholder="—">
                     <span>weeks</span>
                 </div>
             </div>
         </div>
     </div>
-    <button id="chart-type-btn" aria-label="Switch to weekly chart" data-tip="Switch to weekly chart">
+    <button id="chart-type-btn" aria-label="Switch to weekly chart">
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
             <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/>
             <line x1="16" y1="2" x2="16" y2="6"/>
@@ -456,7 +456,7 @@
             <line x1="3" y1="10" x2="21" y2="10"/>
         </svg>
     </button>
-    <button class="mp-view-toggle-btn" id="view-toggle-btn" aria-label="Toggle chart or table view" data-tip="Toggle chart / table">
+    <button class="mp-view-toggle-btn" id="view-toggle-btn" aria-label="Toggle chart or table view">
         <svg id="mp-view-icon-chart" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
             <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/>
         </svg>
@@ -490,7 +490,7 @@
 {% endblock %}
 
 {% block footer_add %}
-<button class="site-add-btn" id="chart-add-btn" aria-label="Log a weigh-in" data-tip="Log a weigh-in">+</button>
+<button class="site-add-btn" id="chart-add-btn" aria-label="Log a weigh-in">+</button>
 {% endblock %}
 
 {% block content %}
@@ -776,7 +776,7 @@
                 const nReq = activeRange === '7d' ? 7 : activeRange === '30d' ? 30 :
                              activeRange === '90d' ? 90 : activeRange === '1y' ? 365 : (activeDays || 30);
                 if (allDates.length < nReq - 1) {
-                    infoIcon.dataset.tip = 'Showing max data - ' + weightRows.length + (weightRows.length !== 1 ? ' entries' : ' entry') + ' logged';
+                    infoIcon.setAttribute('aria-label','Showing max data - ' + weightRows.length + (weightRows.length !== 1 ? ' entries' : ' entry') + ' logged');
                     infoIcon.style.display = 'flex';
                 } else { infoIcon.style.display = 'none'; }
             } else { infoIcon.style.display = 'none'; }
@@ -1039,7 +1039,7 @@
             if (days!=null) {
                 const cutoff=new Date(); cutoff.setDate(cutoff.getDate()-days);
                 const oldestD=new Date(filteredRows[0].date+'T00:00:00');
-                if (oldestD>cutoff) { infoIconEl.dataset.tip='Showing max data — '+filteredRows.length+' entries logged'; infoIconEl.style.display='flex'; }
+                if (oldestD>cutoff) { infoIconEl.setAttribute('aria-label','Showing max data — '+filteredRows.length+' entries logged'); infoIconEl.style.display='flex'; }
                 else infoIconEl.style.display='none';
             } else infoIconEl.style.display='none';
 
@@ -1169,7 +1169,6 @@
             window.currentChartPage = weekly ? 'weekly' : 'daily';
             if (weekly && window.loadWeeklyChartOnce) window.loadWeeklyChartOnce();
             typeBtn.classList.toggle('in-weekly', weekly);
-            typeBtn.dataset.tip = weekly ? 'Switch to daily chart' : 'Switch to weekly chart';
             typeBtn.setAttribute('aria-label', weekly ? 'Switch to daily chart' : 'Switch to weekly chart');
             dailyRanges.hidden = weekly;
             weeklyRanges.hidden = !weekly;
@@ -1273,7 +1272,7 @@
                 dateInner.append(lbl); dateTd.appendChild(dateInner);
                 const primTd=document.createElement('td'); primTd.appendChild(document.createTextNode(primAvg));
                 let hdrExcl=null;
-                if (missingDates.length>0){hdrExcl=document.createElement('button');hdrExcl.className='missing-excl-btn';hdrExcl.textContent='!';hdrExcl.dataset.tip='Missing data';primTd.appendChild(hdrExcl);}
+                if (missingDates.length>0){hdrExcl=document.createElement('button');hdrExcl.className='missing-excl-btn';hdrExcl.textContent='!';hdrExcl.setAttribute('aria-label','Missing data');primTd.appendChild(hdrExcl);}
                 const cntTd=document.createElement('td'); cntTd.className='week-count-cell';
                 const cntInner=document.createElement('span'); cntInner.className='week-count-inner';
                 const cntSpan=document.createElement('span'); cntSpan.textContent=String(week.days.filter(d=>d.weight_lbs!=null).length);
@@ -1295,18 +1294,18 @@
                     if (missing){
                         wtTd.className='cell-weight cell-missing'; wtTd.dataset.lbs=''; wtTd.dataset.kg='';
                         wtTd.innerHTML='<span class="missing-dash">—</span>';
-                        const eb=document.createElement('button');eb.className='missing-excl-btn';eb.textContent='!';eb.dataset.tip='Missing data';eb.addEventListener('click',e=>{e.stopPropagation();if(window.openWeightModal)window.openWeightModal(date,null);});wtTd.appendChild(eb);
+                        const eb=document.createElement('button');eb.className='missing-excl-btn';eb.textContent='!';eb.setAttribute('aria-label','Missing data');eb.addEventListener('click',e=>{e.stopPropagation();if(window.openWeightModal)window.openWeightModal(date,null);});wtTd.appendChild(eb);
                     } else {
                         wtTd.className='cell-weight'; wtTd.dataset.lbs=entry.weight_lbs; wtTd.dataset.kg=entry.weight_kg;
                         wtTd.textContent=(unit==='lbs'?fmtLbs(entry.weight_lbs):fmtLbs(entry.weight_kg))+' '+unit;
                     }
                     const actTd=document.createElement('td'); actTd.className='action-cell';
                     const noteText=entry&&entry.notes?entry.notes:'', hasNote=!!(noteText.trim());
-                    const noteBtn=document.createElement('button'); noteBtn.className='note-btn'+(hasNote?' has-note':''); noteBtn.dataset.tip=hasNote?'Edit note':'Add note';
+                    const noteBtn=document.createElement('button'); noteBtn.className='note-btn'+(hasNote?' has-note':''); noteBtn.setAttribute('aria-label',hasNote?'Edit note':'Add note');
                     noteBtn.innerHTML='<svg viewBox="0 0 16 16" xmlns="http://www.w3.org/2000/svg"><path d="M13 1H3C2.45 1 2 1.45 2 2v9c0 .55.45 1 1 1h1.5l2.5 2.5L9.5 12H13c.55 0 1-.45 1-1V2c0-.55-.45-1-1-1z"/></svg>';
                     noteBtn.addEventListener('click',e=>{e.stopPropagation();window.openNoteEditor(date,noteText,noteBtn);});
                     const del=document.createElement('button');
-                    if (!missing||entry){del.className='table-delete-btn';del.dataset.tip='Delete this entry';del.addEventListener('click',e=>{e.stopPropagation();showRowDeleteModal(date,entry);});}
+                    if (!missing||entry){del.className='table-delete-btn';del.setAttribute('aria-label','Delete this entry');del.addEventListener('click',e=>{e.stopPropagation();showRowDeleteModal(date,entry);});}
                     else{del.className='table-delete-btn missing-del';}
                     del.textContent='✕';
                     actTd.append(noteBtn,del); dayTr.append(dayDateTd,wtTd,actTd);
@@ -1356,14 +1355,14 @@
                 wtTd.dataset.lbs=(!missing&&entry)?entry.weight_lbs:''; wtTd.dataset.kg=(!missing&&entry)?entry.weight_kg:'';
                 const primaryVal=(!missing&&entry)?(unit==='lbs'?fmtLbs(entry.weight_lbs)+' '+unit:fmtLbs(entry.weight_kg)+' '+unit):null;
                 wtTd.innerHTML=missing?'<span class="missing-dash">—</span>':primaryVal;
-                if(missing){const eb=document.createElement('button');eb.className='missing-excl-btn';eb.textContent='!';eb.dataset.tip='Log weight for this day';eb.addEventListener('click',e=>{e.stopPropagation();if(window.openWeightModal)window.openWeightModal(date,null);});wtTd.appendChild(eb);}
+                if(missing){const eb=document.createElement('button');eb.className='missing-excl-btn';eb.textContent='!';eb.setAttribute('aria-label','Log weight for this day');eb.addEventListener('click',e=>{e.stopPropagation();if(window.openWeightModal)window.openWeightModal(date,null);});wtTd.appendChild(eb);}
                 const stTd=document.createElement('td'); stTd.className='action-cell';
                 const noteText=entry&&entry.notes?entry.notes:'',hasNote=!!(noteText.trim());
-                const noteBtn=document.createElement('button'); noteBtn.className='note-btn'+(hasNote?' has-note':''); noteBtn.dataset.tip=hasNote?'Edit note':'Add note';
+                const noteBtn=document.createElement('button'); noteBtn.className='note-btn'+(hasNote?' has-note':''); noteBtn.setAttribute('aria-label',hasNote?'Edit note':'Add note');
                 noteBtn.innerHTML='<svg viewBox="0 0 16 16" xmlns="http://www.w3.org/2000/svg"><path d="M13 1H3C2.45 1 2 1.45 2 2v9c0 .55.45 1 1 1h1.5l2.5 2.5L9.5 12H13c.55 0 1-.45 1-1V2c0-.55-.45-1-1-1z"/></svg>';
                 noteBtn.addEventListener('click',e=>{e.stopPropagation();window.openNoteEditor(date,noteText,noteBtn);});
                 const del=document.createElement('button'); del.className=missing&&!entry?'table-delete-btn missing-del':'table-delete-btn';
-                del.dataset.tip='Delete this entry'; del.textContent='✕';
+                del.setAttribute('aria-label','Delete this entry'); del.textContent='✕';
                 if(!missing||entry)del.addEventListener('click',e=>{e.stopPropagation();showRowDeleteModal(date,entry);});
                 stTd.append(noteBtn,del); tr.append(dateTd,wtTd,stTd); tableBody.appendChild(tr);
                 tr.addEventListener('click',e=>{if(e.target.closest('button,input'))return;if(window.openWeightModal)window.openWeightModal(date,entry&&entry.weight_lbs!=null?entry.weight_lbs:null);});
@@ -1768,7 +1767,7 @@
                     parent.classList.remove('streak-hot');
                     if (s >= 7) parent.classList.add('streak-hot');
                 }
-                if (s > 0) applyStreakGlow(streakEl, streakEl.nextElementSibling, s);
+                applyStreakGlow(streakEl, streakEl.nextElementSibling, s);
             }
         }
 
