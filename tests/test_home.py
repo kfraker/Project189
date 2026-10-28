@@ -1,10 +1,12 @@
 """GET / — home page renders correctly."""
 import pytest
 
+from tests.conftest import page_source
+
 
 @pytest.fixture()
 def html(client):
-    return client.get("/").data.decode()
+    return page_source(client, "/")
 
 
 def test_home_returns_200(client):
@@ -19,7 +21,7 @@ def test_home_returns_html(client):
 
 def test_home_contains_app_elements(client):
     """Key landmarks exist in the served HTML."""
-    html = client.get("/").data.decode()
+    html = page_source(client, "/")
     assert "chart-tooltip" in html or "chart-wrap" in html
 
 

@@ -120,12 +120,16 @@ project-189/
 │   ├── m0002_baseline_notes_and_nullable.py  # VERSION 2 — weights.notes column, nullable weight_lbs/weight_kg
 │   └── m0003_settings_composite_pk.py        # VERSION 3 — settings PK becomes (user_id, key)
 ├── templates/
-│   ├── base.html                # Shared header/footer shell, menu/settings/fight-card/insights modals, cursor JS
+│   ├── base.html                # Shared header/footer shell + menu/settings/fight-card/insights modal markup
 │   ├── index.html                # Home dashboard (health bar, weight plates, Quick Add)
 │   ├── weights.html              # Weigh-ins page (charts + table)
 │   └── workouts.html             # Workout tracking page
 ├── static/
 │   ├── style.css                # All styles
+│   ├── js/shell.js              # Shared shell behavior: cursor, modals, menu, settings, fight card, insights
+│   ├── js/pages/home.js         # Home page behavior (index.html)
+│   ├── js/pages/weights.js      # Weigh-ins page behavior (charts, table, notes)
+│   ├── js/pages/workouts.js     # Workouts page behavior
 │   ├── pointer.png / pointer2-4.png       # Profile-linked custom cursors (source art)
 │   ├── cursor-pointer*.png      # Pre-baked cursors actually served (transparent, 96px tall)
 │   ├── nav-*.png                # Pre-baked header nav icons actually served (transparent, 128px)
@@ -211,4 +215,13 @@ First-time setup for browser tests: `python -m playwright install chromium`.
 - `coverage/python.lcov`: machine-readable copy for CI/Codecov
 - a short summary is printed at the end of the test output
 
-**Baseline (2026-10-28): 98% of Python code** (`app.py` + `db_migrations/`, branch coverage; up from 88% after adding `/api/home-stats` and clear-weight tests). The few uncovered lines are the redirect to Google sign-in, two invalid-date error returns on the workout day-note routes, and the `python app.py` dev-server entry point. Browser-side (JavaScript) coverage is not measured yet.
+**Baseline (2026-10-28): 98% of Python code** (`app.py` + `db_migrations/`, branch coverage; up from 88% after adding `/api/home-stats` and clear-weight tests). The few uncovered lines are the redirect to Google sign-in, two invalid-date error returns on the workout day-note routes, and the `python app.py` dev-server entry point. **Page-code (JavaScript) coverage** is measured whenever browser tests run. Chromium's built-in coverage records which lines of `static/js/**` actually executed, and the run ends by writing:
+
+- `coverage/js-html/index.html`: line-by-line view of the page scripts
+- `coverage/js.lcov`: machine-readable copy
+
+One-time setup (needs Node.js): `npm install --prefix tools/coverage`.
+
+**All code in one report:** after a test run, `npm --prefix tools/coverage run report` merges Python and page-code coverage into `coverage/all-html/index.html`, one table with a single combined total. CI builds the same report on every push (in the `coverage-report` artifact), and Codecov shows both halves as the `python` and `javascript` flags. Without it, browser tests still run and print a reminder instead of the report. Baseline from the smoke tests alone: 52% of page-code lines, 13% of functions (most event handlers only run when a test clicks things).
+
+**Static file versions:** templates link CSS/JS through `static_url()` (in `app.py`), which appends a content hash (`?v=…`). Editing a file changes its hash, so browsers always fetch the new copy after a deploy. No version numbers to bump by hand.

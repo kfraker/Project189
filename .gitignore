@@ -3,5 +3,6 @@ __pycache__/
 *.pyc
 .env
 .coverage
-coverage/
-test-results/
+/coverage/
+/test-results/
+node_modules/

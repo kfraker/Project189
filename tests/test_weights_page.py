@@ -8,10 +8,12 @@ lives on this dedicated page, mirroring the /workouts split.
 """
 import pytest
 
+from tests.conftest import page_source
+
 
 @pytest.fixture()
 def html(client):
-    return client.get("/weights").data.decode()
+    return page_source(client, "/weights")
 
 
 def test_weights_page_returns_200(client):
