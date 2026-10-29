@@ -1,6 +1,8 @@
 /* Weigh-ins page script. */
 registerPage('weights', page => {
-    const { signal } = page;   // every listener below is removed when the page is left
+    // Every listener below is removed when the page is left, and every fetch() answer
+    // that arrives after that is dropped (see router.js).
+    const { signal, fetch } = page;
 
     fetch('/api/latest-weight').then(r => r.json()).then(d => {
         window.oldestEntryDate = d.oldest_date || null;
@@ -538,7 +540,7 @@ registerPage('weights', page => {
         const chartTypeBtn  = document.getElementById('chart-type-btn');
         let isTableView = false, lastChart = 'daily';
 
-        function applyTableMode(on) { slideViewport.classList.toggle('in-table', on); tableWrap.hidden=!on; document.getElementById('main-content').classList.toggle('wt-table-mode', on); }
+        function applyTableMode(on) { slideViewport.classList.toggle('in-table', on); tableWrap.hidden=!on; document.querySelector('.wt-main').classList.toggle('wt-table-mode', on); }
 
         function addDays(iso, n) { const d=new Date(iso+'T00:00:00'); d.setDate(d.getDate()+n); return d.toISOString().split('T')[0]; }
         function dateRange(start, end) { const dates=[]; let cur=start; while(cur<=end){dates.push(cur);cur=addDays(cur,1);} return dates; }

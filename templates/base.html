@@ -250,6 +250,10 @@
         /* Wrappers around parts of the page that change from page to page (see data-region
            below). They exist only to mark the region, so they take no part in layout. */
         .page-region { display: contents; }
+
+        /* Focus moves here after a page change and from the skip link (tabindex="-1"); it's
+           the whole screen, so no focus ring. */
+        #main-content:focus { outline: none; }
     </style>
     {% block page_css %}{% endblock %}
 </head>
@@ -284,7 +288,7 @@
 
 <div class="page-region" data-region="healthbar">{% block healthbar %}{% endblock %}</div>
 
-<main id="main-content" class="site-main" data-region="content">
+<main id="main-content" class="site-main" data-region="content" tabindex="-1">
     {% block content %}{% endblock %}
 </main>
 

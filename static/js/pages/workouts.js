@@ -1,6 +1,8 @@
 /* Workouts page script. */
 registerPage('workouts', page => {
-    const { signal } = page;   // every listener below is removed when the page is left
+    // Every listener below is removed when the page is left, and every fetch() answer
+    // that arrives after that is dropped (see router.js).
+    const { signal, fetch } = page;
 
     /* ── Workout data ── */
     const WORKOUTS = [

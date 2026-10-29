@@ -151,3 +151,60 @@ def test_undeletable_page_name_is_reported(home):
     home.add_script_tag(content="var leakyProbe = 1;")
     home.evaluate("appRouter.leave()")
     assert any('left window.leakyProbe behind' in e for e in errors)
+
+
+# ── page.fetch: answers that arrive after the page was left are dropped (M4.1) ─
+
+def test_page_fetch_works_normally_while_the_page_runs(home):
+    result = home.evaluate("""() => new Promise(done => registerPage('probe', page => {
+        page.fetch('/api/settings').then(r => r.json()).then(data => done(typeof data));
+    }))""")
+    assert result == "object"
+
+
+def test_page_fetch_answer_after_leaving_is_dropped(home):
+    """The follow-up code of a request still out when the page is left never runs,
+    so it can't write into the next page; the request itself still completes."""
+    with home.expect_response("**/api/settings"):
+        home.evaluate("""window.followUps = [];
+            registerPage('probe', page => {
+                page.fetch('/api/settings').then(r => { followUps.push('answer'); return r.json(); })
+                                           .then(() => followUps.push('body'));
+            });
+            appRouter.leave();""")
+    home.wait_for_timeout(300)
+    assert home.evaluate("followUps") == []
+
+
+def test_page_fetch_body_read_after_leaving_is_dropped(home):
+    home.evaluate("""() => new Promise(done => {
+        window.followUps = [];
+        registerPage('probe', page => {
+            page.fetch('/api/settings').then(r => {
+                followUps.push('answer');
+                appRouter.leave();                  // left between the answer and its body
+                r.json().then(() => followUps.push('body'));
+                done();
+            });
+        });
+    })""")
+    home.wait_for_timeout(300)
+    assert home.evaluate("followUps") == ["answer"]
+
+
+@pytest.mark.allow_page_errors          # the failed request itself is expected
+def test_page_fetch_failure_after_leaving_is_silent(home):
+    """A request that fails after the page was left raises nothing: no unhandled
+    rejection, even where the page code has no error handler."""
+    js_errors = []
+    home.on("pageerror", lambda exc: js_errors.append(str(exc)))
+    home.context.route("**/api/settings", lambda route: route.abort())
+    home.evaluate("""window.followUps = [];
+        registerPage('probe', page => {
+            page.fetch('/api/settings').then(() => followUps.push('answer'), () => followUps.push('error'));
+            page.fetch('/api/settings').then(r => r.json());     // no error handler at all
+        });
+        appRouter.leave();""")
+    home.wait_for_timeout(500)
+    assert home.evaluate("followUps") == []
+    assert js_errors == []
