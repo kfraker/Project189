@@ -152,7 +152,7 @@ html::-webkit-scrollbar { display: none; }
 
 .coming-soon-tip {
     position: fixed;
-    transform: translate(-100%, -50%);
+    transform: translateY(-50%);
     background: #0d0020;
     border: 1px solid rgba(255, 45, 120, 0.4);
     border-radius: 20px;

@@ -255,6 +255,22 @@ def test_custom_cursor_keeps_its_place_across_a_refresh(shell):
     assert page.locator("#site-cursor").evaluate("el => el.style.transform") == before
 
 
+# ── Nutrition "Coming Soon" tip ──────────────────────────────────────────────
+
+def test_coming_soon_tip_sits_to_the_right_of_the_nav_buttons(shell):
+    """The tip used to open to the left of the Nutrition button, on top of the
+    other nav buttons; it now opens to its right."""
+    open_page, _ = shell
+    page = open_page()
+    page.locator("#protein-btn").click()
+    tip = page.locator(".coming-soon-tip")
+    expect(tip).to_have_class("coming-soon-tip visible")
+    tip_box, nutrition = tip.bounding_box(), page.locator("#protein-btn").bounding_box()
+    assert tip_box["x"] >= nutrition["x"] + nutrition["width"]               # right of every nav button
+    assert abs((tip_box["y"] + tip_box["height"] / 2) - (nutrition["y"] + nutrition["height"] / 2)) < 2   # level with it
+    expect(tip).not_to_have_class("coming-soon-tip visible", timeout=3000)   # and goes away
+
+
 # ── Log out ──────────────────────────────────────────────────────────────────
 
 def test_log_out_returns_to_sign_in(shell):

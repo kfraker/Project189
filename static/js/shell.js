@@ -983,8 +983,9 @@
         tip.className='coming-soon-tip'; tip.textContent='Coming Soon'; document.body.appendChild(tip);
         let hideTimer=null;
         function showComingSoon(btn) {
+            // Out to the right of the button, clear of the other nav buttons.
             const r=btn.getBoundingClientRect();
-            tip.style.top=(r.top+r.height/2)+'px'; tip.style.left=(r.left-10)+'px';
+            tip.style.top=(r.top+r.height/2)+'px'; tip.style.left=(r.right+10)+'px';
             tip.classList.add('visible'); clearTimeout(hideTimer);
             hideTimer=setTimeout(()=>tip.classList.remove('visible'),1500);
         }
