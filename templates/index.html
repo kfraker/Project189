@@ -3,7 +3,7 @@
 {% block page_title %}Sweat Equity{% endblock %}
 
 {% block page_css %}
-<style>
+<style data-page-style>
     /* ── Index background ── */
     .mp-bg {
         position: fixed; inset: 0; z-index: -1;
@@ -445,5 +445,5 @@
 {% endblock %}
 
 {% block page_js %}
-<script src="{{ static_url('js/pages/home.js') }}"></script>
+<script data-page-script src="{{ static_url('js/pages/home.js') }}"></script>
 {% endblock %}

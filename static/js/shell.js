@@ -15,6 +15,24 @@
         document.body.classList.remove('preload');
     }));
 
+    /* ── Load a third-party script on demand, once ──
+       Pages that need a library (e.g. Chart.js on Weigh-ins) ask for it here instead of
+       linking it in <head>, so other pages never download it and coming back to a page
+       never loads it twice. Returns a promise that resolves once the script has run. */
+    const loadedScripts = {};
+    window.loadScriptOnce = function (src) {
+        if (!loadedScripts[src]) {
+            loadedScripts[src] = new Promise((resolve, reject) => {
+                const el = document.createElement('script');
+                el.src = src;
+                el.onload = resolve;
+                el.onerror = () => { delete loadedScripts[src]; reject(new Error('Could not load ' + src)); };
+                document.head.appendChild(el);
+            });
+        }
+        return loadedScripts[src];
+    };
+
     /* ── Active unit ── */
     window.activeUnit = localStorage.getItem('pref_unit') || 'lbs';
 

@@ -161,7 +161,7 @@ def seed_setting(client, key: str, value_lbs: float, overwrite: bool = False):
 
 # ── Page source helper ───────────────────────────────────────────────────────
 
-_SCRIPT_SRC = re.compile(r'<script src="/static/([^"?]+)(?:\?[^"]*)?"></script>')
+_SCRIPT_SRC = re.compile(r'<script\b[^>]*\bsrc="/static/([^"?]+)(?:\?[^"]*)?"[^>]*></script>')
 
 
 def page_source(client, path):

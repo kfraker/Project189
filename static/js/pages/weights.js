@@ -31,7 +31,10 @@
     chartTtEl.id = 'chart-tooltip';
     document.body.appendChild(chartTtEl);
 
-    Chart.register({
+    /* Chart.js loads on demand (see loadScriptOnce in shell.js); everything that
+       touches Chart waits for this. */
+    const chartJsReady = window.loadScriptOnce('https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js')
+        .then(() => Chart.register({
         id: 'chartAxisLabels',
         afterDraw(chart) {
             const yScale = chart.scales && chart.scales.y;
@@ -59,7 +62,7 @@
                 if (legendEl.innerHTML !== html) legendEl.innerHTML = html;
             }
         }
-    });
+    }));
 
     /* ── Daily chart ── */
     (function () {
@@ -81,6 +84,7 @@
         }
 
         async function loadChart(range, days) {
+            await chartJsReady;
             if (range !== undefined) activeRange = range;
             if (days  !== undefined) activeDays  = days;
             if (window.onChartRangeChange) window.onChartRangeChange();
@@ -379,6 +383,7 @@
         };
 
         async function loadWeeklyChart(range, customWeeks) {
+            await chartJsReady;
             let days = range==='all' ? null : range==='custom' ? (parseInt(customWeeks)||4)*7 : (parseInt(range)||4)*7;
             const url = days==null ? '/api/weights?range=all' : '/api/weights?range=custom&days='+days;
             const [rows, settings] = await Promise.all([fetch(url).then(r=>r.json()), fetch('/api/settings').then(r=>r.json())]);

@@ -246,6 +246,10 @@
         body:has(.site-main .modal-overlay:not([hidden]), .site-main .wp-modal-overlay:not([hidden])) .site-main {
             z-index: 1000;
         }
+
+        /* Wrappers around parts of the page that change from page to page (see data-region
+           below). They exist only to mark the region, so they take no part in layout. */
+        .page-region { display: contents; }
     </style>
     {% block page_css %}{% endblock %}
 </head>
@@ -255,7 +259,7 @@
 <div id="site-cursor"></div>
 <a href="#main-content" class="sr-only skip-link">Skip to main content</a>
 <div id="status-announce" aria-live="polite" aria-atomic="true" class="sr-only"></div>
-{% block bg %}{% endblock %}
+<div class="page-region" data-region="bg">{% block bg %}{% endblock %}</div>
 
 <header class="site-header" role="banner">
     <div class="site-header-left">
@@ -274,13 +278,13 @@
             </button>
         </nav>
     </div>
-    {% block header_title %}<h1 class="site-title">Sweat Equity</h1>{% endblock %}
-    <div class="site-header-stats" aria-label="Page stats">{% block header_stats %}{% endblock %}</div>
+    <div class="page-region" data-region="header_title">{% block header_title %}<h1 class="site-title">Sweat Equity</h1>{% endblock %}</div>
+    <div class="site-header-stats" aria-label="Page stats" data-region="header_stats">{% block header_stats %}{% endblock %}</div>
 </header>
 
-{% block healthbar %}{% endblock %}
+<div class="page-region" data-region="healthbar">{% block healthbar %}{% endblock %}</div>
 
-<main id="main-content" class="site-main">
+<main id="main-content" class="site-main" data-region="content">
     {% block content %}{% endblock %}
 </main>
 
@@ -673,8 +677,8 @@
 
 <!-- ── Site footer ── -->
 <footer class="site-footer" role="navigation" aria-label="Main navigation">
-    <div class="site-nav" aria-label="Page controls">{% block footer_left %}{% endblock %}</div>
-    <div class="site-add-wrap">
+    <div class="site-nav" aria-label="Page controls" data-region="footer_left">{% block footer_left %}{% endblock %}</div>
+    <div class="site-add-wrap" data-region="footer_add">
         {% block footer_add %}
         <button class="site-add-btn" id="site-add-btn" aria-label="Quick add" aria-haspopup="true" aria-expanded="false">+</button>
         {% endblock %}
