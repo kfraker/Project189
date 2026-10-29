@@ -226,14 +226,17 @@
     }
 
     /* ── App-wide confirm modal ── */
-    window.showAppConfirm = function(title, message, okLabel, onOk) {
+    /* onCancel/cancelLabel are optional: e.g. the "Unsaved Changes" prompts turn the
+       second button into "Close" (discard + close) instead of a plain Cancel. */
+    window.showAppConfirm = function(title, message, okLabel, onOk, onCancel, cancelLabel) {
         const modal = document.getElementById('app-confirm-modal');
-        document.getElementById('app-confirm-title').textContent = title;
-        document.getElementById('app-confirm-msg').textContent   = message;
-        document.getElementById('app-confirm-ok').textContent    = okLabel || 'Confirm';
+        document.getElementById('app-confirm-title').textContent  = title;
+        document.getElementById('app-confirm-msg').textContent    = message;
+        document.getElementById('app-confirm-ok').textContent     = okLabel || 'Confirm';
+        document.getElementById('app-confirm-cancel').textContent = cancelLabel || 'Cancel';
         modal.hidden = false;
         document.getElementById('app-confirm-ok').onclick    = () => { modal.hidden = true; if (onOk) onOk(); };
-        document.getElementById('app-confirm-cancel').onclick = () => { modal.hidden = true; };
+        document.getElementById('app-confirm-cancel').onclick = () => { modal.hidden = true; if (onCancel) onCancel(); };
     };
 
     /* ── Modal coordinator ── */

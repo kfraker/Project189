@@ -6,7 +6,8 @@ coverage:
   status:
     project:
       default:
-        informational: true   # report the number, don't fail builds (a coverage guard comes in T5.5)
+        target: auto          # compare with the parent commit…
+        threshold: 0.5%       # …and flag any drop bigger than half a point
     patch:
       default:
         informational: true

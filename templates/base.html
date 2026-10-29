@@ -238,6 +238,14 @@
             left: 0; right: 0;
             overflow: hidden;
         }
+        /* .site-main is position:fixed, so it forms its own stacking layer (at z 0) and
+           page modals inside it can never rise above the header/footer (700) or the
+           health bar (900), whatever their own z-index. While one is open, lift the
+           whole layer so the modal sits on top. Shell modals (menu, settings) live
+           outside .site-main at z 1500 and stay above this. */
+        body:has(.site-main .modal-overlay:not([hidden]), .site-main .wp-modal-overlay:not([hidden])) .site-main {
+            z-index: 1000;
+        }
     </style>
     {% block page_css %}{% endblock %}
 </head>

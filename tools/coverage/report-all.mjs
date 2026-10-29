@@ -2,6 +2,10 @@
 // in ONE HTML view, with one total.
 //
 //   npm --prefix tools/coverage run report      →  coverage/all-html/index.html
+//   npm --prefix tools/coverage run check       →  same, then FAIL if coverage dropped below
+//                                                  baseline.json (used by CI after a full run)
+//   npm --prefix tools/coverage run baseline    →  same, then record today's numbers as the
+//                                                  new baseline (do this when coverage goes up)
 //
 // Inputs, written by a pytest run:
 //   coverage/python.lcov                 (pytest-cov, every run)
@@ -9,7 +13,7 @@
 // Python coverage arrives as lcov, so it's converted into the same (Istanbul) format
 // the page-code report uses before the two are merged.
 import { spawnSync } from "node:child_process";
-import { existsSync, readFileSync, rmSync } from "node:fs";
+import { existsSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import libCoverage from "istanbul-lib-coverage";
@@ -19,6 +23,10 @@ import reports from "istanbul-reports";
 const here = dirname(fileURLToPath(import.meta.url));
 const root = resolve(here, "..", "..");
 const cov = (...p) => join(root, "coverage", ...p);
+const mode = process.argv.includes("--check") ? "check"
+           : process.argv.includes("--update-baseline") ? "baseline" : "report";
+const BASELINE = join(here, "baseline.json");
+const TOLERANCE = 0.5;   // percentage points of wobble allowed before a drop counts
 
 // 1. Page code: refresh the JS report from the raw browser-test data.
 if (existsSync(cov("js-raw"))) {
@@ -48,6 +56,35 @@ const context = libReport.createContext({ dir, coverageMap: map, defaultSummariz
 reports.create("html").execute(context);
 reports.create("text-summary").execute(context);
 console.log("Combined coverage (Python + page code): coverage/all-html/index.html");
+
+// 3. Ratchet: line coverage may go up freely but must not drop.
+const isPageCode = f => f.replace(/\\/g, "/").includes("/static/js/");
+const linePct = files => {
+  const summary = libCoverage.createCoverageSummary();
+  for (const f of files) summary.merge(map.fileCoverageFor(f).toSummary());
+  return Math.floor(summary.lines.pct * 10) / 10;
+};
+const now = {
+  python: linePct(map.files().filter(f => !isPageCode(f))),
+  javascript: linePct(map.files().filter(isPageCode)),
+  combined: linePct(map.files()),
+};
+console.log(`Line coverage: python ${now.python}% · page code ${now.javascript}% · combined ${now.combined}%`);
+
+if (mode === "baseline") {
+  writeFileSync(BASELINE, JSON.stringify(now, null, 2) + "\n");
+  console.log("Baseline updated: tools/coverage/baseline.json");
+} else if (mode === "check") {
+  const base = JSON.parse(readFileSync(BASELINE, "utf8"));
+  const drops = Object.keys(base).filter(k => now[k] < base[k] - TOLERANCE);
+  for (const k of Object.keys(base))
+    console.log(`  ${k.padEnd(10)} baseline ${base[k]}%  now ${now[k]}%  ${drops.includes(k) ? "DROPPED" : "ok"}`);
+  if (drops.length) {
+    console.error(`Coverage dropped below the baseline (${drops.join(", ")}). Add tests for the new code, ` +
+                  "or if the drop is intended, update the baseline with: npm --prefix tools/coverage run baseline");
+    process.exit(1);
+  }
+}
 
 
 function lcovToIstanbul(path, record) {

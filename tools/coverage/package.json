@@ -5,6 +5,8 @@
   "type": "module",
   "scripts": {
     "report": "node report-all.mjs",
+    "check": "node report-all.mjs --check",
+    "baseline": "node report-all.mjs --update-baseline",
     "report:js": "node report-js.mjs"
   },
   "devDependencies": {
