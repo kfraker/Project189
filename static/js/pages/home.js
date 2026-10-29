@@ -1,4 +1,7 @@
 /* Home page script. */
+registerPage('home', page => {
+    const { signal } = page;   // every listener below is removed when the page is left
+
     /* ── Healthbar functions ── */
     function updateLostWeight() {
         const mode       = localStorage.getItem('fight_goal_mode') || 'lean';
@@ -81,6 +84,7 @@
     /* ── Strip white fill zone from health bar PNG ── */
     (function () {
         const img = document.getElementById('healthbar-img');
+        if (img.dataset.stripped) return;          // already done (page restarted in place)
         function strip() {
             const c = document.createElement('canvas');
             c.width = img.naturalWidth; c.height = img.naturalHeight;
@@ -92,9 +96,10 @@
             }
             ctx.putImageData(d, 0, 0);
             img.src = c.toDataURL('image/png');
+            img.dataset.stripped = '1';
         }
         if (img.complete && img.naturalWidth) strip();
-        else img.addEventListener('load', strip, { once: true });
+        else img.addEventListener('load', strip, { once: true, signal });
     })();
 
     /* ── Sync plates from DB on load ── */
@@ -183,17 +188,17 @@
             next = Math.min(parseFloat(input.max), Math.max(parseFloat(input.min), next));
             input.value = next; updatePreview();
         }
-        document.getElementById(cfg.plate).addEventListener('click', open);
-        document.getElementById(cfg.plate).addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') open(); });
-        document.getElementById(cfg.cancel).addEventListener('click', close);
-        document.getElementById(cfg.save).addEventListener('click', () => { const v = parseFloat(input.value); if (!isNaN(v) && v > 0) doSave(v, false); });
-        document.getElementById(cfg.stepUp).addEventListener('click', () => step(1));
-        document.getElementById(cfg.stepDown).addEventListener('click', () => step(-1));
-        modal.addEventListener('click', e => { if (e.target === modal) close(); });
-        document.addEventListener('keydown', e => { if (e.key === 'Escape') close(); });
-        input.addEventListener('keydown', e => { if (e.key === 'Enter') { const v = parseFloat(input.value); if (!isNaN(v) && v > 0) doSave(v, false); } });
-        input.addEventListener('input', updatePreview);
-        if (cfg.screens) document.getElementById(cfg.confirmCancelId).addEventListener('click', close);
+        document.getElementById(cfg.plate).addEventListener('click', open, { signal });
+        document.getElementById(cfg.plate).addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') open(); }, { signal });
+        document.getElementById(cfg.cancel).addEventListener('click', close, { signal });
+        document.getElementById(cfg.save).addEventListener('click', () => { const v = parseFloat(input.value); if (!isNaN(v) && v > 0) doSave(v, false); }, { signal });
+        document.getElementById(cfg.stepUp).addEventListener('click', () => step(1), { signal });
+        document.getElementById(cfg.stepDown).addEventListener('click', () => step(-1), { signal });
+        modal.addEventListener('click', e => { if (e.target === modal) close(); }, { signal });
+        document.addEventListener('keydown', e => { if (e.key === 'Escape') close(); }, { signal });
+        input.addEventListener('keydown', e => { if (e.key === 'Enter') { const v = parseFloat(input.value); if (!isNaN(v) && v > 0) doSave(v, false); } }, { signal });
+        input.addEventListener('input', updatePreview, { signal });
+        if (cfg.screens) document.getElementById(cfg.confirmCancelId).addEventListener('click', close, { signal });
     }
 
     setupWeightModal({
@@ -288,11 +293,11 @@
         const modal  = document.getElementById('quick-add-modal');
         function openQA()  { modal.hidden = false; modalOpen(modal); addBtn.setAttribute('aria-expanded', 'true'); }
         function closeQA() { modal.hidden = true; modalClose(modal); addBtn.setAttribute('aria-expanded', 'false'); }
-        addBtn.addEventListener('click', openQA);
-        modal.addEventListener('click', e => { if (e.target === modal) closeQA(); });
-        document.addEventListener('keydown', e => { if (e.key === 'Escape' && !modal.hidden) closeQA(); });
-        document.getElementById('qa-log-weight').addEventListener('click', () => { closeQA(); if (window.openWeightModal) window.openWeightModal(); });
-        document.getElementById('qa-log-workout').addEventListener('click', () => { closeQA(); if (window.openWorkoutModal) window.openWorkoutModal(); });
+        addBtn.addEventListener('click', openQA, { signal });
+        modal.addEventListener('click', e => { if (e.target === modal) closeQA(); }, { signal });
+        document.addEventListener('keydown', e => { if (e.key === 'Escape' && !modal.hidden) closeQA(); }, { signal });
+        document.getElementById('qa-log-weight').addEventListener('click', () => { closeQA(); if (window.openWeightModal) window.openWeightModal(); }, { signal });
+        document.getElementById('qa-log-workout').addEventListener('click', () => { closeQA(); if (window.openWorkoutModal) window.openWorkoutModal(); }, { signal });
     })();
 
     /* ── Log Past Weight modal ── */
@@ -327,7 +332,7 @@
                 const iso=isoFromParts(y,m,day),btn=document.createElement('button');
                 btn.type='button';btn.className='dp-day';btn.textContent=day;
                 if(iso===today)btn.classList.add('dp-today');if(iso===selectedDateISO)btn.classList.add('dp-selected');
-                if(iso>today||iso<minDate){btn.disabled=true;}else{btn.addEventListener('click',()=>{selectedDateISO=iso;if(dateIn)dateIn.value=displayFromISO(iso);if(calEl)calEl.hidden=true;});}
+                if(iso>today||iso<minDate){btn.disabled=true;}else{btn.addEventListener('click',()=>{selectedDateISO=iso;if(dateIn)dateIn.value=displayFromISO(iso);if(calEl)calEl.hidden=true;}, { signal });}
                 gridEl.appendChild(btn);
             }
             const rem=(firstDow+daysInMonth)%7;
@@ -341,16 +346,16 @@
                 const yr=yearPage+i,btn=document.createElement('button');
                 btn.type='button';btn.className='dp-day dp-year';btn.textContent=yr;
                 if(yr===todayY)btn.classList.add('dp-today');if(yr===curY)btn.classList.add('dp-selected');
-                if(yr>todayY||yr<minY){btn.disabled=true;}else{btn.addEventListener('click',()=>{viewDate=new Date(yr,viewDate.getMonth(),1);renderCalendar();});}
+                if(yr>todayY||yr<minY){btn.disabled=true;}else{btn.addEventListener('click',()=>{viewDate=new Date(yr,viewDate.getMonth(),1);renderCalendar();}, { signal });}
                 gridEl.appendChild(btn);
             }
         }
-        if(monthLbl)monthLbl.addEventListener('click',()=>{if(calMode==='days'){yearPage=viewDate.getFullYear()-5;renderYearGrid();}else{renderCalendar();}});
-        if(dateIn)dateIn.addEventListener('click',()=>{if(calEl.hidden){viewDate=selectedDateISO?new Date(selectedDateISO+'T12:00:00'):new Date();renderCalendar();calEl.hidden=false;}else{calEl.hidden=true;}});
+        if(monthLbl)monthLbl.addEventListener('click',()=>{if(calMode==='days'){yearPage=viewDate.getFullYear()-5;renderYearGrid();}else{renderCalendar();}}, { signal });
+        if(dateIn)dateIn.addEventListener('click',()=>{if(calEl.hidden){viewDate=selectedDateISO?new Date(selectedDateISO+'T12:00:00'):new Date();renderCalendar();calEl.hidden=false;}else{calEl.hidden=true;}}, { signal });
         const dpPrev=document.getElementById('dp-prev'),dpNext=document.getElementById('dp-next');
-        if(dpPrev)dpPrev.addEventListener('click',()=>{if(calMode==='years'){yearPage-=12;renderYearGrid();}else{viewDate=new Date(viewDate.getFullYear(),viewDate.getMonth()-1,1);renderCalendar();}});
-        if(dpNext)dpNext.addEventListener('click',()=>{if(calMode==='years'){yearPage+=12;renderYearGrid();}else{viewDate=new Date(viewDate.getFullYear(),viewDate.getMonth()+1,1);renderCalendar();}});
-        document.addEventListener('click',e=>{const wrap=document.getElementById('history-date-wrap');if(calEl&&!calEl.hidden&&!e.composedPath().includes(wrap))calEl.hidden=true;});
+        if(dpPrev)dpPrev.addEventListener('click',()=>{if(calMode==='years'){yearPage-=12;renderYearGrid();}else{viewDate=new Date(viewDate.getFullYear(),viewDate.getMonth()-1,1);renderCalendar();}}, { signal });
+        if(dpNext)dpNext.addEventListener('click',()=>{if(calMode==='years'){yearPage+=12;renderYearGrid();}else{viewDate=new Date(viewDate.getFullYear(),viewDate.getMonth()+1,1);renderCalendar();}}, { signal });
+        document.addEventListener('click',e=>{const wrap=document.getElementById('history-date-wrap');if(calEl&&!calEl.hidden&&!e.composedPath().includes(wrap))calEl.hidden=true;}, { signal });
 
         function isKgMode(){return window.activeUnit==='kg';}
         function close(){modal.hidden=true;if(calEl)calEl.hidden=true;const si=document.getElementById('history-screen-input'),sc=document.getElementById('history-screen-confirm');if(si)si.hidden=false;if(sc)sc.hidden=true;modalClose(modal);}
@@ -389,14 +394,14 @@
         };
         const hCancel=document.getElementById('history-cancel'),hSave=document.getElementById('history-save');
         const hStepUp=document.getElementById('history-step-up'),hStepDown=document.getElementById('history-step-down');
-        if(hCancel)hCancel.addEventListener('click',close);
-        if(hSave)hSave.addEventListener('click',trySave);
-        if(hStepUp)hStepUp.addEventListener('click',()=>step(1));
-        if(hStepDown)hStepDown.addEventListener('click',()=>step(-1));
-        modal.addEventListener('click',e=>{if(e.target===modal)close();});
-        document.addEventListener('keydown',e=>{if(e.key==='Escape'){if(calEl&&!calEl.hidden){calEl.hidden=true;return;}if(!modal.hidden)close();}});
-        weightIn.addEventListener('input',updatePreview);
-        weightIn.addEventListener('keydown',e=>{if(e.key==='Enter')trySave();});
+        if(hCancel)hCancel.addEventListener('click',close, { signal });
+        if(hSave)hSave.addEventListener('click',trySave, { signal });
+        if(hStepUp)hStepUp.addEventListener('click',()=>step(1), { signal });
+        if(hStepDown)hStepDown.addEventListener('click',()=>step(-1), { signal });
+        modal.addEventListener('click',e=>{if(e.target===modal)close();}, { signal });
+        document.addEventListener('keydown',e=>{if(e.key==='Escape'){if(calEl&&!calEl.hidden){calEl.hidden=true;return;}if(!modal.hidden)close();}}, { signal });
+        weightIn.addEventListener('input',updatePreview, { signal });
+        weightIn.addEventListener('keydown',e=>{if(e.key==='Enter')trySave();}, { signal });
     })();
 
     /* ── Workout data ── */
@@ -530,33 +535,33 @@
         chip.style.display='none'; speedField.classList.add('speed-inactive');
         document.getElementById('workout-speed-up').disabled=true; document.getElementById('workout-speed-down').disabled=true;
         setFormActive(false);
-        document.getElementById('workout-speed-up').addEventListener('click',()=>{speedMph=Math.round((speedMph+0.5)*10)/10;speedVal.textContent=speedMph.toFixed(1);if(isSpeedBased){selectedMet=speedToMet(speedMph,speedTable);refreshKcal();}});
-        document.getElementById('workout-speed-down').addEventListener('click',()=>{speedMph=Math.max(0.5,Math.round((speedMph-0.5)*10)/10);speedVal.textContent=speedMph.toFixed(1);if(isSpeedBased){selectedMet=speedToMet(speedMph,speedTable);refreshKcal();}});
-        document.getElementById('workout-dur-up').addEventListener('click',()=>{duration=Math.min(duration+5,300);durVal.textContent=duration;refreshKcal();});
-        document.getElementById('workout-dur-down').addEventListener('click',()=>{duration=Math.max(duration-5,5);durVal.textContent=duration;refreshKcal();});
-        function buildDropdown(results){dropdown.innerHTML='';results.forEach((w,i)=>{const item=document.createElement('div');item.className='wsd-item';item.dataset.idx=i;item.innerHTML=`<span>${w.name}</span><span class="wsd-met">${w.speedBased?'speed-based':w.met+' MET'}</span>`;item.addEventListener('mousedown',e=>{e.preventDefault();selectWorkout(w);});dropdown.appendChild(item);});dropdownIdx=-1;}
+        document.getElementById('workout-speed-up').addEventListener('click',()=>{speedMph=Math.round((speedMph+0.5)*10)/10;speedVal.textContent=speedMph.toFixed(1);if(isSpeedBased){selectedMet=speedToMet(speedMph,speedTable);refreshKcal();}}, { signal });
+        document.getElementById('workout-speed-down').addEventListener('click',()=>{speedMph=Math.max(0.5,Math.round((speedMph-0.5)*10)/10);speedVal.textContent=speedMph.toFixed(1);if(isSpeedBased){selectedMet=speedToMet(speedMph,speedTable);refreshKcal();}}, { signal });
+        document.getElementById('workout-dur-up').addEventListener('click',()=>{duration=Math.min(duration+5,300);durVal.textContent=duration;refreshKcal();}, { signal });
+        document.getElementById('workout-dur-down').addEventListener('click',()=>{duration=Math.max(duration-5,5);durVal.textContent=duration;refreshKcal();}, { signal });
+        function buildDropdown(results){dropdown.innerHTML='';results.forEach((w,i)=>{const item=document.createElement('div');item.className='wsd-item';item.dataset.idx=i;item.innerHTML=`<span>${w.name}</span><span class="wsd-met">${w.speedBased?'speed-based':w.met+' MET'}</span>`;item.addEventListener('mousedown',e=>{e.preventDefault();selectWorkout(w);}, { signal });dropdown.appendChild(item);});dropdownIdx=-1;}
         function selectWorkout(w){isSpeedBased=!!w.speedBased;selectedLabel=w.name;const su=document.getElementById('workout-speed-up'),sd=document.getElementById('workout-speed-down');if(isSpeedBased){speedTable=w.speedTable||'running';speedMph=w.defaultSpeed||5.0;speedVal.textContent=speedMph.toFixed(1);selectedMet=speedToMet(speedMph,speedTable);speedField.classList.remove('speed-inactive');su.disabled=false;sd.disabled=false;}else{selectedMet=w.met;speedField.classList.add('speed-inactive');su.disabled=true;sd.disabled=true;}chipLabel.textContent=w.name;chipTier.className='workout-chip-tier '+tierClass(selectedMet);typeInput.style.display='none';chip.style.display='flex';typeInput.value='';dropdown.hidden=true;refreshKcal();setFormActive(true);}
-        chipClear.addEventListener('click',()=>{chip.style.display='none';typeInput.style.display='';speedField.classList.add('speed-inactive');typeInput.value='';selectedMet=null;selectedLabel=null;isSpeedBased=false;refreshKcal();setFormActive(false);});
-        typeInput.addEventListener('input',()=>{const q=typeInput.value.trim().toLowerCase();if(!q){dropdown.hidden=true;return;}const matches=WORKOUTS.filter(w=>w.name.toLowerCase().includes(q));matches.sort((a,b)=>{const rank=n=>{const lo=n.toLowerCase();if(lo.startsWith(q))return 0;if(lo.split(/[\s(/]/).some(w=>w.startsWith(q)))return 1;return 2;};return rank(a.name)-rank(b.name);});const results=matches.slice(0,10);if(!results.length){dropdown.hidden=true;return;}buildDropdown(results);dropdown.hidden=false;});
-        typeInput.addEventListener('keydown',e=>{const items=dropdown.querySelectorAll('.wsd-item');if(e.key==='ArrowDown'){e.preventDefault();dropdownIdx=Math.min(dropdownIdx+1,items.length-1);items.forEach((el,i)=>el.classList.toggle('highlighted',i===dropdownIdx));}else if(e.key==='ArrowUp'){e.preventDefault();dropdownIdx=Math.max(dropdownIdx-1,0);items.forEach((el,i)=>el.classList.toggle('highlighted',i===dropdownIdx));}else if(e.key==='Enter'&&dropdownIdx>=0){e.preventDefault();const q=typeInput.value.trim().toLowerCase();const results=WORKOUTS.filter(w=>w.name.toLowerCase().includes(q));if(results[dropdownIdx])selectWorkout(results[dropdownIdx]);}else if(e.key==='Escape'){dropdown.hidden=true;}});
-        document.addEventListener('click',e=>{if(!e.target.closest('#workout-type-input,#workout-search-dropdown,.workout-search-wrap'))dropdown.hidden=true;});
-        dropdown.addEventListener('wheel',e=>{e.preventDefault();dropdown.scrollTop+=e.deltaY;},{passive:false});
+        chipClear.addEventListener('click',()=>{chip.style.display='none';typeInput.style.display='';speedField.classList.add('speed-inactive');typeInput.value='';selectedMet=null;selectedLabel=null;isSpeedBased=false;refreshKcal();setFormActive(false);}, { signal });
+        typeInput.addEventListener('input',()=>{const q=typeInput.value.trim().toLowerCase();if(!q){dropdown.hidden=true;return;}const matches=WORKOUTS.filter(w=>w.name.toLowerCase().includes(q));matches.sort((a,b)=>{const rank=n=>{const lo=n.toLowerCase();if(lo.startsWith(q))return 0;if(lo.split(/[\s(/]/).some(w=>w.startsWith(q)))return 1;return 2;};return rank(a.name)-rank(b.name);});const results=matches.slice(0,10);if(!results.length){dropdown.hidden=true;return;}buildDropdown(results);dropdown.hidden=false;}, { signal });
+        typeInput.addEventListener('keydown',e=>{const items=dropdown.querySelectorAll('.wsd-item');if(e.key==='ArrowDown'){e.preventDefault();dropdownIdx=Math.min(dropdownIdx+1,items.length-1);items.forEach((el,i)=>el.classList.toggle('highlighted',i===dropdownIdx));}else if(e.key==='ArrowUp'){e.preventDefault();dropdownIdx=Math.max(dropdownIdx-1,0);items.forEach((el,i)=>el.classList.toggle('highlighted',i===dropdownIdx));}else if(e.key==='Enter'&&dropdownIdx>=0){e.preventDefault();const q=typeInput.value.trim().toLowerCase();const results=WORKOUTS.filter(w=>w.name.toLowerCase().includes(q));if(results[dropdownIdx])selectWorkout(results[dropdownIdx]);}else if(e.key==='Escape'){dropdown.hidden=true;}}, { signal });
+        document.addEventListener('click',e=>{if(!e.target.closest('#workout-type-input,#workout-search-dropdown,.workout-search-wrap'))dropdown.hidden=true;}, { signal });
+        dropdown.addEventListener('wheel',e=>{e.preventDefault();dropdown.scrollTop+=e.deltaY;},{passive:false, signal });
         const stagedEntriesEl=document.getElementById('wpm-staged-entries');
         let stagedActivities=[],pendingDeletes=[],loadedNote='';
-        function renderStagedRow(item,idx){const el=document.createElement('div');el.className='wpm-staged-row';el.dataset.idx=idx;el.innerHTML=`<div class="wpm-staged-row-info"><span class="workout-badge ${tierClassByName(item.type)}">${item.type.replace(/</g,'&lt;')}</span></div><div class="wpm-day-dur">${item.duration_min} min</div><div class="wpm-day-kcal">${item.kcal.toLocaleString()} kcal</div><button class="table-delete-btn" aria-label="Remove">&#10005;</button>`;el.querySelector('.table-delete-btn').addEventListener('click',()=>{const i=parseInt(el.dataset.idx,10);stagedActivities.splice(i,1);el.remove();stagedEntriesEl.querySelectorAll('.wpm-staged-row').forEach((r,j)=>{r.dataset.idx=j;});if(!dayEntries.querySelectorAll('.wpm-day-row').length&&!stagedActivities.length)dayEmpty.hidden=false;});stagedEntriesEl.appendChild(el);}
-        async function loadDayEntries(isoDate){const isToday=isoDate===getTodayISO();dayHeading.textContent=isToday?'Logged today':`Logged for ${fmtDateWO(isoDate)}`;dayEntries.querySelectorAll('.wpm-day-row').forEach(el=>el.remove());stagedEntriesEl.innerHTML='';stagedActivities=[];pendingDeletes=[];dayEmpty.hidden=false;const[rows,noteData]=await Promise.all([fetch('/api/workouts?date='+isoDate).then(r=>r.json()),fetch('/api/workout-day-note?date='+isoDate).then(r=>r.json())]);loadedNote=noteData.note||'';noteInput.value=loadedNote;if(rows.length){dayEmpty.hidden=true;rows.forEach(w=>{const el=document.createElement('div');el.className='wpm-day-row';el.dataset.wid=w.id;el.innerHTML=`<div class="wpm-day-row-info"><span class="workout-badge ${tierClassByName(w.type)}">${w.type.replace(/</g,'&lt;')}</span></div><div class="wpm-day-dur">${w.duration_min} min</div><div class="wpm-day-kcal">${w.kcal.toLocaleString()} kcal</div><button class="table-delete-btn" aria-label="Delete">&#10005;</button>`;el.querySelector('.table-delete-btn').addEventListener('click',()=>{pendingDeletes.push({id:w.id,type:w.type,duration_min:w.duration_min});el.remove();if(!dayEntries.querySelectorAll('.wpm-day-row').length&&!stagedActivities.length)dayEmpty.hidden=false;});dayEntries.appendChild(el);});}}
+        function renderStagedRow(item,idx){const el=document.createElement('div');el.className='wpm-staged-row';el.dataset.idx=idx;el.innerHTML=`<div class="wpm-staged-row-info"><span class="workout-badge ${tierClassByName(item.type)}">${item.type.replace(/</g,'&lt;')}</span></div><div class="wpm-day-dur">${item.duration_min} min</div><div class="wpm-day-kcal">${item.kcal.toLocaleString()} kcal</div><button class="table-delete-btn" aria-label="Remove">&#10005;</button>`;el.querySelector('.table-delete-btn').addEventListener('click',()=>{const i=parseInt(el.dataset.idx,10);stagedActivities.splice(i,1);el.remove();stagedEntriesEl.querySelectorAll('.wpm-staged-row').forEach((r,j)=>{r.dataset.idx=j;});if(!dayEntries.querySelectorAll('.wpm-day-row').length&&!stagedActivities.length)dayEmpty.hidden=false;}, { signal });stagedEntriesEl.appendChild(el);}
+        async function loadDayEntries(isoDate){const isToday=isoDate===getTodayISO();dayHeading.textContent=isToday?'Logged today':`Logged for ${fmtDateWO(isoDate)}`;dayEntries.querySelectorAll('.wpm-day-row').forEach(el=>el.remove());stagedEntriesEl.innerHTML='';stagedActivities=[];pendingDeletes=[];dayEmpty.hidden=false;const[rows,noteData]=await Promise.all([fetch('/api/workouts?date='+isoDate).then(r=>r.json()),fetch('/api/workout-day-note?date='+isoDate).then(r=>r.json())]);loadedNote=noteData.note||'';noteInput.value=loadedNote;if(rows.length){dayEmpty.hidden=true;rows.forEach(w=>{const el=document.createElement('div');el.className='wpm-day-row';el.dataset.wid=w.id;el.innerHTML=`<div class="wpm-day-row-info"><span class="workout-badge ${tierClassByName(w.type)}">${w.type.replace(/</g,'&lt;')}</span></div><div class="wpm-day-dur">${w.duration_min} min</div><div class="wpm-day-kcal">${w.kcal.toLocaleString()} kcal</div><button class="table-delete-btn" aria-label="Delete">&#10005;</button>`;el.querySelector('.table-delete-btn').addEventListener('click',()=>{pendingDeletes.push({id:w.id,type:w.type,duration_min:w.duration_min});el.remove();if(!dayEntries.querySelectorAll('.wpm-day-row').length&&!stagedActivities.length)dayEmpty.hidden=false;}, { signal });dayEntries.appendChild(el);});}}
         const dpInput=document.getElementById('wp-date-input'),dpCalEl=document.getElementById('wpm-calendar'),dpGridEl=document.getElementById('wpm-dp-grid'),dpMonthLbl=document.getElementById('wpm-dp-month-label');
         const dpDayNames=dpCalEl.querySelector('.dp-day-names'),DP_MONTHS=['January','February','March','April','May','June','July','August','September','October','November','December'];
         let dpViewDate=new Date(),dpSelected='',dpCalMode='days',dpYearPage=new Date().getFullYear()-5;
         function dpIsoFromParts(y,m,d){return y+'-'+String(m+1).padStart(2,'0')+'-'+String(d).padStart(2,'0');}
         function dpDisplayFromISO(iso){const[y,m,d]=iso.split('-');return DP_MONTHS[parseInt(m)-1]+' '+parseInt(d)+', '+y;}
-        function dpRenderCalendar(){dpCalMode='days';dpDayNames.style.display='';dpGridEl.style.gridTemplateColumns='repeat(7,1fr)';const today=getTodayISO(),y=dpViewDate.getFullYear(),m=dpViewDate.getMonth();dpMonthLbl.textContent=DP_MONTHS[m]+' '+y;const firstDow=new Date(y,m,1).getDay(),daysInMonth=new Date(y,m+1,0).getDate(),daysInPrev=new Date(y,m,0).getDate();dpGridEl.innerHTML='';for(let i=firstDow-1;i>=0;i--){const btn=document.createElement('button');btn.type='button';btn.className='dp-day dp-other-month';btn.textContent=daysInPrev-i;btn.disabled=true;dpGridEl.appendChild(btn);}for(let day=1;day<=daysInMonth;day++){const iso=dpIsoFromParts(y,m,day),btn=document.createElement('button');btn.type='button';btn.className='dp-day';btn.textContent=day;if(iso===today)btn.classList.add('dp-today');if(iso===dpSelected)btn.classList.add('dp-selected');if(iso>today){btn.disabled=true;}else{btn.addEventListener('click',()=>{dpSelected=iso;dpInput.value=dpDisplayFromISO(iso);dpCalEl.hidden=true;loadDayEntries(iso);});}dpGridEl.appendChild(btn);}const rem=(firstDow+daysInMonth)%7;if(rem>0){for(let i=1;i<=7-rem;i++){const btn=document.createElement('button');btn.type='button';btn.className='dp-day dp-other-month';btn.textContent=i;btn.disabled=true;dpGridEl.appendChild(btn);}}}
-        function dpRenderYearGrid(){dpCalMode='years';dpDayNames.style.display='none';dpGridEl.style.gridTemplateColumns='repeat(3,1fr)';const todayY=new Date().getFullYear();dpMonthLbl.textContent=dpYearPage+' – '+(dpYearPage+11);dpGridEl.innerHTML='';for(let i=0;i<12;i++){const yr=dpYearPage+i,btn=document.createElement('button');btn.type='button';btn.className='dp-day dp-year';btn.textContent=yr;if(yr===todayY)btn.classList.add('dp-today');if(yr===dpViewDate.getFullYear())btn.classList.add('dp-selected');if(yr>todayY){btn.disabled=true;}else{btn.addEventListener('click',()=>{dpViewDate=new Date(yr,dpViewDate.getMonth(),1);dpRenderCalendar();});}dpGridEl.appendChild(btn);}}
-        dpMonthLbl.addEventListener('click',()=>{if(dpCalMode==='days'){dpYearPage=dpViewDate.getFullYear()-5;dpRenderYearGrid();}else dpRenderCalendar();});
-        dpInput.addEventListener('click',()=>{if(dpCalEl.hidden){dpViewDate=dpSelected?new Date(dpSelected+'T12:00:00'):new Date();dpRenderCalendar();dpCalEl.hidden=false;}else{dpCalEl.hidden=true;}});
-        document.getElementById('wpm-dp-prev').addEventListener('click',()=>{if(dpCalMode==='years'){dpYearPage-=12;dpRenderYearGrid();}else{dpViewDate=new Date(dpViewDate.getFullYear(),dpViewDate.getMonth()-1,1);dpRenderCalendar();}});
-        document.getElementById('wpm-dp-next').addEventListener('click',()=>{if(dpCalMode==='years'){dpYearPage+=12;dpRenderYearGrid();}else{dpViewDate=new Date(dpViewDate.getFullYear(),dpViewDate.getMonth()+1,1);dpRenderCalendar();}});
-        document.addEventListener('click',e=>{const wrap=document.getElementById('wpm-dp-wrap');if(!dpCalEl.hidden&&!e.composedPath().includes(wrap))dpCalEl.hidden=true;});
+        function dpRenderCalendar(){dpCalMode='days';dpDayNames.style.display='';dpGridEl.style.gridTemplateColumns='repeat(7,1fr)';const today=getTodayISO(),y=dpViewDate.getFullYear(),m=dpViewDate.getMonth();dpMonthLbl.textContent=DP_MONTHS[m]+' '+y;const firstDow=new Date(y,m,1).getDay(),daysInMonth=new Date(y,m+1,0).getDate(),daysInPrev=new Date(y,m,0).getDate();dpGridEl.innerHTML='';for(let i=firstDow-1;i>=0;i--){const btn=document.createElement('button');btn.type='button';btn.className='dp-day dp-other-month';btn.textContent=daysInPrev-i;btn.disabled=true;dpGridEl.appendChild(btn);}for(let day=1;day<=daysInMonth;day++){const iso=dpIsoFromParts(y,m,day),btn=document.createElement('button');btn.type='button';btn.className='dp-day';btn.textContent=day;if(iso===today)btn.classList.add('dp-today');if(iso===dpSelected)btn.classList.add('dp-selected');if(iso>today){btn.disabled=true;}else{btn.addEventListener('click',()=>{dpSelected=iso;dpInput.value=dpDisplayFromISO(iso);dpCalEl.hidden=true;loadDayEntries(iso);}, { signal });}dpGridEl.appendChild(btn);}const rem=(firstDow+daysInMonth)%7;if(rem>0){for(let i=1;i<=7-rem;i++){const btn=document.createElement('button');btn.type='button';btn.className='dp-day dp-other-month';btn.textContent=i;btn.disabled=true;dpGridEl.appendChild(btn);}}}
+        function dpRenderYearGrid(){dpCalMode='years';dpDayNames.style.display='none';dpGridEl.style.gridTemplateColumns='repeat(3,1fr)';const todayY=new Date().getFullYear();dpMonthLbl.textContent=dpYearPage+' – '+(dpYearPage+11);dpGridEl.innerHTML='';for(let i=0;i<12;i++){const yr=dpYearPage+i,btn=document.createElement('button');btn.type='button';btn.className='dp-day dp-year';btn.textContent=yr;if(yr===todayY)btn.classList.add('dp-today');if(yr===dpViewDate.getFullYear())btn.classList.add('dp-selected');if(yr>todayY){btn.disabled=true;}else{btn.addEventListener('click',()=>{dpViewDate=new Date(yr,dpViewDate.getMonth(),1);dpRenderCalendar();}, { signal });}dpGridEl.appendChild(btn);}}
+        dpMonthLbl.addEventListener('click',()=>{if(dpCalMode==='days'){dpYearPage=dpViewDate.getFullYear()-5;dpRenderYearGrid();}else dpRenderCalendar();}, { signal });
+        dpInput.addEventListener('click',()=>{if(dpCalEl.hidden){dpViewDate=dpSelected?new Date(dpSelected+'T12:00:00'):new Date();dpRenderCalendar();dpCalEl.hidden=false;}else{dpCalEl.hidden=true;}}, { signal });
+        document.getElementById('wpm-dp-prev').addEventListener('click',()=>{if(dpCalMode==='years'){dpYearPage-=12;dpRenderYearGrid();}else{dpViewDate=new Date(dpViewDate.getFullYear(),dpViewDate.getMonth()-1,1);dpRenderCalendar();}}, { signal });
+        document.getElementById('wpm-dp-next').addEventListener('click',()=>{if(dpCalMode==='years'){dpYearPage+=12;dpRenderYearGrid();}else{dpViewDate=new Date(dpViewDate.getFullYear(),dpViewDate.getMonth()+1,1);dpRenderCalendar();}}, { signal });
+        document.addEventListener('click',e=>{const wrap=document.getElementById('wpm-dp-wrap');if(!dpCalEl.hidden&&!e.composedPath().includes(wrap))dpCalEl.hidden=true;}, { signal });
         function dpSetDate(isoDate){dpSelected=isoDate;dpInput.value=isoDate?dpDisplayFromISO(isoDate):'';dpCalEl.hidden=true;}
         function clearActivityForm(){typeInput.value='';typeInput.style.display='';chip.style.display='none';speedField.classList.add('speed-inactive');document.getElementById('workout-speed-up').disabled=true;document.getElementById('workout-speed-down').disabled=true;selectedMet=null;selectedLabel=null;isSpeedBased=false;speedMph=5.0;speedVal.textContent='5.0';duration=30;durVal.textContent='30';setFormActive(false);refreshKcal();dropdown.hidden=true;}
         function closeModal(){logModal.hidden=true;dpCalEl.hidden=true;dropdown.hidden=true;}
@@ -565,14 +570,14 @@
         function clearDayView(){dayHeading.textContent='Select a date';dayEntries.querySelectorAll('.wpm-day-row').forEach(el=>el.remove());stagedEntriesEl.innerHTML='';stagedActivities=[];pendingDeletes=[];loadedNote='';noteInput.value='';dayEmpty.hidden=false;}
         async function openModal(isoDate){try{const w=await fetch('/api/latest-weight').then(r=>r.json());weightKg=w.weight_lbs?w.weight_lbs/2.2046:80;}catch{weightKg=80;}let startDate=isoDate;if(!startDate){const today=getTodayISO();const todayRows=await fetch('/api/workouts?date='+today).then(r=>r.json());startDate=todayRows.length?'':today;}dpSetDate(startDate);clearActivityForm();if(startDate)await loadDayEntries(startDate);else clearDayView();logModal.hidden=false;requestAnimationFrame(()=>document.getElementById('wpm-entries-scroll').dispatchEvent(new Event('scroll')));typeInput.focus();}
         window.openWorkoutModal = function(){openModal();};
-        document.getElementById('wp-modal-x').addEventListener('click',maybeClose);
-        document.getElementById('wp-modal-cancel').addEventListener('click',maybeClose);
-        logModal.addEventListener('click',e=>{if(e.target===logModal)maybeClose();});
-        logModal.addEventListener('keydown',e=>{if(e.key==='Escape')maybeClose();});
-        document.getElementById('wpm-add-activity-btn').addEventListener('click',()=>{if(!selectedLabel)return;const kcal=calcKcal(),typeLabel=isSpeedBased?`${selectedLabel} (${speedMph.toFixed(1)} mph)`:selectedLabel;const item={type:typeLabel,duration_min:duration,kcal};const idx=stagedActivities.length;stagedActivities.push(item);renderStagedRow(item,idx);dayEmpty.hidden=true;clearActivityForm();});
-        function showDeleteConfirm(onCommit){const modal=document.getElementById('idx-del-check-modal'),checks=document.getElementById('idx-del-checks'),okBtn=document.getElementById('idx-del-check-ok');checks.innerHTML='';pendingDeletes.forEach((d,i)=>{const lbl=document.createElement('label');lbl.className='row-delete-check-label';const cb=document.createElement('input');cb.type='checkbox';cb.checked=true;cb.dataset.idx=i;lbl.append(cb,document.createTextNode(`${d.type} (${d.duration_min} min)`));checks.appendChild(lbl);});function syncOk(){okBtn.disabled=checks.querySelectorAll('input:checked').length===0;}checks.querySelectorAll('input[type="checkbox"]').forEach(cb=>cb.addEventListener('change',syncOk));okBtn.disabled=false;modal.hidden=false;document.getElementById('idx-del-check-cancel').onclick=()=>{modal.hidden=true;};okBtn.onclick=()=>{modal.hidden=true;const ticked=new Set();checks.querySelectorAll('input[type="checkbox"]').forEach(cb=>{if(cb.checked)ticked.add(parseInt(cb.dataset.idx,10));});pendingDeletes=pendingDeletes.filter((_,i)=>ticked.has(i));onCommit();};}
-        document.getElementById('wp-modal-save').addEventListener('click',async()=>{if(!dpSelected){dpInput.focus();return;}const isoDate=dpSelected;async function commitSave(){for(const d of pendingDeletes)await fetch('/api/workout/'+d.id,{method:'DELETE'});for(const item of stagedActivities)await fetch('/api/workout',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({date:isoDate,type:item.type,duration_min:item.duration_min,kcal:item.kcal,note:''})});await fetch('/api/workout-day-note',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({date:isoDate,note:noteInput.value.trim()})});closeModal();if(window.refreshHeaderStats)window.refreshHeaderStats();}if(pendingDeletes.length>0){showDeleteConfirm(commitSave);}else{await commitSave();}});
-        (function(){const scroll=document.getElementById('wpm-entries-scroll'),thumb=document.getElementById('wpm-scroll-thumb');function sync(){const track=thumb.parentElement;if(scroll.scrollHeight<=scroll.clientHeight){thumb.style.display='none';return;}thumb.style.display='block';const ratio=scroll.clientHeight/scroll.scrollHeight,thumbH=Math.max(16,ratio*track.clientHeight),maxTop=track.clientHeight-thumbH,pct=scroll.scrollTop/(scroll.scrollHeight-scroll.clientHeight);thumb.style.height=thumbH+'px';thumb.style.top=(pct*maxTop)+'px';}scroll.addEventListener('scroll',sync);new MutationObserver(sync).observe(scroll,{childList:true,subtree:true});let drag=false,dragY=0,dragTop=0;thumb.addEventListener('mousedown',e=>{drag=true;dragY=e.clientY;dragTop=scroll.scrollTop;e.preventDefault();e.stopPropagation();});document.addEventListener('mousemove',e=>{if(!drag)return;const track=thumb.parentElement,thumbH=parseFloat(thumb.style.height)||16,maxTop=track.clientHeight-thumbH,maxScroll=scroll.scrollHeight-scroll.clientHeight;scroll.scrollTop=Math.max(0,Math.min(dragTop+(maxTop>0?(e.clientY-dragY)/maxTop:0)*maxScroll,maxScroll));});document.addEventListener('mouseup',()=>{drag=false;});})();
+        document.getElementById('wp-modal-x').addEventListener('click',maybeClose, { signal });
+        document.getElementById('wp-modal-cancel').addEventListener('click',maybeClose, { signal });
+        logModal.addEventListener('click',e=>{if(e.target===logModal)maybeClose();}, { signal });
+        logModal.addEventListener('keydown',e=>{if(e.key==='Escape')maybeClose();}, { signal });
+        document.getElementById('wpm-add-activity-btn').addEventListener('click',()=>{if(!selectedLabel)return;const kcal=calcKcal(),typeLabel=isSpeedBased?`${selectedLabel} (${speedMph.toFixed(1)} mph)`:selectedLabel;const item={type:typeLabel,duration_min:duration,kcal};const idx=stagedActivities.length;stagedActivities.push(item);renderStagedRow(item,idx);dayEmpty.hidden=true;clearActivityForm();}, { signal });
+        function showDeleteConfirm(onCommit){const modal=document.getElementById('idx-del-check-modal'),checks=document.getElementById('idx-del-checks'),okBtn=document.getElementById('idx-del-check-ok');checks.innerHTML='';pendingDeletes.forEach((d,i)=>{const lbl=document.createElement('label');lbl.className='row-delete-check-label';const cb=document.createElement('input');cb.type='checkbox';cb.checked=true;cb.dataset.idx=i;lbl.append(cb,document.createTextNode(`${d.type} (${d.duration_min} min)`));checks.appendChild(lbl);});function syncOk(){okBtn.disabled=checks.querySelectorAll('input:checked').length===0;}checks.querySelectorAll('input[type="checkbox"]').forEach(cb=>cb.addEventListener('change',syncOk, { signal }));okBtn.disabled=false;modal.hidden=false;document.getElementById('idx-del-check-cancel').onclick=()=>{modal.hidden=true;};okBtn.onclick=()=>{modal.hidden=true;const ticked=new Set();checks.querySelectorAll('input[type="checkbox"]').forEach(cb=>{if(cb.checked)ticked.add(parseInt(cb.dataset.idx,10));});pendingDeletes=pendingDeletes.filter((_,i)=>ticked.has(i));onCommit();};}
+        document.getElementById('wp-modal-save').addEventListener('click',async()=>{if(!dpSelected){dpInput.focus();return;}const isoDate=dpSelected;async function commitSave(){for(const d of pendingDeletes)await fetch('/api/workout/'+d.id,{method:'DELETE'});for(const item of stagedActivities)await fetch('/api/workout',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({date:isoDate,type:item.type,duration_min:item.duration_min,kcal:item.kcal,note:''})});await fetch('/api/workout-day-note',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({date:isoDate,note:noteInput.value.trim()})});closeModal();if(window.refreshHeaderStats)window.refreshHeaderStats();}if(pendingDeletes.length>0){showDeleteConfirm(commitSave);}else{await commitSave();}}, { signal });
+        (function(){const scroll=document.getElementById('wpm-entries-scroll'),thumb=document.getElementById('wpm-scroll-thumb');function sync(){const track=thumb.parentElement;if(scroll.scrollHeight<=scroll.clientHeight){thumb.style.display='none';return;}thumb.style.display='block';const ratio=scroll.clientHeight/scroll.scrollHeight,thumbH=Math.max(16,ratio*track.clientHeight),maxTop=track.clientHeight-thumbH,pct=scroll.scrollTop/(scroll.scrollHeight-scroll.clientHeight);thumb.style.height=thumbH+'px';thumb.style.top=(pct*maxTop)+'px';}scroll.addEventListener('scroll',sync, { signal });const mo=new MutationObserver(sync);mo.observe(scroll,{childList:true,subtree:true});page.onLeave(()=>mo.disconnect());let drag=false,dragY=0,dragTop=0;thumb.addEventListener('mousedown',e=>{drag=true;dragY=e.clientY;dragTop=scroll.scrollTop;e.preventDefault();e.stopPropagation();}, { signal });document.addEventListener('mousemove',e=>{if(!drag)return;const track=thumb.parentElement,thumbH=parseFloat(thumb.style.height)||16,maxTop=track.clientHeight-thumbH,maxScroll=scroll.scrollHeight-scroll.clientHeight;scroll.scrollTop=Math.max(0,Math.min(dragTop+(maxTop>0?(e.clientY-dragY)/maxTop:0)*maxScroll,maxScroll));}, { signal });document.addEventListener('mouseup',()=>{drag=false;}, { signal });})();
     })();
 
     /* ── Header stats ── */
@@ -594,3 +599,4 @@
         updateHeaderStats().catch(e => console.warn('Header stats failed:', e));
         window.refreshHeaderStats = updateHeaderStats;
     })();
+});

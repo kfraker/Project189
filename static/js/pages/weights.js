@@ -1,27 +1,6 @@
 /* Weigh-ins page script. */
-    window.savePref = function (key, value) {
-        localStorage.setItem(key, value);
-        fetch('/api/preference', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ key: key, value: value })
-        });
-    };
-
-    if ('scrollRestoration' in history) history.scrollRestoration = 'manual';
-
-    requestAnimationFrame(() => requestAnimationFrame(() => {
-        document.body.classList.remove('preload');
-    }));
-
-    function fmtDateShort(dt) {
-        const mon = dt.toLocaleDateString('en-US', { month: 'short' });
-        const y = dt.getFullYear(), d = dt.getDate();
-        return (localStorage.getItem('pref_date_format') || 'mdy') === 'mdy'
-            ? mon + ' ' + d + ', ' + y
-            : d + ' ' + mon + ' ' + y;
-    }
-
+registerPage('weights', page => {
+    const { signal } = page;   // every listener below is removed when the page is left
 
     fetch('/api/latest-weight').then(r => r.json()).then(d => {
         window.oldestEntryDate = d.oldest_date || null;
@@ -30,6 +9,8 @@
     const chartTtEl = document.createElement('div');
     chartTtEl.id = 'chart-tooltip';
     document.body.appendChild(chartTtEl);
+    page.onLeave(() => chartTtEl.remove());
+    page.onLeave(() => document.body.classList.remove('note-open'));   // if left mid-edit
 
     /* Chart.js loads on demand (see loadScriptOnce in shell.js); everything that
        touches Chart waits for this. */
@@ -67,6 +48,7 @@
     /* ── Daily chart ── */
     (function () {
         let chartInst = null, activeRange = 'all', activeDays = 30;
+        page.onLeave(() => { if (chartInst) { chartInst.destroy(); chartInst = null; } });
         let currentDates = [], currentRawW = [];
         let mouseX = 0, mouseY = 0;
 
@@ -96,6 +78,7 @@
                 fetch(url).then(r => r.json()),
                 fetch('/api/settings').then(r => r.json()),
             ]);
+            if (signal.aborted) return;   // page was left while loading: draw nothing
 
             window.noteMap = new Map(rows.map(r => [r.date, r.notes || '']));
             const weightRows = rows.filter(r => r.weight_lbs != null);
@@ -274,7 +257,7 @@
                     customIn.focus(); customIn.select();
                     loadChart('custom', parseInt(document.getElementById('custom-days').value) || 7);
                 } else { wrap.hidden = true; loadChart(btn.dataset.range); }
-            });
+            }, { signal });
         });
 
         const customIn = document.getElementById('custom-days');
@@ -285,11 +268,11 @@
             document.querySelector('.range-btn[data-range="custom"]').classList.add('active');
             loadChart('custom', d);
         }
-        customIn.addEventListener('keydown', e => { if (e.key === 'Enter') applyCustom(); });
-        customIn.addEventListener('change', applyCustom);
+        customIn.addEventListener('keydown', e => { if (e.key === 'Enter') applyCustom(); }, { signal });
+        customIn.addEventListener('change', applyCustom, { signal });
 
-        canvas.addEventListener('mousemove',  e => { mouseX = e.clientX; mouseY = e.clientY; });
-        canvas.addEventListener('mouseleave', () => { chartTtEl.style.opacity = '0'; });
+        canvas.addEventListener('mousemove',  e => { mouseX = e.clientX; mouseY = e.clientY; }, { signal });
+        canvas.addEventListener('mouseleave', () => { chartTtEl.style.opacity = '0'; }, { signal });
 
         window.refreshChart  = loadChart;
         window.getChartRange = () => ({ range: activeRange, days: activeDays });
@@ -314,6 +297,7 @@
         const customIn   = document.getElementById('custom-weeks');
 
         let weeklyInst = null;
+        page.onLeave(() => { if (weeklyInst) { weeklyInst.destroy(); weeklyInst = null; } });
         let activeWeeksRange = localStorage.getItem('pref_weekly_range') || '4';
         const savedCustomWeeks = localStorage.getItem('pref_custom_weeks');
         if (savedCustomWeeks) customIn.value = savedCustomWeeks;
@@ -387,6 +371,7 @@
             let days = range==='all' ? null : range==='custom' ? (parseInt(customWeeks)||4)*7 : (parseInt(range)||4)*7;
             const url = days==null ? '/api/weights?range=all' : '/api/weights?range=custom&days='+days;
             const [rows, settings] = await Promise.all([fetch(url).then(r=>r.json()), fetch('/api/settings').then(r=>r.json())]);
+            if (signal.aborted) return;   // page was left while loading: draw nothing
             const filteredRows = (rows||[]).filter(r=>r.weight_lbs!=null);
             const gw = settings['goal_weight'], goalLbs = gw?gw.value_lbs:null;
 
@@ -473,8 +458,8 @@
                 }
             });
 
-            canvas.addEventListener('mousemove', e=>{weeklyMouseX=e.clientX;weeklyMouseY=e.clientY;});
-            canvas.addEventListener('mouseleave', ()=>{chartTtEl.style.opacity='0';});
+            canvas.addEventListener('mousemove', e=>{weeklyMouseX=e.clientX;weeklyMouseY=e.clientY;}, { signal });
+            canvas.addEventListener('mouseleave', ()=>{chartTtEl.style.opacity='0';}, { signal });
         }
 
         document.querySelectorAll('.weekly-range-btn').forEach(btn => {
@@ -485,7 +470,7 @@
                 if (w==='custom') { customWrap.hidden=false; customIn.focus(); customIn.select(); loadWeeklyChart('custom',parseInt(customIn.value)||4); }
                 else { customWrap.hidden=true; loadWeeklyChart(w); }
                 if (window.onWeeklyRangeChange) window.onWeeklyRangeChange();
-            });
+            }, { signal });
         });
 
         function applyWeeklyCustom() {
@@ -496,8 +481,8 @@
             activeWeeksRange='custom'; loadWeeklyChart('custom',w);
             if (window.onWeeklyRangeChange) window.onWeeklyRangeChange();
         }
-        customIn.addEventListener('keydown', e=>{if(e.key==='Enter')applyWeeklyCustom();});
-        customIn.addEventListener('blur', ()=>{const v=parseInt(customIn.value);if(v&&v<4)customIn.value=4;else if(v>156)customIn.value=156;});
+        customIn.addEventListener('keydown', e=>{if(e.key==='Enter')applyWeeklyCustom();}, { signal });
+        customIn.addEventListener('blur', ()=>{const v=parseInt(customIn.value);if(v&&v<4)customIn.value=4;else if(v>156)customIn.value=156;}, { signal });
 
         window.refreshWeeklyChart = function() {
             if (!window.weeklyChartLoaded) return;
@@ -534,7 +519,7 @@
             weeklyRanges.hidden = !weekly;
         }
 
-        typeBtn.addEventListener('click', () => setChart(window.currentChartPage !== 'weekly'));
+        typeBtn.addEventListener('click', () => setChart(window.currentChartPage !== 'weekly'), { signal });
 
         window.applyChartNav = function() {
             const dl = localStorage.getItem('pref_default_landing') || 'daily';
@@ -595,7 +580,7 @@
                 exportRows.forEach(r=>{const note=(r.notes||'').replace(/"/g,'""');lines.push(`${r.date},${r.weight_lbs??''},${r.weight_kg??''},"${note}"`);});
                 const blob=new Blob([lines.join('\n')],{type:'text/csv'});
                 const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download='weight-history.csv'; a.click(); URL.revokeObjectURL(a.href);
-            });
+            }, { signal });
             td.appendChild(btn); tr.appendChild(td); tbody.appendChild(tr);
         }
 
@@ -654,7 +639,7 @@
                     if (missing){
                         wtTd.className='cell-weight cell-missing'; wtTd.dataset.lbs=''; wtTd.dataset.kg='';
                         wtTd.innerHTML='<span class="missing-dash">—</span>';
-                        const eb=document.createElement('button');eb.className='missing-excl-btn';eb.textContent='!';eb.setAttribute('aria-label','Missing data');eb.addEventListener('click',e=>{e.stopPropagation();if(window.openWeightModal)window.openWeightModal(date,null);});wtTd.appendChild(eb);
+                        const eb=document.createElement('button');eb.className='missing-excl-btn';eb.textContent='!';eb.setAttribute('aria-label','Missing data');eb.addEventListener('click',e=>{e.stopPropagation();if(window.openWeightModal)window.openWeightModal(date,null);}, { signal });wtTd.appendChild(eb);
                     } else {
                         wtTd.className='cell-weight'; wtTd.dataset.lbs=entry.weight_lbs; wtTd.dataset.kg=entry.weight_kg;
                         wtTd.textContent=(unit==='lbs'?fmtLbs(entry.weight_lbs):fmtLbs(entry.weight_kg))+' '+unit;
@@ -663,15 +648,15 @@
                     const noteText=entry&&entry.notes?entry.notes:'', hasNote=!!(noteText.trim());
                     const noteBtn=document.createElement('button'); noteBtn.className='note-btn'+(hasNote?' has-note':''); noteBtn.setAttribute('aria-label',hasNote?'Edit note':'Add note');
                     noteBtn.innerHTML='<svg viewBox="0 0 16 16" xmlns="http://www.w3.org/2000/svg"><path d="M13 1H3C2.45 1 2 1.45 2 2v9c0 .55.45 1 1 1h1.5l2.5 2.5L9.5 12H13c.55 0 1-.45 1-1V2c0-.55-.45-1-1-1z"/></svg>';
-                    noteBtn.addEventListener('click',e=>{e.stopPropagation();window.openNoteEditor(date,noteText,noteBtn);});
+                    noteBtn.addEventListener('click',e=>{e.stopPropagation();window.openNoteEditor(date,noteText,noteBtn);}, { signal });
                     const del=document.createElement('button');
-                    if (!missing||entry){del.className='table-delete-btn';del.setAttribute('aria-label','Delete this entry');del.addEventListener('click',e=>{e.stopPropagation();showRowDeleteModal(date,entry);});}
+                    if (!missing||entry){del.className='table-delete-btn';del.setAttribute('aria-label','Delete this entry');del.addEventListener('click',e=>{e.stopPropagation();showRowDeleteModal(date,entry);}, { signal });}
                     else{del.className='table-delete-btn missing-del';}
                     del.textContent='✕';
                     actTd.append(noteBtn,del); dayTr.append(dayDateTd,wtTd,actTd);
-                    dayTr.addEventListener('mouseenter',()=>dayTr.classList.add('row-hover'));
-                    dayTr.addEventListener('mouseleave',()=>dayTr.classList.remove('row-hover'));
-                    dayTr.addEventListener('click',e=>{if(e.target.closest('button,input'))return;if(window.openWeightModal)window.openWeightModal(date,entry&&entry.weight_lbs!=null?entry.weight_lbs:null);});
+                    dayTr.addEventListener('mouseenter',()=>dayTr.classList.add('row-hover'), { signal });
+                    dayTr.addEventListener('mouseleave',()=>dayTr.classList.remove('row-hover'), { signal });
+                    dayTr.addEventListener('click',e=>{if(e.target.closest('button,input'))return;if(window.openWeightModal)window.openWeightModal(date,entry&&entry.weight_lbs!=null?entry.weight_lbs:null);}, { signal });
                     innerBody.appendChild(dayTr);
                 });
 
@@ -680,10 +665,10 @@
                 innerHead.appendChild(innerHeadTr); innerTable.appendChild(innerHead); innerTable.appendChild(innerBody);
                 wrap.appendChild(innerTable); collapseTd.appendChild(wrap); collapseTr.appendChild(collapseTd); tableBody.appendChild(collapseTr);
 
-                if (hdrExcl){hdrExcl.addEventListener('click',e=>{e.stopPropagation();if(window.openWeightModal)window.openWeightModal(missingDates[0],null);});}
+                if (hdrExcl){hdrExcl.addEventListener('click',e=>{e.stopPropagation();if(window.openWeightModal)window.openWeightModal(missingDates[0],null);}, { signal });}
                 if (defaultExpanded) requestAnimationFrame(()=>{wrap.style.maxHeight=wrap.scrollHeight+'px';});
-                headerTr.addEventListener('click',()=>{const open=icon.classList.contains('expanded');if(open){icon.classList.remove('expanded');wrap.style.maxHeight='0';headerTr.setAttribute('aria-expanded','false');}else{icon.classList.add('expanded');wrap.style.maxHeight=wrap.scrollHeight+'px';headerTr.setAttribute('aria-expanded','true');}});
-                headerTr.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();headerTr.click();}});
+                headerTr.addEventListener('click',()=>{const open=icon.classList.contains('expanded');if(open){icon.classList.remove('expanded');wrap.style.maxHeight='0';headerTr.setAttribute('aria-expanded','false');}else{icon.classList.add('expanded');wrap.style.maxHeight=wrap.scrollHeight+'px';headerTr.setAttribute('aria-expanded','true');}}, { signal });
+                headerTr.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();headerTr.click();}}, { signal });
             });
             appendExportRow(tableBody, weekExportRows);
         }
@@ -715,17 +700,17 @@
                 wtTd.dataset.lbs=(!missing&&entry)?entry.weight_lbs:''; wtTd.dataset.kg=(!missing&&entry)?entry.weight_kg:'';
                 const primaryVal=(!missing&&entry)?(unit==='lbs'?fmtLbs(entry.weight_lbs)+' '+unit:fmtLbs(entry.weight_kg)+' '+unit):null;
                 wtTd.innerHTML=missing?'<span class="missing-dash">—</span>':primaryVal;
-                if(missing){const eb=document.createElement('button');eb.className='missing-excl-btn';eb.textContent='!';eb.setAttribute('aria-label','Log weight for this day');eb.addEventListener('click',e=>{e.stopPropagation();if(window.openWeightModal)window.openWeightModal(date,null);});wtTd.appendChild(eb);}
+                if(missing){const eb=document.createElement('button');eb.className='missing-excl-btn';eb.textContent='!';eb.setAttribute('aria-label','Log weight for this day');eb.addEventListener('click',e=>{e.stopPropagation();if(window.openWeightModal)window.openWeightModal(date,null);}, { signal });wtTd.appendChild(eb);}
                 const stTd=document.createElement('td'); stTd.className='action-cell';
                 const noteText=entry&&entry.notes?entry.notes:'',hasNote=!!(noteText.trim());
                 const noteBtn=document.createElement('button'); noteBtn.className='note-btn'+(hasNote?' has-note':''); noteBtn.setAttribute('aria-label',hasNote?'Edit note':'Add note');
                 noteBtn.innerHTML='<svg viewBox="0 0 16 16" xmlns="http://www.w3.org/2000/svg"><path d="M13 1H3C2.45 1 2 1.45 2 2v9c0 .55.45 1 1 1h1.5l2.5 2.5L9.5 12H13c.55 0 1-.45 1-1V2c0-.55-.45-1-1-1z"/></svg>';
-                noteBtn.addEventListener('click',e=>{e.stopPropagation();window.openNoteEditor(date,noteText,noteBtn);});
+                noteBtn.addEventListener('click',e=>{e.stopPropagation();window.openNoteEditor(date,noteText,noteBtn);}, { signal });
                 const del=document.createElement('button'); del.className=missing&&!entry?'table-delete-btn missing-del':'table-delete-btn';
                 del.setAttribute('aria-label','Delete this entry'); del.textContent='✕';
-                if(!missing||entry)del.addEventListener('click',e=>{e.stopPropagation();showRowDeleteModal(date,entry);});
+                if(!missing||entry)del.addEventListener('click',e=>{e.stopPropagation();showRowDeleteModal(date,entry);}, { signal });
                 stTd.append(noteBtn,del); tr.append(dateTd,wtTd,stTd); tableBody.appendChild(tr);
-                tr.addEventListener('click',e=>{if(e.target.closest('button,input'))return;if(window.openWeightModal)window.openWeightModal(date,entry&&entry.weight_lbs!=null?entry.weight_lbs:null);});
+                tr.addEventListener('click',e=>{if(e.target.closest('button,input'))return;if(window.openWeightModal)window.openWeightModal(date,entry&&entry.weight_lbs!=null?entry.weight_lbs:null);}, { signal });
             });
 
             if(rows.length&&window.oldestEntryDate&&startDate<=window.oldestEntryDate){
@@ -773,8 +758,8 @@
                 else{showTableConfirm('Confirm Overwrite','Are you sure you want to overwrite your weight for '+formatDateDisplay(date)+'?','Overwrite',()=>commitSave(lbs));}
             }
             function cancel(){if(done)return;done=true;renderTable();}
-            inp.addEventListener('keydown',e=>{if(e.key==='Enter')save();if(e.key==='Escape')cancel();});
-            inp.addEventListener('blur',save);
+            inp.addEventListener('keydown',e=>{if(e.key==='Enter')save();if(e.key==='Escape')cancel();}, { signal });
+            inp.addEventListener('blur',save, { signal });
         }
 
         async function applyDelete(date){
@@ -801,7 +786,7 @@
             if(hasNote){const snippet=entry.notes.trim().length>48?entry.notes.trim().slice(0,48)+'…':entry.notes.trim();const lbl=document.createElement('label');lbl.className='row-delete-check-label';const cb=document.createElement('input');cb.type='checkbox';cb.checked=true;cb.dataset.key='note';lbl.append(cb,document.createTextNode('Note: "'+snippet+'"'));checks.appendChild(lbl);}
             const okBtn=document.getElementById('row-delete-ok');
             function syncOk(){okBtn.disabled=checks.querySelectorAll('input:checked').length===0;}
-            checks.querySelectorAll('input[type="checkbox"]').forEach(cb=>cb.addEventListener('change',syncOk));
+            checks.querySelectorAll('input[type="checkbox"]').forEach(cb=>cb.addEventListener('change',syncOk, { signal }));
             okBtn.disabled=false; modal.hidden=false; modalOpen(modal);
             document.getElementById('row-delete-cancel').onclick=()=>{modal.hidden=true;modalClose(modal);};
             okBtn.onclick=async()=>{
@@ -826,14 +811,14 @@
             thumbEl.style.display='block'; thumbEl.style.height=thumbH+'px';
             thumbEl.style.top=(scrollEl.scrollTop/maxScroll)*maxTop+'px';
         }
-        scrollEl.addEventListener('scroll',syncThumb);
-        new ResizeObserver(syncThumb).observe(scrollEl.querySelector('.data-table'));
+        scrollEl.addEventListener('scroll',syncThumb, { signal });
+        const tableResize=new ResizeObserver(syncThumb);tableResize.observe(scrollEl.querySelector('.data-table'));page.onLeave(()=>tableResize.disconnect());
         let drag=false,dragY=0,dragScroll=0;
         function startDrag(e){drag=true;dragY=e.clientY;dragScroll=scrollEl.scrollTop;e.preventDefault();}
-        thumbEl.addEventListener('mousedown',startDrag);
-        trackEl.addEventListener('mousedown',e=>{if(e.target===thumbEl)return;const tr=trackEl.getBoundingClientRect(),th=parseFloat(thumbEl.style.height)||30,mt=trackEl.clientHeight-th,ms=scrollEl.scrollHeight-scrollEl.clientHeight,cy=Math.min(Math.max(e.clientY-tr.top-th/2,0),mt);scrollEl.scrollTop=(cy/mt)*ms;startDrag(e);});
-        document.addEventListener('mousemove',e=>{if(!drag)return;const mt=trackEl.clientHeight-parseFloat(thumbEl.style.height),ms=scrollEl.scrollHeight-scrollEl.clientHeight;scrollEl.scrollTop=Math.max(0,Math.min(ms,dragScroll+(e.clientY-dragY)*(ms/mt)));});
-        document.addEventListener('mouseup',()=>{drag=false;});
+        thumbEl.addEventListener('mousedown',startDrag, { signal });
+        trackEl.addEventListener('mousedown',e=>{if(e.target===thumbEl)return;const tr=trackEl.getBoundingClientRect(),th=parseFloat(thumbEl.style.height)||30,mt=trackEl.clientHeight-th,ms=scrollEl.scrollHeight-scrollEl.clientHeight,cy=Math.min(Math.max(e.clientY-tr.top-th/2,0),mt);scrollEl.scrollTop=(cy/mt)*ms;startDrag(e);}, { signal });
+        document.addEventListener('mousemove',e=>{if(!drag)return;const mt=trackEl.clientHeight-parseFloat(thumbEl.style.height),ms=scrollEl.scrollHeight-scrollEl.clientHeight;scrollEl.scrollTop=Math.max(0,Math.min(ms,dragScroll+(e.clientY-dragY)*(ms/mt)));}, { signal });
+        document.addEventListener('mouseup',()=>{drag=false;}, { signal });
 
         window.addEventListener('wheel',function(e){
             if(e.target.closest&&e.target.closest('.data-table-scroll'))return;
@@ -842,14 +827,14 @@
             if(scrollEl.scrollHeight<=scrollEl.clientHeight)return;
             scrollEl.scrollTop+=e.deltaY;
             e.preventDefault();
-        },{passive:false});
+        },{passive:false, signal });
 
         toggleBtn.addEventListener('click',()=>{
             isTableView=!isTableView; applyTableMode(isTableView);
             if(isTableView){lastChart=window.currentChartPage||'daily';if(tableTitle)tableTitle.textContent=lastChart==='weekly'?'Weekly Summary':'Daily Summary';renderTable();}
             else{if(lastChart==='weekly'){if(window.refreshWeeklyChart)window.refreshWeeklyChart();}else{if(window.refreshChart)window.refreshChart();}}
-        });
-        if(chartTypeBtn)chartTypeBtn.addEventListener('click',()=>{if(isTableView){lastChart=window.currentChartPage||'daily';if(tableTitle)tableTitle.textContent=lastChart==='weekly'?'Weekly Summary':'Daily Summary';renderTable();}});
+        }, { signal });
+        if(chartTypeBtn)chartTypeBtn.addEventListener('click',()=>{if(isTableView){lastChart=window.currentChartPage||'daily';if(tableTitle)tableTitle.textContent=lastChart==='weekly'?'Weekly Summary':'Daily Summary';renderTable();}}, { signal });
 
         window.onChartRangeChange=()=>{if(isTableView)renderTable();};
         window.onWeeklyRangeChange=()=>{if(isTableView&&lastChart==='weekly')renderWeeklyTable();};
@@ -887,18 +872,18 @@
             const pct=textarea.scrollTop/(textarea.scrollHeight-textarea.clientHeight);
             sbThumb.style.height=thumbH+'px'; sbThumb.style.top=(pct*maxTop)+'px';
         }
-        textarea.addEventListener('scroll',syncNoteScrollbar);
-        new ResizeObserver(syncNoteScrollbar).observe(textarea);
+        textarea.addEventListener('scroll',syncNoteScrollbar, { signal });
+        const noteResize=new ResizeObserver(syncNoteScrollbar);noteResize.observe(textarea);page.onLeave(()=>noteResize.disconnect());
 
-        sbThumb.addEventListener('mousedown',e=>{sbDrag=true;sbDragY=e.clientY;sbDragScrollTop=textarea.scrollTop;e.preventDefault();e.stopPropagation();});
+        sbThumb.addEventListener('mousedown',e=>{sbDrag=true;sbDragY=e.clientY;sbDragScrollTop=textarea.scrollTop;e.preventDefault();e.stopPropagation();}, { signal });
         document.addEventListener('mousemove',e=>{
             if(!sbDrag)return;
             const track=sbThumb.parentElement,thumbH=parseFloat(sbThumb.style.height)||16;
             const maxTop=track.clientHeight-thumbH,maxScroll=textarea.scrollHeight-textarea.clientHeight;
             const ratio=maxTop>0?(e.clientY-sbDragY)/maxTop:0;
             textarea.scrollTop=Math.max(0,Math.min(sbDragScrollTop+ratio*maxScroll,maxScroll));
-        });
-        document.addEventListener('mouseup',()=>{sbDrag=false;});
+        }, { signal });
+        document.addEventListener('mouseup',()=>{sbDrag=false;}, { signal });
 
         function positionPopover(){
             if(!_anchorEl)return;
@@ -915,7 +900,7 @@
                 arrowEl.style.left=arrowLeft+'px';
             }
         }
-        window.addEventListener('resize',()=>{if(!popover.hidden)positionPopover();});
+        window.addEventListener('resize',()=>{if(!popover.hidden)positionPopover();}, { signal });
 
         function close(){popover.hidden=true;document.body.classList.remove('note-open');activeDate=null;modalClose(popover);}
 
@@ -947,20 +932,20 @@
             positionPopover(); textarea.focus(); syncNoteScrollbar();
         };
 
-        resizeHdl.addEventListener('mousedown',e=>{isResizing=true;wasDragging=false;resizeStartY=e.clientY;resizeStartH=textarea.offsetHeight;e.preventDefault();e.stopPropagation();});
-        document.addEventListener('mousemove',e=>{if(!isResizing)return;const newH=Math.max(80,resizeStartH+(e.clientY-resizeStartY));textarea.style.height=newH+'px';});
-        document.addEventListener('mouseup',e=>{if(isResizing){isResizing=false;wasDragging=true;setTimeout(()=>{wasDragging=false;},50);}});
+        resizeHdl.addEventListener('mousedown',e=>{isResizing=true;wasDragging=false;resizeStartY=e.clientY;resizeStartH=textarea.offsetHeight;e.preventDefault();e.stopPropagation();}, { signal });
+        document.addEventListener('mousemove',e=>{if(!isResizing)return;const newH=Math.max(80,resizeStartH+(e.clientY-resizeStartY));textarea.style.height=newH+'px';}, { signal });
+        document.addEventListener('mouseup',e=>{if(isResizing){isResizing=false;wasDragging=true;setTimeout(()=>{wasDragging=false;},50);}}, { signal });
 
         deleteBtn.addEventListener('click',e=>{
             e.stopPropagation();
             const exp=getExpandedWeeks();
             if(window.showAppConfirm){window.showAppConfirm('Delete Note','Are you sure you want to delete this note?','Delete',()=>deleteNote(exp));}
             else{deleteNote(exp);}
-        });
-        saveBtn.addEventListener('click',save);
-        cancelBtn.addEventListener('click',close);
-        textarea.addEventListener('keydown',e=>{if(e.key==='Escape')close();if(e.key==='Enter'&&(e.ctrlKey||e.metaKey))save();});
-        document.addEventListener('click',e=>{if(wasDragging)return;if(!popover.hidden&&!e.composedPath().includes(popover)&&!e.target.closest('.note-btn'))close();});
+        }, { signal });
+        saveBtn.addEventListener('click',save, { signal });
+        cancelBtn.addEventListener('click',close, { signal });
+        textarea.addEventListener('keydown',e=>{if(e.key==='Escape')close();if(e.key==='Enter'&&(e.ctrlKey||e.metaKey))save();}, { signal });
+        document.addEventListener('click',e=>{if(wasDragging)return;if(!popover.hidden&&!e.composedPath().includes(popover)&&!e.target.closest('.note-btn'))close();}, { signal });
     })();
 
     /* ── Historical weight modal ── */
@@ -997,7 +982,7 @@
                 const iso=isoFromParts(y,m,day),btn=document.createElement('button');
                 btn.type='button';btn.className='dp-day';btn.textContent=day;
                 if(iso===today)btn.classList.add('dp-today');if(iso===selectedDateISO)btn.classList.add('dp-selected');
-                if(iso>today||iso<minDate){btn.disabled=true;}else{btn.addEventListener('click',()=>{selectedDateISO=iso;if(dateIn)dateIn.value=displayFromISO(iso);if(calEl)calEl.hidden=true;});}
+                if(iso>today||iso<minDate){btn.disabled=true;}else{btn.addEventListener('click',()=>{selectedDateISO=iso;if(dateIn)dateIn.value=displayFromISO(iso);if(calEl)calEl.hidden=true;}, { signal });}
                 gridEl.appendChild(btn);
             }
             const rem=(firstDow+daysInMonth)%7;
@@ -1011,16 +996,16 @@
                 const yr=yearPage+i,btn=document.createElement('button');
                 btn.type='button';btn.className='dp-day dp-year';btn.textContent=yr;
                 if(yr===todayY)btn.classList.add('dp-today');if(yr===curY)btn.classList.add('dp-selected');
-                if(yr>todayY||yr<minY){btn.disabled=true;}else{btn.addEventListener('click',()=>{viewDate=new Date(yr,viewDate.getMonth(),1);renderCalendar();});}
+                if(yr>todayY||yr<minY){btn.disabled=true;}else{btn.addEventListener('click',()=>{viewDate=new Date(yr,viewDate.getMonth(),1);renderCalendar();}, { signal });}
                 gridEl.appendChild(btn);
             }
         }
-        if(monthLbl)monthLbl.addEventListener('click',()=>{if(calMode==='days'){yearPage=viewDate.getFullYear()-5;renderYearGrid();}else{renderCalendar();}});
-        if(dateIn)dateIn.addEventListener('click',()=>{if(calEl.hidden){viewDate=selectedDateISO?new Date(selectedDateISO+'T12:00:00'):new Date();renderCalendar();calEl.hidden=false;}else{calEl.hidden=true;}});
+        if(monthLbl)monthLbl.addEventListener('click',()=>{if(calMode==='days'){yearPage=viewDate.getFullYear()-5;renderYearGrid();}else{renderCalendar();}}, { signal });
+        if(dateIn)dateIn.addEventListener('click',()=>{if(calEl.hidden){viewDate=selectedDateISO?new Date(selectedDateISO+'T12:00:00'):new Date();renderCalendar();calEl.hidden=false;}else{calEl.hidden=true;}}, { signal });
         const dpPrev=document.getElementById('dp-prev'),dpNext=document.getElementById('dp-next');
-        if(dpPrev)dpPrev.addEventListener('click',()=>{if(calMode==='years'){yearPage-=12;renderYearGrid();}else{viewDate=new Date(viewDate.getFullYear(),viewDate.getMonth()-1,1);renderCalendar();}});
-        if(dpNext)dpNext.addEventListener('click',()=>{if(calMode==='years'){yearPage+=12;renderYearGrid();}else{viewDate=new Date(viewDate.getFullYear(),viewDate.getMonth()+1,1);renderCalendar();}});
-        document.addEventListener('click',e=>{const wrap=document.getElementById('history-date-wrap');if(calEl&&!calEl.hidden&&!e.composedPath().includes(wrap))calEl.hidden=true;});
+        if(dpPrev)dpPrev.addEventListener('click',()=>{if(calMode==='years'){yearPage-=12;renderYearGrid();}else{viewDate=new Date(viewDate.getFullYear(),viewDate.getMonth()-1,1);renderCalendar();}}, { signal });
+        if(dpNext)dpNext.addEventListener('click',()=>{if(calMode==='years'){yearPage+=12;renderYearGrid();}else{viewDate=new Date(viewDate.getFullYear(),viewDate.getMonth()+1,1);renderCalendar();}}, { signal });
+        document.addEventListener('click',e=>{const wrap=document.getElementById('history-date-wrap');if(calEl&&!calEl.hidden&&!e.composedPath().includes(wrap))calEl.hidden=true;}, { signal });
 
         function isKgMode(){return window.activeUnit==='kg';}
         function close(){modal.hidden=true;if(calEl)calEl.hidden=true;const si=document.getElementById('history-screen-input'),sc=document.getElementById('history-screen-confirm');if(si)si.hidden=false;if(sc)sc.hidden=true;modalClose(modal);}
@@ -1056,18 +1041,18 @@
             selectedDateISO=startDate; if(dateIn)dateIn.value=startDate?displayFromISO(startDate):''; weightIn.value=''; preview.textContent='';
             close(); modal.hidden=false; modalOpen(modal);
             setTimeout(()=>{if(dateIn)dateIn.focus();},50);
-        });
+        }, { signal });
 
         const hCancel=document.getElementById('history-cancel'),hSave=document.getElementById('history-save');
         const hStepUp=document.getElementById('history-step-up'),hStepDown=document.getElementById('history-step-down');
-        if(hCancel)hCancel.addEventListener('click',close);
-        if(hSave)hSave.addEventListener('click',trySave);
-        if(hStepUp)hStepUp.addEventListener('click',()=>step(1));
-        if(hStepDown)hStepDown.addEventListener('click',()=>step(-1));
-        modal.addEventListener('click',e=>{if(e.target===modal)close();});
-        document.addEventListener('keydown',e=>{if(e.key==='Escape'){if(calEl&&!calEl.hidden){calEl.hidden=true;return;}if(!modal.hidden)close();}});
-        weightIn.addEventListener('input',updatePreview);
-        weightIn.addEventListener('keydown',e=>{if(e.key==='Enter')trySave();});
+        if(hCancel)hCancel.addEventListener('click',close, { signal });
+        if(hSave)hSave.addEventListener('click',trySave, { signal });
+        if(hStepUp)hStepUp.addEventListener('click',()=>step(1), { signal });
+        if(hStepDown)hStepDown.addEventListener('click',()=>step(-1), { signal });
+        modal.addEventListener('click',e=>{if(e.target===modal)close();}, { signal });
+        document.addEventListener('keydown',e=>{if(e.key==='Escape'){if(calEl&&!calEl.hidden){calEl.hidden=true;return;}if(!modal.hidden)close();}}, { signal });
+        weightIn.addEventListener('input',updatePreview, { signal });
+        weightIn.addEventListener('keydown',e=>{if(e.key==='Enter')trySave();}, { signal });
 
         window.openWeightModal=function(date,currentLbs){
             const kg=isKgMode();
@@ -1145,12 +1130,12 @@
         function open()  { menu.classList.add('open');    btn.setAttribute('aria-expanded','true'); }
         function toggle(){ menu.classList.contains('open') ? close() : open(); }
 
-        btn.addEventListener('click', e => { e.stopPropagation(); toggle(); });
+        btn.addEventListener('click', e => { e.stopPropagation(); toggle(); }, { signal });
         document.addEventListener('click', e => {
             if (!menu.classList.contains('open')) return;
             if (!e.composedPath().includes(menu) && !e.composedPath().includes(btn)) close();
-        });
-        document.addEventListener('keydown', e => { if (e.key === 'Escape') close(); });
+        }, { signal });
+        document.addEventListener('keydown', e => { if (e.key === 'Escape') close(); }, { signal });
 
         menu.querySelectorAll('[data-range]').forEach(item => {
             item.addEventListener('click', () => {
@@ -1160,7 +1145,7 @@
                 close();
                 window.savePref('chart_range', range);
                 if (window.setChartRange) window.setChartRange(range);
-            });
+            }, { signal });
         });
 
         // Custom date range modal trigger
@@ -1171,7 +1156,7 @@
                 close();
                 const modal = document.getElementById('custom-date-modal');
                 if (modal) { modal.hidden = false; modalOpen(modal); }
-            });
+            }, { signal });
         }
 
         // Restore saved range
@@ -1182,3 +1167,4 @@
             match.classList.add('active');
         }
     })();
+});

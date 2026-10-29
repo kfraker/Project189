@@ -2,7 +2,8 @@
 signal and onLeave() undo everything the page set up when it is left, and
 appRouter.remount() restarts the current page in place.
 
-No real page uses it yet (that's M3), so these tests register small probe pages.
+These tests register small probe pages, after first leaving the real page
+(Home) so the probes start from a page with nothing running.
 """
 import pytest
 
@@ -23,8 +24,10 @@ registerPage('probe', page => {
 
 @pytest.fixture()
 def home(signed_in_page):
+    """Home with its own page left, so nothing is running."""
     signed_in_page.goto("/")
     signed_in_page.wait_for_load_state("networkidle")
+    signed_in_page.evaluate("appRouter.leave()")
     return signed_in_page
 
 
@@ -32,12 +35,16 @@ def _click_count_after_one_click(page):
     return page.evaluate("() => { window.clicks = 0; document.body.click(); return window.clicks; }")
 
 
-def test_router_loads_on_every_page_with_no_page_registered_yet(signed_in_page):
-    for path in ["/", "/weights", "/workouts"]:
-        signed_in_page.goto(path)
-        assert signed_in_page.evaluate("typeof window.registerPage") == "function"
-        assert signed_in_page.evaluate("appRouter.current") is None
-        assert signed_in_page.evaluate("appRouter.remount()") is False   # nothing to restart
+@pytest.mark.parametrize("path,name", [("/", "home"), ("/weights", "weights"), ("/workouts", "workouts")])
+def test_each_page_registers_itself_on_load(signed_in_page, path, name):
+    signed_in_page.goto(path)
+    signed_in_page.wait_for_load_state("networkidle")
+    assert signed_in_page.evaluate("appRouter.current") == name
+
+
+def test_with_no_page_running_there_is_nothing_to_restart(home):
+    assert home.evaluate("appRouter.current") is None
+    assert home.evaluate("appRouter.remount()") is False
 
 
 def test_register_page_starts_it_with_a_context(home):
