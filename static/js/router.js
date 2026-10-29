@@ -28,7 +28,10 @@
    what changes (the [data-region] parts, its <style data-page-style> and its script),
    then starts it. The shell stays as it is, so the cursor and menus are never rebuilt.
    Back/Forward swap pages the same way. The latest click wins, and clicking the page
-   you're on does nothing. Anything unexpected falls back to a normal full page load. */
+   you're on does nothing. The page's parts fade out while the next page downloads and
+   fade back in once it's swapped in; backgrounds cross-fade once the new one has loaded
+   (all instant with reduced motion). Anything unexpected falls back to a normal full
+   page load. */
 (function () {
     const APP_WIDE = new Set([
         // shell.js
@@ -120,10 +123,73 @@
         });
     }
 
+    /* Fade (styles in base.html): out takes FADE_MS, in takes FADE_MS. */
+    const FADE_MS = 125;
+    const root = document.documentElement;
+    const motionOK = () => !matchMedia('(prefers-reduced-motion: reduce)').matches;
+    let fadeDone = null;
+    function fadeOut() {
+        clearTimeout(fadeDone);
+        root.classList.add('page-fading', 'page-leaving');
+        return new Promise(resolve => setTimeout(resolve, motionOK() ? FADE_MS : 0));
+    }
+    function fadeIn() {
+        void document.body.offsetHeight;    // new parts render hidden first, so they fade in
+        root.classList.remove('page-leaving');
+        fadeDone = setTimeout(() => root.classList.remove('page-fading'), motionOK() ? FADE_MS : 0);
+    }
+
+    /* Background cross-fade. The old background's look comes from its page style, which
+       is about to be swapped out, so it's copied ("frozen") onto a ghost element in the
+       shell, laid over the new background, and faded out once the new image is ready. */
+    const BG_FADE_MS = 250, BG_WAIT_MAX_MS = 2000;
+    const BG_LOOK = ['backgroundImage', 'backgroundColor', 'backgroundSize', 'backgroundPosition', 'backgroundRepeat'];
+
+    function freezeBackground() {
+        const region = document.querySelector('[data-region="bg"]');
+        const old = region && region.firstElementChild;
+        if (!old) return null;
+        const ghost = document.createElement('div'), tint = document.createElement('div');
+        const copy = (to, pseudo) => { const look = getComputedStyle(old, pseudo); for (const p of BG_LOOK) to.style[p] = look[p]; };
+        copy(ghost);
+        copy(tint, '::after');
+        ghost.className = 'bg-ghost';
+        ghost.appendChild(tint);
+        region.after(ghost);
+        return ghost;
+    }
+
+    // The new page's background image, read from its page style (null if it has none).
+    function backgroundUrlOf(next, pageUrl) {
+        const bg = next.querySelector('[data-region="bg"] > [class]');
+        if (!bg) return null;
+        const css = [...next.querySelectorAll('style[data-page-style]')].map(el => el.textContent).join('\n');
+        const rule = css.match(new RegExp('\\.' + bg.classList[0] + '\\s*\\{[^}]*url\\([\'"]?([^\'")]+)'));
+        return rule ? new URL(rule[1], pageUrl).href : null;
+    }
+
+    function whenImageReady(url) {
+        if (!url) return Promise.resolve();
+        const img = new Image();
+        img.src = url;
+        const loaded = img.decode().catch(() => {});        // a broken image mustn't hold things up
+        return Promise.race([loaded, new Promise(resolve => setTimeout(resolve, BG_WAIT_MAX_MS))]);
+    }
+
+    function fadeAwayGhost(ghost, ready) {
+        if (!ghost) return;
+        ready.then(() => {
+            void ghost.offsetHeight;
+            ghost.style.opacity = '0';
+            setTimeout(() => ghost.remove(), motionOK() ? BG_FADE_MS : 0);
+        });
+    }
+
     // push: false for Back/Forward, where the browser has already moved in its history.
     async function navigate(url, { push = true } = {}) {
         const nav = ++latestNav;
         const overtaken = () => nav !== latestNav;
+        const fadedOut = fadeOut();             // runs while the page downloads
         try {
             const res = await fetch(url);
             if (overtaken()) return;
@@ -137,8 +203,12 @@
             const script = next.querySelector('script[data-page-script]');
             if (!script || regions.some(([, incoming]) => !incoming)) throw new Error('Not an app page: ' + url);
             const scriptSrc = new URL(script.getAttribute('src'), res.url).href;
+            const backgroundReady = whenImageReady(backgroundUrlOf(next, res.url));   // starts downloading now
+            await fadedOut;
+            if (overtaken()) return;
 
             awaitedScript = scriptSrc;
+            const ghost = freezeBackground();
             leave();
             for (const [el, incoming] of regions)
                 el.replaceChildren(...[...incoming.childNodes].map(node => document.adoptNode(node)));
@@ -153,6 +223,9 @@
                 const twin = next.querySelector(NAV_LINKS.replace('a[href]', 'a[href="' + link.getAttribute('href') + '"]'));
                 if (twin) link.className = twin.className;
             }
+
+            fadeIn();
+            fadeAwayGhost(ghost, backgroundReady);
 
             // Keyboard and screen-reader users land at the new page's content (a full page
             // load does this by itself): focus moves off the nav link, and the page is named.
@@ -182,7 +255,10 @@
         if (e.defaultPrevented || e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
         if (new URL(link.href).origin !== location.origin) return;
         e.preventDefault();
-        if (pathOf(link.href) === shownPath) { latestNav++; return; }   // already here; cancels a pending click
+        if (pathOf(link.href) === shownPath) {   // already here: cancel a pending click, if any
+            if (root.classList.contains('page-leaving')) { latestNav++; fadeIn(); }
+            return;
+        }
         navigate(link.href);
     });
 

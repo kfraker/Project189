@@ -254,6 +254,29 @@
         /* Focus moves here after a page change and from the skip link (tabindex="-1"); it's
            the whole screen, so no focus ring. */
         #main-content:focus { outline: none; }
+
+        /* In-page navigation fades the page's own parts out and back in (router.js): while
+           .page-fading is on <html> they fade, and while .page-leaving is on too they're
+           hidden and can't be clicked. Only during a page change, so the parts' own
+           transitions are untouched otherwise. The background (bg) is handled apart. */
+        html.page-fading [data-region]:not([data-region="bg"]) > * {
+            transition: opacity 0.125s ease !important;
+        }
+        html.page-leaving [data-region]:not([data-region="bg"]) > * {
+            opacity: 0 !important;
+            pointer-events: none !important;
+        }
+        /* The old page's background, frozen and laid over the new one, then faded out
+           (router.js), so backgrounds cross-fade. */
+        .bg-ghost {
+            position: fixed; inset: 0; z-index: -1; pointer-events: none;
+            transition: opacity 0.25s ease;
+        }
+        .bg-ghost > div { position: absolute; inset: 0; }
+        @media (prefers-reduced-motion: reduce) {
+            html.page-fading [data-region]:not([data-region="bg"]) > * { transition: none !important; }
+            .bg-ghost { transition: none; }
+        }
     </style>
     {% block page_css %}{% endblock %}
 </head>

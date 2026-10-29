@@ -5,6 +5,8 @@ M4.2: the address bar, tab title and highlighted nav button follow along.
 M4.3: Back and Forward swap pages the same way.
 M4.4: the latest click wins, and clicking the page you're on does nothing.
 M4.5: focus moves to the new page's content and its name is announced.
+M5.1: the page's parts fade out while the next page downloads, then fade in.
+M5.2: backgrounds cross-fade once the new background image has loaded.
 
 Every test also passes the page-error guard, so "zero errors" is checked throughout.
 """
@@ -362,6 +364,133 @@ def test_weigh_ins_table_mode_stays_inside_the_page(started_on_home):
     expect(page.locator("#main-content")).not_to_have_class(re.compile("wt-table-mode"))
     _go(page, "Workouts", "workouts")
     expect(page.locator("#main-content")).not_to_have_class(re.compile("wt-table-mode"))
+
+
+# ── Fade between pages (M5.1) ───────────────────────────────────────────────
+
+def _style(page, selector, prop):
+    return page.evaluate("([sel, prop]) => getComputedStyle(document.querySelector(sel))[prop]", [selector, prop])
+
+
+def test_page_fades_out_then_in(started_on_home):
+    page = started_on_home
+    page.evaluate("""document.fadeLog = [];       // not on window: leaving Home would clear it
+        new MutationObserver(() => document.fadeLog.push(document.documentElement.className))
+            .observe(document.documentElement, { attributes: true, attributeFilter: ['class'] });""")
+    _go(page, "Workouts", "workouts")
+    page.wait_for_function("() => !document.documentElement.classList.contains('page-fading')")
+    log = page.evaluate("document.fadeLog")
+    assert any("page-leaving" in c for c in log)                            # faded out...
+    assert "page-leaving" not in log[-1] and "page-fading" not in log[-1]   # ...and all the way back in
+    assert _style(page, "#wp-add-btn", "opacity") == "1"
+
+
+def test_while_fading_out_the_old_page_is_hidden_and_unclickable(started_on_home):
+    page = started_on_home
+    held, release = _hold(page, "**/weights")
+    _click(page, "Weigh-ins")
+    page.wait_for_function("() => getComputedStyle(document.querySelector('#mp-footer-add-btn')).opacity === '0'")
+    assert _style(page, "#mp-footer-add-btn", "pointerEvents") == "none"
+    assert _style(page, ".site-header", "opacity") == "1"                   # the shell never fades
+    assert _style(page, ".mp-bg", "opacity") == "1"                         # nor the background (M5.2)
+    assert _style(page, "#mp-footer-add-btn", "transitionDuration") == "0.125s"
+    settle(page, release, until="() => appRouter.current === 'weights'")
+    page.wait_for_function("() => getComputedStyle(document.querySelector('#chart-add-btn')).opacity === '1'")
+
+
+def test_cancelling_a_pending_click_fades_the_page_back_in(started_on_home):
+    page = started_on_home
+    held, release = _hold(page, "**/weights")
+    _click(page, "Weigh-ins")
+    page.wait_for_function("() => document.documentElement.classList.contains('page-leaving')")
+    _click(page, "Home")
+    page.wait_for_function("() => getComputedStyle(document.querySelector('#mp-footer-add-btn')).opacity === '1'")
+    settle(page, release)
+    assert page.evaluate("appRouter.current") == "home"
+    assert _style(page, "#mp-footer-add-btn", "pointerEvents") != "none"
+
+
+def test_reduced_motion_switches_pages_without_a_fade(started_on_home):
+    page = started_on_home
+    page.emulate_media(reduced_motion="reduce")
+    held, release = _hold(page, "**/weights")
+    _click(page, "Weigh-ins")
+    page.wait_for_function("() => document.documentElement.classList.contains('page-fading')")
+    assert _style(page, "#mp-footer-add-btn", "transitionDuration") == "0s"
+    settle(page, release, until="() => appRouter.current === 'weights'")
+    assert _style(page, "#chart-add-btn", "opacity") == "1"                 # shown at once, no fade-in
+
+
+# ── Background cross-fade (M5.2) ────────────────────────────────────────────
+
+GHOST = ".bg-ghost"
+WORKOUTS_BG = "**/static/workoutbackground7.png"
+
+
+def test_old_background_lies_over_the_new_one_then_fades_away(started_on_home):
+    page = started_on_home
+    held, release = _hold(page, WORKOUTS_BG)
+    _click(page, "Workouts")
+    page.wait_for_function("() => appRouter.current === 'workouts'")
+    ghost = page.locator(GHOST)
+    expect(ghost).to_have_count(1)
+    assert "mainbackground.png" in _style(page, GHOST, "backgroundImage")   # Home's background, frozen
+    assert _style(page, GHOST + " > div", "backgroundColor") == "rgba(8, 0, 18, 0.72)"   # with its tint
+    assert _style(page, GHOST, "pointerEvents") == "none"
+    assert page.evaluate("!document.querySelector('.bg-ghost').closest('[data-region]')")   # part of the shell
+    expect(page.locator('[data-region="bg"] .wp-bg')).to_have_count(1)     # the new one, underneath
+
+    page.wait_for_timeout(500)
+    assert _style(page, GHOST, "opacity") == "1"                            # waits for the new image
+    release()
+    expect(ghost).to_have_count(0)                                          # faded out and removed
+
+
+def test_background_fade_takes_a_quarter_second(started_on_home):
+    page = started_on_home
+    held, release = _hold(page, WORKOUTS_BG)
+    _click(page, "Workouts")
+    expect(page.locator(GHOST)).to_have_count(1)
+    assert _style(page, GHOST, "transitionDuration") == "0.25s"
+    release()
+    expect(page.locator(GHOST)).to_have_count(0)
+
+
+def test_a_slow_background_cannot_hold_the_fade_forever(started_on_home):
+    page = started_on_home
+    _hold(page, WORKOUTS_BG)                                                # never released
+    _click(page, "Workouts")
+    expect(page.locator(GHOST)).to_have_count(1)
+    expect(page.locator(GHOST)).to_have_count(0, timeout=4000)              # gives up waiting after 2s
+    expect(page.locator(".wp-row")).to_have_count(1)                        # content never waited
+
+
+@pytest.mark.allow_page_errors          # the broken image is the point of the test
+def test_a_broken_background_still_clears_the_old_one(started_on_home):
+    page = started_on_home
+    page.route(WORKOUTS_BG, lambda route: route.abort())
+    _go(page, "Workouts", "workouts")
+    expect(page.locator(GHOST)).to_have_count(0, timeout=1000)
+
+
+def test_reduced_motion_swaps_backgrounds_without_a_fade(started_on_home):
+    page = started_on_home
+    page.emulate_media(reduced_motion="reduce")
+    held, release = _hold(page, WORKOUTS_BG)
+    _click(page, "Workouts")
+    expect(page.locator(GHOST)).to_have_count(1)
+    assert _style(page, GHOST, "transitionDuration") == "0s"
+    release()
+    expect(page.locator(GHOST)).to_have_count(0, timeout=500)
+
+
+def test_quick_clicks_leave_no_background_ghosts(started_on_home):
+    page = started_on_home
+    for label in ["Weigh-ins", "Workouts", "Home", "Weigh-ins", "Workouts"]:
+        _click(page, label)
+    settle(page, lambda: None, until="() => appRouter.current === 'workouts'")
+    expect(page.locator(GHOST)).to_have_count(0, timeout=4000)
+    expect(page.locator('[data-region="bg"] > *')).to_have_count(1)
 
 
 # ── Falling back to a normal page load ───────────────────────────────────────
