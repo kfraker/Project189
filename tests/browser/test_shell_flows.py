@@ -240,6 +240,21 @@ def test_custom_cursor_follows_mouse_and_survives_page_change(shell):
     expect(page.locator("#site-cursor")).to_be_visible()          # no mouse move needed
 
 
+def test_custom_cursor_keeps_its_place_across_a_refresh(shell):
+    """Nav clicks no longer reload the page, but a refresh still does: the cursor
+    is shown where the mouse was straight away, without waiting for a mouse move."""
+    open_page, _ = shell
+    page = open_page()
+    page.mouse.move(400, 300)
+    cursor = page.locator("#site-cursor")
+    expect(cursor).to_be_visible()
+    before = cursor.evaluate("el => el.style.transform")
+    page.reload()
+    page.wait_for_load_state("networkidle")
+    expect(page.locator("#site-cursor")).to_be_visible()                # no mouse move needed
+    assert page.locator("#site-cursor").evaluate("el => el.style.transform") == before
+
+
 # ── Log out ──────────────────────────────────────────────────────────────────
 
 def test_log_out_returns_to_sign_in(shell):

@@ -74,17 +74,6 @@
        never gets clipped/suppressed near viewport edges the way a native
        CSS cursor: url() does, and still works over scrollbars. ── */
     (function () {
-        /* Chromium/Windows quirk: on a fresh page load (e.g. after clicking a
-           header nav link) the OS-drawn cursor icon isn't refreshed until the
-           next real hardware mouse move, so the native pointer can linger
-           visibly over our `cursor:none` page until the user moves the mouse.
-           Forcing a CSS `cursor` value change (even with no real movement)
-           makes the browser push a fresh cursor state to the OS immediately. */
-        document.documentElement.style.setProperty('cursor', 'default', 'important');
-        requestAnimationFrame(function () {
-            document.documentElement.style.removeProperty('cursor');
-        });
-
         const el = document.getElementById('site-cursor');
 
         /* Pre-baked images (white background already transparent, 2x res) —
@@ -115,9 +104,10 @@
             place();
         };
 
-        /* Every nav click is a full page load, and mouseenter/mousemove don't
-           fire until the mouse physically moves — so the cursor used to vanish
-           after each click. Carry the last position across pages instead. */
+        /* A refresh or direct link is a full page load (nav clicks aren't: see
+           router.js), and mouseenter/mousemove don't fire until the mouse
+           physically moves, so the cursor would vanish until then. Carry the
+           last position across the load instead. */
         try {
             const saved = JSON.parse(sessionStorage.getItem('cursor_pos'));
             if (saved) {
