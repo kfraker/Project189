@@ -78,25 +78,43 @@
 
         /* Pre-baked images (white background already transparent, 2x res) —
            no per-page canvas processing, so the cursor is usable immediately.
-           [src, hotX, hotY] with the hotspot in display px (88x48 render). */
-        const CURSOR_W = 88, CURSOR_H = 48;
+           [src, hotX, hotY] with the hotspot in display px (88x48 render), then
+           the same for the open-hand cursor shown over editable things (117x64). */
+        const CURSOR_W = 88, CURSOR_H = 48, EDIT_W = 117, EDIT_H = 64;
         const CURSOR_SETS = {
-            '1': ['/static/cursor-pointer.png',  15, 1],
-            '2': ['/static/cursor-pointer2.png', 17, 1],
-            '3': ['/static/cursor-pointer3.png', 17, 1],
-            '4': ['/static/cursor-pointer4.png', 17, 1],
+            '1': ['/static/cursor-pointer.png',  15, 1, '/static/cursor-edit.png',  55, 3],
+            '2': ['/static/cursor-pointer2.png', 17, 1, '/static/cursor-edit2.png', 53, 3],
+            '3': ['/static/cursor-pointer3.png', 17, 1, '/static/cursor-edit3.png', 53, 3],
+            '4': ['/static/cursor-pointer4.png', 17, 1, '/static/cursor-edit4.png', 53, 3],
         };
+        const EDITABLE = '#start-plate, #current-plate, #goal-plate, .note-resize-handle';
         let active = CURSOR_SETS[localStorage.getItem('pref_profile_pic')] || CURSOR_SETS['1'];
-        let lastMX = 0, lastMY = 0, mouseInDoc = false, rafPending = false;
+        let lastMX = 0, lastMY = 0, mouseInDoc = false, rafPending = false, editing = false;
 
-        el.style.width = CURSOR_W + 'px';
-        el.style.height = CURSOR_H + 'px';
-
-        function applyCursor() { el.style.backgroundImage = `url(${active[0]})`; }
+        function applyCursor() {
+            el.style.width = (editing ? EDIT_W : CURSOR_W) + 'px';
+            el.style.height = (editing ? EDIT_H : CURSOR_H) + 'px';
+            el.style.backgroundImage = `url(${active[editing ? 3 : 0]})`;
+        }
         function place() {
-            el.style.transform = `translate3d(${lastMX - active[1]}px, ${lastMY - active[2]}px, 0)`;
+            const hotX = active[editing ? 4 : 1], hotY = active[editing ? 5 : 2];
+            el.style.transform = `translate3d(${lastMX - hotX}px, ${lastMY - hotY}px, 0)`;
         }
         applyCursor();
+        Object.values(CURSOR_SETS).forEach(set => { new Image().src = set[3]; });   // no blank frame on the first swap
+
+        function setEditing(target) {
+            const next = !!(target && target.closest && target.closest(EDITABLE));
+            if (next === editing) return;
+            editing = next;
+            applyCursor();
+            place();
+        }
+        document.addEventListener('mouseover', e => setEditing(e.target));
+        /* A click can open a modal or swap the page under a mouse that hasn't moved. */
+        document.addEventListener('click', () => {
+            setTimeout(() => setEditing(document.elementFromPoint(lastMX, lastMY)), 0);
+        });
 
         window.applyCursorSet = function(n) {
             active = CURSOR_SETS[String(n)] || active;
@@ -123,7 +141,18 @@
             } catch (e) {}
         });
 
+        /* A tap also fires browser-made mouse events; ignore those so touchscreens
+           never show the cursor, while a touchscreen laptop's real mouse still does. */
+        let lastTouch = 0;
+        function fromTouch() { return Date.now() - lastTouch < 1000; }
+        ['touchstart', 'touchend'].forEach(type => document.addEventListener(type, () => {
+            lastTouch = Date.now();
+            mouseInDoc = false;
+            el.style.display = 'none';
+        }, { capture: true, passive: true }));
+
         document.addEventListener('mousemove', e => {
+            if (fromTouch()) return;
             lastMX = e.clientX; lastMY = e.clientY;
             if (!mouseInDoc) { mouseInDoc = true; el.style.display = 'block'; }
             if (rafPending) return;
@@ -132,7 +161,7 @@
         });
 
         document.addEventListener('mouseleave', () => { mouseInDoc = false; el.style.display = 'none'; });
-        document.addEventListener('mouseenter', () => { mouseInDoc = true; el.style.display = 'block'; });
+        document.addEventListener('mouseenter', () => { if (fromTouch()) return; mouseInDoc = true; el.style.display = 'block'; });
     })();
 
     /* ── Accessibility: toggle-group roles + aria-pressed sync ── */
@@ -807,8 +836,9 @@
         });
         profCustomWorkoutsDays.addEventListener('change',()=>{ const v=parseInt(profCustomWorkoutsDays.value); if(v&&v<7)profCustomWorkoutsDays.value=7; else if(v>1095)profCustomWorkoutsDays.value=1095; });
 
+        wireToggle(['prof-healthbar-on','prof-healthbar-off']);
         document.querySelectorAll('#prof-healthbar-on,#prof-healthbar-off').forEach(b=>{
-            b.addEventListener('click',()=>{ wireToggle(['prof-healthbar-on','prof-healthbar-off']); b.classList.add('active'); syncFighterNameToHealthBar(); });
+            b.addEventListener('click',syncFighterNameToHealthBar);
         });
 
         function syncFighterNameToHealthBar() {

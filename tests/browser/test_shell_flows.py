@@ -123,6 +123,51 @@ def test_settings_switch_to_kilograms_applies_and_persists(shell):
     assert _saved_prefs(client)["pref_unit"] == "kg"
 
 
+def test_health_bar_and_its_settings_are_hidden_for_now(shell):
+    open_page, client = shell
+    client.post("/api/preference", json={"key": "pref_healthbar", "value": "1"})   # even if it was left on
+    page = open_page()
+    expect(page.locator("#healthbar-hud")).to_be_hidden()
+    _menu_item(page, "Settings")
+    expect(page.locator("#prof-healthbar-on")).to_be_hidden()
+    expect(page.locator("#prof-fighter-name-on")).to_be_hidden()
+    expect(page.locator("#change-pic-btn")).to_be_visible()       # shares that Settings section
+
+
+def test_settings_health_bar_switch_unlocks_fighter_name(shell):
+    """The hidden section still works: Health Bar is one on/off choice, and Fighter
+    Name is only locked while it's off."""
+    open_page, client = shell
+    client.post("/api/preference", json={"key": "pref_healthbar", "value": "0"})
+    page = open_page()
+    _menu_item(page, "Settings")
+    page.evaluate("document.getElementById('healthbar-options').style.display = ''")
+    bar_on, bar_off = page.locator("#prof-healthbar-on"), page.locator("#prof-healthbar-off")
+    name_on, name_off = page.locator("#prof-fighter-name-on"), page.locator("#prof-fighter-name-off")
+    expect(name_on).to_be_disabled()
+    expect(name_off).to_be_disabled()
+
+    bar_on.click()
+    expect(bar_on).to_have_class("profile-opt-btn active")
+    expect(bar_off).to_have_class("profile-opt-btn")
+    expect(name_on).to_be_enabled()
+    expect(name_off).to_be_enabled()
+
+    bar_off.click()
+    expect(bar_off).to_have_class("profile-opt-btn active")
+    expect(bar_on).to_have_class("profile-opt-btn")
+    expect(name_on).to_be_disabled()
+
+    bar_on.click()
+    name_on.click()
+    expect(name_on).to_have_class("profile-opt-btn active")
+    with page.expect_response(lambda r: "pref_fighter_name" in (r.request.post_data or "")):
+        page.locator("#settings-save").click()
+    expect(page.locator("#settings-modal")).to_be_hidden()
+    prefs = _saved_prefs(client)
+    assert prefs["pref_healthbar"] == "1" and prefs["pref_fighter_name"] == "1"
+
+
 def test_settings_unsaved_changes_save_and_close(shell):
     open_page, client = shell
     page = open_page()
@@ -238,6 +283,81 @@ def test_custom_cursor_follows_mouse_and_survives_page_change(shell):
     page.wait_for_url("**/workouts")
     page.wait_for_load_state("networkidle")
     expect(page.locator("#site-cursor")).to_be_visible()          # no mouse move needed
+
+
+def _cursor_image(page):
+    return page.locator("#site-cursor").evaluate("el => el.style.backgroundImage")
+
+
+def test_cursor_becomes_the_open_hand_over_editable_things(shell):
+    open_page, _ = shell
+    page = open_page()
+    page.mouse.move(5, 300)
+    assert "cursor-pointer.png" in _cursor_image(page)
+
+    box = page.locator("#goal-plate").bounding_box()
+    page.mouse.move(box["x"] + box["width"] / 2, box["y"] + box["height"] / 2)
+    page.wait_for_function("document.getElementById('site-cursor').style.backgroundImage.includes('cursor-edit.png')")
+    cursor = page.locator("#site-cursor").bounding_box()
+    assert (cursor["width"], cursor["height"]) == (117, 64)
+
+    page.mouse.move(5, 300)
+    page.wait_for_function("document.getElementById('site-cursor').style.backgroundImage.includes('cursor-pointer.png')")
+    cursor = page.locator("#site-cursor").bounding_box()
+    assert (cursor["width"], cursor["height"]) == (88, 48)
+
+
+def test_open_hand_cursor_matches_the_profile_picture(shell):
+    open_page, client = shell
+    client.post("/api/preference", json={"key": "pref_profile_pic", "value": "3"})
+    page = open_page()
+    box = page.locator("#goal-plate").bounding_box()
+    page.mouse.move(box["x"] + box["width"] / 2, box["y"] + box["height"] / 2)
+    page.wait_for_function("document.getElementById('site-cursor').style.backgroundImage.includes('cursor-edit3.png')")
+
+
+def test_open_hand_cursor_does_not_stick_after_a_page_change(shell):
+    open_page, _ = shell
+    page = open_page()
+    box = page.locator("#goal-plate").bounding_box()
+    page.mouse.move(box["x"] + box["width"] / 2, box["y"] + box["height"] / 2)
+    page.wait_for_function("document.getElementById('site-cursor').style.backgroundImage.includes('cursor-edit.png')")
+    page.evaluate("appRouter.navigate('/workouts')")
+    page.wait_for_url("**/workouts")
+    page.wait_for_function("document.getElementById('site-cursor').style.backgroundImage.includes('cursor-pointer.png')")
+
+
+def test_cursor_stays_the_pointer_over_table_rows(shell):
+    open_page, client = shell
+    seed_weight(client, _day(1), 200.0)
+    page = open_page("/weights")
+    page.locator("#view-toggle-btn").click()
+    cell = page.locator(".cell-weight:not(.cell-missing)").first
+    expect(cell).to_be_visible()
+    cell.hover()
+    assert "cursor-pointer.png" in _cursor_image(page)
+
+
+@pytest.mark.browser_context_args(has_touch=True, is_mobile=True, viewport={"width": 390, "height": 844})
+def test_custom_cursor_stays_hidden_on_touch(shell):
+    """A tap also fires browser-made mouse events, which must not bring up the cursor."""
+    open_page, _ = shell
+    page = open_page()
+    page.locator("#mp-footer-add-btn").tap()
+    expect(page.locator("#quick-add-modal")).to_be_visible()
+    page.wait_for_timeout(400)
+    expect(page.locator("#site-cursor")).to_be_hidden()
+
+
+@pytest.mark.browser_context_args(has_touch=True)
+def test_custom_cursor_returns_when_a_touchscreen_laptop_uses_its_mouse(shell):
+    open_page, _ = shell
+    page = open_page()
+    page.locator("#mp-footer-add-btn").tap()
+    expect(page.locator("#site-cursor")).to_be_hidden()
+    page.wait_for_timeout(1100)
+    page.mouse.move(300, 300)
+    expect(page.locator("#site-cursor")).to_be_visible()
 
 
 def test_custom_cursor_keeps_its_place_across_a_refresh(shell):

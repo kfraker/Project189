@@ -1,13 +1,41 @@
-# Sweat Equity — Weight Loss Dashboard
+# Sweat Equity
 
+![Version](https://img.shields.io/badge/version-4.0.0-ff2d78)
 [![Tests](https://github.com/kfraker/Project189/actions/workflows/tests.yml/badge.svg?branch=main)](https://github.com/kfraker/Project189/actions/workflows/tests.yml?query=branch%3Amain)
 [![Coverage](https://codecov.io/gh/kfraker/Project189/branch/main/graph/badge.svg)](https://app.codecov.io/gh/kfraker/Project189/tree/main)
 
-A personal weight tracking dashboard built with Flask and Postgres (Neon). A gamified Home screen (health bar HUD, weight-plate stat cards) links out to a dedicated Weigh-ins page for charting/logging weight and a Workouts page for logging exercise — all sharing one Jinja2 header/footer shell.
+A retro-styled weight and workout tracker built with Flask and Postgres (Neon). A gamified Home screen (weight-plate stat cards, streaks and weekly stats) connects to a Weigh-ins page for charting and logging weight and a Workouts page for logging exercise, all inside one shared shell that stays in place as you move between pages.
+
+**Live site:** [sweatequity.kfraker.dev](https://sweatequity.kfraker.dev). Sign-in is currently limited to approved accounts; a public demo mode is [on the roadmap](#roadmap).
+
+| Home | Weigh-ins |
+|---|---|
+| ![Home page with four weight-plate cards over a speedboat at dusk](docs/screenshots/home.png) | ![Weigh-ins page with a 90-day weight chart over a boxing gym](docs/screenshots/weigh-ins.png) |
+
+| Workouts | Sign-in |
+|---|---|
+| ![Workouts page with a date-grouped log over a garage gym](docs/screenshots/workouts.png) | ![Sign-in page over a speedboat at dusk](docs/screenshots/login.png) |
+
+*Screenshots use mock data.*
+
+## What's new in v4.0
+
+- **Rebuilt page architecture:** the shell loads once and pages swap in place, with cleanup rules that keep long sessions stable. See [In-page navigation](#in-page-navigation).
+- **New CI pipeline and tracked testing:** every push runs API and browser tests on GitHub Actions, with Python and JavaScript coverage reported to Codecov and guarded against drops. See [Running Tests & Viewing Coverage](#running-tests--viewing-coverage).
+- **New look:** redrawn backgrounds for Home, Weigh-ins and Workouts.
+
+Full details are in the [changelog](CHANGELOG.md).
+
+## Roadmap
+
+- **Database sandbox:** a separate Neon branch for development and preview deployments, fully isolated from production data.
+- **Demo mode:** one click from the sign-in page into a private, temporary account full of realistic data, with a guided tour. No sign-up, and it's wiped when you leave.
+- **Mobile test coverage:** the browser test suite extended to phone and tablet sizes with touch input.
+- **Nutrition page:** already marked "Coming Soon" in the header.
 
 ## Pages
 
-- **Home** (`/`) — health bar HUD, four weight-plate cards (Starting / Current / Lost / Goal), and quick stats (7-day trend, weekly kcal burn, active streak).
+- **Home** (`/`) — four weight-plate cards (Starting / Current / Lost / Goal), and quick stats (7-day trend, weekly kcal burn, active streak).
 - **Weigh-ins** (`/weights`) — daily and weekly weight charts, the data table, and weigh-in logging.
 - **Workouts** (`/workouts`) — date-grouped workout log with staging/edit workflow.
 
@@ -16,7 +44,6 @@ All three share a fixed header (page nav + per-page stats) and footer (context-a
 ## Features
 
 ### Home
-- **Health bar HUD** — fixed pixel-art health bar that fills as the user progresses from start weight toward goal weight. Fighter name (set in Fight Card) displays above it in Mortal Kombat–style gold text; hovering shows remaining weight to goal.
 - **Weight plate cards** — Starting, Current, Lost, and Goal weight shown as styled plates; lost weight is calculated automatically. Click any plate to set or update its value with overwrite confirmation.
 - **Quick Add** — footer "+" button opens a modal to jump straight to logging a weigh-in or a workout.
 - **Header stats** — 7-day weight trend, weekly kcal burn, and active streak (union of weigh-in days and workout days).
@@ -42,12 +69,12 @@ All three share a fixed header (page nav + per-page stats) and footer (context-a
 - **Header stats** — workouts logged this week, total kcal burned, and current day streak.
 
 ### Shared / site-wide
-- **Menu modal** — footer profile button opens a menu with Insights, Settings, and Profile.
-- **Settings** — collapsible accordion sections: Default Formats (weight/height/date display), Chart Landing (default chart + view), Daily Summary (range, moving avg, trend, goal line, legend), Weekly Summary (range, min/max range, trend, goal line, table expanded, week mode, legend), Workouts (range), and HUD (health bar, fighter name).
-- **Fight Card modal** — record fighter profile info (name, sex, date of birth, height, activity level) with a themed date picker for DOB. Age is calculated automatically. Activity level is used for BMR calculations. Includes a **Goal Mode** toggle: **Lean Machine** (lose weight) or **Muscle Monster** (gain weight) — dynamically updates the lost/gained plate label, health bar fill direction, and goal weight validation.
+- **Menu modal** — footer profile button opens a menu with Insights, Settings, Profile, and Log Out.
+- **Settings** — collapsible accordion sections: Default Formats (weight/height/date display), Chart Landing (default chart + view), Daily Summary (range, moving avg, trend, goal line, legend), Weekly Summary (range, min/max range, trend, goal line, table expanded, week mode, legend), Workouts (range), and Profile (profile picture).
+- **Fight Card modal** — record fighter profile info (name, sex, date of birth, height, activity level) with a themed date picker for DOB. Age is calculated automatically. Activity level is used for BMR calculations. Includes a **Goal Mode** toggle: **Lean Machine** (lose weight) or **Muscle Monster** (gain weight) — dynamically updates the lost/gained plate label and goal weight validation.
 - **Insights modal** — 10 stats computed from full weight history: Predicted Goal Date (Mifflin-St. Jeor BMR simulation), Total Weigh-ins, Longest Streak, Current Streak, Current Trend, Weekly Loss Rate, Monthly Loss Rate, Lowest Weight, Largest Weekly Loss, and Avg Daily Fluctuation.
 - **Profile system** — four selectable profile pictures, each linked to its own custom cursor. Selection is persisted server-side and restored on every page load.
-- **Custom cursor** — profile-linked pointer rendered as a DOM element positioned via `transform: translate3d()` (GPU-composited, never native `cursor: url()`, which Chromium/Edge silently suppress near viewport edges). Nav clicks don't reload the page, so it never has to be rebuilt; for a refresh or direct link its last position is carried across the load via `sessionStorage`, so it doesn't vanish until the mouse moves.
+- **Custom cursor** — profile-linked pointer that becomes an open hand over the Home weight plates and the note resize handle, rendered as a DOM element positioned via `transform: translate3d()` (GPU-composited, never native `cursor: url()`, which Chromium/Edge silently suppress near viewport edges). Nav clicks don't reload the page, so it never has to be rebuilt; for a refresh or direct link its last position is carried across the load via `sessionStorage`, so it doesn't vanish until the mouse moves.
 - **No hover tooltips** — removed by design (they covered the button art); icon-only buttons carry `aria-label`s for screen readers instead.
 - **Persistent preferences & storage** — unit choice, date ranges, default views, chart line toggles, fight card data, and profile selection are stored server-side in the database and hydrated into every page on load.
 
@@ -83,8 +110,8 @@ The shell (header, footer, menus, custom cursor) loads once. A header nav click 
 **1. Clone the repo and create a virtual environment**
 
 ```bash
-git clone <repo-url>
-cd project-189
+git clone https://github.com/kfraker/Project189.git
+cd Project189
 python -m venv .venv
 ```
 
@@ -124,29 +151,29 @@ Tables are created and migrated automatically on startup.
 
 ## Database Migrations
 
-Schema changes are managed by a small hand-rolled migration system in `db_migrations/` — no ORM, no external migration library, consistent with the rest of the app's plain-SQL `psycopg` style. Each numbered module (`m0001_baseline.py`, `m0002_...`, `m0003_...`) exposes a `VERSION` and an `up(conn)` function; `run_migrations()` (called from `init_db()` on every app startup) applies any migration whose version isn't yet recorded in the `schema_migrations` table, in order. Migrations are forward-only — to make a schema change, add a new `db_migrations/m000N_description.py` file rather than editing an existing one; it'll run automatically the next time the app starts.
+Schema changes are managed by a small hand-rolled migration system in `db_migrations/` — no ORM, no external migration library, consistent with the rest of the app's plain-SQL `psycopg` style. Each numbered module (currently just `m0001_baseline.py`) exposes a `VERSION` and an `up(conn)` function; `run_migrations()` (called from `init_db()` on every app startup) applies any migration whose version isn't yet recorded in the `schema_migrations` table, in order. Migrations are forward-only — to make a schema change, add a new `db_migrations/m000N_description.py` file rather than editing an existing one; it'll run automatically the next time the app starts.
 
 ## Project Structure
 
 ```
-project-189/
+Project189/
 ├── app.py                      # Flask app and REST API routes
 ├── requirements.txt            # Runtime dependencies (what Vercel installs)
 ├── requirements-dev.txt        # + test/dev tools for local development and CI
 ├── .vercelignore               # Keeps tests/tooling out of the deployment
+├── CHANGELOG.md                # Release history
 ├── .env.example                # Settings to copy into .env
+├── docs/screenshots/           # README images (not deployed)
 ├── pytest.ini / .coveragerc    # Test markers and coverage settings
 ├── codecov.yml                 # Codecov reporting settings
 ├── .github/workflows/tests.yml # CI: full suite + coverage guard on every push
 ├── tools/coverage/             # Node tooling: page-code coverage, combined report, ratchet
 ├── db_migrations/
 │   ├── __init__.py              # run_migrations() runner + schema_migrations tracking
-│   ├── m0001_baseline.py        # VERSION 1 — core tables (users, weights, settings, preferences, workouts, workout_day_notes)
-│   ├── m0002_baseline_notes_and_nullable.py  # VERSION 2 — weights.notes column, nullable weight_lbs/weight_kg
-│   └── m0003_settings_composite_pk.py        # VERSION 3 — settings PK becomes (user_id, key)
+│   └── m0001_baseline.py        # VERSION 1 — core tables (users, weights, settings, preferences, workouts, workout_day_notes)
 ├── templates/
 │   ├── base.html                # Shared header/footer shell + menu/settings/fight-card/insights modal markup
-│   ├── index.html                # Home dashboard (health bar, weight plates, Quick Add)
+│   ├── index.html                # Home dashboard (weight plates, Quick Add)
 │   ├── weights.html              # Weigh-ins page (charts + table)
 │   └── workouts.html             # Workout tracking page
 ├── static/
@@ -158,6 +185,8 @@ project-189/
 │   ├── js/pages/workouts.js     # Workouts page behavior
 │   ├── pointer.png / pointer2-4.png       # Profile-linked custom cursors (source art)
 │   ├── cursor-pointer*.png      # Pre-baked cursors actually served (transparent, 96px tall)
+│   ├── editpointer*.png         # Open-hand cursors (source art)
+│   ├── cursor-edit*.png         # Pre-baked open-hand cursors actually served (transparent, 128px tall)
 │   ├── nav-*.png                # Pre-baked header nav icons actually served (transparent, 128px)
 │   ├── profilebutton.png / profile2-4button.png            # Profile avatars (default)
 │   ├── profilebuttonsmile.png / profile2-4buttonsmile.png  # Profile avatars (hover)
@@ -165,18 +194,18 @@ project-189/
 │   ├── weightbutton.png        # Weigh-ins nav icon
 │   ├── dumbbellbutton.png      # Workouts nav icon
 │   ├── proteinshakebutton.png  # Nutrition nav icon (coming soon)
-│   ├── healthbar.png           # Health bar HUD graphic
+│   ├── healthbar.png           # Health bar graphic (feature hidden for now)
 │   ├── weightplate.png         # Weight plate card graphic
-│   ├── mainbackground.png      # Home page background
+│   ├── homebackground.png      # Home, login and access-denied background
 │   ├── miamibackground.png     # Parallax palm-tree frame overlay
-│   └── workoutbackground4.png / workoutbackground7.png     # Weigh-ins / Workouts page backgrounds
+│   └── weighinsbackground.png / workoutbackground9.png     # Weigh-ins / Workouts page backgrounds
 └── tests/
     ├── conftest.py              # Test schema, Flask client, seed helpers
     ├── test_*.py                # API, auth, business logic, migrations, page structure
     └── browser/                 # Playwright: page flows, lifecycle, navigation, stress test
 ```
 
-A few other `static/` PNGs (`editpointer*.png`, `settingsbutton.png`, `homebutton.png`, `leanmachine.png`, `musclemonster.png`, various `workoutbackgroundtest*.png`) are earlier iterations no longer referenced by any template — left in place but not wired up.
+`static/leanmachine.png`, `musclemonster.png` and `mainbackground.png` aren't used by any page right now; they're kept on purpose.
 
 ## API Endpoints
 
@@ -219,7 +248,7 @@ First-time setup for browser tests: `python -m playwright install chromium`.
 
 **CI:** every push to `dev`/`main` runs the full suite on GitHub Actions against a throwaway Postgres (a few minutes). Coverage is uploaded to Codecov. When a browser test fails, screenshots and Playwright traces are attached to the run (`browser-test-failures` artifact; open a trace at https://trace.playwright.dev).
 
-582 tests in all. 435 API/server tests cover all API endpoints (including the Home header stats), sign-in and multi-user isolation, business logic, date-range boundaries, page structure across Home/Weigh-ins/Workouts, and the migration runner. 147 browser tests cover the user flows on every page, the shell (menu, settings, profile, cursor), each page's lifecycle (restarted 20 times in place without anything piling up), in-page navigation (swaps, Back/Forward, rapid clicks, fallbacks, focus, fades), and a 35-step stress test whose pages must look identical to a fresh load. Tests run in an isolated `test` schema that is wiped before every test, so real data is never touched.
+591 tests in all. 435 API/server tests cover all API endpoints (including the Home header stats), sign-in and multi-user isolation, business logic, date-range boundaries, page structure across Home/Weigh-ins/Workouts, and the migration runner. 156 browser tests cover the user flows on every page, the shell (menu, settings, profile, cursor), each page's lifecycle (restarted 20 times in place without anything piling up), in-page navigation (swaps, Back/Forward, rapid clicks, fallbacks, focus, fades), and a 35-step stress test whose pages must look identical to a fresh load. Tests run in an isolated `test` schema that is wiped before every test, so real data is never touched.
 
 **Coverage is measured on every run** (settings in `.coveragerc`, switched on in `pytest.ini`). After any run:
 
@@ -236,6 +265,6 @@ One-time setup (needs Node.js): `npm install --prefix tools/coverage`.
 
 **All code in one report:** after a test run, `npm --prefix tools/coverage run report` merges Python and page-code coverage into `coverage/all-html/index.html`, one table with a single combined total. CI builds the same report on every push (in the `coverage-report` artifact), and Codecov shows both halves as the `python` and `javascript` flags.
 
-**Coverage guard (ratchet):** `tools/coverage/baseline.json` records line coverage for Python, page code and combined. After the full test run, CI runs `npm --prefix tools/coverage run check`, which **fails the build if any of the three drops more than 0.5 points** below the baseline. Coverage can only go up. When it does (or a drop is intentional, e.g. deleting well-tested code), refresh the baseline after a full local run with `npm --prefix tools/coverage run baseline` and commit the file. Codecov flags drops of more than 0.5% on each commit as well. Current baseline (2026-10-29): 99.1% of Python lines, 84.2% of page-code lines, 85.9% combined.
+**Coverage guard (ratchet):** `tools/coverage/baseline.json` records line coverage for Python, page code and combined. After the full test run, CI runs `npm --prefix tools/coverage run check`, which **fails the build if any of the three drops more than 0.5 points** below the baseline. Coverage can only go up. When it does (or a drop is intentional, e.g. deleting well-tested code), refresh the baseline after a full local run with `npm --prefix tools/coverage run baseline` and commit the file. Codecov flags drops of more than 0.5% on each commit as well. Current baseline (2026-10-31): 99.1% of Python lines, 84.5% of page-code lines, 86.1% combined.
 
 **Static file versions:** templates link CSS/JS through `static_url()` (in `app.py`), which appends a content hash (`?v=…`). Editing a file changes its hash, so browsers always fetch the new copy after a deploy. No version numbers to bump by hand.

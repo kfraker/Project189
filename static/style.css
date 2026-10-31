@@ -224,7 +224,10 @@ body {
     scroll-snap-align: start;
 }
 
+/* Hidden for everyone until it's redesigned: its position and size don't hold up across
+   screen widths. The markup and code stay so it can return. */
 #healthbar-hud {
+    display: none;
     position: fixed;
     top: 16px;
     left: 16px;

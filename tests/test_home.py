@@ -317,7 +317,7 @@ def test_settings_sections_present(html):
     assert 'Chart Landing' in html
     assert 'Daily Summary' in html
     assert 'Weekly Summary' in html
-    assert 'HUD' in html
+    assert 'data-section="hud">Profile' in html
 
 
 def test_settings_collapsible_bodies_present(html):
