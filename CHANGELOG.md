@@ -1,5 +1,27 @@
 # Changelog
 
+## 4.1.0 (2026-10-31)
+
+### Added
+- Neon `dev` branch as a database sandbox for local development and `dev` previews; Vercel `DATABASE_URL` scoped to the `dev` preview branch as a Secret.
+- `APP_ENV=sandbox` setting and `templates/_env_badge.html`: SANDBOX badge, plus a PRODUCTION DATA warning in debug mode without the setting. No badge in production.
+- `tools/sandbox/seed_mock_data.py`: fills an account with mock data through the API; refuses to run unless `APP_ENV=sandbox`, and off Vercel only.
+- `docs/requirements/roadmap.md` (epics, stories, acceptance criteria) and `docs/decisions.md`.
+- README sections for the sandbox, and for releases and rollback (rollback and return tested on production, v4.0.0 to v3.3.2 and back).
+- MIT `LICENSE`.
+- `.github/dependabot.yml`: weekly grouped update checks for pip, npm and GitHub Actions, targeting `dev`.
+- Tests: `tests/test_env_badge.py`, `tests/test_sandbox_seed.py`, and a browser test for the badge (610 tests in total).
+
+### Changed
+- Neon's Vercel integration now covers Production and Development only, so previews no longer receive production credentials. Previews from other branches have no database and fail safely.
+- Registered the `dev` preview address as a Google sign-in callback.
+- Turned on Dependabot alerts and security updates for the repo.
+- Repository homepage now points to https://sweatequity.kfraker.dev.
+- `.coveragerc` omits `tools/`, which was counting developer tools as app code.
+
+### Removed
+- Temporary `demo` and `test` schemas from the production database. Row counts in `public` verified unchanged.
+
 ## 4.0.0 (2026-10-31)
 
 A major release. The front end now runs on a new page architecture, and the project gained a CI pipeline and an automated test suite that runs on every push.

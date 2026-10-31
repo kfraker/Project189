@@ -1,0 +1,6 @@
+{# Which database this copy of the app is using. Never shown on the live site. #}
+{% if env_badge == 'sandbox' %}
+<div id="env-badge" style="position: fixed; top: 6px; left: 50%; transform: translateX(-50%); z-index: 2000; pointer-events: none; padding: 2px 10px; border-radius: 999px; background: #0b7a75; color: #fff; font: 700 11px/16px Arial, sans-serif; letter-spacing: 0.1em;">SANDBOX</div>
+{% elif env_badge == 'production-warning' %}
+<div id="env-badge" role="alert" style="position: fixed; top: 6px; left: 50%; transform: translateX(-50%); z-index: 2000; pointer-events: none; padding: 4px 14px; border-radius: 6px; background: #d00000; color: #fff; font: 700 13px/18px Arial, sans-serif; letter-spacing: 0.06em;">PRODUCTION DATA</div>
+{% endif %}

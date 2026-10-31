@@ -4,6 +4,7 @@
 source = .
 omit =
     tests/*
+    tools/*
     .venv/*
 branch = True
 
