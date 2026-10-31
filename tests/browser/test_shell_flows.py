@@ -38,6 +38,20 @@ def _saved_prefs(client):
     return client.get("/api/preferences").get_json()
 
 
+# ── Which-database badge ─────────────────────────────────────────────────────
+
+def test_env_badge_stays_put_across_pages_and_never_blocks_clicks(shell, monkeypatch):
+    monkeypatch.setenv("APP_ENV", "sandbox")
+    open_page, _ = shell
+    page = open_page()
+    badge = page.locator("#env-badge")
+    expect(badge).to_have_text("SANDBOX")
+    assert badge.evaluate("el => getComputedStyle(el).pointerEvents") == "none"
+    page.get_by_role("navigation", name="Pages").get_by_role("link", name="Workouts").click()
+    page.wait_for_url("**/workouts")
+    expect(badge).to_be_visible()
+
+
 # ── Menu ─────────────────────────────────────────────────────────────────────
 
 def test_menu_lists_items_in_order(shell):

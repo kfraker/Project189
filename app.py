@@ -67,6 +67,16 @@ def _static_url_helper():
     return {'static_url': static_url}
 
 
+@app.context_processor
+def _env_badge():
+    """Which database this copy of the app uses: 'sandbox', or a warning when running in
+    debug mode without APP_ENV=sandbox (assume real data). The live site never runs in
+    debug mode, so it shows nothing."""
+    if os.environ.get('APP_ENV') == 'sandbox':
+        return {'env_badge': 'sandbox'}
+    return {'env_badge': 'production-warning' if app.debug else None}
+
+
 def current_user_id():
     return session['user_id']
 

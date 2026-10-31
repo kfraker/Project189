@@ -1,5 +1,26 @@
 # Changelog
 
+## Unreleased
+
+### Database sandbox
+- Added a separate sandbox database, so development and testing no longer touch real data.
+- The local version of the app now runs on the sandbox.
+- Preview versions of the site from the `dev` branch now run on the sandbox too, and no longer have access to the production database.
+- Previews from any other branch now have no database at all, so they can't reach real data by accident.
+- Signing in with Google now works on the `dev` preview site.
+- Added a SANDBOX badge that shows whenever the app is running on the sandbox, including on the sign-in page.
+- Added a loud PRODUCTION DATA warning for anyone running the app in debug mode without the sandbox setting, so real data doesn't get edited by mistake.
+- Visitors to the live site see neither of these labels.
+- Added a command that fills a sandbox account with about four months of realistic weigh-ins, workouts and notes. It refuses to run anywhere but the sandbox.
+- Removed leftover temporary test data from the production database. Real data wasn't changed.
+
+### Documentation
+- Added instructions for setting up the sandbox, filling it with mock data and resetting it.
+
+### Testing
+- Added tests for the sandbox badge, the production warning, and the mock data command's safety checks.
+- Fixed test coverage reports counting developer tools as if they were part of the app.
+
 ## 4.0.0 (2026-10-31)
 
 A major release. The front end now runs on a new page architecture, and the project gained a CI pipeline and an automated test suite that runs on every push.

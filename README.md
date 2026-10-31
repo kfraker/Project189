@@ -149,6 +149,15 @@ Open `http://localhost:5000` in your browser (use `localhost`, not `127.0.0.1`: 
 
 Tables are created and migrated automatically on startup.
 
+## Database sandbox
+
+Local development and `dev` preview deployments use a Neon branch called `dev`, a separate copy of production. Changes there never reach the live site. Setting `APP_ENV=sandbox` shows a **SANDBOX** badge in the header; running in debug mode without it shows a **PRODUCTION DATA** warning instead, and the live site shows neither.
+
+To work against the sandbox, copy the `dev` branch's connection strings (database `neondb`) from Neon into `.env` as `DATABASE_URL` and `DATABASE_URL_UNPOOLED`, and set `APP_ENV=sandbox`.
+
+- **Fill an account with mock data:** `python tools/sandbox/seed_mock_data.py` replaces the `OWNER_EMAIL` account's data with about four months of realistic history, ending yesterday. Pass `--user-id N` for another account. It refuses to run unless `APP_ENV=sandbox`.
+- **Reset the sandbox:** in Neon, open the `dev` branch and choose **Reset from parent**. This throws away sandbox changes and brings in a fresh copy of production, so run the command above afterwards if you want mock data again.
+
 ## Database Migrations
 
 Schema changes are managed by a small hand-rolled migration system in `db_migrations/` — no ORM, no external migration library, consistent with the rest of the app's plain-SQL `psycopg` style. Each numbered module (currently just `m0001_baseline.py`) exposes a `VERSION` and an `up(conn)` function; `run_migrations()` (called from `init_db()` on every app startup) applies any migration whose version isn't yet recorded in the `schema_migrations` table, in order. Migrations are forward-only — to make a schema change, add a new `db_migrations/m000N_description.py` file rather than editing an existing one; it'll run automatically the next time the app starts.
@@ -168,6 +177,7 @@ Project189/
 ├── codecov.yml                 # Codecov reporting settings
 ├── .github/workflows/tests.yml # CI: full suite + coverage guard on every push
 ├── tools/coverage/             # Node tooling: page-code coverage, combined report, ratchet
+├── tools/sandbox/              # Mock data for the sandbox database
 ├── db_migrations/
 │   ├── __init__.py              # run_migrations() runner + schema_migrations tracking
 │   └── m0001_baseline.py        # VERSION 1 — core tables (users, weights, settings, preferences, workouts, workout_day_notes)
@@ -248,7 +258,7 @@ First-time setup for browser tests: `python -m playwright install chromium`.
 
 **CI:** every push to `dev`/`main` runs the full suite on GitHub Actions against a throwaway Postgres (a few minutes). Coverage is uploaded to Codecov. When a browser test fails, screenshots and Playwright traces are attached to the run (`browser-test-failures` artifact; open a trace at https://trace.playwright.dev).
 
-591 tests in all. 435 API/server tests cover all API endpoints (including the Home header stats), sign-in and multi-user isolation, business logic, date-range boundaries, page structure across Home/Weigh-ins/Workouts, and the migration runner. 156 browser tests cover the user flows on every page, the shell (menu, settings, profile, cursor), each page's lifecycle (restarted 20 times in place without anything piling up), in-page navigation (swaps, Back/Forward, rapid clicks, fallbacks, focus, fades), and a 35-step stress test whose pages must look identical to a fresh load. Tests run in an isolated `test` schema that is wiped before every test, so real data is never touched.
+610 tests in all. 453 API/server tests cover all API endpoints (including the Home header stats), sign-in and multi-user isolation, business logic, date-range boundaries, page structure across Home/Weigh-ins/Workouts, and the migration runner. 157 browser tests cover the user flows on every page, the shell (menu, settings, profile, cursor), each page's lifecycle (restarted 20 times in place without anything piling up), in-page navigation (swaps, Back/Forward, rapid clicks, fallbacks, focus, fades), and a 35-step stress test whose pages must look identical to a fresh load. Tests run in an isolated `test` schema that is wiped before every test, so real data is never touched.
 
 **Coverage is measured on every run** (settings in `.coveragerc`, switched on in `pytest.ini`). After any run:
 
