@@ -5,7 +5,7 @@ Upcoming work as epics and stories, in the order it's planned. Each story is don
 Sizes: **S** is about one sitting, **M** is a couple of sittings.
 
 ## Epic 1: Foundations
-*Status: in progress.*
+*Status: done, released in v4.1.0.*
 
 - **1.1 Repo basics** (S). Done: the repo links to the live site and is licensed under MIT.
 - **1.2 Dependency alerts** (S). Done: alerts are on, and weekly update checks target `dev` so updates pass the full test suite first.
@@ -13,8 +13,12 @@ Sizes: **S** is about one sitting, **M** is a couple of sittings.
 - **1.4 Decisions and requirements in the repo** (S). Done: this file and the decision log are published, and we keep them current.
 
 ## Epic 2: Complete the CI/CD pipeline
-- **2.1 Protect the main branch** (S). **Done when:** direct pushes to `main` are blocked, and merging requires the test suite to pass.
-- **2.2 Deploys wait for tests** (M). **Done when:** a deliberately failing test blocks a production deploy and a passing run deploys automatically. Only then do the docs say CI/CD.
+*Status: next.*
+
+- **2.1 Confirm the approach** (S). Vercel's Deployment Checks can hold a production deploy back from the live address until GitHub checks pass. **Done when:** we've confirmed it's available on this hosting plan, or chosen the fallback: turning off automatic production deploys and deploying from GitHub Actions after tests pass.
+- **2.2 Protect the main branch** (S). **Done when:** changes reach `main` only through a pull request that has passed the test suite, and a direct push is refused.
+- **2.3 Deploys wait for tests** (M). **Done when:** the `test` check is required before production goes live.
+- **2.4 Prove and document it** (S). **Done when:** a deliberately failing commit doesn't reach the live address, a passing one does, both work alongside the branch rules, and the docs are updated. Only then do the docs say CI/CD.
 
 ## Epic 3: Consistent code
 - **3.1 Formatting and lint** (M). **Done when:** the existing code is cleaned up, with no behavior change, and CI fails on new violations.

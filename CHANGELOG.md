@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## 4.1.0 (2026-10-31)
 
 ### Added
 - Neon `dev` branch as a database sandbox for local development and `dev` previews; Vercel `DATABASE_URL` scoped to the `dev` preview branch as a Secret.
