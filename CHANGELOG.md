@@ -16,6 +16,15 @@
 
 ### Documentation
 - Added instructions for setting up the sandbox, filling it with mock data and resetting it.
+- Published the roadmap, with upcoming work written up as epics, stories and acceptance criteria.
+- Added a decision log explaining the big technical choices and why they were made.
+- Added steps for undoing a bad release.
+
+### Project maintenance
+- Made the project open source under the MIT license.
+- Turned on automatic alerts and fixes for vulnerable dependencies.
+- Added weekly checks for outdated dependencies, which go through the full test suite before reaching a release.
+- Fixed the repository's website link, which pointed to an old address.
 
 ### Testing
 - Added tests for the sandbox badge, the production warning, and the mock data command's safety checks.

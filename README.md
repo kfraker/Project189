@@ -28,7 +28,9 @@ Full details are in the [changelog](CHANGELOG.md).
 
 ## Roadmap
 
-- **Database sandbox:** a separate Neon branch for development and preview deployments, fully isolated from production data.
+Full requirements are in [docs/requirements/roadmap.md](docs/requirements/roadmap.md), and the reasoning behind big choices is in the [decision log](docs/decisions.md).
+
+- **Complete CI/CD:** production deploys that wait for passing tests.
 - **Demo mode:** one click from the sign-in page into a private, temporary account full of realistic data, with a guided tour. No sign-up, and it's wiped when you leave.
 - **Mobile test coverage:** the browser test suite extended to phone and tablet sizes with touch input.
 - **Nutrition page:** already marked "Coming Soon" in the header.
@@ -158,6 +160,12 @@ To work against the sandbox, copy the `dev` branch's connection strings (databas
 - **Fill an account with mock data:** `python tools/sandbox/seed_mock_data.py` replaces the `OWNER_EMAIL` account's data with about four months of realistic history, ending yesterday. Pass `--user-id N` for another account. It refuses to run unless `APP_ENV=sandbox`.
 - **Reset the sandbox:** in Neon, open the `dev` branch and choose **Reset from parent**. This throws away sandbox changes and brings in a fresh copy of production, so run the command above afterwards if you want mock data again.
 
+## Releases and rollback
+
+`main` deploys to production on Vercel, and each release gets a version tag, a GitHub Release and a [changelog](CHANGELOG.md) entry.
+
+**To undo a bad release:** in Vercel, open the project's **Deployments**, find the last good Production deployment, open its **⋯** menu and choose **Instant Rollback**. Then fix the problem on `dev` and release again. Database migrations only go forward, so if a release changed the database, check that the older code still works with it before rolling back.
+
 ## Database Migrations
 
 Schema changes are managed by a small hand-rolled migration system in `db_migrations/` — no ORM, no external migration library, consistent with the rest of the app's plain-SQL `psycopg` style. Each numbered module (currently just `m0001_baseline.py`) exposes a `VERSION` and an `up(conn)` function; `run_migrations()` (called from `init_db()` on every app startup) applies any migration whose version isn't yet recorded in the `schema_migrations` table, in order. Migrations are forward-only — to make a schema change, add a new `db_migrations/m000N_description.py` file rather than editing an existing one; it'll run automatically the next time the app starts.
@@ -171,8 +179,11 @@ Project189/
 ├── requirements-dev.txt        # + test/dev tools for local development and CI
 ├── .vercelignore               # Keeps tests/tooling out of the deployment
 ├── CHANGELOG.md                # Release history
+├── LICENSE                     # MIT
 ├── .env.example                # Settings to copy into .env
 ├── docs/screenshots/           # README images (not deployed)
+├── docs/requirements/          # Upcoming work as epics and stories
+├── docs/decisions.md           # Key decisions and why they were made
 ├── pytest.ini / .coveragerc    # Test markers and coverage settings
 ├── codecov.yml                 # Codecov reporting settings
 ├── .github/workflows/tests.yml # CI: full suite + coverage guard on every push
@@ -278,3 +289,7 @@ One-time setup (needs Node.js): `npm install --prefix tools/coverage`.
 **Coverage guard (ratchet):** `tools/coverage/baseline.json` records line coverage for Python, page code and combined. After the full test run, CI runs `npm --prefix tools/coverage run check`, which **fails the build if any of the three drops more than 0.5 points** below the baseline. Coverage can only go up. When it does (or a drop is intentional, e.g. deleting well-tested code), refresh the baseline after a full local run with `npm --prefix tools/coverage run baseline` and commit the file. Codecov flags drops of more than 0.5% on each commit as well. Current baseline (2026-10-31): 99.1% of Python lines, 84.5% of page-code lines, 86.1% combined.
 
 **Static file versions:** templates link CSS/JS through `static_url()` (in `app.py`), which appends a content hash (`?v=…`). Editing a file changes its hash, so browsers always fetch the new copy after a deploy. No version numbers to bump by hand.
+
+## License
+
+[MIT](LICENSE)
