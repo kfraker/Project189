@@ -1,0 +1,11 @@
+# Not needed to run the app — keep them out of the Vercel deployment.
+tests/
+tools/
+coverage/
+Notes/
+requirements-dev.txt
+pytest.ini
+.coveragerc
+codecov.yml
+.github/
+docs/

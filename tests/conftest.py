@@ -7,6 +7,9 @@ truncated before every test. get_db() reads DB_SCHEMA from app.config at
 call time, so the override takes effect for every route handler called
 through the test client.
 """
+import os
+import re
+
 import psycopg
 from psycopg.rows import dict_row
 
@@ -154,3 +157,21 @@ def seed_setting(client, key: str, value_lbs: float, overwrite: bool = False):
         json={"key": key, "value_lbs": value_lbs, "overwrite": overwrite},
         content_type="application/json",
     )
+
+
+# ── Page source helper ───────────────────────────────────────────────────────
+
+_SCRIPT_SRC = re.compile(r'<script\b[^>]*\bsrc="/static/([^"?]+)(?:\?[^"]*)?"[^>]*></script>')
+
+
+def page_source(client, path):
+    """A page's HTML plus the source of every app script it links, as one string.
+
+    Page code lives in static/js/*.js, so tests that look for a code snippet
+    "on the page" should find it whichever file it's loaded from.
+    """
+    html = client.get(path).data.decode()
+    for rel in _SCRIPT_SRC.findall(html):
+        with open(os.path.join(flask_app.static_folder, rel), encoding="utf-8") as f:
+            html += "\n" + f.read()
+    return html

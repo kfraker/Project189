@@ -1,7 +1,15 @@
 """Google OAuth login flow: gating of existing routes, the login/logout
 routes themselves, and the /auth/google/callback exchange."""
+import pytest
+
 import app as app_module
 from tests.conftest import connect
+
+
+@pytest.fixture(autouse=True)
+def _allowlist(monkeypatch):
+    """Pin the allowlist so these tests don't depend on ALLOWED_EMAILS in the real .env."""
+    monkeypatch.setattr(app_module, "ALLOWED_EMAILS", {"you@example.com"})
 
 
 def _fake_token(email, sub="sub-test-1", name="Test User", picture="http://pic"):

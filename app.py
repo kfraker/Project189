@@ -1,6 +1,7 @@
 from flask import Flask, render_template, request, jsonify, session, redirect, url_for
 import psycopg
 from psycopg.rows import dict_row
+import hashlib
 import os
 import re
 from datetime import date, timedelta
@@ -43,6 +44,27 @@ def init_db():
 
 
 init_db()
+
+
+_static_versions = {}
+
+
+@app.context_processor
+def _static_url_helper():
+    """static_url('js/shell.js') -> /static/js/shell.js?v=<content hash>.
+
+    The hash changes whenever the file's contents change, so browsers never run a
+    stale cached copy after a deploy. Cached per process; recomputed every time in
+    debug mode so local edits show up on refresh.
+    """
+    def static_url(filename):
+        version = None if app.debug else _static_versions.get(filename)
+        if version is None:
+            with open(os.path.join(app.static_folder, filename), 'rb') as f:
+                version = hashlib.md5(f.read()).hexdigest()[:10]
+            _static_versions[filename] = version
+        return url_for('static', filename=filename, v=version)
+    return {'static_url': static_url}
 
 
 def current_user_id():

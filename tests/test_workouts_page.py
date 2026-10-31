@@ -1,10 +1,12 @@
 """GET /workouts — standalone workout page renders correctly."""
 import pytest
 
+from tests.conftest import page_source
+
 
 @pytest.fixture()
 def html(client):
-    return client.get("/workouts").data.decode()
+    return page_source(client, "/workouts")
 
 
 def test_workouts_page_returns_200(client):

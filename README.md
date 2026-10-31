@@ -1,19 +1,49 @@
-# Sweat Equity — Weight Loss Dashboard
+# Sweat Equity
 
-A personal weight tracking dashboard built with Flask and SQLite. A gamified Home screen (health bar HUD, weight-plate stat cards) links out to a dedicated Weigh-ins page for charting/logging weight and a Workouts page for logging exercise — all sharing one Jinja2 header/footer shell.
+![Version](https://img.shields.io/badge/version-4.0.0-ff2d78)
+[![Tests](https://github.com/kfraker/Project189/actions/workflows/tests.yml/badge.svg?branch=main)](https://github.com/kfraker/Project189/actions/workflows/tests.yml?query=branch%3Amain)
+[![Coverage](https://codecov.io/gh/kfraker/Project189/branch/main/graph/badge.svg)](https://app.codecov.io/gh/kfraker/Project189/tree/main)
+
+A retro-styled weight and workout tracker built with Flask and Postgres (Neon). A gamified Home screen (weight-plate stat cards, streaks and weekly stats) connects to a Weigh-ins page for charting and logging weight and a Workouts page for logging exercise, all inside one shared shell that stays in place as you move between pages.
+
+**Live site:** [sweatequity.kfraker.dev](https://sweatequity.kfraker.dev). Sign-in is currently limited to approved accounts; a public demo mode is [on the roadmap](#roadmap).
+
+| Home | Weigh-ins |
+|---|---|
+| ![Home page with four weight-plate cards over a speedboat at dusk](docs/screenshots/home.png) | ![Weigh-ins page with a 90-day weight chart over a boxing gym](docs/screenshots/weigh-ins.png) |
+
+| Workouts | Sign-in |
+|---|---|
+| ![Workouts page with a date-grouped log over a garage gym](docs/screenshots/workouts.png) | ![Sign-in page over a speedboat at dusk](docs/screenshots/login.png) |
+
+*Screenshots use mock data.*
+
+## What's new in v4.0
+
+- **Rebuilt page architecture:** the shell loads once and pages swap in place, with cleanup rules that keep long sessions stable. See [In-page navigation](#in-page-navigation).
+- **New CI pipeline and tracked testing:** every push runs API and browser tests on GitHub Actions, with Python and JavaScript coverage reported to Codecov and guarded against drops. See [Running Tests & Viewing Coverage](#running-tests--viewing-coverage).
+- **New look:** redrawn backgrounds for Home, Weigh-ins and Workouts.
+
+Full details are in the [changelog](CHANGELOG.md).
+
+## Roadmap
+
+- **Database sandbox:** a separate Neon branch for development and preview deployments, fully isolated from production data.
+- **Demo mode:** one click from the sign-in page into a private, temporary account full of realistic data, with a guided tour. No sign-up, and it's wiped when you leave.
+- **Mobile test coverage:** the browser test suite extended to phone and tablet sizes with touch input.
+- **Nutrition page:** already marked "Coming Soon" in the header.
 
 ## Pages
 
-- **Home** (`/`) — health bar HUD, four weight-plate cards (Starting / Current / Lost / Goal), and quick stats (7-day trend, weekly kcal burn, active streak).
+- **Home** (`/`) — four weight-plate cards (Starting / Current / Lost / Goal), and quick stats (7-day trend, weekly kcal burn, active streak).
 - **Weigh-ins** (`/weights`) — daily and weekly weight charts, the data table, and weigh-in logging.
 - **Workouts** (`/workouts`) — date-grouped workout log with staging/edit workflow.
 
-All three share a fixed header (page nav + per-page stats) and footer (context-aware "+" quick-add button, profile menu button) defined once in `templates/base.html` and extended by each page template.
+All three share a fixed header (page nav + per-page stats) and footer (context-aware "+" quick-add button, profile menu button) defined once in `templates/base.html` and extended by each page template. Moving between them happens in place, without a full page load: see [In-page navigation](#in-page-navigation).
 
 ## Features
 
 ### Home
-- **Health bar HUD** — fixed pixel-art health bar that fills as the user progresses from start weight toward goal weight. Fighter name (set in Fight Card) displays above it in Mortal Kombat–style gold text; hovering shows remaining weight to goal.
 - **Weight plate cards** — Starting, Current, Lost, and Goal weight shown as styled plates; lost weight is calculated automatically. Click any plate to set or update its value with overwrite confirmation.
 - **Quick Add** — footer "+" button opens a modal to jump straight to logging a weigh-in or a workout.
 - **Header stats** — 7-day weight trend, weekly kcal burn, and active streak (union of weigh-in days and workout days).
@@ -39,32 +69,49 @@ All three share a fixed header (page nav + per-page stats) and footer (context-a
 - **Header stats** — workouts logged this week, total kcal burned, and current day streak.
 
 ### Shared / site-wide
-- **Menu modal** — footer profile button opens a menu with Insights, Settings, and Profile.
-- **Settings** — collapsible accordion sections: Default Formats (weight/height/date display), Chart Landing (default chart + view), Daily Summary (range, moving avg, trend, goal line, legend), Weekly Summary (range, min/max range, trend, goal line, table expanded, week mode, legend), Workouts (range), and HUD (health bar, fighter name).
-- **Fight Card modal** — record fighter profile info (name, sex, date of birth, height, activity level) with a themed date picker for DOB. Age is calculated automatically. Activity level is used for BMR calculations. Includes a **Goal Mode** toggle: **Lean Machine** (lose weight) or **Muscle Monster** (gain weight) — dynamically updates the lost/gained plate label, health bar fill direction, and goal weight validation.
+- **Menu modal** — footer profile button opens a menu with Insights, Settings, Profile, and Log Out.
+- **Settings** — collapsible accordion sections: Default Formats (weight/height/date display), Chart Landing (default chart + view), Daily Summary (range, moving avg, trend, goal line, legend), Weekly Summary (range, min/max range, trend, goal line, table expanded, week mode, legend), Workouts (range), and Profile (profile picture).
+- **Fight Card modal** — record fighter profile info (name, sex, date of birth, height, activity level) with a themed date picker for DOB. Age is calculated automatically. Activity level is used for BMR calculations. Includes a **Goal Mode** toggle: **Lean Machine** (lose weight) or **Muscle Monster** (gain weight) — dynamically updates the lost/gained plate label and goal weight validation.
 - **Insights modal** — 10 stats computed from full weight history: Predicted Goal Date (Mifflin-St. Jeor BMR simulation), Total Weigh-ins, Longest Streak, Current Streak, Current Trend, Weekly Loss Rate, Monthly Loss Rate, Lowest Weight, Largest Weekly Loss, and Avg Daily Fluctuation.
 - **Profile system** — four selectable profile pictures, each linked to its own custom cursor. Selection is persisted server-side and restored on every page load.
-- **Custom cursor** — profile-linked pointer rendered as a DOM element positioned via `transform: translate3d()` (GPU-composited, never native `cursor: url()`, which Chromium/Edge silently suppress near viewport edges). Its last position is carried across page loads via `sessionStorage` so it doesn't vanish after a nav click.
+- **Custom cursor** — profile-linked pointer that becomes an open hand over the Home weight plates and the note resize handle, rendered as a DOM element positioned via `transform: translate3d()` (GPU-composited, never native `cursor: url()`, which Chromium/Edge silently suppress near viewport edges). Nav clicks don't reload the page, so it never has to be rebuilt; for a refresh or direct link its last position is carried across the load via `sessionStorage`, so it doesn't vanish until the mouse moves.
 - **No hover tooltips** — removed by design (they covered the button art); icon-only buttons carry `aria-label`s for screen readers instead.
-- **Persistent preferences & storage** — unit choice, date ranges, default views, chart line toggles, fight card data, and profile selection are stored server-side in SQLite and hydrated into every page on load.
+- **Persistent preferences & storage** — unit choice, date ranges, default views, chart line toggles, fight card data, and profile selection are stored server-side in the database and hydrated into every page on load.
+
+## In-page navigation
+
+The shell (header, footer, menus, custom cursor) loads once. A header nav click fetches the next page from the server and swaps in only what changes, so the shell is never rebuilt (this is what stops Windows from flashing its white cursor over the custom one). The server still renders every page in full, so refreshes, bookmarks and direct links work as before.
+
+- **What gets swapped:** the parts of `base.html` marked `data-region` (`bg`, `header_title`, `header_stats`, `healthbar`, `content`, `footer_left`, `footer_add`), the page's own `<style data-page-style>`, and its `<script data-page-script>`. Everything else is shell.
+- **Router:** `static/js/router.js` intercepts nav clicks and Back/Forward, keeps the address bar, tab title and highlighted nav button in step, moves focus to the content and announces the page name for screen readers. The latest click wins; clicking the page you're on does nothing. Any unexpected response (e.g. signed out) falls back to a normal full page load.
+- **Transitions:** the page's parts fade out while the next page downloads and fade back in (about 0.25s in all); backgrounds cross-fade once the new image has loaded. Both are off with *reduce motion*.
+- **Page lifecycle:** each page script calls `registerPage(name, init)`. `init(page)` gets a context and must clean up through it, because with in-page navigation nothing is wiped by a page load:
+  - `addEventListener(type, fn, { signal: page.signal })`: removed automatically when the page is left
+  - `page.onLeave(fn)`: anything else to undo (charts, observers, timers)
+  - `page.fetch(...)`: like `fetch`, but answers that arrive after the page was left are dropped, so they can't write into the next page
+  - names a page puts on `window` are deleted when it's left; shell names are kept (the `APP_WIDE` list in `router.js`, which a test keeps in sync with `shell.js`)
+- **Adding a page:** extend `base.html`, fill the region blocks, label the page's `<style>` and `<script>`, wrap the script in `registerPage(...)` with `const { signal, fetch } = page;`, and add a browser lifecycle test like `tests/browser/test_workouts_lifecycle.py` (20 restarts: listeners and globals stay flat).
 
 ## Stack
 
 | Layer | Technology |
 |---|---|
 | Backend | Python 3, Flask 3.1 |
-| Database | SQLite (via `sqlite3` stdlib) |
+| Database | Postgres on Neon (via `psycopg` 3) |
+| Sign-in | Google OAuth (Authlib), limited to `ALLOWED_EMAILS` |
 | Templates | Jinja2 template inheritance (`base.html` + per-page blocks) |
-| Frontend | Vanilla JS, Chart.js 4.4.0 |
+| Frontend | Vanilla JS with in-page navigation (`static/js/router.js`), Chart.js 4.4.0 loaded on demand |
 | Styling | Custom CSS |
+| Hosting | Vercel (deploys `main`) |
+| Testing | pytest, Playwright (Chromium), coverage.py + c8, GitHub Actions, Codecov |
 
 ## Setup
 
 **1. Clone the repo and create a virtual environment**
 
 ```bash
-git clone <repo-url>
-cd project-189
+git clone https://github.com/kfraker/Project189.git
+cd Project189
 python -m venv .venv
 ```
 
@@ -83,44 +130,63 @@ source .venv/bin/activate
 **3. Install dependencies**
 
 ```bash
-pip install -r requirements.txt
+pip install -r requirements-dev.txt
 ```
 
-**4. Run the app**
+`requirements-dev.txt` pulls in the runtime packages from `requirements.txt` plus the test tools. Vercel installs only `requirements.txt`, and `.vercelignore` keeps tests and tooling out of the deployment.
+
+**4. Configure**
+
+Copy `.env.example` to `.env` and fill it in: `DATABASE_URL` (Postgres connection string), the Google OAuth client ID/secret, a `FLASK_SECRET_KEY`, and `ALLOWED_EMAILS`. Set `FLASK_DEBUG=1` locally so template and static-file edits show up on refresh.
+
+**5. Run the app**
 
 ```bash
 python app.py
 ```
 
-Open `http://127.0.0.1:5000` in your browser.
+Open `http://localhost:5000` in your browser (use `localhost`, not `127.0.0.1`: Google sign-in only accepts the callback addresses registered for the OAuth client).
 
-The SQLite database (`weights.db`) is created automatically on first run in the project root.
+Tables are created and migrated automatically on startup.
 
 ## Database Migrations
 
-Schema changes are managed by a small hand-rolled migration system in `db_migrations/` — no ORM, no external migration library, consistent with the rest of the app's stdlib-only `sqlite3` style. Each numbered module (`m0001_baseline.py`, `m0002_...`, `m0003_...`) exposes a `VERSION` and an `up(conn)` function; `run_migrations()` (called from `init_db()` on every app startup) applies any migration whose version isn't yet recorded in the `schema_migrations` table, in order. Migrations are forward-only — to make a schema change, add a new `db_migrations/m000N_description.py` file rather than editing an existing one; it'll run automatically the next time the app starts.
+Schema changes are managed by a small hand-rolled migration system in `db_migrations/` — no ORM, no external migration library, consistent with the rest of the app's plain-SQL `psycopg` style. Each numbered module (currently just `m0001_baseline.py`) exposes a `VERSION` and an `up(conn)` function; `run_migrations()` (called from `init_db()` on every app startup) applies any migration whose version isn't yet recorded in the `schema_migrations` table, in order. Migrations are forward-only — to make a schema change, add a new `db_migrations/m000N_description.py` file rather than editing an existing one; it'll run automatically the next time the app starts.
 
 ## Project Structure
 
 ```
-project-189/
+Project189/
 ├── app.py                      # Flask app and REST API routes
-├── requirements.txt            # Runtime + test dependencies
-├── weights.db                  # SQLite database (auto-created)
+├── requirements.txt            # Runtime dependencies (what Vercel installs)
+├── requirements-dev.txt        # + test/dev tools for local development and CI
+├── .vercelignore               # Keeps tests/tooling out of the deployment
+├── CHANGELOG.md                # Release history
+├── .env.example                # Settings to copy into .env
+├── docs/screenshots/           # README images (not deployed)
+├── pytest.ini / .coveragerc    # Test markers and coverage settings
+├── codecov.yml                 # Codecov reporting settings
+├── .github/workflows/tests.yml # CI: full suite + coverage guard on every push
+├── tools/coverage/             # Node tooling: page-code coverage, combined report, ratchet
 ├── db_migrations/
 │   ├── __init__.py              # run_migrations() runner + schema_migrations tracking
-│   ├── m0001_baseline.py        # VERSION 1 — core tables (users, weights, settings, preferences, workouts, workout_day_notes)
-│   ├── m0002_baseline_notes_and_nullable.py  # VERSION 2 — weights.notes column, nullable weight_lbs/weight_kg
-│   └── m0003_settings_composite_pk.py        # VERSION 3 — settings PK becomes (user_id, key)
+│   └── m0001_baseline.py        # VERSION 1 — core tables (users, weights, settings, preferences, workouts, workout_day_notes)
 ├── templates/
-│   ├── base.html                # Shared header/footer shell, menu/settings/fight-card/insights modals, cursor JS
-│   ├── index.html                # Home dashboard (health bar, weight plates, Quick Add)
+│   ├── base.html                # Shared header/footer shell + menu/settings/fight-card/insights modal markup
+│   ├── index.html                # Home dashboard (weight plates, Quick Add)
 │   ├── weights.html              # Weigh-ins page (charts + table)
 │   └── workouts.html             # Workout tracking page
 ├── static/
 │   ├── style.css                # All styles
+│   ├── js/shell.js              # Shared shell behavior: cursor, modals, menu, settings, fight card, insights
+│   ├── js/router.js             # In-page navigation + page lifecycle (registerPage)
+│   ├── js/pages/home.js         # Home page behavior (index.html)
+│   ├── js/pages/weights.js      # Weigh-ins page behavior (charts, table, notes)
+│   ├── js/pages/workouts.js     # Workouts page behavior
 │   ├── pointer.png / pointer2-4.png       # Profile-linked custom cursors (source art)
 │   ├── cursor-pointer*.png      # Pre-baked cursors actually served (transparent, 96px tall)
+│   ├── editpointer*.png         # Open-hand cursors (source art)
+│   ├── cursor-edit*.png         # Pre-baked open-hand cursors actually served (transparent, 128px tall)
 │   ├── nav-*.png                # Pre-baked header nav icons actually served (transparent, 128px)
 │   ├── profilebutton.png / profile2-4button.png            # Profile avatars (default)
 │   ├── profilebuttonsmile.png / profile2-4buttonsmile.png  # Profile avatars (hover)
@@ -128,32 +194,18 @@ project-189/
 │   ├── weightbutton.png        # Weigh-ins nav icon
 │   ├── dumbbellbutton.png      # Workouts nav icon
 │   ├── proteinshakebutton.png  # Nutrition nav icon (coming soon)
-│   ├── healthbar.png           # Health bar HUD graphic
+│   ├── healthbar.png           # Health bar graphic (feature hidden for now)
 │   ├── weightplate.png         # Weight plate card graphic
-│   ├── mainbackground.png      # Home page background
+│   ├── homebackground.png      # Home, login and access-denied background
 │   ├── miamibackground.png     # Parallax palm-tree frame overlay
-│   └── workoutbackground4.png / workoutbackground7.png     # Weigh-ins / Workouts page backgrounds
+│   └── weighinsbackground.png / workoutbackground9.png     # Weigh-ins / Workouts page backgrounds
 └── tests/
-    ├── conftest.py
-    ├── test_home.py
-    ├── test_weights_page.py
-    ├── test_workouts_page.py
-    ├── test_api_weight_post.py
-    ├── test_api_weights_get.py
-    ├── test_api_weights_edge.py
-    ├── test_api_weight_delete.py
-    ├── test_api_weight_notes.py
-    ├── test_api_weight_stats.py
-    ├── test_api_latest_weight.py
-    ├── test_api_settings.py
-    ├── test_api_preferences.py
-    ├── test_api_workouts.py
-    ├── test_business_logic.py
-    ├── test_db_init.py
-    └── test_db_migrations.py
+    ├── conftest.py              # Test schema, Flask client, seed helpers
+    ├── test_*.py                # API, auth, business logic, migrations, page structure
+    └── browser/                 # Playwright: page flows, lifecycle, navigation, stress test
 ```
 
-A few other `static/` PNGs (`editpointer*.png`, `settingsbutton.png`, `homebutton.png`, `leanmachine.png`, `musclemonster.png`, various `workoutbackgroundtest*.png`) are earlier iterations no longer referenced by any template — left in place but not wired up.
+`static/leanmachine.png`, `musclemonster.png` and `mainbackground.png` aren't used by any page right now; they're kept on purpose.
 
 ## API Endpoints
 
@@ -181,10 +233,38 @@ A few other `static/` PNGs (`editpointer*.png`, `settingsbutton.png`, `homebutto
 | `POST` | `/api/workout-day-note` | Upsert the day note for a date |
 | `GET` | `/api/workout-day-notes` | Get all non-empty day notes as a `{date: note}` map |
 
-## Running Tests
+## Running Tests & Viewing Coverage
 
 ```bash
-python -m pytest tests/ -v
+python -m pytest                      # everything (~25 min locally — tests talk to Neon over the network)
+python -m pytest -m "not browser"     # skip the browser tests
+python -m pytest -m browser           # browser tests only
+python -m pytest tests/test_auth.py   # one file
 ```
 
-376 tests covering all API endpoints, business logic, date range boundaries, page structure across Home/Weigh-ins/Workouts, and the migration runner.
+First-time setup for browser tests: `python -m playwright install chromium`.
+
+**Browser tests** (`tests/browser/`, Playwright) open the real app in Chromium against the same isolated test schema. They sign in with a test-only session cookie, and every test fails automatically on any JavaScript error, failed request or error response. The live test server refuses all requests unless the test schema is active, so browser tests can never touch real data.
+
+**CI:** every push to `dev`/`main` runs the full suite on GitHub Actions against a throwaway Postgres (a few minutes). Coverage is uploaded to Codecov. When a browser test fails, screenshots and Playwright traces are attached to the run (`browser-test-failures` artifact; open a trace at https://trace.playwright.dev).
+
+591 tests in all. 435 API/server tests cover all API endpoints (including the Home header stats), sign-in and multi-user isolation, business logic, date-range boundaries, page structure across Home/Weigh-ins/Workouts, and the migration runner. 156 browser tests cover the user flows on every page, the shell (menu, settings, profile, cursor), each page's lifecycle (restarted 20 times in place without anything piling up), in-page navigation (swaps, Back/Forward, rapid clicks, fallbacks, focus, fades), and a 35-step stress test whose pages must look identical to a fresh load. Tests run in an isolated `test` schema that is wiped before every test, so real data is never touched.
+
+**Coverage is measured on every run** (settings in `.coveragerc`, switched on in `pytest.ini`). After any run:
+
+- `coverage/python-html/index.html`: open in a browser for a line-by-line view of what the tests exercised
+- `coverage/python.lcov`: machine-readable copy for CI/Codecov
+- a short summary is printed at the end of the test output
+
+**Python baseline (2026-10-28): 98% of Python code** (`app.py` + `db_migrations/`, branch coverage; up from 88% after adding `/api/home-stats` and clear-weight tests). The few uncovered lines are the redirect to Google sign-in, two invalid-date error returns on the workout day-note routes, and the `python app.py` dev-server entry point. **Page-code (JavaScript) coverage** is measured whenever browser tests run. Chromium's built-in coverage records which lines of `static/js/**` actually executed, and the run ends by writing:
+
+- `coverage/js-html/index.html`: line-by-line view of the page scripts
+- `coverage/js.lcov`: machine-readable copy
+
+One-time setup (needs Node.js): `npm install --prefix tools/coverage`.
+
+**All code in one report:** after a test run, `npm --prefix tools/coverage run report` merges Python and page-code coverage into `coverage/all-html/index.html`, one table with a single combined total. CI builds the same report on every push (in the `coverage-report` artifact), and Codecov shows both halves as the `python` and `javascript` flags.
+
+**Coverage guard (ratchet):** `tools/coverage/baseline.json` records line coverage for Python, page code and combined. After the full test run, CI runs `npm --prefix tools/coverage run check`, which **fails the build if any of the three drops more than 0.5 points** below the baseline. Coverage can only go up. When it does (or a drop is intentional, e.g. deleting well-tested code), refresh the baseline after a full local run with `npm --prefix tools/coverage run baseline` and commit the file. Codecov flags drops of more than 0.5% on each commit as well. Current baseline (2026-10-31): 99.1% of Python lines, 84.5% of page-code lines, 86.1% combined.
+
+**Static file versions:** templates link CSS/JS through `static_url()` (in `app.py`), which appends a content hash (`?v=…`). Editing a file changes its hash, so browsers always fetch the new copy after a deploy. No version numbers to bump by hand.

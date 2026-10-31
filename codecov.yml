@@ -1,0 +1,27 @@
+# Codecov settings. Python coverage arrives with flag "python"; page-code (JavaScript)
+# coverage (from browser tests) arrives with flag "javascript". The dashboard total combines both.
+coverage:
+  precision: 1
+  round: down          # never overstate: 99.07% shows as 99.0%, not 100%
+  status:
+    project:
+      default:
+        target: auto          # compare with the parent commit…
+        threshold: 0.5%       # …and flag any drop bigger than half a point
+    patch:
+      default:
+        informational: true
+
+flags:
+  python:
+    paths:
+      - app.py
+      - db_migrations/
+    carryforward: true
+  javascript:
+    paths:
+      - static/js/
+    carryforward: true
+
+comment:
+  layout: "header, diff, flags, files"
