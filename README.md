@@ -164,7 +164,11 @@ To work against the sandbox, copy the `dev` branch's connection strings (databas
 
 `main` deploys to production on Vercel, and each release gets a version tag, a GitHub Release and a [changelog](CHANGELOG.md) entry.
 
-**To undo a bad release:** in Vercel, open the project's **Deployments**, find the last good Production deployment, open its **⋯** menu and choose **Instant Rollback**. Then fix the problem on `dev` and release again. Database migrations only go forward, so if a release changed the database, check that the older code still works with it before rolling back.
+**To undo a bad release:** on the Vercel project's **Overview**, click **Instant Rollback**, choose the last good production version and confirm. It took effect within seconds when tested on 2026-10-31.
+
+**To return afterward:** a rollback pauses automatic production deploys. On **Overview**, click **Manage** on the rollback banner, choose the version to return to and confirm. Check the banner is gone, or later releases may not go live.
+
+Database migrations only go forward, so if a release changed the database, check that the older code still works with it before rolling back.
 
 ## Database Migrations
 

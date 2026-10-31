@@ -9,7 +9,7 @@ Sizes: **S** is about one sitting, **M** is a couple of sittings.
 
 - **1.1 Repo basics** (S). Done: the repo links to the live site and is licensed under MIT.
 - **1.2 Dependency alerts** (S). Done: alerts are on, and weekly update checks target `dev` so updates pass the full test suite first.
-- **1.3 Documented rollback** (S). **Done when:** the README has steps for undoing a bad release, and they've been tried once.
+- **1.3 Documented rollback** (S). Done: the README has steps for undoing a bad release, tested on the live site.
 - **1.4 Decisions and requirements in the repo** (S). Done: this file and the decision log are published, and we keep them current.
 
 ## Epic 2: Complete the CI/CD pipeline

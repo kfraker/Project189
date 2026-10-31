@@ -2,33 +2,25 @@
 
 ## Unreleased
 
-### Database sandbox
-- Added a separate sandbox database, so development and testing no longer touch real data.
-- The local version of the app now runs on the sandbox.
-- Preview versions of the site from the `dev` branch now run on the sandbox too, and no longer have access to the production database.
-- Previews from any other branch now have no database at all, so they can't reach real data by accident.
-- Signing in with Google now works on the `dev` preview site.
-- Added a SANDBOX badge that shows whenever the app is running on the sandbox, including on the sign-in page.
-- Added a loud PRODUCTION DATA warning for anyone running the app in debug mode without the sandbox setting, so real data doesn't get edited by mistake.
-- Visitors to the live site see neither of these labels.
-- Added a command that fills a sandbox account with about four months of realistic weigh-ins, workouts and notes. It refuses to run anywhere but the sandbox.
-- Removed leftover temporary test data from the production database. Real data wasn't changed.
+### Added
+- Neon `dev` branch as a database sandbox for local development and `dev` previews; Vercel `DATABASE_URL` scoped to the `dev` preview branch as a Secret.
+- `APP_ENV=sandbox` setting and `templates/_env_badge.html`: SANDBOX badge, plus a PRODUCTION DATA warning in debug mode without the setting. No badge in production.
+- `tools/sandbox/seed_mock_data.py`: fills an account with mock data through the API; refuses to run unless `APP_ENV=sandbox`, and off Vercel only.
+- `docs/requirements/roadmap.md` (epics, stories, acceptance criteria) and `docs/decisions.md`.
+- README sections for the sandbox, and for releases and rollback (rollback and return tested on production, v4.0.0 to v3.3.2 and back).
+- MIT `LICENSE`.
+- `.github/dependabot.yml`: weekly grouped update checks for pip, npm and GitHub Actions, targeting `dev`.
+- Tests: `tests/test_env_badge.py`, `tests/test_sandbox_seed.py`, and a browser test for the badge (610 tests in total).
 
-### Documentation
-- Added instructions for setting up the sandbox, filling it with mock data and resetting it.
-- Published the roadmap, with upcoming work written up as epics, stories and acceptance criteria.
-- Added a decision log explaining the big technical choices and why they were made.
-- Added steps for undoing a bad release.
+### Changed
+- Neon's Vercel integration now covers Production and Development only, so previews no longer receive production credentials. Previews from other branches have no database and fail safely.
+- Registered the `dev` preview address as a Google sign-in callback.
+- Turned on Dependabot alerts and security updates for the repo.
+- Repository homepage now points to https://sweatequity.kfraker.dev.
+- `.coveragerc` omits `tools/`, which was counting developer tools as app code.
 
-### Project maintenance
-- Made the project open source under the MIT license.
-- Turned on automatic alerts and fixes for vulnerable dependencies.
-- Added weekly checks for outdated dependencies, which go through the full test suite before reaching a release.
-- Fixed the repository's website link, which pointed to an old address.
-
-### Testing
-- Added tests for the sandbox badge, the production warning, and the mock data command's safety checks.
-- Fixed test coverage reports counting developer tools as if they were part of the app.
+### Removed
+- Temporary `demo` and `test` schemas from the production database. Row counts in `public` verified unchanged.
 
 ## 4.0.0 (2026-10-31)
 
