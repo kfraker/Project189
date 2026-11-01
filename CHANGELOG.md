@@ -1,5 +1,10 @@
 # Changelog
 
+## Unreleased
+
+### Fixed
+- Weigh-in and weight card windows moved focus 50ms after opening, in `home.js` and `weights.js`, so input entered in that gap could be lost and Save would do nothing. Focus now moves as the window opens. This also removes an intermittent CI failure.
+
 ## 4.1.0 (2026-10-31)
 
 ### Added

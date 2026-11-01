@@ -2,6 +2,10 @@
 
 Key decisions behind Sweat Equity and why they were made. Newest first. Earlier entries were written up afterward from project history.
 
+## Track user flow coverage alongside code coverage (2026-11-01)
+**Decision:** keep a list of every user flow, linked to the tests that prove it on each device, and report it on every run.
+**Why:** code coverage shows which lines ran, not whether a user's goal works. It can look excellent while a whole flow or device goes untested, as phone sizes did here.
+
 ## Keep the repo public, under the MIT license (2026-10-31)
 **Decision:** the code stays public and open source.
 **Why:** this project is a portfolio showcase, so reviewers should be able to see the code, tests, CI and requirements, not just the finished site. Real data isn't in the repo, so being public doesn't expose it.

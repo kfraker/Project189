@@ -1042,7 +1042,7 @@ registerPage('weights', page => {
             }catch{}
             selectedDateISO=startDate; if(dateIn)dateIn.value=startDate?displayFromISO(startDate):''; weightIn.value=''; preview.textContent='';
             close(); modal.hidden=false; modalOpen(modal);
-            setTimeout(()=>{if(dateIn)dateIn.focus();},50);
+            if(dateIn)dateIn.focus();
         }, { signal });
 
         const hCancel=document.getElementById('history-cancel'),hSave=document.getElementById('history-save');
@@ -1070,7 +1070,7 @@ registerPage('weights', page => {
             if(si)si.hidden=false;if(sc)sc.hidden=true;
             if(calEl)calEl.hidden=true;
             modal.hidden=false; modalOpen(modal);
-            setTimeout(()=>{weightIn.focus();if(weightIn.value)weightIn.select();},50);
+            weightIn.focus();if(weightIn.value)weightIn.select();
         };
     })();
 
