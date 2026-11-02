@@ -1,5 +1,6 @@
 """static_url(): app scripts and styles are linked with a content-hash version,
 so browsers never run a stale cached copy after a deploy."""
+
 import hashlib
 import os
 import re
@@ -14,11 +15,14 @@ def _hash(rel):
         return hashlib.md5(f.read()).hexdigest()[:10]
 
 
-@pytest.mark.parametrize("path,page_script", [
-    ("/", "js/pages/home.js"),
-    ("/weights", "js/pages/weights.js"),
-    ("/workouts", "js/pages/workouts.js"),
-])
+@pytest.mark.parametrize(
+    "path,page_script",
+    [
+        ("/", "js/pages/home.js"),
+        ("/weights", "js/pages/weights.js"),
+        ("/workouts", "js/pages/workouts.js"),
+    ],
+)
 def test_pages_link_versioned_scripts(client, path, page_script):
     html = client.get(path).data.decode()
     for rel in ("js/shell.js", page_script):

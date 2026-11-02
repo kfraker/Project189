@@ -1,9 +1,9 @@
 """Chart.js loads on demand (migration M1.3): only Weigh-ins downloads it, only
 once, and the charts still draw after waiting for it."""
+
 from datetime import date, timedelta
 
 import pytest
-from playwright.sync_api import expect
 
 from tests.conftest import seed_weight
 
@@ -56,7 +56,7 @@ def test_load_script_once_shares_one_download(signed_in_page):
     assert result == {"same": True, "runs": 1, "tags": 1}
 
 
-@pytest.mark.allow_page_errors          # the missing file is the point of the test
+@pytest.mark.allow_page_errors  # the missing file is the point of the test
 def test_load_script_once_failure_rejects_and_can_retry(signed_in_page):
     page = signed_in_page
     page.goto("/")
@@ -68,4 +68,4 @@ def test_load_script_once_failure_rejects_and_can_retry(signed_in_page):
         return { first, tags: document.querySelectorAll('script[src="' + src + '"]').length };
     }""")
     assert result["first"] == "Could not load /static/js/does-not-exist.js"
-    assert result["tags"] == 2                 # a failure isn't cached, so the retry really retries
+    assert result["tags"] == 2  # a failure isn't cached, so the retry really retries

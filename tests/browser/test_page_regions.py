@@ -4,6 +4,7 @@ data-region, so in-page navigation can swap exactly those parts (migration M1.1)
 Each page must have every region exactly once, each holding that page's own
 content, and the labels must not change the layout.
 """
+
 import pytest
 from playwright.sync_api import expect
 
@@ -63,7 +64,7 @@ def test_region_wrappers_take_no_part_in_layout(signed_in_page, path):
     page = signed_in_page
     page.goto(path)
     wrappers = page.locator(".page-region")
-    expect(wrappers).to_have_count(3)                     # bg, header_title, healthbar
+    expect(wrappers).to_have_count(3)  # bg, header_title, healthbar
     for display in wrappers.evaluate_all("els => els.map(el => getComputedStyle(el).display)"):
         assert display == "contents"
 
@@ -73,6 +74,12 @@ def test_shell_parts_are_outside_every_region(signed_in_page):
     in-page navigation keeps, so none of them may sit inside a swappable region."""
     page = signed_in_page
     page.goto("/")
-    for shell_part in ["#site-cursor", ".site-nav[aria-label='Pages']", "#profile-btn",
-                       "#menu-modal", "#settings-modal", "#app-confirm-modal"]:
+    for shell_part in [
+        "#site-cursor",
+        ".site-nav[aria-label='Pages']",
+        "#profile-btn",
+        "#menu-modal",
+        "#settings-modal",
+        "#app-confirm-modal",
+    ]:
         assert page.locator(shell_part).evaluate("el => !el.closest('[data-region]')"), shell_part

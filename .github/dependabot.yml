@@ -22,6 +22,15 @@ updates:
       coverage-tools:
         patterns: ["*"]
 
+  - package-ecosystem: npm
+    directory: /tools/lint
+    target-branch: dev
+    schedule:
+      interval: weekly
+    groups:
+      lint-tools:
+        patterns: ["*"]
+
   - package-ecosystem: github-actions
     directory: /
     target-branch: dev

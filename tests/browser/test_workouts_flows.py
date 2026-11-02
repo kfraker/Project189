@@ -1,6 +1,7 @@
 """Workouts page flows in a real browser: the day-grouped table, header stats,
 range filter, logging (with a day note), deleting (single row, and several via
 the delete-confirm checkboxes), and the "discard unsaved changes?" guard."""
+
 from datetime import date, timedelta
 
 import pytest
@@ -17,16 +18,20 @@ TODAY = _day(0)
 @pytest.fixture()
 def workouts(signed_in_page, client):
     """Signed-in browser + an API client for seeding, both on test user 1."""
+
     def open_workouts():
         signed_in_page.goto("/workouts")
         signed_in_page.wait_for_load_state("networkidle")
         return signed_in_page
+
     return open_workouts, client
 
 
 def _seed_workout(client, entry_date, workout_type, duration_min, kcal):
-    client.post("/api/workout", json={"date": entry_date, "type": workout_type,
-                                      "duration_min": duration_min, "kcal": kcal, "note": ""})
+    client.post(
+        "/api/workout",
+        json={"date": entry_date, "type": workout_type, "duration_min": duration_min, "kcal": kcal, "note": ""},
+    )
 
 
 def _saved(client):
@@ -43,6 +48,7 @@ def _pick_range(page, value):
 
 
 # ── What the page shows ──────────────────────────────────────────────────────
+
 
 def test_new_account_shows_empty_state(workouts):
     open_workouts, _ = workouts
@@ -63,14 +69,14 @@ def test_table_groups_workouts_by_day_with_totals_and_note(workouts):
     page = open_workouts()
 
     expect(_groups(page)).to_have_count(2)
-    today = _groups(page).first                                  # newest day first
+    today = _groups(page).first  # newest day first
     expect(today.locator(".wp-date-count")).to_contain_text("2 workouts")
     expect(today.locator(".wp-header-dur")).to_have_text("50 min")
     expect(today.locator(".wp-header-kcal")).to_contain_text("360")
     expect(today.locator(".wp-day-note")).to_have_text("double session")
     expect(today.locator(".wp-row")).to_have_count(2)
 
-    expect(page.locator("#wp-count")).to_have_text("3")          # all three are within 7 days
+    expect(page.locator("#wp-count")).to_have_text("3")  # all three are within 7 days
     expect(page.locator("#wp-kcal")).to_have_text("760")
     expect(page.locator("#wp-streak")).to_have_text("1")
 
@@ -91,24 +97,25 @@ def test_range_filter_shows_older_days_and_is_remembered(workouts):
     _seed_workout(client, TODAY, "Yoga", 20, 100)
     _seed_workout(client, _day(20), "Boxing", 30, 300)
     page = open_workouts()
-    expect(_groups(page)).to_have_count(1)                       # default: last 7 days
+    expect(_groups(page)).to_have_count(1)  # default: last 7 days
 
     with page.expect_response("**/api/preference"):
         _pick_range(page, "30d")
     expect(_groups(page)).to_have_count(2)
 
-    page = open_workouts()                                       # reload keeps the choice
+    page = open_workouts()  # reload keeps the choice
     expect(_groups(page)).to_have_count(2)
 
 
 # ── Logging ──────────────────────────────────────────────────────────────────
+
 
 def test_log_workout_with_day_note(workouts):
     open_workouts, client = workouts
     page = open_workouts()
     page.locator("#wp-add-btn").click()
     expect(page.locator("#wp-log-modal")).to_be_visible()
-    expect(page.locator("#wp-date-input")).not_to_have_value("")   # today pre-selected
+    expect(page.locator("#wp-date-input")).not_to_have_value("")  # today pre-selected
 
     page.locator("#workout-type-input").fill("yoga")
     page.locator("#workout-search-dropdown .wsd-item", has_text="Yoga").first.click()
@@ -130,6 +137,7 @@ def test_log_workout_with_day_note(workouts):
 
 
 # ── Deleting ─────────────────────────────────────────────────────────────────
+
 
 def test_delete_single_workout_from_table_after_confirming(workouts):
     open_workouts, client = workouts
@@ -159,7 +167,7 @@ def test_cancel_delete_keeps_workout(workouts):
 
 
 def _mark_both_for_removal(page):
-    page.locator(".wp-row").first.click()                         # opens that day for editing
+    page.locator(".wp-row").first.click()  # opens that day for editing
     expect(page.locator("#wp-log-modal")).to_be_visible()
     day_rows = page.locator("#wpm-day-entries .wpm-day-row")
     expect(day_rows).to_have_count(2)
@@ -178,7 +186,7 @@ def test_remove_several_and_confirm_all(workouts):
     _seed_workout(client, TODAY, "Yoga", 20, 100)
     page = open_workouts()
     _mark_both_for_removal(page)
-    page.locator("#wp-del-check-ok").click()                      # both ticked (default)
+    page.locator("#wp-del-check-ok").click()  # both ticked (default)
     expect(page.locator("#wp-log-modal")).to_be_hidden()
     expect(page.locator("#wp-empty")).to_be_visible()
     assert _saved(client) == []
@@ -202,6 +210,7 @@ def test_remove_several_then_confirm_only_some(workouts):
 
 # ── Discard-changes guard ────────────────────────────────────────────────────
 
+
 def test_cancel_with_unsaved_changes_asks_before_discarding(workouts):
     open_workouts, client = workouts
     page = open_workouts()
@@ -213,12 +222,12 @@ def test_cancel_with_unsaved_changes_asks_before_discarding(workouts):
     page.locator("#wp-modal-cancel").click()
     expect(page.locator("#app-confirm-modal")).to_be_visible()
     expect(page.locator("#app-confirm-modal")).to_contain_text("unsaved changes")
-    page.locator("#app-confirm-cancel").click()                   # keep editing
+    page.locator("#app-confirm-cancel").click()  # keep editing
     expect(page.locator("#wp-log-modal")).to_be_visible()
     expect(page.locator("#wpm-staged-entries .wpm-staged-row")).to_have_count(1)
 
     page.locator("#wp-modal-cancel").click()
-    page.locator("#app-confirm-ok").click()                       # discard
+    page.locator("#app-confirm-ok").click()  # discard
     expect(page.locator("#wp-log-modal")).to_be_hidden()
     assert _saved(client) == []
 

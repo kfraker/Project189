@@ -1,5 +1,7 @@
 """GET /api/weight/stats — rolling 7-day change, 7-day average, day streak."""
+
 from datetime import date, timedelta
+
 from tests.conftest import seed_weight
 
 
@@ -9,6 +11,7 @@ def _date_offset(days: int) -> str:
 
 # ── Empty database ────────────────────────────────────────────────────────────
 
+
 def test_empty_db_returns_nulls_and_zero_streak(client):
     body = client.get("/api/weight/stats").get_json()
     assert body["week_change"] is None
@@ -17,6 +20,7 @@ def test_empty_db_returns_nulls_and_zero_streak(client):
 
 
 # ── week_change: rolling 7-day delta, not ISO calendar week ────────────────────
+
 
 def test_single_entry_in_window_gives_no_change(client):
     """A lone entry has nothing to diff against."""
@@ -50,8 +54,8 @@ def test_entries_older_than_seven_days_excluded(client):
     """Regression: previously this stat reset on Monday (ISO week); it must
     now be a true rolling 7-day window regardless of what day it is."""
     seed_weight(client, _date_offset(10), 210.0)  # outside window
-    seed_weight(client, _date_offset(6), 200.0)   # oldest in window
-    seed_weight(client, _date_offset(0), 195.0)   # latest in window
+    seed_weight(client, _date_offset(6), 200.0)  # oldest in window
+    seed_weight(client, _date_offset(0), 195.0)  # latest in window
     body = client.get("/api/weight/stats").get_json()
     assert body["week_change"] == -5.0
 
@@ -64,6 +68,7 @@ def test_entry_exactly_eight_days_ago_excluded(client):
 
 
 # ── avg_7d ───────────────────────────────────────────────────────────────────
+
 
 def test_avg_7d_averages_only_entries_in_window(client):
     seed_weight(client, _date_offset(10), 999.0)  # excluded
@@ -80,6 +85,7 @@ def test_avg_7d_none_when_no_entries_in_window(client):
 
 
 # ── streak ───────────────────────────────────────────────────────────────────
+
 
 def test_streak_zero_when_today_not_logged(client):
     seed_weight(client, _date_offset(1), 200.0)

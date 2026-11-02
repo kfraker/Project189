@@ -3,6 +3,7 @@ leaves nothing behind, and leaving it removes all of it.
 
 Every test also passes the page-error guard, so "zero errors" is checked throughout.
 """
+
 from datetime import date, timedelta
 
 import pytest
@@ -14,9 +15,18 @@ from tests.conftest import seed_setting, seed_weight
 YESTERDAY = (date.today() - timedelta(days=1)).isoformat()
 
 # Names Home shares on window for the shell and its own parts to call.
-HOME_SHARED = ["updateLostWeight", "updateHealthBar", "updateHealthBarName", "applyHealthbarPref",
-               "applyPlateUnit", "refreshPlatesData", "openWeightModal", "openWorkoutModal",
-               "refreshHeaderStats", "oldestEntryDate"]
+HOME_SHARED = [
+    "updateLostWeight",
+    "updateHealthBar",
+    "updateHealthBarName",
+    "applyHealthbarPref",
+    "applyPlateUnit",
+    "refreshPlatesData",
+    "openWeightModal",
+    "openWorkoutModal",
+    "refreshHeaderStats",
+    "oldestEntryDate",
+]
 
 
 @pytest.fixture()
@@ -44,11 +54,11 @@ def test_twenty_restarts_leave_listeners_and_globals_flat(home_page):
     healthbar = page.locator("#healthbar-img").get_attribute("src")
 
     remount(page, 20)
-    expect(page.locator("#lost-lbs-num")).to_have_text("20")             # cards refilled
+    expect(page.locator("#lost-lbs-num")).to_have_text("20")  # cards refilled
     expect(page.locator("#healthbar-fill-track")).to_have_attribute("aria-valuenow", "48.8")
     assert listener_count(page) == listeners
     assert page.evaluate("Object.keys(window).length") == names
-    assert page.locator("#healthbar-img").get_attribute("src") == healthbar   # image processed once
+    assert page.locator("#healthbar-img").get_attribute("src") == healthbar  # image processed once
 
 
 def test_after_restarts_quick_add_weigh_in_saves_once(home_page, client):
@@ -79,7 +89,7 @@ def test_after_restarts_quick_add_workout_steps_once(home_page):
     page.locator("#workout-type-input").fill("yoga")
     page.locator("#workout-search-dropdown .wsd-item", has_text="Yoga").first.click()
     page.locator("#workout-dur-up").click()
-    expect(page.locator("#workout-dur-val")).to_have_text("35")          # one +5 step, not 21
+    expect(page.locator("#workout-dur-val")).to_have_text("35")  # one +5 step, not 21
 
 
 def test_leaving_removes_everything_the_page_set_up(home_page):
@@ -87,6 +97,6 @@ def test_leaving_removes_everything_the_page_set_up(home_page):
     page.evaluate("appRouter.leave()")
     assert page.evaluate("names => names.filter(n => n in window)", HOME_SHARED) == []
     page.locator("#mp-footer-add-btn").click()
-    expect(page.locator("#quick-add-modal")).to_be_hidden()             # its buttons are disconnected
+    expect(page.locator("#quick-add-modal")).to_be_hidden()  # its buttons are disconnected
     page.locator("#current-plate").click()
     expect(page.locator("#current-modal")).to_be_hidden()

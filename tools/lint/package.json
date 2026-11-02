@@ -1,0 +1,20 @@
+{
+  "name": "sweat-equity-lint-tools",
+  "private": true,
+  "description": "Dev-only linting and formatting for the page code. Never deployed.",
+  "type": "module",
+  "scripts": {
+    "lint": "cd ../.. && eslint -c tools/lint/eslint.config.mjs \"static/js/**/*.js\"",
+    "format": "cd ../.. && prettier --config tools/lint/.prettierrc.json --write \"static/js/**/*.js\"",
+    "format:check": "cd ../.. && prettier --config tools/lint/.prettierrc.json --check \"static/js/**/*.js\""
+  },
+  "devDependencies": {
+    "@eslint/js": "10.0.1",
+    "eslint": "10.14.0",
+    "globals": "17.14.0",
+    "prettier": "3.9.10"
+  },
+  "overrides": {
+    "minimatch": "^11.0.1"
+  }
+}

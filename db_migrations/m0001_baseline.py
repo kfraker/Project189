@@ -3,11 +3,12 @@
 preferences (composite user_id+key primary keys), workouts, and
 workout_day_notes.
 """
+
 VERSION = 1
 
 
 def up(conn):
-    conn.execute('''
+    conn.execute("""
         CREATE TABLE IF NOT EXISTS users (
             id            SERIAL PRIMARY KEY,
             username      TEXT NOT NULL UNIQUE,
@@ -17,13 +18,12 @@ def up(conn):
             name          TEXT,
             picture       TEXT
         )
-    ''')
+    """)
     conn.execute(
-        "CREATE UNIQUE INDEX IF NOT EXISTS idx_users_google_sub "
-        "ON users(google_sub) WHERE google_sub IS NOT NULL"
+        "CREATE UNIQUE INDEX IF NOT EXISTS idx_users_google_sub ON users(google_sub) WHERE google_sub IS NOT NULL"
     )
 
-    conn.execute('''
+    conn.execute("""
         CREATE TABLE IF NOT EXISTS weights (
             id          SERIAL PRIMARY KEY,
             user_id     INTEGER NOT NULL REFERENCES users(id),
@@ -33,9 +33,9 @@ def up(conn):
             notes       TEXT NOT NULL DEFAULT '',
             UNIQUE(user_id, date)
         )
-    ''')
+    """)
 
-    conn.execute('''
+    conn.execute("""
         CREATE TABLE IF NOT EXISTS settings (
             user_id   INTEGER NOT NULL REFERENCES users(id),
             key       TEXT NOT NULL,
@@ -43,18 +43,18 @@ def up(conn):
             value_kg  REAL NOT NULL,
             PRIMARY KEY (user_id, key)
         )
-    ''')
+    """)
 
-    conn.execute('''
+    conn.execute("""
         CREATE TABLE IF NOT EXISTS preferences (
             user_id INTEGER NOT NULL REFERENCES users(id),
             key     TEXT NOT NULL,
             value   TEXT NOT NULL,
             PRIMARY KEY (user_id, key)
         )
-    ''')
+    """)
 
-    conn.execute('''
+    conn.execute("""
         CREATE TABLE IF NOT EXISTS workouts (
             id           SERIAL PRIMARY KEY,
             user_id      INTEGER NOT NULL REFERENCES users(id),
@@ -64,13 +64,13 @@ def up(conn):
             kcal         INTEGER NOT NULL,
             note         TEXT NOT NULL DEFAULT ''
         )
-    ''')
+    """)
 
-    conn.execute('''
+    conn.execute("""
         CREATE TABLE IF NOT EXISTS workout_day_notes (
             user_id INTEGER NOT NULL REFERENCES users(id),
             date    TEXT NOT NULL,
             note    TEXT NOT NULL DEFAULT '',
             PRIMARY KEY (user_id, date)
         )
-    ''')
+    """)

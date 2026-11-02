@@ -1,9 +1,11 @@
 """POST /api/weight — save and overwrite weight entries."""
+
 import pytest
+
 from tests.conftest import seed_weight
 
-
 # ── Happy path ───────────────────────────────────────────────────────────────
+
 
 def test_insert_new_entry_returns_success(client):
     r = seed_weight(client, "2026-01-01", 200.0)
@@ -22,6 +24,7 @@ def test_inserted_entry_appears_in_history(client):
 
 # ── kg conversion ────────────────────────────────────────────────────────────
 
+
 def test_kg_is_calculated_from_lbs(client):
     seed_weight(client, "2026-01-01", 200.0)
     rows = client.get("/api/weights?range=all").get_json()
@@ -36,12 +39,15 @@ def test_kg_conversion_precision_one_decimal(client):
     assert len(str(kg).split(".")[-1]) <= 1 or kg == int(kg)
 
 
-@pytest.mark.parametrize("lbs,expected_kg", [
-    (100.0, round(100.0 / 2.2046, 1)),
-    (220.46, round(220.46 / 2.2046, 1)),
-    (0.1,   round(0.1 / 2.2046, 1)),
-    (999.9, round(999.9 / 2.2046, 1)),
-])
+@pytest.mark.parametrize(
+    "lbs,expected_kg",
+    [
+        (100.0, round(100.0 / 2.2046, 1)),
+        (220.46, round(220.46 / 2.2046, 1)),
+        (0.1, round(0.1 / 2.2046, 1)),
+        (999.9, round(999.9 / 2.2046, 1)),
+    ],
+)
 def test_kg_conversion_table(client, lbs, expected_kg):
     seed_weight(client, "2026-01-01", lbs)
     rows = client.get("/api/weights?range=all").get_json()
@@ -49,6 +55,7 @@ def test_kg_conversion_table(client, lbs, expected_kg):
 
 
 # ── Duplicate / conflict handling ────────────────────────────────────────────
+
 
 def test_duplicate_without_overwrite_returns_conflict(client):
     seed_weight(client, "2026-01-01", 200.0)
@@ -99,6 +106,7 @@ def test_overwrite_defaults_to_false(client):
 
 # ── Multiple entries ─────────────────────────────────────────────────────────
 
+
 def test_multiple_entries_on_different_dates(client):
     seed_weight(client, "2026-01-01", 200.0)
     seed_weight(client, "2026-01-02", 199.5)
@@ -117,6 +125,7 @@ def test_entries_are_ordered_by_date_ascending(client):
 
 
 # ── Decimal and boundary weights ─────────────────────────────────────────────
+
 
 def test_decimal_weight_stored_correctly(client):
     seed_weight(client, "2026-01-01", 155.3)
@@ -137,6 +146,7 @@ def test_very_small_positive_weight(client):
 
 
 # ── Input validation — invalid weights ───────────────────────────────────────
+
 
 def test_negative_weight_returns_400(client):
     r = seed_weight(client, "2026-01-01", -10.0)
@@ -166,6 +176,7 @@ def test_string_weight_returns_400(client):
 
 
 # ── Input validation — invalid dates ─────────────────────────────────────────
+
 
 def test_invalid_date_format_returns_400(client):
     r = client.post(
@@ -206,6 +217,7 @@ def test_invalid_date_not_stored(client):
 
 
 # ── Missing fields ────────────────────────────────────────────────────────────
+
 
 def test_missing_weight_lbs_returns_400(client):
     r = client.post(

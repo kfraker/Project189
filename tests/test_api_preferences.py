@@ -1,8 +1,8 @@
 """Tests for GET /api/preferences and POST /api/preference."""
-import pytest
 
 
 # ── GET /api/preferences ──────────────────────────────────────────────────────
+
 
 def test_get_preferences_returns_200(client):
     r = client.get("/api/preferences")
@@ -20,6 +20,7 @@ def test_get_preferences_empty_by_default(client):
 
 
 # ── POST /api/preference ──────────────────────────────────────────────────────
+
 
 def test_save_preference_returns_success(client):
     r = client.post("/api/preference", json={"key": "pref_unit", "value": "kg"})
@@ -49,6 +50,7 @@ def test_save_preference_no_body(client):
 
 # ── Round-trip ────────────────────────────────────────────────────────────────
 
+
 def test_saved_preference_appears_in_get(client):
     client.post("/api/preference", json={"key": "pref_unit", "value": "kg"})
     prefs = client.get("/api/preferences").get_json()
@@ -63,10 +65,10 @@ def test_preference_upsert_updates_existing(client):
 
 
 def test_multiple_preferences_stored_independently(client):
-    client.post("/api/preference", json={"key": "pref_unit",  "value": "kg"})
+    client.post("/api/preference", json={"key": "pref_unit", "value": "kg"})
     client.post("/api/preference", json={"key": "pref_range", "value": "1y"})
     prefs = client.get("/api/preferences").get_json()
-    assert prefs["pref_unit"]  == "kg"
+    assert prefs["pref_unit"] == "kg"
     assert prefs["pref_range"] == "1y"
 
 
@@ -85,18 +87,18 @@ def test_profile_pic_pref_saved_and_retrieved(client):
 
 def test_all_known_prefs_survive_round_trip(client):
     known = {
-        "pref_unit":        "lbs",
-        "pref_range":       "30d",
+        "pref_unit": "lbs",
+        "pref_range": "30d",
         "pref_custom_days": "14",
-        "pref_view":        "chart",
+        "pref_view": "chart",
         "pref_height_unit": "us",
         "pref_profile_pic": "2",
-        "fight_name":       "Test Fighter",
-        "fight_sex":        "male",
-        "fight_dob":        "1990-06-15",
-        "fight_height_ft":  "5",
-        "fight_height_in":  "11",
-        "fight_height_cm":  "180",
+        "fight_name": "Test Fighter",
+        "fight_sex": "male",
+        "fight_dob": "1990-06-15",
+        "fight_height_ft": "5",
+        "fight_height_in": "11",
+        "fight_height_cm": "180",
     }
     for k, v in known.items():
         client.post("/api/preference", json={"key": k, "value": v})
@@ -106,6 +108,7 @@ def test_all_known_prefs_survive_round_trip(client):
 
 
 # ── Home route passes prefs to template ──────────────────────────────────────
+
 
 def test_home_renders_without_prefs(client):
     """Home route must render even when preferences table is empty."""

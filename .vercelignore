@@ -7,5 +7,6 @@ requirements-dev.txt
 pytest.ini
 .coveragerc
 codecov.yml
+ruff.toml
 .github/
 docs/

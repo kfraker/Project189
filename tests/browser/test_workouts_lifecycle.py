@@ -3,6 +3,7 @@ leaves nothing behind, and leaving it removes all of it.
 
 Every test also passes the page-error guard, so "zero errors" is checked throughout.
 """
+
 from datetime import date, timedelta
 
 import pytest
@@ -34,7 +35,7 @@ def test_twenty_restarts_leave_listeners_and_globals_flat(workouts_page):
     names = page.evaluate("Object.keys(window).length")
 
     remount(page, 20)
-    expect(page.locator(".wp-row")).to_have_count(1)                 # table redrawn, not doubled
+    expect(page.locator(".wp-row")).to_have_count(1)  # table redrawn, not doubled
     assert listener_count(page) == listeners
     assert page.evaluate("Object.keys(window).length") == names
 
@@ -48,7 +49,7 @@ def test_after_restarts_each_click_fires_exactly_once(workouts_page, client):
     page.locator("#workout-type-input").fill("yoga")
     page.locator("#workout-search-dropdown .wsd-item", has_text="Yoga").first.click()
     page.locator("#workout-dur-up").click()
-    expect(page.locator("#workout-dur-val")).to_have_text("35")      # one +5 step, not 21
+    expect(page.locator("#workout-dur-val")).to_have_text("35")  # one +5 step, not 21
     page.locator("#wpm-add-activity-btn").click()
     expect(page.locator("#wpm-staged-entries .wpm-staged-row")).to_have_count(1)
 
@@ -66,7 +67,7 @@ def test_leaving_removes_everything_the_page_set_up(workouts_page):
     page.evaluate("appRouter.leave()")
     assert page.evaluate("'setWorkoutsRange' in window") is False
     page.locator("#wp-add-btn").click()
-    expect(page.locator("#wp-log-modal")).to_be_hidden()             # its buttons are disconnected
+    expect(page.locator("#wp-log-modal")).to_be_hidden()  # its buttons are disconnected
 
 
 def test_saving_settings_keeps_the_workouts_table(workouts_page):
