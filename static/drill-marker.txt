@@ -1,1 +1,0 @@
-Temporary marker for the deploy gate drill. If you can read this live, the gate did not hold.
