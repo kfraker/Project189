@@ -1,5 +1,10 @@
 # Changelog
 
+## 4.1.5 (2026-11-02)
+
+### Security
+- Updated Pillow, used only by the dev-time image tool (`tools/images`), from 12.3.0 to 13.0.0 to resolve 41 Dependabot advisories. It was pinned in 4.1.4 without checking its advisories. Rebuilt images are byte-identical.
+
 ## 4.1.4 (2026-11-02)
 
 ### Fixed
