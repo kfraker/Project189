@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## 4.1.4 (2026-11-02)
 
 ### Fixed
 - Insights streaks compared dates as exactly 24 hours apart, so a 23 or 25-hour day around a clock change reset them. They now count calendar days (`daysApart` in `shell.js`), with tests pinned to both clock changes.
