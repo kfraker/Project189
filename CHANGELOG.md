@@ -1,5 +1,10 @@
 # Changelog
 
+## Unreleased
+
+### Changed
+- README and docs now describe the CI/CD pipeline: protected `main`, required `test` check, and Vercel Deployment Checks. Proven with three drills: a failing pull request was blocked, a passing release was held until tests finished, and a failure on `main` left production unchanged.
+
 ## 4.1.1 (2026-11-01)
 
 ### Fixed

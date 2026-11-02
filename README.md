@@ -30,7 +30,6 @@ v4.1 added a separate [database sandbox](#database-sandbox), a published [roadma
 
 Full requirements are in [docs/requirements/roadmap.md](docs/requirements/roadmap.md), and the reasoning behind big choices is in the [decision log](docs/decisions.md).
 
-- **Complete CI/CD:** production deploys that wait for passing tests.
 - **Demo mode:** one click from the sign-in page into a private, temporary account full of realistic data, with a guided tour. No sign-up, and it's wiped when you leave.
 - **Mobile test coverage:** the browser test suite extended to phone and tablet sizes with touch input.
 - **Nutrition page:** already marked "Coming Soon" in the header.
@@ -162,7 +161,15 @@ To work against the sandbox, copy the `dev` branch's connection strings (databas
 
 ## Releases and rollback
 
-`main` deploys to production on Vercel, and each release gets a version tag, a GitHub Release and a [changelog](CHANGELOG.md) entry.
+Sweat Equity has a tested CI/CD pipeline, and nothing reaches the live site unless the tests pass:
+
+1. **Pull request:** `main` is protected, so changes arrive only through a pull request from `dev`. It can't merge until the full test suite passes.
+2. **Merge:** merging is the approval step, and the tests run again on `main`.
+3. **Deploy:** Vercel builds the release but holds it back from the live address until the `test` check passes on `main`. If it fails, the live site stays on the previous version.
+
+Each release gets a version tag, a GitHub Release and a [changelog](CHANGELOG.md) entry.
+
+**This was proven with drills:** a failing pull request couldn't merge, a passing release went live only after its tests finished, and a failure that appeared only after merging left the live site unchanged.
 
 **To undo a bad release:** on the Vercel project's **Overview**, click **Instant Rollback**, choose the last good production version and confirm. It took effect within seconds when tested on 2026-10-31.
 
@@ -271,7 +278,7 @@ First-time setup for browser tests: `python -m playwright install chromium`.
 
 **Browser tests** (`tests/browser/`, Playwright) open the real app in Chromium against the same isolated test schema. They sign in with a test-only session cookie, and every test fails automatically on any JavaScript error, failed request or error response. The live test server refuses all requests unless the test schema is active, so browser tests can never touch real data.
 
-**CI:** every push to `dev`/`main` runs the full suite on GitHub Actions against a throwaway Postgres (a few minutes). Coverage is uploaded to Codecov. When a browser test fails, screenshots and Playwright traces are attached to the run (`browser-test-failures` artifact; open a trace at https://trace.playwright.dev).
+**CI:** every push to `dev`/`main`, and every pull request, runs the full suite on GitHub Actions against a throwaway Postgres (a few minutes). Coverage is uploaded to Codecov. When a browser test fails, screenshots and Playwright traces are attached to the run (`browser-test-failures` artifact; open a trace at https://trace.playwright.dev).
 
 611 tests in all. 453 API/server tests cover all API endpoints (including the Home header stats), sign-in and multi-user isolation, business logic, date-range boundaries, page structure across Home/Weigh-ins/Workouts, and the migration runner. 158 browser tests cover the user flows on every page, the shell (menu, settings, profile, cursor), each page's lifecycle (restarted 20 times in place without anything piling up), in-page navigation (swaps, Back/Forward, rapid clicks, fallbacks, focus, fades), and a 35-step stress test whose pages must look identical to a fresh load. Tests run in an isolated `test` schema that is wiped before every test, so real data is never touched.
 
