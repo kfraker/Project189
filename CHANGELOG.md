@@ -1,5 +1,14 @@
 # Changelog
 
+## 4.1.1 (2026-11-01)
+
+### Fixed
+- Weigh-in and weight card windows moved focus 50ms after opening, in `home.js` and `weights.js`, so input entered in that gap could be lost and Save would do nothing. Focus now moves as the window opens. This also removes an intermittent CI failure.
+
+### Added
+- Regression test for the focus race, and a user flow coverage story and decision in the docs.
+- `main` branch protection (pull request and the `test` check required, admins included) and a Vercel Deployment Check on `test`.
+
 ## 4.1.0 (2026-10-31)
 
 ### Added

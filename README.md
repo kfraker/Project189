@@ -1,6 +1,6 @@
 # Sweat Equity
 
-![Version](https://img.shields.io/badge/version-4.1.0-ff2d78)
+![Version](https://img.shields.io/badge/version-4.1.1-ff2d78)
 [![Tests](https://github.com/kfraker/Project189/actions/workflows/tests.yml/badge.svg?branch=main)](https://github.com/kfraker/Project189/actions/workflows/tests.yml?query=branch%3Amain)
 [![Coverage](https://codecov.io/gh/kfraker/Project189/branch/main/graph/badge.svg)](https://app.codecov.io/gh/kfraker/Project189/tree/main)
 
@@ -273,7 +273,7 @@ First-time setup for browser tests: `python -m playwright install chromium`.
 
 **CI:** every push to `dev`/`main` runs the full suite on GitHub Actions against a throwaway Postgres (a few minutes). Coverage is uploaded to Codecov. When a browser test fails, screenshots and Playwright traces are attached to the run (`browser-test-failures` artifact; open a trace at https://trace.playwright.dev).
 
-610 tests in all. 453 API/server tests cover all API endpoints (including the Home header stats), sign-in and multi-user isolation, business logic, date-range boundaries, page structure across Home/Weigh-ins/Workouts, and the migration runner. 157 browser tests cover the user flows on every page, the shell (menu, settings, profile, cursor), each page's lifecycle (restarted 20 times in place without anything piling up), in-page navigation (swaps, Back/Forward, rapid clicks, fallbacks, focus, fades), and a 35-step stress test whose pages must look identical to a fresh load. Tests run in an isolated `test` schema that is wiped before every test, so real data is never touched.
+611 tests in all. 453 API/server tests cover all API endpoints (including the Home header stats), sign-in and multi-user isolation, business logic, date-range boundaries, page structure across Home/Weigh-ins/Workouts, and the migration runner. 158 browser tests cover the user flows on every page, the shell (menu, settings, profile, cursor), each page's lifecycle (restarted 20 times in place without anything piling up), in-page navigation (swaps, Back/Forward, rapid clicks, fallbacks, focus, fades), and a 35-step stress test whose pages must look identical to a fresh load. Tests run in an isolated `test` schema that is wiped before every test, so real data is never touched.
 
 **Coverage is measured on every run** (settings in `.coveragerc`, switched on in `pytest.ini`). After any run:
 

@@ -28,6 +28,8 @@ Sizes: **S** is about one sitting, **M** is a couple of sittings.
 - **4.2 Performance budget** (S). **Done when:** CI fails if page weight or load speed goes past an agreed limit.
 - **4.3 Phone and tablet tests** (M). **Done when:** key flows run at phone and tablet sizes with touch: no sideways scrolling, tappable buttons, windows that fit and close, and logging that works. Any bugs found are fixed or deliberately deferred.
 
+- **4.4 User flow coverage** (M). Code coverage shows that lines ran, not that a user's goal works. **Done when:** every user flow is listed and tagged to the tests that prove it, by device; each run reports flow coverage with the gaps named; and CI fails if a test names an unlisted flow or a covered flow loses its test.
+
 ## Epic 5: Keeping it running
 - **5.1 Uptime checks and error alerts** (S). **Done when:** an outage or a burst of errors sends an alert, and that's been tested.
 - **5.2 Tested backups** (S). **Done when:** the backup approach is written down and a restore has been proven on a throwaway copy.

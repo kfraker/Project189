@@ -209,6 +209,25 @@ def test_remove_workouts_deletes_only_ticked_ones(home):
     assert [w["type"] for w in client.get("/api/workouts").get_json()] == ["Yoga"]
 
 
+def test_opening_log_weigh_in_does_not_pull_focus_from_something_typed_quickly(home):
+    """The window used to move focus to Date 50ms after opening, so anything typed in that
+    gap (autofill, a quick keyboard user) could lose its text and Save would do nothing."""
+    open_home, _ = home
+    page = open_home()
+    # Focus Weight the instant the window opens, as a fast typist or autofill would.
+    page.evaluate("""() => {
+        const modal = document.getElementById('history-modal');
+        new MutationObserver((_, watcher) => {
+            if (!modal.hidden) { document.getElementById('history-weight').focus(); watcher.disconnect(); }
+        }).observe(modal, { attributes: true, attributeFilter: ['hidden'] });
+    }""")
+    page.locator("#mp-footer-add-btn").click()
+    page.locator("#qa-log-weight").click()
+    expect(_text(page, "history-modal")).to_be_visible()
+    page.wait_for_timeout(150)
+    expect(_text(page, "history-weight")).to_be_focused()
+
+
 # ── Pop-ups sit above the header, footer and health bar (bug #22) ───────────
 
 def _covering_element(page, selector):

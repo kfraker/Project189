@@ -182,7 +182,7 @@ registerPage('home', page => {
             input.max   = kg ? '450' : '999';
             input.value = kg ? kgNum.textContent : lbsNum.textContent;
             updatePreview(); modal.hidden = false; modalOpen(modal);
-            setTimeout(() => { input.focus(); input.select(); }, 50);
+            input.focus(); input.select();
         }
         function step(amount) {
             const cur = parseFloat(input.value) || 0;
@@ -392,7 +392,7 @@ registerPage('home', page => {
             const si=document.getElementById('history-screen-input'),sc=document.getElementById('history-screen-confirm');
             if(si)si.hidden=false; if(sc)sc.hidden=true;
             modal.hidden=false; modalOpen(modal);
-            setTimeout(()=>{if(dateIn)dateIn.focus();},50);
+            if(dateIn)dateIn.focus();
         };
         const hCancel=document.getElementById('history-cancel'),hSave=document.getElementById('history-save');
         const hStepUp=document.getElementById('history-step-up'),hStepDown=document.getElementById('history-step-down');
