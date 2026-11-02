@@ -63,7 +63,7 @@ def _static_url_helper():
         version = None if app.debug else _static_versions.get(filename)
         if version is None:
             with open(os.path.join(app.static_folder, filename), "rb") as f:
-                version = hashlib.md5(f.read()).hexdigest()[:10]
+                version = hashlib.md5(f.read(), usedforsecurity=False).hexdigest()[:10]
             _static_versions[filename] = version
         return url_for("static", filename=filename, v=version)
 

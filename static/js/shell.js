@@ -919,7 +919,6 @@ window.addEventListener(
     const grid = document.getElementById('insights-grid');
     const closeBtn = document.getElementById('insights-close');
 
-    const DAY_NAMES = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
     function isKg() {
         return (localStorage.getItem('pref_unit') || 'lbs') === 'kg';
     }
@@ -949,9 +948,6 @@ window.addEventListener(
             totalLoss = weights[0] - weights[n - 1];
         const weeklyRate = spanDays >= 7 ? (totalLoss / spanDays) * 7 : null,
             monthlyRate = spanDays >= 30 ? (totalLoss / spanDays) * 30.44 : null;
-        const dayCounts = Array(7).fill(0);
-        dates.forEach((d) => dayCounts[d.getDay()]++);
-        const topDay = DAY_NAMES[dayCounts.indexOf(Math.max(...dayCounts))];
         let longest = 1,
             curS = 1;
         for (let i = 1; i < n; i++) {

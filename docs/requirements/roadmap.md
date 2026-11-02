@@ -21,7 +21,9 @@ Sizes: **S** is about one sitting, **M** is a couple of sittings.
 - **2.4 Prove and document it** (S). Done: a failing pull request couldn't merge, a passing release went live only after its tests finished, a failure after merging left the live site unchanged, and the docs are updated.
 
 ## Epic 3: Consistent code
-- **3.1 Formatting and lint** (M). **Done when:** the existing code is cleaned up, with no behavior change, and CI fails on new violations.
+*Status: done.*
+
+- **3.1 Formatting and lint** (M). Done: the existing code is cleaned up with no behavior change, and CI fails on new violations.
 
 ## Epic 4: Fast and works on every screen
 - **4.1 Fast first load** (M). Home currently shows the plates' outlines before their images arrive. **Done when:** images are sized to how they're displayed, unneeded downloads are gone, static files are cached, and plates appear whole.

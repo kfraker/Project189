@@ -1,5 +1,18 @@
 # Changelog
 
+## Unreleased
+
+### Added
+- Ruff for Python, and ESLint and Prettier for page code, enforced in CI. Dependabot watches the new tools.
+- Browser test for clicking a Weigh-ins table row to edit it, a flow that had no test.
+
+### Changed
+- Formatted all Python and page code, with no behavior change. CSS and templates aren't formatted.
+- Marked the static file version hash as non-security (`usedforsecurity=False`). It only detects changed files.
+
+### Removed
+- Dead code: `startEdit` (inline cell editing, long replaced by the weigh-in window), the `showTableConfirm` window only it used, and an unused Insights calculation.
+
 ## 4.1.2 (2026-11-01)
 
 ### Security

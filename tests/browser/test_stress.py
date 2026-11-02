@@ -84,7 +84,11 @@ def test_thirty_plus_page_changes_leave_nothing_behind(seeded):
 
     for i, step in enumerate(ROUTE):
         expected, position = _expected_after(step, history, position)
-        settle(page, lambda: _take(page, step), until=f"() => window.appRouter && appRouter.current === '{expected}'")
+        settle(
+            page,
+            lambda step=step: _take(page, step),
+            until=f"() => window.appRouter && appRouter.current === '{expected}'",
+        )
         _settled(page)
         label, path = PAGES[expected]
         expect(page).to_have_url(re.compile(re.escape(path) + r"$"))

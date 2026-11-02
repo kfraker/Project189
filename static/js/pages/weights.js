@@ -1434,108 +1434,6 @@ registerPage('weights', (page) => {
             appendExportRow(tableBody, rows);
         }
 
-        function showTableConfirm(title, message, okLabel, onOk, onCancel, cancelLabel) {
-            document.getElementById('table-confirm-title').textContent = title;
-            document.getElementById('table-confirm-message').textContent = message;
-            document.getElementById('table-confirm-ok').textContent = okLabel;
-            document.getElementById('table-confirm-cancel').textContent = cancelLabel || 'Cancel';
-            const modal = document.getElementById('table-confirm-modal');
-            modal.hidden = false;
-            modalOpen(modal);
-            document.getElementById('table-confirm-ok').onclick = () => {
-                modal.hidden = true;
-                modalClose(modal);
-                onOk();
-            };
-            document.getElementById('table-confirm-cancel').onclick = () => {
-                modal.hidden = true;
-                modalClose(modal);
-                if (onCancel) onCancel();
-                else renderTable();
-            };
-        }
-
-        async function startEdit(wtTd) {
-            if (wtTd.querySelector('input')) return;
-            const date = wtTd.dataset.date,
-                unit = window.activeUnit || 'lbs',
-                cur = unit === 'lbs' ? wtTd.dataset.lbs : wtTd.dataset.kg;
-            const inp = document.createElement('input');
-            inp.type = 'number';
-            inp.min = '1';
-            inp.max = '999';
-            inp.step = '0.1';
-            inp.value = cur;
-            inp.className = 'table-edit-input';
-            wtTd.innerHTML = '';
-            wtTd.appendChild(inp);
-            inp.focus();
-            if (cur) inp.select();
-            let done = false;
-            async function commitSave(lbs) {
-                await fetch('/api/weight', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ weight_lbs: lbs, date, overwrite: true }),
-                });
-                await renderTable();
-                if (window.refreshChart) window.refreshChart();
-                if (window.refreshHeaderStats) window.refreshHeaderStats();
-            }
-            async function save() {
-                if (done) return;
-                done = true;
-                inp.removeEventListener('blur', save);
-                const raw = inp.value.trim();
-                if (raw === '' && wtTd.dataset.lbs) {
-                    showTableConfirm(
-                        'Confirm Clear Weight',
-                        'Are you sure you want to remove your weight for ' + formatDateDisplay(date) + '?',
-                        'Clear',
-                        async () => {
-                            await fetch('/api/weight/' + date + '/weight', { method: 'DELETE' });
-                            await renderTable();
-                            if (window.refreshChart) window.refreshChart();
-                            if (window.refreshHeaderStats) window.refreshHeaderStats();
-                        },
-                    );
-                    return;
-                }
-                const val = parseFloat(raw);
-                if (isNaN(val) || val <= 0) {
-                    renderTable();
-                    return;
-                }
-                const lbs = unit === 'lbs' ? val : parseFloat((val * 2.2046).toFixed(1));
-                if (!wtTd.dataset.lbs) {
-                    await commitSave(lbs);
-                } else if (Math.abs(val - parseFloat(cur)) < 0.001) {
-                    renderTable();
-                } else {
-                    showTableConfirm(
-                        'Confirm Overwrite',
-                        'Are you sure you want to overwrite your weight for ' + formatDateDisplay(date) + '?',
-                        'Overwrite',
-                        () => commitSave(lbs),
-                    );
-                }
-            }
-            function cancel() {
-                if (done) return;
-                done = true;
-                renderTable();
-            }
-            inp.addEventListener(
-                'keydown',
-                (e) => {
-                    if (e.key === 'Enter') save();
-                    if (e.key === 'Escape') cancel();
-                },
-                { signal },
-            );
-            inp.addEventListener('blur', save, { signal });
-        }
-
         async function applyDelete(date) {
             await fetch('/api/weight/' + date, { method: 'DELETE' });
             await renderTable();
@@ -1952,7 +1850,7 @@ registerPage('weights', (page) => {
         );
         document.addEventListener(
             'mouseup',
-            (e) => {
+            () => {
                 if (isResizing) {
                     isResizing = false;
                     wasDragging = true;

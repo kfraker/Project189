@@ -190,6 +190,24 @@ def test_missing_day_can_be_filled_from_the_table(weights):
     assert _rows(client)[_day(1)]["weight_lbs"] == 201.0
 
 
+def test_clicking_a_row_opens_that_day_for_editing(weights):
+    open_weights, client = weights
+    seed_weight(client, TODAY, 200.0)
+    page = open_weights()
+    _open_table(page)
+
+    _row_for(page, TODAY).locator("td.cell-weight").click()
+    expect(page.locator("#history-modal")).to_be_visible()
+    expect(page.locator("#history-weight")).to_have_value("200")
+    page.locator("#history-weight").fill("198.5")
+    page.locator("#history-save").click()
+    expect(page.locator("#history-overwrite-confirm")).to_be_visible()
+    page.locator("#history-overwrite-confirm").click()
+
+    expect(_row_for(page, TODAY).locator("td.cell-weight")).to_contain_text("198.5 lbs")
+    assert _rows(client)[TODAY]["weight_lbs"] == 198.5
+
+
 # ── Notes ────────────────────────────────────────────────────────────────────
 
 
