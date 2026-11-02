@@ -439,7 +439,7 @@ def test_reduced_motion_switches_pages_without_a_fade(started_on_home):
 # ── Background cross-fade (M5.2) ────────────────────────────────────────────
 
 GHOST = ".bg-ghost"
-WORKOUTS_BG = "**/static/workoutbackground9.png"
+WORKOUTS_BG = "**/static/workoutbackground9.webp"
 
 
 def test_old_background_lies_over_the_new_one_then_fades_away(started_on_home):
@@ -449,7 +449,7 @@ def test_old_background_lies_over_the_new_one_then_fades_away(started_on_home):
     page.wait_for_function("() => appRouter.current === 'workouts'")
     ghost = page.locator(GHOST)
     expect(ghost).to_have_count(1)
-    assert "homebackground.png" in _style(page, GHOST, "backgroundImage")  # Home's background, frozen
+    assert "homebackground.webp" in _style(page, GHOST, "backgroundImage")  # Home's background, frozen
     assert _style(page, GHOST + " > div", "backgroundColor") == "rgba(8, 0, 18, 0.72)"  # with its tint
     assert _style(page, GHOST, "pointerEvents") == "none"
     assert page.evaluate("!document.querySelector('.bg-ghost').closest('[data-region]')")  # part of the shell

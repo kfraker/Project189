@@ -22,3 +22,6 @@ typing_extensions==4.16.0
 
 # Formatting and lint for Python
 ruff==0.17.3
+
+# Builds the served images (tools/images)
+Pillow==12.3.0

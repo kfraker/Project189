@@ -7,7 +7,7 @@
     /* ── Index background ── */
     .mp-bg {
         position: fixed; inset: 0; z-index: -1;
-        background: url('/static/homebackground.png') center / cover no-repeat;
+        background: url('/static/homebackground.webp') center / cover no-repeat;
         background-color: rgb(8, 0, 18);
     }
     .mp-bg::after { content: ''; position: absolute; inset: 0; background: rgba(8, 0, 18, 0.72); }
@@ -102,7 +102,7 @@
         <div id="healthbar-fill-track" role="progressbar" aria-label="Weight loss progress" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0">
             <div id="healthbar-fill"></div>
         </div>
-        <img id="healthbar-img" src="{{ url_for('static', filename='healthbar.png') }}" alt="">
+        <img id="healthbar-img" src="{{ url_for('static', filename='healthbar.png') }}" alt="" loading="lazy">
         <div id="healthbar-tooltip"></div>
     </div>
 </div>

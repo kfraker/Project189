@@ -1,6 +1,6 @@
 # Sweat Equity
 
-![Version](https://img.shields.io/badge/version-4.1.3-ff2d78)
+![Version](https://img.shields.io/badge/version-4.1.4-ff2d78)
 [![Tests](https://github.com/kfraker/Project189/actions/workflows/tests.yml/badge.svg?branch=main)](https://github.com/kfraker/Project189/actions/workflows/tests.yml?query=branch%3Amain)
 [![Coverage](https://codecov.io/gh/kfraker/Project189/branch/main/graph/badge.svg)](https://app.codecov.io/gh/kfraker/Project189/tree/main)
 
@@ -201,6 +201,8 @@ Project189/
 ├── tools/coverage/             # Node tooling: page-code coverage, combined report, ratchet
 ├── tools/sandbox/              # Mock data for the sandbox database
 ├── tools/lint/                 # ESLint and Prettier for the page code
+├── tools/images/               # Builds the served images from the originals
+├── design/originals/           # Full-size source art (not deployed)
 ├── ruff.toml                   # Python lint and formatting rules
 ├── db_migrations/
 │   ├── __init__.py              # run_migrations() runner + schema_migrations tracking
@@ -229,10 +231,10 @@ Project189/
 │   ├── dumbbellbutton.png      # Workouts nav icon
 │   ├── proteinshakebutton.png  # Nutrition nav icon (coming soon)
 │   ├── healthbar.png           # Health bar graphic (feature hidden for now)
-│   ├── weightplate.png         # Weight plate card graphic
-│   ├── homebackground.png      # Home, login and access-denied background
+│   ├── weightplate.webp        # Weight plate card graphic
+│   ├── homebackground.webp     # Home, login and access-denied background
 │   ├── miamibackground.png     # Parallax palm-tree frame overlay
-│   └── weighinsbackground.png / workoutbackground9.png     # Weigh-ins / Workouts page backgrounds
+│   └── weighinsbackground.webp / workoutbackground9.webp     # Weigh-ins / Workouts page backgrounds
 └── tests/
     ├── conftest.py              # Test schema, Flask client, seed helpers
     ├── test_*.py                # API, auth, business logic, migrations, page structure
@@ -282,7 +284,7 @@ First-time setup for browser tests: `python -m playwright install chromium`.
 
 **CI:** every push to `dev`/`main`, and every pull request, runs the full suite on GitHub Actions against a throwaway Postgres (a few minutes). Coverage is uploaded to Codecov. When a browser test fails, screenshots and Playwright traces are attached to the run (`browser-test-failures` artifact; open a trace at https://trace.playwright.dev).
 
-612 tests in all. 453 API/server tests cover all API endpoints (including the Home header stats), sign-in and multi-user isolation, business logic, date-range boundaries, page structure across Home/Weigh-ins/Workouts, and the migration runner. 159 browser tests cover the user flows on every page, the shell (menu, settings, profile, cursor), each page's lifecycle (restarted 20 times in place without anything piling up), in-page navigation (swaps, Back/Forward, rapid clicks, fallbacks, focus, fades), and a 35-step stress test whose pages must look identical to a fresh load. Tests run in an isolated `test` schema that is wiped before every test, so real data is never touched.
+626 tests in all. 460 API/server tests cover all API endpoints (including the Home header stats), sign-in and multi-user isolation, business logic, date-range boundaries, page structure across Home/Weigh-ins/Workouts, and the migration runner. 166 browser tests cover the user flows on every page, the shell (menu, settings, profile, cursor), each page's lifecycle (restarted 20 times in place without anything piling up), in-page navigation (swaps, Back/Forward, rapid clicks, fallbacks, focus, fades), and a 35-step stress test whose pages must look identical to a fresh load. Tests run in an isolated `test` schema that is wiped before every test, so real data is never touched.
 
 **Coverage is measured on every run** (settings in `.coveragerc`, switched on in `pytest.ini`). After any run:
 

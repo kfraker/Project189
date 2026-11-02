@@ -80,6 +80,16 @@ def _env_badge():
     return {"env_badge": "production-warning" if app.debug else None}
 
 
+@app.after_request
+def _cache_static_files(response):
+    """Let browsers and the CDN reuse static files. URLs with a content hash (?v=) never
+    change, so they keep for a year; other images keep for a day."""
+    if request.path.startswith("/static/") and not app.debug and response.status_code == 200:
+        age = "public, max-age=31536000, immutable" if request.args.get("v") else "public, max-age=86400"
+        response.headers["Cache-Control"] = age
+    return response
+
+
 def current_user_id():
     return session["user_id"]
 

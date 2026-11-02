@@ -42,6 +42,12 @@ window.loadScriptOnce = function (src) {
 window.activeUnit = localStorage.getItem('pref_unit') || 'lbs';
 
 /* ── Shared helpers ── */
+/* Whole calendar days between two local dates. A day can be 23 or 25 hours around a
+   clock change, so round instead of expecting exactly 24 hours. */
+function daysApart(later, earlier) {
+    return Math.round((later - earlier) / 86400000);
+}
+
 function getTodayISO() {
     const d = new Date();
     return (
@@ -951,7 +957,7 @@ window.addEventListener(
         let longest = 1,
             curS = 1;
         for (let i = 1; i < n; i++) {
-            if ((dates[i] - dates[i - 1]) / 86400000 === 1) {
+            if (daysApart(dates[i], dates[i - 1]) === 1) {
                 curS++;
                 if (curS > longest) longest = curS;
             } else curS = 1;
@@ -959,10 +965,10 @@ window.addEventListener(
         let curStreak = 0;
         const today = new Date();
         today.setHours(0, 0, 0, 0);
-        if ((today - dates[n - 1]) / 86400000 <= 1) {
+        if (daysApart(today, dates[n - 1]) <= 1) {
             curStreak = 1;
             for (let i = n - 1; i > 0; i--) {
-                if ((dates[i] - dates[i - 1]) / 86400000 === 1) curStreak++;
+                if (daysApart(dates[i], dates[i - 1]) === 1) curStreak++;
                 else break;
             }
         }
