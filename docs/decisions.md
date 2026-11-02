@@ -2,6 +2,10 @@
 
 Key decisions behind Sweat Equity and why they were made. Newest first. Earlier entries were written up afterward from project history.
 
+## Gate production deploys with Vercel Deployment Checks and branch protection (2026-11-01)
+**Decision:** `main` accepts changes only through pull requests that pass the tests, including from admins, and Vercel holds each production deploy until the `test` check passes on `main`.
+**Why:** a failed test had gone live during the 4.1.0 release. This needed less setup than having GitHub Actions deploy, and the two layers cover different failures: one stops bad code merging, and the other stops anything that fails only after merging. The docs say CI/CD now because all of this was proven with deliberate failures.
+
 ## Track user flow coverage alongside code coverage (2026-11-01)
 **Decision:** keep a list of every user flow, linked to the tests that prove it on each device, and report it on every run.
 **Why:** code coverage shows which lines ran, not whether a user's goal works. It can look excellent while a whole flow or device goes untested, as phone sizes did here.
@@ -31,8 +35,8 @@ Key decisions behind Sweat Equity and why they were made. Newest first. Earlier 
 **Why:** both used to share the production database. A branch is a full, resettable copy that's created instantly, and it gives a realistic place to test. Neon's automatic per-preview branches were turned down in favor of one predictable sandbox.
 
 ## Call it CI, not CI/CD, until deploys wait for tests (2026-10-30)
-**Decision:** public docs describe a CI pipeline only, for now.
-**Why:** Vercel deploys `main` whether or not tests pass, so "CI/CD" wouldn't yet be accurate. Gating deploys is on the [roadmap](requirements/roadmap.md).
+**Decision:** public docs described a CI pipeline only until deploys were gated, which happened on 2026-11-01.
+**Why:** Vercel was deploying `main` whether or not tests passed, so "CI/CD" wouldn't have been accurate.
 
 ## Keep server-rendered pages, and swap them in place (2026-10-28)
 **Decision:** the header, footer and menus load once and nav clicks swap in only what changes, while the server still renders complete pages. Any unexpected response falls back to a normal page load.

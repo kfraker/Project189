@@ -36,9 +36,9 @@ jobs:
       GOOGLE_CLIENT_SECRET: ci-dummy-client-secret
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
-      - uses: actions/setup-python@v5
+      - uses: actions/setup-python@v7
         with:
           python-version: "3.14"
           cache: pip
@@ -46,7 +46,7 @@ jobs:
             requirements.txt
             requirements-dev.txt
 
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v7
         with:
           node-version: "24"
           cache: npm
@@ -68,7 +68,7 @@ jobs:
 
       - name: Upload Python coverage to Codecov
         if: always()
-        uses: codecov/codecov-action@v5
+        uses: codecov/codecov-action@v7
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
           files: coverage/python.lcov
@@ -77,7 +77,7 @@ jobs:
 
       - name: Upload page-code coverage to Codecov
         if: always()
-        uses: codecov/codecov-action@v5
+        uses: codecov/codecov-action@v7
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
           files: coverage/js.lcov
@@ -86,7 +86,7 @@ jobs:
 
       - name: Upload coverage report
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: coverage-report
           path: coverage/
@@ -94,7 +94,7 @@ jobs:
 
       - name: Upload browser-test failure evidence (screenshots + traces)
         if: failure()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: browser-test-failures
           path: test-results/

@@ -13,12 +13,12 @@ Sizes: **S** is about one sitting, **M** is a couple of sittings.
 - **1.4 Decisions and requirements in the repo** (S). Done: this file and the decision log are published, and we keep them current.
 
 ## Epic 2: Complete the CI/CD pipeline
-*Status: next.*
+*Status: done.*
 
-- **2.1 Confirm the approach** (S). Vercel's Deployment Checks can hold a production deploy back from the live address until GitHub checks pass. **Done when:** we've confirmed it's available on this hosting plan, or chosen the fallback: turning off automatic production deploys and deploying from GitHub Actions after tests pass.
-- **2.2 Protect the main branch** (S). **Done when:** changes reach `main` only through a pull request that has passed the test suite, and a direct push is refused.
-- **2.3 Deploys wait for tests** (M). **Done when:** the `test` check is required before production goes live.
-- **2.4 Prove and document it** (S). **Done when:** a deliberately failing commit doesn't reach the live address, a passing one does, both work alongside the branch rules, and the docs are updated. Only then do the docs say CI/CD.
+- **2.1 Confirm the approach** (S). Done: Vercel's Deployment Checks is available on this hosting plan.
+- **2.2 Protect the main branch** (S). Done: changes reach `main` only through a pull request that has passed the test suite, and a direct push was tested and refused.
+- **2.3 Deploys wait for tests** (M). Done: the `test` check is required before production goes live.
+- **2.4 Prove and document it** (S). Done: a failing pull request couldn't merge, a passing release went live only after its tests finished, a failure after merging left the live site unchanged, and the docs are updated.
 
 ## Epic 3: Consistent code
 - **3.1 Formatting and lint** (M). **Done when:** the existing code is cleaned up, with no behavior change, and CI fails on new violations.
