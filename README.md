@@ -284,7 +284,7 @@ First-time setup for browser tests: `python -m playwright install chromium`.
 
 **CI:** every push to `dev`/`main`, and every pull request, runs the full suite on GitHub Actions against a throwaway Postgres (a few minutes). Coverage is uploaded to Codecov. When a browser test fails, screenshots and Playwright traces are attached to the run (`browser-test-failures` artifact; open a trace at https://trace.playwright.dev).
 
-626 tests in all. 460 API/server tests cover all API endpoints (including the Home header stats), sign-in and multi-user isolation, business logic, date-range boundaries, page structure across Home/Weigh-ins/Workouts, and the migration runner. 166 browser tests cover the user flows on every page, the shell (menu, settings, profile, cursor), each page's lifecycle (restarted 20 times in place without anything piling up), in-page navigation (swaps, Back/Forward, rapid clicks, fallbacks, focus, fades), and a 35-step stress test whose pages must look identical to a fresh load. Tests run in an isolated `test` schema that is wiped before every test, so real data is never touched.
+632 tests in all. 460 API/server tests cover all API endpoints (including the Home header stats), sign-in and multi-user isolation, business logic, date-range boundaries, page structure across Home/Weigh-ins/Workouts, and the migration runner. 172 browser tests cover the user flows on every page, the shell (menu, settings, profile, cursor), each page's lifecycle (restarted 20 times in place without anything piling up), in-page navigation (swaps, Back/Forward, rapid clicks, fallbacks, focus, fades), a 35-step stress test whose pages must look identical to a fresh load, and a performance budget. Tests run in an isolated `test` schema that is wiped before every test, so real data is never touched.
 
 **Coverage is measured on every run** (settings in `.coveragerc`, switched on in `pytest.ini`). After any run:
 
@@ -302,6 +302,17 @@ One-time setup (needs Node.js): `npm install --prefix tools/coverage`.
 **All code in one report:** after a test run, `npm --prefix tools/coverage run report` merges Python and page-code coverage into `coverage/all-html/index.html`, one table with a single combined total. CI builds the same report on every push (in the `coverage-report` artifact), and Codecov shows both halves as the `python` and `javascript` flags.
 
 **Coverage guard (ratchet):** `tools/coverage/baseline.json` records line coverage for Python, page code and combined. After the full test run, CI runs `npm --prefix tools/coverage run check`, which **fails the build if any of the three drops more than 0.5 points** below the baseline. Coverage can only go up. When it does (or a drop is intentional, e.g. deleting well-tested code), refresh the baseline after a full local run with `npm --prefix tools/coverage run baseline` and commit the file. Codecov flags drops of more than 0.5% on each commit as well. Current baseline (2026-11-02): 99.1% of Python lines, 75.4% of page-code lines, 76.7% combined. Page-code coverage read 84.5% before the code was formatted, because compressed lines counted as covered if a test touched any part of them. The tests didn't change; the measurement became more accurate.
+
+**Performance budget:** `tests/browser/test_performance_budget.py` loads each page with an empty cache on a network slowed to a typical 4G connection. CI fails if a page downloads more than its size or request limit, or if its Largest Contentful Paint (when the main content appears) takes more than 2.5 seconds, Google's threshold for "good". Each page's limit sits about 20% above its current size:
+
+| Page | Downloads (limit) | Requests (limit) | Largest Contentful Paint |
+|---|---|---|---|
+| Sign-in | 124 KB (150) | 4 (6) | 0.3 s |
+| Home | 811 KB (980) | 21 (25) | 1.1 s |
+| Weigh-ins | 895 KB (1,080) | 22 (26) | 0.7 s |
+| Workouts | 733 KB (880) | 20 (24) | 0.7 s |
+
+Sizes are uncompressed upper bounds, because the test server doesn't compress text the way Vercel does. Two more tests prove the budget catches regressions: an oversized image and a slow network both make it fail.
 
 **Formatting and lint:** CI fails on lint errors or unformatted code. Python uses Ruff (`ruff check .`, `ruff format .`), and page code uses ESLint and Prettier (`npm --prefix tools/lint run lint`, `npm --prefix tools/lint run format`). One-time setup: `npm install --prefix tools/lint`.
 

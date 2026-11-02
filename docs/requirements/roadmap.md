@@ -29,7 +29,7 @@ Sizes: **S** is about one sitting, **M** is a couple of sittings.
 *Status: in progress.*
 
 - **4.1 Fast first load** (M). Done: Home's download fell from 4.57 MB to 0.69 MB, images are sized to how they're displayed, unneeded downloads are gone, static files are cached, and plates appear whole.
-- **4.2 Performance budget** (S). **Done when:** CI fails if page weight or load speed goes past an agreed limit.
+- **4.2 Performance budget** (S). Done: CI fails if a page's download size, request count or Largest Contentful Paint (2.5 s on emulated 4G) goes past its limit, and tests prove the check trips.
 - **4.3 Phone and tablet tests** (M). **Done when:** key flows run at phone and tablet sizes with touch: no sideways scrolling, tappable buttons, windows that fit and close, and logging that works. Any bugs found are fixed or deliberately deferred.
 
 - **4.4 User flow coverage** (M). Code coverage shows that lines ran, not that a user's goal works. **Done when:** every user flow is listed and tagged to the tests that prove it, by device; each run reports flow coverage with the gaps named; and CI fails if a test names an unlisted flow or a covered flow loses its test.

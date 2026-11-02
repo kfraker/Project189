@@ -2,6 +2,10 @@
 
 Key decisions behind Sweat Equity and why they were made. Newest first. Earlier entries were written up afterward from project history.
 
+## Check the performance budget in the browser tests, not Lighthouse (2026-11-02)
+**Decision:** measure page weight, request count and Largest Contentful Paint with Playwright, inside the existing browser test suite, under an emulated 4G connection.
+**Why:** the app's pages need a signed-in user. The browser tests already sign in with a test cookie, while Lighthouse CI would need a separate sign-in workaround and another tool to maintain. Sizes and request counts don't vary between runs. Load speed under a slowed network depends mainly on page weight and round trips, not on how fast the CI machine is, and it was stable across five local runs. A Lighthouse performance score isn't checked; that's a known gap, acceptable while sizes and Largest Contentful Paint are guarded.
+
 ## Reset coverage to the honest number after formatting (2026-11-02)
 **Decision:** lower the page-code coverage baseline from 84.5% to 75.4%, and say why, rather than exclude code or adjust the measure to keep the higher figure.
 **Why:** compressed JavaScript let one test mark a whole long line as covered. Formatting put statements on their own lines, so the new number shows what the tests really run. The tests themselves didn't change.
