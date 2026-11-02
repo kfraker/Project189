@@ -41,6 +41,27 @@ def _saved_prefs(client):
     return client.get("/api/preferences").get_json()
 
 
+@pytest.mark.browser_context_args(timezone_id="America/New_York")
+@pytest.mark.parametrize(
+    "days",
+    [
+        pytest.param(["2026-10-31", "2026-11-01", "2026-11-02"], id="clocks-go-back-25-hour-day"),
+        pytest.param(["2026-03-07", "2026-03-08", "2026-03-09"], id="clocks-go-forward-23-hour-day"),
+    ],
+)
+def test_insights_streaks_survive_a_clock_change(shell, signed_in_page, days):
+    """Regression: streaks compared dates as exactly 24 hours apart, so a day with 23 or
+    25 hours reset them. CI runs in UTC, which has no clock changes, so set a time zone."""
+    open_page, client = shell
+    for day in days:
+        seed_weight(client, day, 200.0)
+    signed_in_page.clock.set_fixed_time(f"{days[-1]}T12:00:00-05:00")
+    page = open_page()
+    _menu_item(page, "Insights")
+    expect(page.locator(".insight-card", has_text="Current Streak").locator(".insight-value")).to_have_text("3")
+    expect(page.locator(".insight-card", has_text="Longest Streak").locator(".insight-value")).to_have_text("3")
+
+
 # ── Which-database badge ─────────────────────────────────────────────────────
 
 
