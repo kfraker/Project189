@@ -1,9 +1,9 @@
 """Notes field on weight entries — POST /api/weight stores notes, PATCH /api/weight/<date>/note edits them."""
-import pytest
+
 from tests.conftest import seed_weight
 
-
 # ── GET /api/weights includes notes field ────────────────────────────────────
+
 
 def test_get_weights_includes_notes_field(client):
     seed_weight(client, "2026-01-01", 200.0)
@@ -18,6 +18,7 @@ def test_notes_defaults_to_empty_string(client):
 
 
 # ── POST /api/weight stores notes on insert ──────────────────────────────────
+
 
 def test_insert_with_notes_stores_note(client):
     client.post(
@@ -42,6 +43,7 @@ def test_insert_notes_truncated_at_500_chars(client):
 
 # ── POST /api/weight (overwrite) preserves existing notes ────────────────────
 
+
 def test_weight_overwrite_preserves_existing_note(client):
     client.post(
         "/api/weight",
@@ -59,6 +61,7 @@ def test_weight_overwrite_preserves_existing_note(client):
 
 
 # ── PATCH /api/weight/<date>/note ────────────────────────────────────────────
+
 
 def test_patch_note_returns_success(client):
     seed_weight(client, "2026-01-01", 200.0)

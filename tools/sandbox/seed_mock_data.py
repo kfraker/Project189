@@ -7,6 +7,7 @@ Usage (from the project folder):
 It replaces that account's data, and refuses to run unless APP_ENV=sandbox. To undo it,
 reset the Neon dev branch from its parent (see "Database sandbox" in the README).
 """
+
 import argparse
 import os
 import random
@@ -19,18 +20,29 @@ from dotenv import load_dotenv
 ROOT = Path(__file__).resolve().parents[2]
 TABLES = ("weights", "workouts", "workout_day_notes", "settings", "preferences")
 HISTORY_DAYS = 120
-STEADY_DAYS = 21                 # the last 3 weeks have no gaps, so the streak looks good
+STEADY_DAYS = 21  # the last 3 weeks have no gaps, so the streak looks good
 
 WEIGH_IN_NOTES = {
-    9: "Weekend BBQ, felt bloated", 23: "Slept badly", 38: "New deadlift PR!",
-    51: "Travel, hotel scale", 64: "Cheat day", 80: "Back on track", 97: "Sore from leg day",
+    9: "Weekend BBQ, felt bloated",
+    23: "Slept badly",
+    38: "New deadlift PR!",
+    51: "Travel, hotel scale",
+    64: "Cheat day",
+    80: "Back on track",
+    97: "Sore from leg day",
     110: "Feeling lighter",
 }
 # (type label, MET, typical minutes)
 WORKOUTS = [
-    ("Running (6.0 mph)", 9.8, 30), ("Cycling (14.0 mph)", 8.0, 45), ("HIIT", 9.5, 25),
-    ("Basketball", 6.5, 60), ("Yoga", 2.5, 40), ("Rowing Machine (moderate)", 7.0, 30),
-    ("Hiking", 6.0, 90), ("Pickleball", 4.1, 60), ("Kettlebell Training", 9.8, 20),
+    ("Running (6.0 mph)", 9.8, 30),
+    ("Cycling (14.0 mph)", 8.0, 45),
+    ("HIIT", 9.5, 25),
+    ("Basketball", 6.5, 60),
+    ("Yoga", 2.5, 40),
+    ("Rowing Machine (moderate)", 7.0, 30),
+    ("Hiking", 6.0, 90),
+    ("Pickleball", 4.1, 60),
+    ("Kettlebell Training", 9.8, 20),
 ]
 DAY_NOTES = ["Leg day + cardio", "Long hike with friends", "Double session", "Felt strong", "Quick one before work"]
 
@@ -47,9 +59,9 @@ def plan_weigh_ins(today, days=HISTORY_DAYS, seed=189):
     start = today - timedelta(days=days)
     weight, rows = 231.4, []
     for n in range(days):
-        weight += -0.22 if not 55 <= n <= 66 else 0.02      # a plateau in the middle
+        weight += -0.22 if not 55 <= n <= 66 else 0.02  # a plateau in the middle
         steady = n >= days - STEADY_DAYS
-        if not steady and (rng.random() < 0.15 or 40 <= n <= 42):   # missed days, and a 3-day gap
+        if not steady and (rng.random() < 0.15 or 40 <= n <= 42):  # missed days, and a 3-day gap
             continue
         row = {"date": (start + timedelta(days=n)).isoformat(), "weight_lbs": round(weight + rng.uniform(-1.2, 1.2), 1)}
         if n in WEIGH_IN_NOTES:
@@ -71,8 +83,15 @@ def plan_workouts(today, days=HISTORY_DAYS, seed=189):
             label, met, minutes = rng.choice(WORKOUTS)
             minutes = max(10, minutes + rng.choice([-10, -5, 0, 5, 10]))
             kg = (231.4 - 0.2 * n) / 2.2046
-            workouts.append({"date": day, "type": label, "duration_min": minutes,
-                             "kcal": round(met * kg * minutes / 60), "note": ""})
+            workouts.append(
+                {
+                    "date": day,
+                    "type": label,
+                    "duration_min": minutes,
+                    "kcal": round(met * kg * minutes / 60),
+                    "note": "",
+                }
+            )
         if rng.random() < 0.08:
             notes.append({"date": day, "note": rng.choice(DAY_NOTES)})
     return workouts, notes
@@ -112,15 +131,16 @@ def main():
     refuse_unless_sandbox()
 
     sys.path.insert(0, str(ROOT))
-    from app import app, get_db            # only imported once we know this is the sandbox
+    from app import app, get_db  # only imported once we know this is the sandbox
 
     conn = get_db()
     try:
         if args.user_id:
             row = conn.execute("SELECT id FROM users WHERE id = %s", (args.user_id,)).fetchone()
         else:
-            row = conn.execute("SELECT id FROM users WHERE lower(email) = lower(%s)",
-                               (os.environ.get("OWNER_EMAIL", ""),)).fetchone()
+            row = conn.execute(
+                "SELECT id FROM users WHERE lower(email) = lower(%s)", (os.environ.get("OWNER_EMAIL", ""),)
+            ).fetchone()
         if not row:
             sys.exit("No matching account in the sandbox: sign in once locally, or pass --user-id.")
         user_id = row["id"]
@@ -134,8 +154,10 @@ def main():
     with client.session_transaction() as sess:
         sess["user_id"] = user_id
     counts = fill_account(client)
-    print(f"Sandbox account {user_id} filled: {counts['weigh_ins']} weigh-ins, {counts['workouts']} workouts, "
-          f"{counts['day_notes']} day notes. Start 232 lbs, goal 189 lbs. Today is left for you to log.")
+    print(
+        f"Sandbox account {user_id} filled: {counts['weigh_ins']} weigh-ins, {counts['workouts']} workouts, "
+        f"{counts['day_notes']} day notes. Start 232 lbs, goal 189 lbs. Today is left for you to log."
+    )
 
 
 if __name__ == "__main__":

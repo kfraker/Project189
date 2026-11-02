@@ -7,13 +7,14 @@ truncated before every test. get_db() reads DB_SCHEMA from app.config at
 call time, so the override takes effect for every route handler called
 through the test client.
 """
+
 import os
 import re
 
 import psycopg
+import pytest
 from psycopg.rows import dict_row
 
-import pytest
 import app as app_module
 from app import app as flask_app
 from db_migrations import run_migrations
@@ -31,16 +32,13 @@ def connect(schema=TEST_SCHEMA):
 
 
 def table_names(conn, schema=TEST_SCHEMA):
-    rows = conn.execute(
-        "SELECT tablename FROM pg_tables WHERE schemaname = %s", (schema,)
-    ).fetchall()
+    rows = conn.execute("SELECT tablename FROM pg_tables WHERE schemaname = %s", (schema,)).fetchall()
     return {r["tablename"] for r in rows}
 
 
 def columns(conn, table, schema=TEST_SCHEMA):
     rows = conn.execute(
-        "SELECT column_name, is_nullable FROM information_schema.columns "
-        "WHERE table_schema = %s AND table_name = %s",
+        "SELECT column_name, is_nullable FROM information_schema.columns WHERE table_schema = %s AND table_name = %s",
         (schema, table),
     ).fetchall()
     return {r["column_name"]: r["is_nullable"] for r in rows}
@@ -60,8 +58,7 @@ def pk_columns(conn, table, schema=TEST_SCHEMA):
 
 def seed_user(conn, user_id=1, username="default"):
     conn.execute(
-        "INSERT INTO users (id, username, password_hash) VALUES (%s, %s, '') "
-        "ON CONFLICT (id) DO NOTHING",
+        "INSERT INTO users (id, username, password_hash) VALUES (%s, %s, '') ON CONFLICT (id) DO NOTHING",
         (user_id, username),
     )
 
@@ -87,9 +84,9 @@ def test_db():
     conn.commit()
     conn.close()
 
-    flask_app.config['DB_SCHEMA'] = TEST_SCHEMA
+    flask_app.config["DB_SCHEMA"] = TEST_SCHEMA
     yield
-    flask_app.config['DB_SCHEMA'] = 'public'
+    flask_app.config["DB_SCHEMA"] = "public"
 
 
 @pytest.fixture()
@@ -103,8 +100,7 @@ def client(test_db):
     """
     conn = connect()
     conn.execute(
-        "INSERT INTO users (id, username, password_hash) VALUES (1, 'default', '') "
-        "ON CONFLICT (id) DO NOTHING"
+        "INSERT INTO users (id, username, password_hash) VALUES (1, 'default', '') ON CONFLICT (id) DO NOTHING"
     )
     conn.commit()
     conn.close()
@@ -112,7 +108,7 @@ def client(test_db):
     flask_app.config["TESTING"] = True
     c = flask_app.test_client()
     with c.session_transaction() as sess:
-        sess['user_id'] = 1
+        sess["user_id"] = 1
     yield c
 
 
@@ -120,17 +116,14 @@ def client(test_db):
 def other_client(test_db):
     """A second authenticated client (user 2) sharing the same test schema as `client`."""
     conn = connect()
-    conn.execute(
-        "INSERT INTO users (id, username, password_hash) VALUES (2, 'user2', '') "
-        "ON CONFLICT (id) DO NOTHING"
-    )
+    conn.execute("INSERT INTO users (id, username, password_hash) VALUES (2, 'user2', '') ON CONFLICT (id) DO NOTHING")
     conn.commit()
     conn.close()
 
     flask_app.config["TESTING"] = True
     c = flask_app.test_client()
     with c.session_transaction() as sess:
-        sess['user_id'] = 2
+        sess["user_id"] = 2
     yield c
 
 
@@ -142,6 +135,7 @@ def unauthenticated_client(test_db):
 
 
 # ── Seed helpers ─────────────────────────────────────────────────────────────
+
 
 def seed_weight(client, entry_date: str, weight_lbs: float, overwrite: bool = False):
     return client.post(

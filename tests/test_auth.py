@@ -1,5 +1,6 @@
 """Google OAuth login flow: gating of existing routes, the login/logout
 routes themselves, and the /auth/google/callback exchange."""
+
 import pytest
 
 import app as app_module
@@ -17,6 +18,7 @@ def _fake_token(email, sub="sub-test-1", name="Test User", picture="http://pic")
 
 
 # ── Route gating ──────────────────────────────────────────────────────────────
+
 
 def test_home_shows_login_card_when_unauthenticated(unauthenticated_client):
     r = unauthenticated_client.get("/")
@@ -44,6 +46,7 @@ def test_api_route_returns_401_json_when_unauthenticated(unauthenticated_client)
 
 # ── /login and /logout ────────────────────────────────────────────────────────
 
+
 def test_login_page_renders_when_unauthenticated(unauthenticated_client):
     r = unauthenticated_client.get("/login")
     assert r.status_code == 200
@@ -67,9 +70,11 @@ def test_logout_then_home_shows_login_again(client):
 
 # ── /auth/google/callback ─────────────────────────────────────────────────────
 
+
 def test_callback_allowed_email_creates_user_and_sets_session(unauthenticated_client, test_db, monkeypatch):
     monkeypatch.setattr(
-        app_module.oauth.google, "authorize_access_token",
+        app_module.oauth.google,
+        "authorize_access_token",
         lambda: _fake_token("you@example.com", sub="sub-new-1"),
     )
     r = unauthenticated_client.get("/auth/google/callback", follow_redirects=False)
@@ -88,7 +93,8 @@ def test_callback_allowed_email_creates_user_and_sets_session(unauthenticated_cl
 
 def test_callback_repeat_login_reuses_same_user(unauthenticated_client, test_db, monkeypatch):
     monkeypatch.setattr(
-        app_module.oauth.google, "authorize_access_token",
+        app_module.oauth.google,
+        "authorize_access_token",
         lambda: _fake_token("you@example.com", sub="sub-repeat-1"),
     )
     unauthenticated_client.get("/auth/google/callback")
@@ -102,16 +108,15 @@ def test_callback_repeat_login_reuses_same_user(unauthenticated_client, test_db,
     assert first_user_id == second_user_id
 
     conn = connect()
-    count = conn.execute(
-        "SELECT COUNT(*) AS c FROM users WHERE google_sub = %s", ("sub-repeat-1",)
-    ).fetchone()["c"]
+    count = conn.execute("SELECT COUNT(*) AS c FROM users WHERE google_sub = %s", ("sub-repeat-1",)).fetchone()["c"]
     conn.close()
     assert count == 1
 
 
 def test_callback_denies_non_allowlisted_email(unauthenticated_client, test_db, monkeypatch):
     monkeypatch.setattr(
-        app_module.oauth.google, "authorize_access_token",
+        app_module.oauth.google,
+        "authorize_access_token",
         lambda: _fake_token("stranger@example.com", sub="sub-stranger"),
     )
     r = unauthenticated_client.get("/auth/google/callback")
@@ -132,7 +137,8 @@ def test_fresh_user_home_renders_without_error(unauthenticated_client, monkeypat
     assume any prior data exists (keeps the onboarding-wizard backlog item
     unblocked)."""
     monkeypatch.setattr(
-        app_module.oauth.google, "authorize_access_token",
+        app_module.oauth.google,
+        "authorize_access_token",
         lambda: _fake_token("you@example.com", sub="sub-fresh-1"),
     )
     unauthenticated_client.get("/auth/google/callback")

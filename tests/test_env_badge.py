@@ -1,4 +1,5 @@
 """The badge that says which database this copy of the app is using."""
+
 import pytest
 
 from app import app as flask_app

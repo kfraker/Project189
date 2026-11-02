@@ -13,6 +13,7 @@ saves the counts for the app's own scripts (static/js/**) to coverage/js-raw/,
 and at the end of the run tools/coverage/report-js.mjs turns them into
 coverage/js-html/ + coverage/js.lcov.
 """
+
 import hashlib
 import json
 import shutil
@@ -45,8 +46,10 @@ def pytest_sessionfinish(session):
         return
     node = shutil.which("node")
     if not node or not (JS_REPORT.parent / "node_modules").is_dir():
-        print("\nPage-code coverage collected but not reported: install the tooling with "
-              "`npm install --prefix tools/coverage` (needs Node.js).")
+        print(
+            "\nPage-code coverage collected but not reported: install the tooling with "
+            "`npm install --prefix tools/coverage` (needs Node.js)."
+        )
         return
     print()
     subprocess.run([node, str(JS_REPORT)], cwd=ROOT, check=False)
@@ -58,6 +61,7 @@ def _test_schema_only(wsgi_app):
             start_response("503 Service Unavailable", [("Content-Type", "text/plain")])
             return [b"Live test server: refusing request, test schema not active"]
         return wsgi_app(environ, start_response)
+
     return guarded
 
 
@@ -98,7 +102,7 @@ def _collect_js_coverage(request, page, app_server, browser_name):
     for script in scripts:
         url = script["url"].split("?")[0]
         if url.startswith(prefix) and url.endswith(".js"):
-            script["url"] = (STATIC_DIR / url[len(prefix):]).as_uri()   # map to the file on disk
+            script["url"] = (STATIC_DIR / url[len(prefix) :]).as_uri()  # map to the file on disk
             ours.append(script)
     if ours:
         name = hashlib.md5(request.node.nodeid.encode()).hexdigest()
@@ -110,10 +114,13 @@ def browser_type_launch_args(browser_type_launch_args):
     """Keep same-site navigations in one renderer process. By default Chromium may
     move each new page into a fresh process, which discards the coverage counts of
     the pages a test visited before it (only the last page would be measured)."""
-    return {**browser_type_launch_args, "args": [
-        *browser_type_launch_args.get("args", []),
-        "--disable-features=RenderDocument,BackForwardCache,ProactivelySwapBrowsingInstance",
-    ]}
+    return {
+        **browser_type_launch_args,
+        "args": [
+            *browser_type_launch_args.get("args", []),
+            "--disable-features=RenderDocument,BackForwardCache,ProactivelySwapBrowsingInstance",
+        ],
+    }
 
 
 @pytest.fixture(scope="session")
@@ -129,10 +136,21 @@ def _fail_on_page_errors(request, page, app_server):
     problems = []
     page.on("pageerror", lambda exc: problems.append(f"JS error: {exc}"))
     page.on("console", lambda msg: msg.type == "error" and problems.append(f"console.error: {msg.text}"))
-    page.on("requestfailed", lambda req: "ERR_ABORTED" not in (req.failure or "")
-            and problems.append(f"request failed: {req.method} {req.url} ({req.failure})"))
-    page.on("response", lambda res: res.url.startswith(app_server) and res.status >= 400
-            and problems.append(f"HTTP {res.status}: {res.request.method} {res.url}"))
+    page.on(
+        "requestfailed",
+        lambda req: (
+            "ERR_ABORTED" not in (req.failure or "")
+            and problems.append(f"request failed: {req.method} {req.url} ({req.failure})")
+        ),
+    )
+    page.on(
+        "response",
+        lambda res: (
+            res.url.startswith(app_server)
+            and res.status >= 400
+            and problems.append(f"HTTP {res.status}: {res.request.method} {res.url}")
+        ),
+    )
     yield
     if problems and not request.node.get_closest_marker("allow_page_errors"):
         pytest.fail("Page problems during test:\n  " + "\n  ".join(problems), pytrace=False)
@@ -154,16 +172,19 @@ def signed_in_page(test_db, page, app_server):
     """
     conn = connect()
     conn.execute(
-        "INSERT INTO users (id, username, password_hash) VALUES (1, 'default', '') "
-        "ON CONFLICT (id) DO NOTHING"
+        "INSERT INTO users (id, username, password_hash) VALUES (1, 'default', '') ON CONFLICT (id) DO NOTHING"
     )
     conn.commit()
     conn.close()
 
     cookie = flask_app.session_interface.get_signing_serializer(flask_app).dumps({"user_id": 1})
-    page.context.add_cookies([{
-        "name": flask_app.config["SESSION_COOKIE_NAME"],
-        "value": cookie,
-        "url": app_server,
-    }])
+    page.context.add_cookies(
+        [
+            {
+                "name": flask_app.config["SESSION_COOKIE_NAME"],
+                "value": cookie,
+                "url": app_server,
+            }
+        ]
+    )
     return page

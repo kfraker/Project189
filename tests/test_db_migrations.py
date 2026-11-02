@@ -1,7 +1,8 @@
 """Migration runner tests — db_migrations/."""
+
 import app as app_module
 from db_migrations import run_migrations
-from tests.conftest import connect, columns, pk_columns, seed_user
+from tests.conftest import columns, connect, pk_columns, seed_user
 
 
 def test_fresh_db_records_migration_version(test_db):
@@ -56,9 +57,7 @@ def test_note_only_row_can_be_inserted_without_weight(test_db):
     """Regression guard for the nullable-weight schema's whole purpose."""
     conn = connect()
     seed_user(conn)
-    conn.execute(
-        "INSERT INTO weights (user_id, date, notes) VALUES (1, '2026-01-01', 'no weigh-in today')"
-    )
+    conn.execute("INSERT INTO weights (user_id, date, notes) VALUES (1, '2026-01-01', 'no weigh-in today')")
     conn.commit()
     row = conn.execute("SELECT weight_lbs, notes FROM weights WHERE date = '2026-01-01'").fetchone()
     conn.close()

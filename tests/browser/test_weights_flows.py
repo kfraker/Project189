@@ -1,6 +1,7 @@
 """Weigh-ins page flows in a real browser: charts, date ranges, Daily/Weekly switch,
 table view, logging (incl. missing days), notes, deleting, the "max data" info
 icon (#20) and the 0-day streak colour (#16)."""
+
 from datetime import date, timedelta
 
 import pytest
@@ -19,10 +20,12 @@ TODAY = _day(0)
 @pytest.fixture()
 def weights(signed_in_page, client):
     """Signed-in browser + an API client for seeding, both on test user 1."""
+
     def open_weights():
         signed_in_page.goto("/weights")
         signed_in_page.wait_for_load_state("networkidle")
         return signed_in_page
+
     return open_weights, client
 
 
@@ -35,7 +38,8 @@ def _wait_for_chart_days(page, canvas_id, days):
     (Range changes re-fetch data, so the chart updates a moment after the click.)"""
     page.wait_for_function(
         "([id, n]) => { const c = window.Chart && Chart.getChart(id); return c && c.data.labels.length === n; }",
-        arg=[canvas_id, days])
+        arg=[canvas_id, days],
+    )
 
 
 def _pick_daily_range(page, value):
@@ -64,6 +68,7 @@ def _rows(client):
 
 # ── Header stats ─────────────────────────────────────────────────────────────
 
+
 def test_zero_day_streak_is_blue(weights):
     """Regression for #16: a 0-day streak gets the same blue as on Home/Workouts."""
     open_weights, _ = weights
@@ -83,6 +88,7 @@ def test_header_shows_streak_and_seven_day_average(weights):
 
 # ── Charts & ranges ──────────────────────────────────────────────────────────
 
+
 def test_daily_chart_plots_weigh_ins_and_ranges_change_it(weights):
     open_weights, client = weights
     for offset in (0, 1, 2, 20, 40):
@@ -90,10 +96,10 @@ def test_daily_chart_plots_weigh_ins_and_ranges_change_it(weights):
     page = open_weights()
 
     _pick_daily_range(page, "all")
-    _wait_for_chart_days(page, "weight-chart", 41)   # oldest weigh-in (40 days ago) → today
+    _wait_for_chart_days(page, "weight-chart", 41)  # oldest weigh-in (40 days ago) → today
 
     _pick_daily_range(page, "7d")
-    _wait_for_chart_days(page, "weight-chart", 3)    # only the last 3 days have data in that window
+    _wait_for_chart_days(page, "weight-chart", 3)  # only the last 3 days have data in that window
 
 
 def test_switch_between_daily_and_weekly_charts(weights):
@@ -119,6 +125,7 @@ def test_new_account_shows_empty_chart_message(weights):
 
 
 # ── "Showing max data" info icon (#20) ───────────────────────────────────────
+
 
 def test_info_icon_explains_short_history_on_hover(weights):
     open_weights, client = weights
@@ -148,6 +155,7 @@ def test_info_icon_hidden_when_history_covers_range(weights):
 
 
 # ── Logging ──────────────────────────────────────────────────────────────────
+
 
 def test_log_weigh_in_adds_point_and_table_row(weights):
     open_weights, client = weights
@@ -184,6 +192,7 @@ def test_missing_day_can_be_filled_from_the_table(weights):
 
 # ── Notes ────────────────────────────────────────────────────────────────────
 
+
 def test_add_and_edit_a_note_from_the_table(weights):
     open_weights, client = weights
     seed_weight(client, TODAY, 200.0)
@@ -208,6 +217,7 @@ def test_add_and_edit_a_note_from_the_table(weights):
 
 
 # ── Deleting ─────────────────────────────────────────────────────────────────
+
 
 def test_delete_weight_but_keep_note(weights):
     open_weights, client = weights
@@ -235,6 +245,6 @@ def test_delete_whole_entry(weights):
 
     _row_for(page, TODAY).get_by_role("button", name="Delete this entry").click()
     expect(page.locator('#row-delete-checks [data-key="note"]')).to_be_checked()
-    _delete_selected(page)                          # weight + note both ticked by default
+    _delete_selected(page)  # weight + note both ticked by default
     assert TODAY not in _rows(client)
     assert _day(1) in _rows(client)

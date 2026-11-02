@@ -1,4 +1,5 @@
 """tools/sandbox/seed_mock_data.py: refuses to run outside the sandbox, and its data looks real."""
+
 import importlib.util
 import os
 import subprocess
@@ -40,7 +41,7 @@ def test_weigh_ins_end_yesterday_with_no_recent_gaps():
     dates = {r["date"] for r in rows}
     assert TODAY.isoformat() not in dates
     assert all((TODAY - timedelta(days=i)).isoformat() in dates for i in range(1, seed.STEADY_DAYS + 1))
-    assert len(rows) < seed.HISTORY_DAYS                              # older history has gaps
+    assert len(rows) < seed.HISTORY_DAYS  # older history has gaps
 
 
 def test_weigh_ins_trend_down_with_notes():

@@ -1,8 +1,9 @@
 """Database schema and initialisation tests."""
+
 import psycopg
 
 import app as app_module
-from tests.conftest import connect, table_names, columns, seed_user
+from tests.conftest import columns, connect, seed_user, table_names
 
 
 def test_init_db_creates_weights_table(test_db):

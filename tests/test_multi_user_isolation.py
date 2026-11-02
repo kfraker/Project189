@@ -31,14 +31,28 @@ def test_preferences_are_isolated_between_users(client, other_client):
 
 
 def test_workouts_are_isolated_between_users(client, other_client):
-    client.post("/api/workout", json={
-        "date": "2026-01-01", "type": "Run", "duration_min": 30, "kcal": 300, "note": "",
-    })
+    client.post(
+        "/api/workout",
+        json={
+            "date": "2026-01-01",
+            "type": "Run",
+            "duration_min": 30,
+            "kcal": 300,
+            "note": "",
+        },
+    )
     assert other_client.get("/api/workouts").get_json() == []
 
-    other_client.post("/api/workout", json={
-        "date": "2026-01-02", "type": "Bike", "duration_min": 45, "kcal": 400, "note": "",
-    })
+    other_client.post(
+        "/api/workout",
+        json={
+            "date": "2026-01-02",
+            "type": "Bike",
+            "duration_min": 45,
+            "kcal": 400,
+            "note": "",
+        },
+    )
     client_workouts = client.get("/api/workouts").get_json()
     assert len(client_workouts) == 1
     assert client_workouts[0]["type"] == "Run"
@@ -54,9 +68,16 @@ def test_workout_day_notes_are_isolated_between_users(client, other_client):
 
 
 def test_cannot_delete_another_users_workout(client, other_client):
-    r = other_client.post("/api/workout", json={
-        "date": "2026-01-03", "type": "Swim", "duration_min": 20, "kcal": 150, "note": "",
-    })
+    r = other_client.post(
+        "/api/workout",
+        json={
+            "date": "2026-01-03",
+            "type": "Swim",
+            "duration_min": 20,
+            "kcal": 150,
+            "note": "",
+        },
+    )
     other_workout_id = r.get_json()["id"]
 
     client.delete(f"/api/workout/{other_workout_id}")

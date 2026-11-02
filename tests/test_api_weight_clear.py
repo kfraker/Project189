@@ -1,7 +1,8 @@
 """DELETE /api/weight/<date>/weight — clear a day's weight but keep its note."""
-from datetime import date, timedelta
-from tests.conftest import seed_weight
 
+from datetime import date, timedelta
+
+from tests.conftest import seed_weight
 
 TODAY = date.today().isoformat()
 
@@ -25,6 +26,7 @@ def _row(client, entry_date):
 
 # ── Day with a note: weight cleared, note kept ───────────────────────────────
 
+
 def test_clear_weight_keeps_note(client):
     _seed_with_note(client, TODAY, 200.0, "felt great")
     r = client.delete(f"/api/weight/{TODAY}/weight")
@@ -38,6 +40,7 @@ def test_clear_weight_keeps_note(client):
 
 # ── Day without a note: whole entry removed ──────────────────────────────────
 
+
 def test_clear_weight_without_note_deletes_entry(client):
     seed_weight(client, TODAY, 200.0)
     client.delete(f"/api/weight/{TODAY}/weight")
@@ -45,6 +48,7 @@ def test_clear_weight_without_note_deletes_entry(client):
 
 
 # ── Returned "latest" weight ─────────────────────────────────────────────────
+
 
 def test_clear_weight_returns_previous_latest(client):
     seed_weight(client, _date_offset(1), 195.0)
@@ -60,6 +64,7 @@ def test_clear_weight_returns_empty_latest_when_no_weights_left(client):
 
 
 # ── Errors ───────────────────────────────────────────────────────────────────
+
 
 def test_clear_weight_nonexistent_date_returns_404(client):
     r = client.delete("/api/weight/2000-01-01/weight")

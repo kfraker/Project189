@@ -5,6 +5,7 @@ appRouter.remount() restarts the current page in place.
 These tests register small probe pages, after first leaving the real page
 (Home) so the probes start from a page with nothing running.
 """
+
 import pytest
 
 # A probe page: counts clicks on the document and records its cleanups in window.log.
@@ -68,8 +69,12 @@ def test_remount_restarts_the_page_with_a_fresh_context(home):
     home.evaluate(PROBE)
     assert home.evaluate("appRouter.remount()") is True
     assert home.evaluate("appRouter.current") == "probe"
-    assert home.evaluate("[contexts.length, contexts[0].signal.aborted, contexts[1].signal.aborted]") == [2, True, False]
-    assert home.evaluate("log") == ["second cleanup 1", "first cleanup 1"]   # old cleanups ran, once
+    assert home.evaluate("[contexts.length, contexts[0].signal.aborted, contexts[1].signal.aborted]") == [
+        2,
+        True,
+        False,
+    ]
+    assert home.evaluate("log") == ["second cleanup 1", "first cleanup 1"]  # old cleanups ran, once
     assert _click_count_after_one_click(home) == 1
 
 
@@ -77,7 +82,7 @@ def test_twenty_remounts_leave_exactly_one_listener(home):
     home.evaluate(PROBE)
     home.evaluate("for (let i = 0; i < 20; i++) appRouter.remount()")
     assert _click_count_after_one_click(home) == 1
-    assert home.evaluate("log.length") == 40                               # 2 cleanups × 20 leaves
+    assert home.evaluate("log.length") == 40  # 2 cleanups × 20 leaves
 
 
 def test_registering_another_page_leaves_the_current_one(home):
@@ -88,7 +93,7 @@ def test_registering_another_page_leaves_the_current_one(home):
     assert _click_count_after_one_click(home) == 0
 
 
-@pytest.mark.allow_page_errors          # the failing cleanup is the point of the test
+@pytest.mark.allow_page_errors  # the failing cleanup is the point of the test
 def test_a_failing_cleanup_does_not_stop_the_others(home):
     errors = []
     home.on("console", lambda msg: msg.type == "error" and errors.append(msg.text))
@@ -103,6 +108,7 @@ def test_a_failing_cleanup_does_not_stop_the_others(home):
 
 
 # ── Page-shared names on window are cleared on leave (M2.2) ─────────────────
+
 
 def test_names_a_page_puts_on_window_are_removed_when_it_is_left(home):
     home.evaluate("""() => new Promise(done => registerPage('probe', page => {
@@ -124,7 +130,7 @@ def test_names_that_existed_before_the_page_are_kept(home):
 def test_app_wide_names_created_during_a_page_are_kept(home):
     """A library loaded by a page (Chart.js on Weigh-ins) stays loaded for next time,
     and shell state set while the page is open survives leaving it."""
-    assert home.evaluate("'Chart' in window") is False              # Home doesn't load it
+    assert home.evaluate("'Chart' in window") is False  # Home doesn't load it
     home.evaluate("""registerPage('probe', page => {
         window.Chart = { stand_in: true };
         window.activeModal = { tryClose() {} };
@@ -141,7 +147,7 @@ def test_remounts_do_not_pile_up_names_on_window(home):
     assert home.evaluate("Object.keys(window).length") == count
 
 
-@pytest.mark.allow_page_errors          # the undeletable name is the point of the test
+@pytest.mark.allow_page_errors  # the undeletable name is the point of the test
 def test_undeletable_page_name_is_reported(home):
     """A top-level `var` can't be deleted. Pages must use window.x = … inside init
     instead; if one slips through, leaving the page says so."""
@@ -150,10 +156,11 @@ def test_undeletable_page_name_is_reported(home):
     home.evaluate("registerPage('probe', page => {})")
     home.add_script_tag(content="var leakyProbe = 1;")
     home.evaluate("appRouter.leave()")
-    assert any('left window.leakyProbe behind' in e for e in errors)
+    assert any("left window.leakyProbe behind" in e for e in errors)
 
 
 # ── page.fetch: answers that arrive after the page was left are dropped (M4.1) ─
+
 
 def test_page_fetch_works_normally_while_the_page_runs(home):
     result = home.evaluate("""() => new Promise(done => registerPage('probe', page => {
@@ -192,7 +199,7 @@ def test_page_fetch_body_read_after_leaving_is_dropped(home):
     assert home.evaluate("followUps") == ["answer"]
 
 
-@pytest.mark.allow_page_errors          # the failed request itself is expected
+@pytest.mark.allow_page_errors  # the failed request itself is expected
 def test_page_fetch_failure_after_leaving_is_silent(home):
     """A request that fails after the page was left raises nothing: no unhandled
     rejection, even where the page code has no error handler."""

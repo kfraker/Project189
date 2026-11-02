@@ -9,8 +9,9 @@ def listener_count(page):
         total = 0
         for target in ("window", "document"):
             obj = cdp.send("Runtime.evaluate", {"expression": target})["result"]["objectId"]
-            total += len(cdp.send("DOMDebugger.getEventListeners",
-                                  {"objectId": obj, "depth": -1, "pierce": True})["listeners"])
+            total += len(
+                cdp.send("DOMDebugger.getEventListeners", {"objectId": obj, "depth": -1, "pierce": True})["listeners"]
+            )
         return total
     finally:
         cdp.detach()
@@ -41,7 +42,7 @@ def settle(page, action, until=None, quiet_ms=200, timeout_ms=30_000):
         waited = quiet = 0
         while quiet < quiet_ms:
             assert waited < timeout_ms, f"{len(pending)} requests still pending"
-            page.wait_for_timeout(50)          # lets Playwright deliver the request events
+            page.wait_for_timeout(50)  # lets Playwright deliver the request events
             waited += 50
             quiet = 0 if pending else quiet + 50
     finally:
