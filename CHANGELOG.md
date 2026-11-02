@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## 4.1.3 (2026-11-02)
 
 ### Added
 - Ruff for Python, and ESLint and Prettier for page code, enforced in CI. Dependabot watches the new tools.
