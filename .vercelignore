@@ -8,5 +8,6 @@ pytest.ini
 .coveragerc
 codecov.yml
 ruff.toml
+design/
 .github/
 docs/

@@ -377,6 +377,25 @@ h1 {
     transition: transform 0.25s ease, box-shadow 0.25s ease;
 }
 
+/* Plates stay hidden until their image arrives, so the shadows and numbers never show
+   as an empty silhouette. home.js adds .plates-ready. */
+.mp-plates-section:not(.plates-ready) .plate {
+    visibility: hidden;
+}
+.mp-plates-section.plates-fade-in .plate {
+    animation: plates-fade-in 0.2s ease-out;
+}
+@keyframes plates-fade-in {
+    from {
+        opacity: 0;
+    }
+}
+@media (prefers-reduced-motion: reduce) {
+    .mp-plates-section.plates-fade-in .plate {
+        animation: none;
+    }
+}
+
 .plate:hover {
     transform: translateY(-12px) rotate(3deg);
     box-shadow:
@@ -391,7 +410,7 @@ h1 {
     content: '';
     position: absolute;
     inset: 0;
-    background: url('/static/weightplate.png') center / cover no-repeat;
+    background: url('/static/weightplate.webp') center / cover no-repeat;
     -webkit-mask-image: radial-gradient(circle, transparent 8%, black 9%);
     mask-image:         radial-gradient(circle, transparent 8%, black 9%);
     pointer-events: none;
