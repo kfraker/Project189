@@ -2,6 +2,10 @@
 
 Key decisions behind Sweat Equity and why they were made. Newest first. Earlier entries were written up afterward from project history.
 
+## Reset coverage to the honest number after formatting (2026-11-02)
+**Decision:** lower the page-code coverage baseline from 84.5% to 75.4%, and say why, rather than exclude code or adjust the measure to keep the higher figure.
+**Why:** compressed JavaScript let one test mark a whole long line as covered. Formatting put statements on their own lines, so the new number shows what the tests really run. The tests themselves didn't change.
+
 ## Gate production deploys with Vercel Deployment Checks and branch protection (2026-11-01)
 **Decision:** `main` accepts changes only through pull requests that pass the tests, including from admins, and Vercel holds each production deploy until the `test` check passes on `main`.
 **Why:** a failed test had gone live during the 4.1.0 release. This needed less setup than having GitHub Actions deploy, and the two layers cover different failures: one stops bad code merging, and the other stops anything that fails only after merging. The docs say CI/CD now because all of this was proven with deliberate failures.

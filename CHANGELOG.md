@@ -9,6 +9,7 @@
 ### Changed
 - Formatted all Python and page code, with no behavior change. CSS and templates aren't formatted.
 - Marked the static file version hash as non-security (`usedforsecurity=False`). It only detects changed files.
+- Reset the page-code coverage baseline from 84.5% to 75.4%, and combined from 86.1% to 76.7%. Formatting put statements on separate lines, which exposed that compressed lines had been counting as covered when a test touched any part of them. No tests were removed.
 
 ### Removed
 - Dead code: `startEdit` (inline cell editing, long replaced by the weigh-in window), the `showTableConfirm` window only it used, and an unused Insights calculation.
