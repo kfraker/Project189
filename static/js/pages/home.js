@@ -107,6 +107,20 @@ registerPage('home', (page) => {
         else img.addEventListener('load', strip, { once: true, signal });
     })();
 
+    /* ── Reveal the plates once their image is ready (or after 3s, so they can't stay hidden) ── */
+    (function () {
+        const section = document.querySelector('.mp-plates-section');
+        const probe = new Image();
+        const reveal = () => section.classList.add('plates-ready');
+        probe.src = '/static/weightplate.webp';
+        if (probe.complete) return reveal();
+        section.classList.add('plates-fade-in');
+        probe.addEventListener('load', reveal, { signal });
+        probe.addEventListener('error', reveal, { signal });
+        const timer = setTimeout(reveal, 3000);
+        page.onLeave(() => clearTimeout(timer));
+    })();
+
     /* ── Sync plates from DB on load ── */
     Promise.all([fetch('/api/latest-weight').then((r) => r.json()), fetch('/api/settings').then((r) => r.json())]).then(
         ([latest, settings]) => {

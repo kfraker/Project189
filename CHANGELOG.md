@@ -1,5 +1,19 @@
 # Changelog
 
+## Unreleased
+
+### Fixed
+- Insights streaks compared dates as exactly 24 hours apart, so a 23 or 25-hour day around a clock change reset them. They now count calendar days (`daysApart` in `shell.js`), with tests pinned to both clock changes.
+- Home showed the plates' shadows and text before their image loaded. Plates now stay hidden until it's ready, with a 3-second limit so they can't stay hidden.
+
+### Changed
+- Home's first download fell from 4.57 MB to 0.69 MB. Profile pictures are 256px instead of 1024px, the plate and backgrounds are WebP, and hidden images (`loading="lazy"`) no longer download until shown.
+- Static files now have cache headers: a year for URLs with a content hash, a day for other images. Debug mode is excluded.
+
+### Added
+- `tools/images/optimize_images.py` builds the served images from full-size originals, now kept in `design/originals/` and not deployed.
+- Tests for the plate reveal, skipped downloads, cache headers, referenced images existing, and image size limits.
+
 ## 4.1.3 (2026-11-02)
 
 ### Added

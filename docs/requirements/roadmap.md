@@ -26,11 +26,15 @@ Sizes: **S** is about one sitting, **M** is a couple of sittings.
 - **3.1 Formatting and lint** (M). Done: the existing code is cleaned up with no behavior change, and CI fails on new violations.
 
 ## Epic 4: Fast and works on every screen
-- **4.1 Fast first load** (M). Home currently shows the plates' outlines before their images arrive. **Done when:** images are sized to how they're displayed, unneeded downloads are gone, static files are cached, and plates appear whole.
+*Status: in progress.*
+
+- **4.1 Fast first load** (M). Done: Home's download fell from 4.57 MB to 0.69 MB, images are sized to how they're displayed, unneeded downloads are gone, static files are cached, and plates appear whole.
 - **4.2 Performance budget** (S). **Done when:** CI fails if page weight or load speed goes past an agreed limit.
 - **4.3 Phone and tablet tests** (M). **Done when:** key flows run at phone and tablet sizes with touch: no sideways scrolling, tappable buttons, windows that fit and close, and logging that works. Any bugs found are fixed or deliberately deferred.
 
 - **4.4 User flow coverage** (M). Code coverage shows that lines ran, not that a user's goal works. **Done when:** every user flow is listed and tagged to the tests that prove it, by device; each run reports flow coverage with the gaps named; and CI fails if a test names an unlisted flow or a covered flow loses its test.
+
+- **4.5 Dates in every time zone** (M). A streak bug appeared when the clocks changed, and CI runs in UTC so it couldn't catch it. **Done when:** date handling is reviewed in the browser and on the server, and key date flows are tested across time zones and clock changes.
 
 ## Epic 5: Keeping it running
 - **5.1 Uptime checks and error alerts** (S). **Done when:** an outage or a burst of errors sends an alert, and that's been tested.
