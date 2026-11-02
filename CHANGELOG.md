@@ -4,7 +4,7 @@
 
 ### Fixed
 - Insights streaks compared dates as exactly 24 hours apart, so a 23 or 25-hour day around a clock change reset them. They now count calendar days (`daysApart` in `shell.js`), with tests pinned to both clock changes.
-- Home showed the plates' shadows and text before their image loaded. Plates now stay hidden until it's ready, with a 3-second limit so they can't stay hidden.
+- Home showed the plates' shadows and text before their image loaded. Plates now stay hidden until it's downloaded and decoded (`Image.decode()`), with a 3-second limit so they can't stay hidden.
 
 ### Changed
 - Home's first download fell from 4.57 MB to 0.69 MB. Profile pictures are 256px instead of 1024px, the plate and backgrounds are WebP, and hidden images (`loading="lazy"`) no longer download until shown.
