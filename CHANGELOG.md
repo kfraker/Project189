@@ -2,7 +2,13 @@
 
 ## Unreleased
 
+### Security
+- Updated Python dependencies to resolve Dependabot alerts: Authlib 1.7.2 to 1.9.1, certifi to 2026.10.23, cryptography to 50.0.2, joserfc to 1.7.7, urllib3 to 2.8.0, Werkzeug to 3.1.9, plus routine updates to the other packages.
+- Pinned `minimatch` to a fixed version in the dev-only coverage tools through an npm override. A moderate `glob` advisory remains in those tools; they aren't deployed, and npm's only fix would downgrade `c8` by three major versions.
+
 ### Changed
+- Updated GitHub Actions to current versions (`checkout`, `setup-python`, `setup-node`, `upload-artifact`, `codecov-action`).
+- Held `pyee` at 14.0.0, as Playwright requires, and told Dependabot to leave it.
 - README and docs now describe the CI/CD pipeline: protected `main`, required `test` check, and Vercel Deployment Checks. Proven with three drills: a failing pull request was blocked, a passing release was held until tests finished, and a failure on `main` left production unchanged.
 
 ## 4.1.1 (2026-11-01)
