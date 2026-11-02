@@ -7,6 +7,8 @@ updates:
     target-branch: dev
     schedule:
       interval: weekly
+    ignore:
+      - dependency-name: pyee    # Playwright requires its own version of this
     groups:
       python:
         patterns: ["*"]
