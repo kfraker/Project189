@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## 4.1.2 (2026-11-01)
 
 ### Security
 - Updated Python dependencies to resolve Dependabot alerts: Authlib 1.7.2 to 1.9.1, certifi to 2026.10.23, cryptography to 50.0.2, joserfc to 1.7.7, urllib3 to 2.8.0, Werkzeug to 3.1.9, plus routine updates to the other packages.

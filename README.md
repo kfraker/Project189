@@ -1,6 +1,6 @@
 # Sweat Equity
 
-![Version](https://img.shields.io/badge/version-4.1.1-ff2d78)
+![Version](https://img.shields.io/badge/version-4.1.2-ff2d78)
 [![Tests](https://github.com/kfraker/Project189/actions/workflows/tests.yml/badge.svg?branch=main)](https://github.com/kfraker/Project189/actions/workflows/tests.yml?query=branch%3Amain)
 [![Coverage](https://codecov.io/gh/kfraker/Project189/branch/main/graph/badge.svg)](https://app.codecov.io/gh/kfraker/Project189/tree/main)
 
