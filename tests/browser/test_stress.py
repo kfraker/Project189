@@ -4,6 +4,7 @@ must look the same after an in-page arrival as after a fresh full load.
 
 The page-error guard runs throughout, so any JS error fails the test.
 """
+
 import base64
 import re
 from datetime import date, timedelta
@@ -17,9 +18,13 @@ from tests.conftest import seed_setting, seed_weight
 PAGES = {"home": ("Home", "/"), "weights": ("Weigh-ins", "/weights"), "workouts": ("Workouts", "/workouts")}
 
 # Nav clicks by page name, plus "back", "forward" and "reload".
-ROUTE = (["weights", "workouts", "home", "back", "back", "forward", "forward", "weights",
-          "home", "reload"] * 3
-         + ["workouts", "weights", "workouts", "back", "home"])
+ROUTE = ["weights", "workouts", "home", "back", "back", "forward", "forward", "weights", "home", "reload"] * 3 + [
+    "workouts",
+    "weights",
+    "workouts",
+    "back",
+    "home",
+]
 
 
 def _day(offset):
@@ -33,8 +38,9 @@ def seeded(signed_in_page, client):
     for i in range(1, 40):
         seed_weight(client, _day(i), 210.0 - i / 3)
     for i in range(1, 6):
-        client.post("/api/workout", json={"date": _day(i), "type": "Yoga", "duration_min": 20 + i,
-                                          "kcal": 100, "note": ""})
+        client.post(
+            "/api/workout", json={"date": _day(i), "type": "Yoga", "duration_min": 20 + i, "kcal": 100, "note": ""}
+        )
     signed_in_page.set_viewport_size({"width": 1280, "height": 800})
     return signed_in_page
 
@@ -46,7 +52,7 @@ def _expected_after(step, history, position):
     elif step == "forward":
         position += 1
     elif step != "reload":
-        del history[position + 1:]
+        del history[position + 1 :]
         history.append(step)
         position += 1
     return history[position], position
@@ -78,7 +84,11 @@ def test_thirty_plus_page_changes_leave_nothing_behind(seeded):
 
     for i, step in enumerate(ROUTE):
         expected, position = _expected_after(step, history, position)
-        settle(page, lambda: _take(page, step), until=f"() => window.appRouter && appRouter.current === '{expected}'")
+        settle(
+            page,
+            lambda step=step: _take(page, step),
+            until=f"() => window.appRouter && appRouter.current === '{expected}'",
+        )
         _settled(page)
         label, path = PAGES[expected]
         expect(page).to_have_url(re.compile(re.escape(path) + r"$"))
@@ -95,9 +105,10 @@ def test_thirty_plus_page_changes_leave_nothing_behind(seeded):
 
 # ── In-page arrival looks the same as a fresh load ───────────────────────────
 
+
 def _screenshot(page):
     page.mouse.move(0, 0)
-    page.wait_for_timeout(1500)                     # charts and bars finish animating
+    page.wait_for_timeout(1500)  # charts and bars finish animating
     # Endless animations (the streak's flame glow) are frozen on their first frame,
     # or two screenshots would catch them at different moments.
     return base64.b64encode(page.screenshot(animations="disabled")).decode()
@@ -106,7 +117,8 @@ def _screenshot(page):
 def _differing_share(page, a, b):
     """Share of pixels that differ noticeably between two screenshots, compared in
     the browser (no image library needed)."""
-    return page.evaluate("""async ([a, b]) => {
+    return page.evaluate(
+        """async ([a, b]) => {
         const load = src => new Promise(done => { const img = new Image(); img.onload = () => done(img); img.src = src; });
         const [ia, ib] = await Promise.all([load('data:image/png;base64,' + a), load('data:image/png;base64,' + b)]);
         const pixels = img => { const c = document.createElement('canvas'); c.width = img.width; c.height = img.height;
@@ -117,7 +129,9 @@ def _differing_share(page, a, b):
         for (let i = 0; i < pa.length; i += 4)
             if (Math.abs(pa[i] - pb[i]) + Math.abs(pa[i+1] - pb[i+1]) + Math.abs(pa[i+2] - pb[i+2]) > 48) differ++;
         return differ / (pa.length / 4);
-    }""", [a, b])
+    }""",
+        [a, b],
+    )
 
 
 @pytest.mark.parametrize("name", ["weights", "workouts", "home"])

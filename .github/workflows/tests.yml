@@ -56,6 +56,14 @@ jobs:
         run: |
           pip install -r requirements-dev.txt
           npm ci --prefix tools/coverage
+          npm ci --prefix tools/lint
+
+      - name: Check formatting and lint
+        run: |
+          ruff check .
+          ruff format --check .
+          npm --prefix tools/lint run lint
+          npm --prefix tools/lint run format:check
 
       - name: Install Chromium for browser tests
         run: python -m playwright install --with-deps chromium

@@ -6,9 +6,10 @@ migration whose VERSION isn't yet recorded in the `schema_migrations`
 table, in VERSION order, committing after each one. Runs against whatever
 schema is active on the connection's search_path.
 """
+
 import importlib
 import pkgutil
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 
 import psycopg
 
@@ -16,18 +17,18 @@ import psycopg
 def _discover():
     modules = []
     for _, name, _ in pkgutil.iter_modules(__path__):
-        if name.startswith('m') and name[1:5].isdigit():
-            modules.append(importlib.import_module(f'{__name__}.{name}'))
+        if name.startswith("m") and name[1:5].isdigit():
+            modules.append(importlib.import_module(f"{__name__}.{name}"))
     return modules
 
 
 def run_migrations(conn: psycopg.Connection) -> None:
-    conn.execute('''
+    conn.execute("""
         CREATE TABLE IF NOT EXISTS schema_migrations (
             version    INTEGER PRIMARY KEY,
             applied_at TEXT NOT NULL
         )
-    ''')
+    """)
     applied = {row["version"] for row in conn.execute("SELECT version FROM schema_migrations").fetchall()}
 
     for mod in sorted(_discover(), key=lambda m: m.VERSION):
@@ -36,6 +37,6 @@ def run_migrations(conn: psycopg.Connection) -> None:
         mod.up(conn)
         conn.execute(
             "INSERT INTO schema_migrations (version, applied_at) VALUES (%s, %s)",
-            (mod.VERSION, datetime.now(timezone.utc).isoformat()),
+            (mod.VERSION, datetime.now(UTC).isoformat()),
         )
         conn.commit()

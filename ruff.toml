@@ -1,0 +1,11 @@
+line-length = 120
+extend-exclude = ["tools/coverage/node_modules", "tools/lint/node_modules", "coverage"]
+
+[lint]
+# Style and bugs (E, F, W, B), import order (I), modern syntax (UP), security (S).
+select = ["E", "F", "W", "I", "B", "UP", "S"]
+ignore = ["E501"]  # the formatter handles line length where it safely can
+
+[lint.per-file-ignores]
+"tests/*" = ["S"]  # test code uses assert, fake credentials and subprocess on purpose
+"tools/*" = ["S"]  # developer-only scripts, never deployed

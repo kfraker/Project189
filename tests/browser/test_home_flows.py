@@ -1,5 +1,6 @@
 """Home page flows in a real browser: weight cards, health bar, header stats,
 Quick Add (weigh-in + workout), and editing the weight cards."""
+
 from datetime import date, timedelta
 
 import pytest
@@ -18,10 +19,12 @@ TODAY = _day(0)
 @pytest.fixture()
 def home(signed_in_page, client):
     """Signed-in browser + an API client for seeding, both on test user 1."""
+
     def open_home():
         signed_in_page.goto("/")
         signed_in_page.wait_for_load_state("networkidle")
         return signed_in_page
+
     return open_home, client
 
 
@@ -30,6 +33,7 @@ def _text(page, element_id):
 
 
 # ── What the page shows ──────────────────────────────────────────────────────
+
 
 def test_new_account_shows_empty_cards_and_zero_stats(home):
     open_home, _ = home
@@ -61,18 +65,18 @@ def test_cards_and_health_bar_reflect_saved_weights(home):
 def test_header_shows_streak_kcal_and_trend(home):
     open_home, client = home
     seed_weight(client, _day(1), 198.0)
-    seed_weight(client, _day(2), 196.0)          # last-7 avg 197
+    seed_weight(client, _day(2), 196.0)  # last-7 avg 197
     seed_weight(client, _day(8), 200.0)
-    seed_weight(client, _day(9), 202.0)          # prior-7 avg 201
-    client.post("/api/workout", json={"date": TODAY, "type": "Basketball", "duration_min": 30,
-                                      "kcal": 260, "note": ""})
+    seed_weight(client, _day(9), 202.0)  # prior-7 avg 201
+    client.post("/api/workout", json={"date": TODAY, "type": "Basketball", "duration_min": 30, "kcal": 260, "note": ""})
     page = open_home()
-    expect(_text(page, "mp-active-streak")).to_have_text("3 days")   # today (workout) + 2 weigh-ins
+    expect(_text(page, "mp-active-streak")).to_have_text("3 days")  # today (workout) + 2 weigh-ins
     expect(_text(page, "mp-kcal-week")).to_have_text("260")
     expect(_text(page, "mp-trend")).to_have_text("−4.0")
 
 
 # ── Quick Add → weigh-in ─────────────────────────────────────────────────────
+
 
 def test_quick_add_weigh_in_updates_card_and_streak(home):
     """Regression for #17: the header streak refreshes right after logging."""
@@ -84,7 +88,7 @@ def test_quick_add_weigh_in_updates_card_and_streak(home):
 
     modal = _text(page, "history-modal")
     expect(modal).to_be_visible()
-    expect(_text(page, "history-date")).not_to_have_value("")   # today is pre-selected
+    expect(_text(page, "history-date")).not_to_have_value("")  # today is pre-selected
     page.locator("#history-weight").fill("205")
     page.locator("#history-save").click()
 
@@ -96,6 +100,7 @@ def test_quick_add_weigh_in_updates_card_and_streak(home):
 
 
 # ── Editing the weight cards ─────────────────────────────────────────────────
+
 
 def test_edit_current_weight_asks_before_overwriting_today(home):
     open_home, client = home
@@ -128,7 +133,7 @@ def test_set_goal_weight_persists(home):
     expect(_text(page, "goal-modal")).to_be_hidden()
     expect(_text(page, "goal-lbs-num")).to_have_text("180")
 
-    page = open_home()   # still there after a reload
+    page = open_home()  # still there after a reload
     expect(_text(page, "goal-lbs-num")).to_have_text("180")
 
 
@@ -157,6 +162,7 @@ def test_cancel_does_not_save(home):
 
 
 # ── Quick Add → workout ──────────────────────────────────────────────────────
+
 
 def test_quick_add_workout_updates_kcal_and_streak(home):
     open_home, client = home
@@ -187,8 +193,9 @@ def test_remove_workouts_deletes_only_ticked_ones(home):
     ticked workouts are deleted."""
     open_home, client = home
     for workout_type in ("Basketball", "Yoga"):
-        client.post("/api/workout", json={"date": TODAY, "type": workout_type, "duration_min": 30,
-                                          "kcal": 200, "note": ""})
+        client.post(
+            "/api/workout", json={"date": TODAY, "type": workout_type, "duration_min": 30, "kcal": 200, "note": ""}
+        )
     page = open_home()
     page.locator("#mp-footer-add-btn").click()
     page.locator("#qa-log-workout").click()
@@ -230,19 +237,26 @@ def test_opening_log_weigh_in_does_not_pull_focus_from_something_typed_quickly(h
 
 # ── Pop-ups sit above the header, footer and health bar (bug #22) ───────────
 
+
 def _covering_element(page, selector):
     """The id/class of whatever is actually on top at the centre of `selector`."""
-    return page.evaluate("""sel => {
+    return page.evaluate(
+        """sel => {
         const r = document.querySelector(sel).getBoundingClientRect();
         const top = document.elementFromPoint(r.x + r.width / 2, r.y + r.height / 2);
         return top.closest('#wp-log-modal') ? 'modal' : (top.id || top.className || top.tagName);
-    }""", selector)
+    }""",
+        selector,
+    )
 
 
-@pytest.mark.parametrize("path,open_button", [
-    ("/", None),                       # Home: + → Quick Add → Log Workout
-    ("/workouts", "#wp-add-btn"),      # Workouts page: its own + button
-])
+@pytest.mark.parametrize(
+    "path,open_button",
+    [
+        ("/", None),  # Home: + → Quick Add → Log Workout
+        ("/workouts", "#wp-add-btn"),  # Workouts page: its own + button
+    ],
+)
 def test_log_workout_modal_fully_usable_on_laptop_screen(signed_in_page, path, open_button):
     """Regression for #22: at 1366×768 the modal used to sit under the header,
     footer and health bar, so Save couldn't be clicked."""

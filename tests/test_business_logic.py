@@ -4,10 +4,12 @@ Business logic tests — calculations, rules, and cross-endpoint workflows.
 These tests verify that the application behaves correctly across multiple
 API calls in a single user story, and that the core arithmetic is right.
 """
-import pytest
-from datetime import date, timedelta
-from tests.conftest import seed_weight, seed_setting
 
+from datetime import date, timedelta
+
+import pytest
+
+from tests.conftest import seed_setting, seed_weight
 
 TODAY = date.today().isoformat()
 
@@ -17,6 +19,7 @@ def _date_offset(days: int) -> str:
 
 
 # ── Weight conversion accuracy ───────────────────────────────────────────────
+
 
 class TestWeightConversion:
     """2.2046 lbs per kg, rounded to 1 decimal."""
@@ -40,41 +43,41 @@ class TestWeightConversion:
         lbs = 185.5
         seed_weight(client, TODAY, lbs)
         seed_setting(client, "start", lbs)
-        weight_kg  = client.get("/api/weights?range=all").get_json()[0]["weight_kg"]
+        weight_kg = client.get("/api/weights?range=all").get_json()[0]["weight_kg"]
         setting_kg = client.get("/api/settings").get_json()["start"]["value_kg"]
         assert weight_kg == setting_kg
 
 
 # ── Date range boundary conditions ───────────────────────────────────────────
 
-class TestDateRangeBoundaries:
 
+class TestDateRangeBoundaries:
     def test_7d_window_anchors_to_most_recent_entry(self, client):
         """7D = most recent entry and 6 days back = 7 days total."""
-        anchor   = _date_offset(3)       # most recent entry — sets the anchor
-        boundary = _date_offset(3 + 6)   # exactly 6 days before anchor — included
-        outside  = _date_offset(3 + 7)   # 7 days before anchor — excluded
-        seed_weight(client, anchor,   200.0)
+        anchor = _date_offset(3)  # most recent entry — sets the anchor
+        boundary = _date_offset(3 + 6)  # exactly 6 days before anchor — included
+        outside = _date_offset(3 + 7)  # 7 days before anchor — excluded
+        seed_weight(client, anchor, 200.0)
         seed_weight(client, boundary, 201.0)
-        seed_weight(client, outside,  202.0)
-        rows  = client.get("/api/weights?range=7d").get_json()
+        seed_weight(client, outside, 202.0)
+        rows = client.get("/api/weights?range=7d").get_json()
         dates = [r["date"] for r in rows]
-        assert anchor   in dates
+        assert anchor in dates
         assert boundary in dates
-        assert outside  not in dates
+        assert outside not in dates
 
     def test_1y_window_is_364_days_back_from_most_recent(self, client):
         """1Y = 365 days, so boundary is most recent entry − 364."""
-        anchor   = _date_offset(5)
+        anchor = _date_offset(5)
         boundary = _date_offset(5 + 364)
-        outside  = _date_offset(5 + 365)
-        seed_weight(client, anchor,   200.0)
+        outside = _date_offset(5 + 365)
+        seed_weight(client, anchor, 200.0)
         seed_weight(client, boundary, 201.0)
-        seed_weight(client, outside,  202.0)
-        rows  = client.get("/api/weights?range=1y").get_json()
+        seed_weight(client, outside, 202.0)
+        rows = client.get("/api/weights?range=1y").get_json()
         dates = [r["date"] for r in rows]
         assert boundary in dates
-        assert outside  not in dates
+        assert outside not in dates
 
     def test_leap_year_date_stored_and_retrieved(self, client):
         """Feb 29 on a leap year should round-trip correctly."""
@@ -95,8 +98,8 @@ class TestDateRangeBoundaries:
 
 # ── Dashboard / workflow rules ────────────────────────────────────────────────
 
-class TestDashboardWorkflows:
 
+class TestDashboardWorkflows:
     def test_logging_current_weight_creates_historical_entry(self, client):
         """Every weight log becomes a historical entry (no separate current table)."""
         seed_weight(client, TODAY, 200.0)
@@ -121,22 +124,22 @@ class TestDashboardWorkflows:
         seed_setting(client, "start", 220.0)
         seed_weight(client, TODAY, 200.0)
         settings = client.get("/api/settings").get_json()
-        latest   = client.get("/api/latest-weight").get_json()
+        latest = client.get("/api/latest-weight").get_json()
         weight_lost = settings["start"]["value_lbs"] - latest["weight_lbs"]
         assert weight_lost == pytest.approx(20.0)
 
     def test_goal_progress_data_is_accessible(self, client):
         seed_setting(client, "start", 220.0)
-        seed_setting(client, "goal",  180.0)
+        seed_setting(client, "goal", 180.0)
         seed_weight(client, TODAY, 200.0)
         settings = client.get("/api/settings").get_json()
-        latest   = client.get("/api/latest-weight").get_json()
-        total_to_lose  = settings["start"]["value_lbs"] - settings["goal"]["value_lbs"]
-        already_lost   = settings["start"]["value_lbs"] - latest["weight_lbs"]
-        progress_pct   = already_lost / total_to_lose * 100
+        latest = client.get("/api/latest-weight").get_json()
+        total_to_lose = settings["start"]["value_lbs"] - settings["goal"]["value_lbs"]
+        already_lost = settings["start"]["value_lbs"] - latest["weight_lbs"]
+        progress_pct = already_lost / total_to_lose * 100
         assert total_to_lose == pytest.approx(40.0)
-        assert already_lost  == pytest.approx(20.0)
-        assert progress_pct  == pytest.approx(50.0)
+        assert already_lost == pytest.approx(20.0)
+        assert progress_pct == pytest.approx(50.0)
 
     def test_date_ordering_maintained_after_multiple_inserts(self, client):
         dates = [_date_offset(i) for i in [10, 2, 7, 1, 4]]
@@ -168,8 +171,8 @@ class TestDashboardWorkflows:
 
 # ── Custom range capping ──────────────────────────────────────────────────────
 
-class TestCustomRangeCapping:
 
+class TestCustomRangeCapping:
     def test_days_exactly_1095_accepted(self, client):
         r = client.get("/api/weights?range=custom&days=1095")
         assert r.status_code == 200
@@ -181,14 +184,14 @@ class TestCustomRangeCapping:
 
     def test_days_0_treated_as_30_via_or_fallback(self, client):
         """0 or 30 == 30 in Python; default kicks in. Anchor = most recent entry."""
-        anchor   = _date_offset(2)
+        anchor = _date_offset(2)
         boundary = _date_offset(2 + 29)
-        outside  = _date_offset(2 + 30)
-        seed_weight(client, anchor,   200.0)
+        outside = _date_offset(2 + 30)
+        seed_weight(client, anchor, 200.0)
         seed_weight(client, boundary, 201.0)
-        seed_weight(client, outside,  202.0)
-        rows  = client.get("/api/weights?range=custom&days=0").get_json()
+        seed_weight(client, outside, 202.0)
+        rows = client.get("/api/weights?range=custom&days=0").get_json()
         dates = [r["date"] for r in rows]
-        assert anchor   in dates
+        assert anchor in dates
         assert boundary in dates
-        assert outside  not in dates
+        assert outside not in dates

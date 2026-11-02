@@ -2,6 +2,7 @@
 so in-page navigation knows what to bring in and remove when it switches pages
 (migration M1.2). The shell's own styles and scripts stay unlabelled: they load
 once and are never swapped."""
+
 import re
 
 import pytest
@@ -40,7 +41,7 @@ def test_page_has_one_labelled_script_and_it_is_its_own(client, path, script, ow
 def test_shell_styles_and_scripts_are_not_labelled(client, path, script, own_rule):
     html = client.get(path).data.decode()
     shell_style = [t for t in _tags(html, "style") if "data-page-style" not in t]
-    assert len(shell_style) == 1                          # base.html's shell styles
+    assert len(shell_style) == 1  # base.html's shell styles
     shell_js = next(t for t in _tags(html, "script") if "js/shell.js" in t)
     assert "data-page-script" not in shell_js
     assert "data-page-style" not in next(t for t in _tags(html, "link") if "style.css" in t)

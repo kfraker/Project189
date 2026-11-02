@@ -56,7 +56,7 @@ All three share a fixed header (page nav + per-page stats) and footer (context-a
 - **Goal weight line** — optional teal dashed line on the chart with a y-axis GOAL label; toggled in Settings (default off).
 - **7-day moving average line** — optional amber line on the chart with a y-axis 7D AVG label; toggled in Settings (default off).
 - **Header stats** — rolling 7-day weight change (signed, e.g. `-2.4 lbs`, not a log count), 7-day average, and current day streak.
-- **Data table** — scrollable log of entries for the selected range, showing weight in both lbs and kg. Inline editing with overwrite and delete confirmation modals. Dates with no entry display as empty rows; a "No Earlier Data Recorded" footer marks the bottom of available history. Each row has a note button to add, edit, or delete a text note; note-only rows (no weight logged) appear with a blank weight cell. The delete confirmation modal has independent checkboxes to remove the weight value, the note, or both. The note editor popover uses a themed custom scrollbar and locks table scrolling while open; its position is clamped within the viewport on window resize.
+- **Data table** — scrollable log of entries for the selected range, showing weight in both lbs and kg. Click a row to edit its weight in a window, with overwrite and delete confirmations. Dates with no entry display as empty rows; a "No Earlier Data Recorded" footer marks the bottom of available history. Each row has a note button to add, edit, or delete a text note; note-only rows (no weight logged) appear with a blank weight cell. The delete confirmation modal has independent checkboxes to remove the weight value, the note, or both. The note editor popover uses a themed custom scrollbar and locks table scrolling while open; its position is clamped within the viewport on window resize.
 - **Responsive tables** — both the daily and weekly summary tables adapt cleanly across screen widths: the secondary column (kg) collapses at ≤ 800px, date labels switch from full to short at ≤ 560px, action buttons scale down at ≤ 720px, and column widths stay pinned across all sizes.
 - **Unit toggle** — switch between lbs and kg; all plates, chart, and table update instantly.
 
@@ -200,6 +200,8 @@ Project189/
 ├── .github/workflows/tests.yml # CI: full suite + coverage guard on every push
 ├── tools/coverage/             # Node tooling: page-code coverage, combined report, ratchet
 ├── tools/sandbox/              # Mock data for the sandbox database
+├── tools/lint/                 # ESLint and Prettier for the page code
+├── ruff.toml                   # Python lint and formatting rules
 ├── db_migrations/
 │   ├── __init__.py              # run_migrations() runner + schema_migrations tracking
 │   └── m0001_baseline.py        # VERSION 1 — core tables (users, weights, settings, preferences, workouts, workout_day_notes)
@@ -280,7 +282,7 @@ First-time setup for browser tests: `python -m playwright install chromium`.
 
 **CI:** every push to `dev`/`main`, and every pull request, runs the full suite on GitHub Actions against a throwaway Postgres (a few minutes). Coverage is uploaded to Codecov. When a browser test fails, screenshots and Playwright traces are attached to the run (`browser-test-failures` artifact; open a trace at https://trace.playwright.dev).
 
-611 tests in all. 453 API/server tests cover all API endpoints (including the Home header stats), sign-in and multi-user isolation, business logic, date-range boundaries, page structure across Home/Weigh-ins/Workouts, and the migration runner. 158 browser tests cover the user flows on every page, the shell (menu, settings, profile, cursor), each page's lifecycle (restarted 20 times in place without anything piling up), in-page navigation (swaps, Back/Forward, rapid clicks, fallbacks, focus, fades), and a 35-step stress test whose pages must look identical to a fresh load. Tests run in an isolated `test` schema that is wiped before every test, so real data is never touched.
+612 tests in all. 453 API/server tests cover all API endpoints (including the Home header stats), sign-in and multi-user isolation, business logic, date-range boundaries, page structure across Home/Weigh-ins/Workouts, and the migration runner. 159 browser tests cover the user flows on every page, the shell (menu, settings, profile, cursor), each page's lifecycle (restarted 20 times in place without anything piling up), in-page navigation (swaps, Back/Forward, rapid clicks, fallbacks, focus, fades), and a 35-step stress test whose pages must look identical to a fresh load. Tests run in an isolated `test` schema that is wiped before every test, so real data is never touched.
 
 **Coverage is measured on every run** (settings in `.coveragerc`, switched on in `pytest.ini`). After any run:
 
@@ -297,7 +299,9 @@ One-time setup (needs Node.js): `npm install --prefix tools/coverage`.
 
 **All code in one report:** after a test run, `npm --prefix tools/coverage run report` merges Python and page-code coverage into `coverage/all-html/index.html`, one table with a single combined total. CI builds the same report on every push (in the `coverage-report` artifact), and Codecov shows both halves as the `python` and `javascript` flags.
 
-**Coverage guard (ratchet):** `tools/coverage/baseline.json` records line coverage for Python, page code and combined. After the full test run, CI runs `npm --prefix tools/coverage run check`, which **fails the build if any of the three drops more than 0.5 points** below the baseline. Coverage can only go up. When it does (or a drop is intentional, e.g. deleting well-tested code), refresh the baseline after a full local run with `npm --prefix tools/coverage run baseline` and commit the file. Codecov flags drops of more than 0.5% on each commit as well. Current baseline (2026-10-31): 99.1% of Python lines, 84.5% of page-code lines, 86.1% combined.
+**Coverage guard (ratchet):** `tools/coverage/baseline.json` records line coverage for Python, page code and combined. After the full test run, CI runs `npm --prefix tools/coverage run check`, which **fails the build if any of the three drops more than 0.5 points** below the baseline. Coverage can only go up. When it does (or a drop is intentional, e.g. deleting well-tested code), refresh the baseline after a full local run with `npm --prefix tools/coverage run baseline` and commit the file. Codecov flags drops of more than 0.5% on each commit as well. Current baseline (2026-11-02): 99.1% of Python lines, 75.4% of page-code lines, 76.7% combined. Page-code coverage read 84.5% before the code was formatted, because compressed lines counted as covered if a test touched any part of them. The tests didn't change; the measurement became more accurate.
+
+**Formatting and lint:** CI fails on lint errors or unformatted code. Python uses Ruff (`ruff check .`, `ruff format .`), and page code uses ESLint and Prettier (`npm --prefix tools/lint run lint`, `npm --prefix tools/lint run format`). One-time setup: `npm install --prefix tools/lint`.
 
 **Static file versions:** templates link CSS/JS through `static_url()` (in `app.py`), which appends a content hash (`?v=…`). Editing a file changes its hash, so browsers always fetch the new copy after a deploy. No version numbers to bump by hand.
 

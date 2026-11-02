@@ -11,23 +11,27 @@ def test_unknown_range_param_falls_back_to_30d(client):
 
 def test_negative_custom_days_returns_empty(client):
     """`days=-1` produces a future start date so no rows match."""
-    from tests.conftest import seed_weight
     from datetime import date
+
+    from tests.conftest import seed_weight
+
     seed_weight(client, date.today().isoformat(), 200.0)
     rows = client.get("/api/weights?range=custom&days=-1").get_json()
     assert rows == []
 
 
 def test_custom_days_1_includes_only_today(client):
-    from tests.conftest import seed_weight
     from datetime import date, timedelta
-    today     = date.today().isoformat()
+
+    from tests.conftest import seed_weight
+
+    today = date.today().isoformat()
     yesterday = (date.today() - timedelta(days=1)).isoformat()
-    seed_weight(client, today,     200.0)
+    seed_weight(client, today, 200.0)
     seed_weight(client, yesterday, 205.0)
-    rows  = client.get("/api/weights?range=custom&days=1").get_json()
+    rows = client.get("/api/weights?range=custom&days=1").get_json()
     dates = [r["date"] for r in rows]
-    assert today     in dates
+    assert today in dates
     assert yesterday not in dates
 
 

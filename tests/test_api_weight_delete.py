@@ -1,7 +1,8 @@
 """DELETE /api/weight/<date> — remove a weight entry."""
-from datetime import date, timedelta
-from tests.conftest import seed_weight
 
+from datetime import date, timedelta
+
+from tests.conftest import seed_weight
 
 TODAY = date.today().isoformat()
 
@@ -11,6 +12,7 @@ def _date_offset(days: int) -> str:
 
 
 # ── Happy path ────────────────────────────────────────────────────────────────
+
 
 def test_delete_existing_entry_returns_success(client):
     seed_weight(client, TODAY, 200.0)
@@ -55,6 +57,7 @@ def test_delete_middle_entry_does_not_affect_others(client):
 
 # ── Non-existent entry → 404 ──────────────────────────────────────────────────
 
+
 def test_delete_nonexistent_date_returns_404(client):
     r = client.delete("/api/weight/2000-01-01")
     assert r.status_code == 404
@@ -66,6 +69,7 @@ def test_delete_nonexistent_returns_error_body(client):
 
 
 # ── Ordering preserved after delete ──────────────────────────────────────────
+
 
 def test_history_remains_ordered_after_delete(client):
     for i in range(5, 0, -1):

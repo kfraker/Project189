@@ -1,4 +1,5 @@
 """GET / — home page renders correctly."""
+
 import pytest
 
 from tests.conftest import page_source
@@ -27,6 +28,7 @@ def test_home_contains_app_elements(client):
 
 # ── Modal presence ────────────────────────────────────────────────────────────
 
+
 def test_settings_modal_present(html):
     assert 'id="settings-modal"' in html
 
@@ -41,6 +43,7 @@ def test_fight_card_modal_present(html):
 
 
 # ── Fight Card fields ─────────────────────────────────────────────────────────
+
 
 def test_fight_card_name_input(html):
     assert 'id="fight-name"' in html
@@ -67,6 +70,7 @@ def test_fight_card_height_fields(html):
 
 # ── Custom date picker (history modal) ───────────────────────────────────────
 
+
 def test_history_date_picker_wrap(html):
     assert 'id="history-date-wrap"' in html
 
@@ -90,6 +94,7 @@ def test_history_calendar_month_label(html):
 
 # ── Custom date picker (fight card DOB) ──────────────────────────────────────
 
+
 def test_fight_dob_calendar_dropdown(html):
     assert 'id="fight-dob-calendar"' in html
 
@@ -106,6 +111,7 @@ def test_fight_dob_calendar_grid(html):
 # ── Profile menu ──────────────────────────────────────────────────────────────
 # Hover-based profile-menu was replaced by a tap-friendly "Menu" modal (base.html
 # migration, v2.8.0). Sub-buttons live in the footer nav / menu modal now.
+
 
 def test_profile_menu_container(html):
     """Old hover profile-menu was replaced by the tap-to-open menu-modal."""
@@ -127,12 +133,13 @@ def test_menu_modal_profile_and_close_buttons(html):
 def test_menu_modal_insights_appears_first(html):
     """Insights must be the first option in the menu modal, then Settings, then Profile."""
     insights_pos = html.index('id="menu-insights-btn"')
-    profile_pos  = html.index('id="menu-profile-btn"')
+    profile_pos = html.index('id="menu-profile-btn"')
     settings_pos = html.index('id="menu-settings-btn"')
     assert insights_pos < settings_pos < profile_pos
 
 
 # ── Unit toggle ───────────────────────────────────────────────────────────────
+
 
 def test_unit_toggle_btn_present(html):
     """Standalone unit-toggle-btn was folded into the Settings modal's LBS/KGS toggle pair."""
@@ -141,6 +148,7 @@ def test_unit_toggle_btn_present(html):
 
 
 # ── Profile pic picker ────────────────────────────────────────────────────────
+
 
 def test_change_pic_btn_present(html):
     assert 'id="change-pic-btn"' in html
@@ -166,17 +174,18 @@ def test_profile_pic_picker_actions(html):
 
 
 def test_profile_pic_all_images_referenced(html):
-    assert 'profilebutton.png' in html
-    assert 'profile2button.png' in html
-    assert 'profile3button.png' in html
-    assert 'profile4button.png' in html
+    assert "profilebutton.png" in html
+    assert "profile2button.png" in html
+    assert "profile3button.png" in html
+    assert "profile4button.png" in html
 
 
 # ── Cursor sets ───────────────────────────────────────────────────────────────
 
+
 def test_all_cursor_images_referenced(html):
-    for name in ('pointer.png', 'pointer2.png', 'pointer3.png', 'pointer4.png'):
-        assert name in html, f'{name} not referenced in page'
+    for name in ("pointer.png", "pointer2.png", "pointer3.png", "pointer4.png"):
+        assert name in html, f"{name} not referenced in page"
 
 
 def test_cursor_sets_cover_all_profiles(html):
@@ -190,12 +199,13 @@ def test_change_pic_btn_inside_settings_modal(html):
     """change-pic-btn must appear before the settings modal's closing tag."""
     settings_start = html.find('id="settings-modal"')
     change_pic_pos = html.find('id="change-pic-btn"')
-    picker_pos     = html.find('id="profile-pic-picker"')
+    picker_pos = html.find('id="profile-pic-picker"')
     assert settings_start < change_pic_pos
     assert change_pic_pos < picker_pos
 
 
 # ── Insights modal ────────────────────────────────────────────────────────────
+
 
 def test_insights_modal_present(html):
     assert 'id="insights-modal"' in html
@@ -217,8 +227,8 @@ def test_insights_modal_before_settings_modal(html):
 def test_dumbbell_btn_not_in_coming_soon(html):
     """dumbbell-btn must not be in the coming-soon list — it opens the workout modal."""
     protein_idx = html.find("'protein-btn'")
-    cs_snippet  = html[max(0, protein_idx - 20):protein_idx + 20]
-    assert 'dumbbell' not in cs_snippet
+    cs_snippet = html[max(0, protein_idx - 20) : protein_idx + 20]
+    assert "dumbbell" not in cs_snippet
 
 
 def test_dumbbell_links_to_workouts_page(html):
@@ -235,8 +245,8 @@ def test_predicted_goal_date_is_wide(html):
     """Predicted Goal Date stat must carry wide:true so it spans the full grid row."""
     idx = html.find("'Predicted Goal Date'")
     assert idx != -1, "Predicted Goal Date stat not found"
-    snippet = html[idx:idx + 220]
-    assert 'wide:true' in snippet
+    snippet = html[idx : idx + 220]
+    assert "wide: true" in snippet
 
 
 def test_most_common_day_removed_from_insights(html):
@@ -246,29 +256,30 @@ def test_most_common_day_removed_from_insights(html):
 
 def test_insights_uses_open_exclusive(html):
     """Insights button must open via openExclusive, not a manual activeModal guard."""
-    assert 'openExclusive(window.openInsights)' in html
+    assert "openExclusive(window.openInsights)" in html
 
 
 def test_insight_card_wide_class_in_render(html):
     """render() must apply insight-card-wide class for wide stat cards."""
-    assert 'insight-card-wide' in html
+    assert "insight-card-wide" in html
 
 
 def test_fight_card_activity_buttons(html):
     """Fight Card must contain all four activity level buttons."""
     assert 'id="fight-act-sedentary"' in html
-    assert 'id="fight-act-light"'     in html
-    assert 'id="fight-act-moderate"'  in html
-    assert 'id="fight-act-active"'    in html
+    assert 'id="fight-act-light"' in html
+    assert 'id="fight-act-moderate"' in html
+    assert 'id="fight-act-active"' in html
 
 
 # ── Goal date vertical line ────────────────────────────────────────────────────
 
+
 def test_compute_goal_date_iso_defined(html):
     """Goal-date prediction (Mifflin-St. Jeor estimate, inlined into the Insights
     render in the base.html migration) must still compute a predicted date string."""
-    assert 'goalDateStr' in html
-    assert 'Mifflin-St. Jeor' in html
+    assert "goalDateStr" in html
+    assert "Mifflin-St. Jeor" in html
 
 
 def test_chart_fetches_settings_alongside_rows(html):
@@ -278,12 +289,14 @@ def test_chart_fetches_settings_alongside_rows(html):
 
 # ── Notes on weigh-ins ────────────────────────────────────────────────────────
 
+
 def test_goal_label_unit_aware(html):
     """Goal label must switch between lbs and kgs based on active unit."""
     assert "'kgs'" in html or '"kgs"' in html
 
 
 # ── Goal line visibility toggle ───────────────────────────────────────────────
+
 
 def test_goal_line_toggle_buttons_present(html):
     """Settings modal must have On/Off buttons for the goal line preference."""
@@ -293,10 +306,11 @@ def test_goal_line_toggle_buttons_present(html):
 
 def test_goal_line_pref_key_saved(html):
     """doSave must write pref_goal_line to preferences."""
-    assert 'pref_goal_line' in html
+    assert "pref_goal_line" in html
 
 
 # ── Moving average line ───────────────────────────────────────────────────────
+
 
 def test_ma_toggle_buttons_present(html):
     """Settings modal must have On/Off buttons for the moving average preference."""
@@ -306,38 +320,40 @@ def test_ma_toggle_buttons_present(html):
 
 def test_ma_pref_key_saved(html):
     """doSave must write pref_ma_line to preferences."""
-    assert 'pref_ma_line' in html
+    assert "pref_ma_line" in html
 
 
 # ── Settings section labels ───────────────────────────────────────────────────
 
+
 def test_settings_sections_present(html):
     """Settings modal must have expected section labels."""
-    assert 'Default Formats' in html
-    assert 'Chart Landing' in html
-    assert 'Daily Summary' in html
-    assert 'Weekly Summary' in html
+    assert "Default Formats" in html
+    assert "Chart Landing" in html
+    assert "Daily Summary" in html
+    assert "Weekly Summary" in html
     assert 'data-section="hud">Profile' in html
 
 
 def test_settings_collapsible_bodies_present(html):
     """Each section must have a collapsible body wrapper."""
-    for key in ('measurements', 'landing', 'overtime', 'weekly', 'hud'):
+    for key in ("measurements", "landing", "overtime", "weekly", "hud"):
         assert f'id="ssb-{key}"' in html
 
 
 def test_settings_section_data_attrs_present(html):
     """Each section label must carry a data-section attribute."""
-    for key in ('measurements', 'landing', 'overtime', 'weekly', 'hud'):
+    for key in ("measurements", "landing", "overtime", "weekly", "hud"):
         assert f'data-section="{key}"' in html
 
 
 def test_settings_section_label_class(html):
     """Section dividers must use the settings-section-label class."""
-    assert 'settings-section-label' in html
+    assert "settings-section-label" in html
 
 
 # ── Health bar HUD ────────────────────────────────────────────────────────────
+
 
 def test_healthbar_hud_present(html):
     assert 'id="healthbar-hud"' in html
@@ -357,7 +373,7 @@ def test_healthbar_fill_present(html):
 
 def test_healthbar_img_present(html):
     assert 'id="healthbar-img"' in html
-    assert 'healthbar.png' in html
+    assert "healthbar.png" in html
 
 
 def test_healthbar_tooltip_present(html):
@@ -370,12 +386,12 @@ def test_healthbar_name_present(html):
 
 def test_update_health_bar_defined(html):
     """window.updateHealthBar must be assigned so progress can be reflected."""
-    assert 'window.updateHealthBar' in html
+    assert "window.updateHealthBar" in html
 
 
 def test_update_health_bar_name_defined(html):
     """window.updateHealthBarName must be assigned to refresh name from localStorage."""
-    assert 'window.updateHealthBarName' in html
+    assert "window.updateHealthBarName" in html
 
 
 def test_health_bar_reads_fight_name(html):
@@ -386,13 +402,13 @@ def test_health_bar_reads_fight_name(html):
 
 def test_health_bar_canvas_strip_present(html):
     """Canvas white-removal IIFE must be present to make fill zone transparent."""
-    assert 'naturalWidth' in html
-    assert 'toDataURL' in html
+    assert "naturalWidth" in html
+    assert "toDataURL" in html
 
 
 def test_health_bar_tooltip_shows_to_goal(html):
     """Tooltip text must include 'to goal' string."""
-    assert 'to goal' in html
+    assert "to goal" in html
 
 
 def test_fight_name_maxlength(html):
@@ -402,9 +418,10 @@ def test_fight_name_maxlength(html):
 
 # ── Weekly Summary chart ──────────────────────────────────────────────────────
 
+
 def test_weekly_range_btns_present(html):
     """All five weekly range buttons must exist."""
-    for weeks in ('4', '12', '30', 'all', 'custom'):
+    for weeks in ("4", "12", "30", "all", "custom"):
         assert f'data-weeks="{weeks}"' in html, f'missing data-weeks="{weeks}"'
 
 
@@ -422,16 +439,18 @@ def test_custom_weeks_maximum_156(html):
 
 # ── Weekly chart JS ───────────────────────────────────────────────────────────
 
+
 def test_refresh_weekly_chart_defined(html):
     """window.refreshWeeklyChart must be assigned for unit-toggle and settings save."""
-    assert 'window.refreshWeeklyChart' in html
+    assert "window.refreshWeeklyChart" in html
 
 
 def test_get_weekly_chart_range_defined(html):
-    assert 'window.getWeeklyChartRange' in html
+    assert "window.getWeeklyChartRange" in html
 
 
 # ── Default landing setting ────────────────────────────────────────────────────
+
 
 def test_default_landing_buttons_present(html):
     assert 'id="prof-landing-daily"' in html
@@ -442,13 +461,14 @@ def test_default_landing_buttons_present(html):
 
 def test_pref_default_landing_saved(html):
     """doSave must persist pref_default_landing to preferences."""
-    assert 'pref_default_landing' in html
+    assert "pref_default_landing" in html
 
 
 # ── Weekly Summary section ────────────────────────────────────────────────────
 
+
 def test_settings_weekly_section_present(html):
-    assert 'Weekly Summary' in html
+    assert "Weekly Summary" in html
 
 
 def test_weekly_minmax_buttons_present(html):
@@ -457,7 +477,7 @@ def test_weekly_minmax_buttons_present(html):
 
 
 def test_pref_weekly_minmax_saved(html):
-    assert 'pref_weekly_minmax' in html
+    assert "pref_weekly_minmax" in html
 
 
 def test_weekly_goal_buttons_present(html):
@@ -471,11 +491,11 @@ def test_weekly_trend_buttons_present(html):
 
 
 def test_pref_weekly_goal_line_saved(html):
-    assert 'pref_weekly_goal_line' in html
+    assert "pref_weekly_goal_line" in html
 
 
 def test_pref_weekly_trend_line_saved(html):
-    assert 'pref_weekly_trend_line' in html
+    assert "pref_weekly_trend_line" in html
 
 
 def test_date_format_buttons_present(html):
@@ -483,10 +503,8 @@ def test_date_format_buttons_present(html):
     assert 'id="prof-date-dmy"' in html
 
 
-
-
 def test_pref_date_format_saved(html):
-    assert 'pref_date_format' in html
+    assert "pref_date_format" in html
 
 
 def test_fighter_name_buttons_present(html):
@@ -495,7 +513,7 @@ def test_fighter_name_buttons_present(html):
 
 
 def test_pref_fighter_name_saved(html):
-    assert 'pref_fighter_name' in html
+    assert "pref_fighter_name" in html
 
 
 def test_chart_data_only_button_present(html):
@@ -508,6 +526,7 @@ def test_chart_no_data_button_present(html):
 
 # ── Profile 4 ─────────────────────────────────────────────────────────────────
 
+
 def test_profile_pic_option_4_present(html):
     """Profile 4 must have a selectable button in the pic picker."""
     assert 'data-pic="4"' in html
@@ -515,14 +534,15 @@ def test_profile_pic_option_4_present(html):
 
 def test_profile_4_cursor_images_in_cursor_sets(html):
     """CURSOR_SETS must include pointer4.png."""
-    assert 'pointer4.png' in html
+    assert "pointer4.png" in html
 
 
 # ── Weekly chart fixes (v2.2.1) ───────────────────────────────────────────────
 
+
 def test_set_weekly_range_defined(html):
     """window.setWeeklyRange must be assigned so settings-save can update the chart."""
-    assert 'window.setWeeklyRange' in html
+    assert "window.setWeeklyRange" in html
 
 
 def test_fight_goal_lean_button_present(html):
@@ -537,7 +557,7 @@ def test_fight_goal_muscle_button_present(html):
 
 def test_fight_goal_row_present(html):
     """Fight card must have a goal toggle row."""
-    assert 'fight-goal-row' in html
+    assert "fight-goal-row" in html
 
 
 def test_lost_plate_label_has_id(html):
@@ -547,18 +567,18 @@ def test_lost_plate_label_has_id(html):
 
 def test_goal_mode_updates_lost_label(html):
     """updateLostWeight must swap label between LOST and GAINED based on goal mode."""
-    assert 'fight_goal_mode' in html
+    assert "fight_goal_mode" in html
     assert "'GAINED'" in html or '"GAINED"' in html
 
 
 def test_goal_weight_apiSave_validates_lean(html):
     """apiSave for goal weight must reject equal/higher weights in lean mode."""
-    assert 'Must be below starting weight' in html
+    assert "Must be below starting weight" in html
 
 
 def test_goal_weight_apiSave_validates_muscle(html):
     """apiSave for goal weight must reject equal/lower weights in muscle mode."""
-    assert 'Must exceed starting weight' in html
+    assert "Must exceed starting weight" in html
 
 
 # ── Workout UI moved to /workouts ─────────────────────────────────────────────
