@@ -19,3 +19,6 @@ pytest-playwright==0.10.0
 python-slugify==9.1.3
 text-unidecode==1.3
 typing_extensions==4.16.0
+
+# Formatting and lint for Python
+ruff==0.17.3
