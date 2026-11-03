@@ -162,7 +162,7 @@ registerPage('weights', (page) => {
             const allDates = [];
             const cursor = new Date(first);
             while (cursor <= last) {
-                allDates.push(cursor.toISOString().split('T')[0]);
+                allDates.push(isoDate(cursor));
                 cursor.setDate(cursor.getDate() + 1);
             }
             currentDates = allDates;
@@ -240,7 +240,7 @@ registerPage('weights', (page) => {
                 const endDt = new Date(yr, mo - 1, dy);
                 const startDt = new Date(endDt);
                 startDt.setDate(startDt.getDate() - 6);
-                const startStr = startDt.toISOString().slice(0, 10);
+                const startStr = isoDate(startDt);
                 const vals = weightRows
                     .filter((r) => r.date >= startStr && r.date <= dateStr)
                     .map((r) => (unit === 'kg' ? r.weight_kg : r.weight_lbs));
@@ -546,7 +546,7 @@ registerPage('weights', (page) => {
                         day = d.getDay();
                     const mon = new Date(d);
                     mon.setDate(d.getDate() + (day === 0 ? -6 : 1 - day));
-                    key = mon.toISOString().slice(0, 10);
+                    key = isoDate(mon);
                 } else {
                     key = Math.floor(Math.round((todayD - new Date(r.date + 'T00:00:00')) / 86400000) / 7);
                 }
@@ -561,14 +561,14 @@ registerPage('weights', (page) => {
                     monISO = key;
                     const sunD = new Date(monISO + 'T00:00:00');
                     sunD.setDate(sunD.getDate() + 6);
-                    sunISO = sunD.toISOString().slice(0, 10);
+                    sunISO = isoDate(sunD);
                 } else {
                     const endD = new Date(todayD);
                     endD.setDate(todayD.getDate() - key * 7);
                     const startD = new Date(endD);
                     startD.setDate(endD.getDate() - 6);
-                    monISO = startD.toISOString().slice(0, 10);
-                    sunISO = endD.toISOString().slice(0, 10);
+                    monISO = isoDate(startD);
+                    sunISO = isoDate(endD);
                 }
                 result.push({
                     monISO,
@@ -962,7 +962,7 @@ registerPage('weights', (page) => {
         function addDays(iso, n) {
             const d = new Date(iso + 'T00:00:00');
             d.setDate(d.getDate() + n);
-            return d.toISOString().split('T')[0];
+            return isoDate(d);
         }
         function dateRange(start, end) {
             const dates = [];
@@ -991,7 +991,7 @@ registerPage('weights', (page) => {
                         day = d.getDay(),
                         mon = new Date(d);
                     mon.setDate(d.getDate() + (day === 0 ? -6 : 1 - day));
-                    key = mon.toISOString().slice(0, 10);
+                    key = isoDate(mon);
                 } else {
                     key = Math.floor(Math.round((todayD - new Date(r.date + 'T00:00:00')) / 86400000) / 7);
                 }
@@ -1008,14 +1008,14 @@ registerPage('weights', (page) => {
                     startISO = key;
                     const sunD = new Date(startISO + 'T00:00:00');
                     sunD.setDate(sunD.getDate() + 6);
-                    endISO = sunD.toISOString().slice(0, 10);
+                    endISO = isoDate(sunD);
                 } else {
                     const endD = new Date(todayD);
                     endD.setDate(todayD.getDate() - key * 7);
                     const startD = new Date(endD);
                     startD.setDate(endD.getDate() - 6);
-                    startISO = startD.toISOString().slice(0, 10);
-                    endISO = endD.toISOString().slice(0, 10);
+                    startISO = isoDate(startD);
+                    endISO = isoDate(endD);
                 }
                 result.push({
                     monISO: startISO,
@@ -2268,7 +2268,7 @@ registerPage('weights', (page) => {
         async function refresh() {
             let data;
             try {
-                const r = await fetch('/api/weight/stats');
+                const r = await fetch('/api/weight/stats?today=' + getTodayISO());
                 data = await r.json();
             } catch {
                 return;

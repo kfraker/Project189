@@ -272,7 +272,7 @@ registerPage('workouts', (page) => {
     function filterRows(rows, range) {
         if (range === 'all') return rows;
         const days = range === 'custom' ? customDays : { '7d': 7, '30d': 30, '90d': 90, '1y': 365 }[range];
-        const cutoff = new Date(Date.now() - (days - 1) * 86400000).toLocaleDateString('en-CA');
+        const cutoff = daysAgoISO(days - 1);
         return rows.filter((r) => r.date >= cutoff);
     }
     function applyFilter() {
@@ -391,7 +391,7 @@ registerPage('workouts', (page) => {
     async function refreshStats() {
         const rows = await fetch('/api/workouts').then((r) => r.json());
         const today = todayISO();
-        const weekAgo = new Date(Date.now() - 6 * 86400000).toLocaleDateString('en-CA');
+        const weekAgo = daysAgoISO(6);
         const thisWeek = rows.filter((r) => r.date >= weekAgo && r.date <= today);
         document.getElementById('wp-count').textContent = thisWeek.length;
         document.getElementById('wp-kcal').textContent = thisWeek.reduce((s, r) => s + r.kcal, 0).toLocaleString();

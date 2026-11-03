@@ -48,11 +48,23 @@ function daysApart(later, earlier) {
     return Math.round((later - earlier) / 86400000);
 }
 
-function getTodayISO() {
-    const d = new Date();
+/* A date as "YYYY-MM-DD" in the visitor's own time zone. Never use toISOString() for
+   this: it converts to UTC first, which lands on the wrong day east or west of UTC. */
+function isoDate(d) {
     return (
         d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0')
     );
+}
+
+function getTodayISO() {
+    return isoDate(new Date());
+}
+
+/* The local date `n` calendar days before today. */
+function daysAgoISO(n) {
+    const d = new Date();
+    d.setDate(d.getDate() - n);
+    return isoDate(d);
 }
 
 function formatDateDisplay(isoDate) {
@@ -950,7 +962,7 @@ window.addEventListener(
             n = rows.length;
         const tN = Math.min(7, n),
             trend = weights.slice(-tN).reduce((a, b) => a + b, 0) / tN;
-        const spanDays = (dates[n - 1] - dates[0]) / 86400000,
+        const spanDays = daysApart(dates[n - 1], dates[0]),
             totalLoss = weights[0] - weights[n - 1];
         const weeklyRate = spanDays >= 7 ? (totalLoss / spanDays) * 7 : null,
             monthlyRate = spanDays >= 30 ? (totalLoss / spanDays) * 30.44 : null;
@@ -976,8 +988,7 @@ window.addEventListener(
             lowest = Math.min(...weights);
         let bestWeek = 0;
         for (let i = 0; i < n; i++) {
-            const cutoff = dates[i].getTime() + 7 * 86400000;
-            for (let j = i + 1; j < n && dates[j].getTime() <= cutoff; j++) {
+            for (let j = i + 1; j < n && daysApart(dates[j], dates[i]) <= 7; j++) {
                 const loss = weights[i] - weights[j];
                 if (loss > bestWeek) bestWeek = loss;
             }
@@ -985,7 +996,7 @@ window.addEventListener(
         let totalFluc = 0,
             flucCount = 0;
         for (let i = 1; i < n; i++) {
-            const d = (dates[i] - dates[i - 1]) / 86400000;
+            const d = daysApart(dates[i], dates[i - 1]);
             if (d >= 1 && d <= 3) {
                 totalFluc += Math.abs(weights[i] - weights[i - 1]) / d;
                 flucCount++;

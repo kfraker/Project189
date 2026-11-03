@@ -1636,7 +1636,7 @@ registerPage('home', (page) => {
     /* ── Header stats ── */
     (function () {
         async function updateHeaderStats() {
-            const stats = await fetch('/api/home-stats').then((r) => r.json());
+            const stats = await fetch('/api/home-stats?today=' + getTodayISO()).then((r) => r.json());
             const streakNumEl = document.getElementById('mp-active-streak');
             const streakLblEl = streakNumEl.closest('.mp-stat--streak').querySelector('.site-stat-label');
             streakNumEl.textContent = stats.streak + (stats.streak === 1 ? ' day' : ' days');
