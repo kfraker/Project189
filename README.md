@@ -1,6 +1,6 @@
 # Sweat Equity
 
-![Version](https://img.shields.io/badge/version-4.1.5-ff2d78)
+![Version](https://img.shields.io/badge/version-4.2.0-ff2d78)
 [![Tests](https://github.com/kfraker/Project189/actions/workflows/tests.yml/badge.svg?branch=main)](https://github.com/kfraker/Project189/actions/workflows/tests.yml?query=branch%3Amain)
 [![Coverage](https://codecov.io/gh/kfraker/Project189/branch/main/graph/badge.svg)](https://app.codecov.io/gh/kfraker/Project189/tree/main)
 
@@ -24,7 +24,7 @@ A retro-styled weight and workout tracker built with Flask and Postgres (Neon). 
 - **New CI pipeline and tracked testing:** every push runs API and browser tests on GitHub Actions, with Python and JavaScript coverage reported to Codecov and guarded against drops. See [Running Tests & Viewing Coverage](#running-tests--viewing-coverage).
 - **New look:** redrawn backgrounds for Home, Weigh-ins and Workouts.
 
-v4.1 added a separate [database sandbox](#database-sandbox), a published [roadmap](docs/requirements/roadmap.md) and [decision log](docs/decisions.md), and dependency alerts. Full details are in the [changelog](CHANGELOG.md).
+v4.1 added a separate [database sandbox](#database-sandbox), a published [roadmap](docs/requirements/roadmap.md) and [decision log](docs/decisions.md), and dependency alerts. v4.2 added a [performance budget](#running-tests--viewing-coverage), phone, tablet and time zone tests, and fixes they found, including a Weigh-ins freeze for visitors east of UTC. Full details are in the [changelog](CHANGELOG.md).
 
 ## Roadmap
 
