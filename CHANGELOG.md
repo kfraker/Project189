@@ -1,5 +1,10 @@
 # Changelog
 
+## Unreleased
+
+### Added
+- Performance budget in CI (`tests/browser/test_performance_budget.py`). Each page loads with an empty cache under emulated 4G (10 Mbps, 40 ms), and fails on bytes received, request count, or Largest Contentful Paint over 2.5 s. Limits are about 20% above sizes measured on 2026-11-02. An unmeasured warm-up load runs first, so the test server's cold start (2.9 s on the first page) isn't counted. Two tests prove the gate trips: an oversized image and a slow network.
+
 ## 4.1.5 (2026-11-02)
 
 ### Security
