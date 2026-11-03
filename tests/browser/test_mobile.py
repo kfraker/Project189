@@ -109,11 +109,19 @@ class _MobileFlows:
         assert _sideways_overflow(page) <= 1
 
     def test_login_page_fits(self, signed_out_page):
-        signed_out_page.goto("/login")
-        expect(signed_out_page.get_by_role("link", name="Sign in with Google")).to_be_visible()
-        assert _sideways_overflow(signed_out_page) <= 1
-        _assert_fits_screen(signed_out_page, ".login-card")
-        _assert_on_screen_and_tappable(signed_out_page, ".google-btn")
+        """Regression: the card's padding was added on top of its 90% width, so on phones
+        it filled the screen edge to edge, and its pop-in bounce briefly overflowed it.
+        Measure once the bounce has finished, so the result doesn't depend on timing."""
+        page = signed_out_page
+        page.goto("/login")
+        expect(page.get_by_role("link", name="Sign in with Google")).to_be_visible()
+        page.wait_for_function("document.getAnimations().every(a => a.playState === 'finished')")
+        assert _sideways_overflow(page) <= 1
+        _assert_fits_screen(page, ".login-card")
+        card = page.locator(".login-card").bounding_box()
+        width = page.viewport_size["width"]
+        assert card["x"] >= 8 and card["x"] + card["width"] <= width - 8, f"no side margin: {card}"
+        _assert_on_screen_and_tappable(page, ".google-btn")
 
     @pytest.mark.parametrize("path", PAGES)
     def test_footer_buttons_can_be_tapped(self, mobile, path):
