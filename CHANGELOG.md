@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## 4.2.0 (2026-11-03)
 
 ### Fixed
 - On phones, the sign-in card filled the screen edge to edge: its padding was added on top of `width: min(360px, 90vw)`. Its pop-in bounce then briefly overflowed the screen, which made `test_login_page_fits` fail intermittently in CI depending on when it measured. The card now uses `box-sizing: border-box`, and the test waits for the animation to finish and requires a side margin.
