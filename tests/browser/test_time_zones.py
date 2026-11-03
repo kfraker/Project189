@@ -135,3 +135,16 @@ def test_workouts_this_week_includes_seven_days_late_in_the_evening(signed_in_pa
     # 11:30pm on Friday 11-06: this week is 10-31 to 11-06, across the clocks going back
     signed_in_page.clock.set_fixed_time("2026-11-06T23:30:00-05:00")
     expect(_open(signed_in_page, "/workouts").locator("#wp-count")).to_have_text("1")
+
+
+# ── The server's "today" comes from the visitor's clock ──
+
+
+@pytest.mark.browser_context_args(timezone_id="America/New_York")
+@pytest.mark.parametrize("path, endpoint", [("/", "/api/home-stats"), ("/weights", "/api/weight/stats")])
+def test_stats_requests_send_the_visitors_date(signed_in_page, path, endpoint):
+    """9pm in New York is already tomorrow in UTC, where the server runs."""
+    signed_in_page.clock.set_fixed_time("2026-11-04T21:00:00-05:00")
+    with signed_in_page.expect_request(lambda r: endpoint in r.url) as stats:
+        _open(signed_in_page, path)
+    assert stats.value.url.endswith(f"{endpoint}?today=2026-11-04")

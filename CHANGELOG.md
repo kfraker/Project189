@@ -3,12 +3,15 @@
 ## Unreleased
 
 ### Fixed
+- On phones, the sign-in card filled the screen edge to edge: its padding was added on top of `width: min(360px, 90vw)`. Its pop-in bounce then briefly overflowed the screen, which made `test_login_page_fits` fail intermittently in CI depending on when it measured. The card now uses `box-sizing: border-box`, and the test waits for the animation to finish and requires a side margin.
+- The server counted days from its own UTC date, which is already tomorrow for US visitors from 7–8pm. Every evening the Weigh-ins streak dropped to 0, and the 7-day average and Home's weekly calorie burn shifted a day. Home and Weigh-ins now send the visitor's date (`?today=YYYY-MM-DD`) with `/api/home-stats` and `/api/weight/stats`, and the server uses it when it's within a day of its own (`_visitor_today()`), otherwise its own date (`_server_today()`).
 - East of UTC (e.g. Europe, Asia), the Weigh-ins table froze the page: `addDays` turned local midnight into a UTC date, so adding a day returned the same day and `dateRange` never ended. The daily chart, 7-day average line and weekly chart/table (rolling and calendar weeks) were also a day off there. All 11 `toISOString()` date conversions in `weights.js` now use a new local-date helper, `isoDate()` in `shell.js`.
 - Insights "Largest Weekly Loss" missed a 7-day window spanning the clocks going back, and "Avg Daily Fluctuation" skipped a day pair spanning the clocks going forward, because both treated a day as exactly 24 hours. They now count calendar days with `daysApart`.
 - Workouts "this week" and the date-range filter subtracted 24-hour multiples, so late in the evening in a clock-change week they started a day off. They now use a new `daysAgoISO()` helper.
 - On short screens (700px tall or less), Home's Log Workout window lacked the compact layout the Workouts page has, so on a small phone "+ Add Activity" started below the visible part of the window. Home now has the same `@media (max-height: 700px)` rules.
 
 ### Added
+- Server tests for the visitor's date (`tests/test_visitor_today.py`, 11 tests), with the server's date pinned, and browser tests that both pages send it.
 - Time zone browser tests (`tests/browser/test_time_zones.py`, 23 tests): the Weigh-ins charts, average line, weekly views and table in Honolulu, New York, Berlin and Tokyo on a fixed date with history spanning both clock changes, plus clock-change tests for Insights and Workouts. Each failed before its fix.
 - ESLint rule banning `toISOString()` in page code, pointing to `isoDate()`.
 - Phone and tablet browser tests (`tests/browser/test_mobile.py`, 47 tests): 360×640, 390×844 and 820×1180 with touch, plus 640×360 landscape. They cover sideways overflow, tap targets, windows, touch logging and the custom cursor. Draft findings triaged: the cursor-after-tap failures were already fixed by the 4.1.0 touch change, and 9 failures were mistakes in the draft (wrong button ids, a heading that's never shown).

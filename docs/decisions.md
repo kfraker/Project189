@@ -2,6 +2,10 @@
 
 Key decisions behind Sweat Equity and why they were made. Newest first. Earlier entries were written up afterward from project history.
 
+## Let the page tell the server what day it is (2026-11-03)
+**Decision:** Home and Weigh-ins send the visitor's local date with their stats requests. The server uses it if it's within a day of its own UTC date, and otherwise uses its own.
+**Why:** "today" depends on where the visitor is, and the server runs in UTC. Storing each user's time zone would need a setting and a migration, and would still be wrong while travelling. The page already knows the right date. A visitor could only change their own stats with it, and the one-day window keeps it to a date that really is "today" somewhere.
+
 ## Check the performance budget in the browser tests, not Lighthouse (2026-11-02)
 **Decision:** measure page weight, request count and Largest Contentful Paint with Playwright, inside the existing browser test suite, under an emulated 4G connection.
 **Why:** the app's pages need a signed-in user. The browser tests already sign in with a test cookie, while Lighthouse CI would need a separate sign-in workaround and another tool to maintain. Sizes and request counts don't vary between runs. Load speed under a slowed network depends mainly on page weight and round trips, not on how fast the CI machine is, and it was stable across five local runs. A Lighthouse performance score isn't checked; that's a known gap, acceptable while sizes and Largest Contentful Paint are guarded.

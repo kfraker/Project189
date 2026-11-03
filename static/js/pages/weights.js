@@ -2268,7 +2268,7 @@ registerPage('weights', (page) => {
         async function refresh() {
             let data;
             try {
-                const r = await fetch('/api/weight/stats');
+                const r = await fetch('/api/weight/stats?today=' + getTodayISO());
                 data = await r.json();
             } catch {
                 return;
