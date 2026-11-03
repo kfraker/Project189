@@ -1,5 +1,10 @@
 # Changelog
 
+## Unreleased
+
+### Added
+- User flow coverage. `tests/flows.toml` lists 19 user flows; browser tests name the flows they prove with `@pytest.mark.flow`, and `tests/flow_coverage.py` records each passing test's flows and device (desktop, or phone/tablet by the emulated screen's shorter side) to `coverage/flows.json`. `tools/coverage/check_flows.py` prints the flow-by-device table and gaps (also to the GitHub Actions run summary), writes `docs/user-flows.md` with `--update`, and fails CI if a pair in `tools/coverage/flow_baseline.json` loses its test. A test naming an unlisted flow stops the run at collection. Starting point: 37 of 57 pairs (65%), with 10 flows untested on phone and tablet. 71 existing tests tagged, plus 11 tests for the tooling.
+
 ## 4.2.0 (2026-11-03)
 
 ### Fixed

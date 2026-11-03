@@ -49,6 +49,7 @@ def _saved_prefs(client):
         pytest.param(["2026-03-07", "2026-03-08", "2026-03-09"], id="clocks-go-forward-23-hour-day"),
     ],
 )
+@pytest.mark.flow("read-insights")
 def test_insights_streaks_survive_a_clock_change(shell, signed_in_page, days):
     """Regression: streaks compared dates as exactly 24 hours apart, so a day with 23 or
     25 hours reset them. CI runs in UTC, which has no clock changes, so set a time zone."""
@@ -80,6 +81,7 @@ def test_env_badge_stays_put_across_pages_and_never_blocks_clicks(shell, monkeyp
 # ── Menu ─────────────────────────────────────────────────────────────────────
 
 
+@pytest.mark.flow("use-the-menu")
 def test_menu_lists_items_in_order(shell):
     open_page, _ = shell
     page = open_page()
@@ -89,6 +91,7 @@ def test_menu_lists_items_in_order(shell):
     )
 
 
+@pytest.mark.flow("use-the-menu")
 def test_menu_closes_with_x_and_escape(shell):
     open_page, _ = shell
     page = open_page()
@@ -103,6 +106,7 @@ def test_menu_closes_with_x_and_escape(shell):
 # ── Insights ─────────────────────────────────────────────────────────────────
 
 
+@pytest.mark.flow("read-insights")
 def test_insights_summarises_weigh_ins_and_returns_to_menu(shell):
     open_page, client = shell
     for i, w in enumerate([200.0, 201.0, 202.0]):
@@ -118,6 +122,7 @@ def test_insights_summarises_weigh_ins_and_returns_to_menu(shell):
     expect(page.locator("#menu-modal")).to_be_visible()  # back where you came from
 
 
+@pytest.mark.flow("read-insights")
 def test_insights_with_no_data(shell):
     open_page, _ = shell
     page = open_page()
@@ -128,6 +133,7 @@ def test_insights_with_no_data(shell):
 # ── Profile (Fight Card) ─────────────────────────────────────────────────────
 
 
+@pytest.mark.flow("edit-fight-card")
 def test_fight_card_saves_name_and_goal_mode(shell):
     open_page, client = shell
     page = open_page()
@@ -151,6 +157,7 @@ def test_fight_card_saves_name_and_goal_mode(shell):
 # ── Settings ─────────────────────────────────────────────────────────────────
 
 
+@pytest.mark.flow("change-settings")
 def test_settings_switch_to_kilograms_applies_and_persists(shell):
     open_page, client = shell
     page = open_page()
@@ -178,6 +185,7 @@ def test_health_bar_and_its_settings_are_hidden_for_now(shell):
     expect(page.locator("#change-pic-btn")).to_be_visible()  # shares that Settings section
 
 
+@pytest.mark.flow("change-settings")
 def test_settings_health_bar_switch_unlocks_fighter_name(shell):
     """The hidden section still works: Health Bar is one on/off choice, and Fighter
     Name is only locked while it's off."""
@@ -212,6 +220,7 @@ def test_settings_health_bar_switch_unlocks_fighter_name(shell):
     assert prefs["pref_healthbar"] == "1" and prefs["pref_fighter_name"] == "1"
 
 
+@pytest.mark.flow("change-settings")
 def test_settings_unsaved_changes_save_and_close(shell):
     open_page, client = shell
     page = open_page()
@@ -226,6 +235,7 @@ def test_settings_unsaved_changes_save_and_close(shell):
     assert _saved_prefs(client)["pref_unit"] == "kg"
 
 
+@pytest.mark.flow("change-settings")
 def test_settings_unsaved_changes_close_without_saving(shell):
     """Regression for #24: the prompt offers a working "Close" (discard) button."""
     open_page, client = shell
@@ -258,6 +268,7 @@ def test_plain_confirmations_still_say_cancel_after_a_close_prompt(shell):
     expect(page.locator(".wp-row")).to_have_count(1)
 
 
+@pytest.mark.flow("edit-fight-card")
 def test_fight_card_unsaved_changes_close_without_saving(shell):
     """#24 also affected Profile: "Close" discards the edits."""
     open_page, client = shell
@@ -275,6 +286,7 @@ def test_fight_card_unsaved_changes_close_without_saving(shell):
 # ── Profile picture → matching cursor ────────────────────────────────────────
 
 
+@pytest.mark.flow("change-profile-picture")
 def test_profile_picture_changes_avatar_and_cursor(shell):
     open_page, client = shell
     page = open_page()
@@ -294,6 +306,7 @@ def test_profile_picture_changes_avatar_and_cursor(shell):
     assert _saved_prefs(client)["pref_profile_pic"] == "3"
 
 
+@pytest.mark.flow("change-profile-picture")
 def test_profile_picture_unsaved_choice_close_without_saving(shell):
     """#24 also affected the picture picker: "Close" keeps the old picture."""
     open_page, client = shell
@@ -446,6 +459,7 @@ def test_coming_soon_tip_sits_to_the_right_of_the_nav_buttons(shell):
 # ── Log out ──────────────────────────────────────────────────────────────────
 
 
+@pytest.mark.flow("sign-out")
 def test_log_out_returns_to_sign_in(shell):
     open_page, _ = shell
     page = open_page()

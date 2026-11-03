@@ -1,0 +1,75 @@
+# Every user flow in Sweat Equity: the things a person comes here to do.
+#
+# Browser tests name the flows they prove with @pytest.mark.flow("id"). Each run
+# reports which flows are proven on which devices (desktop, phone, tablet) and
+# names the gaps; see tests/flow_coverage.py and tools/coverage/check_flows.py.
+# A test that names a flow missing from this list fails the run.
+#
+# Every flow is expected on every device. Add new flows here before their tests.
+
+# ── Signing in and getting around ──
+
+[sign-in]
+name = "Reach the sign-in page and start signing in"
+
+[sign-out]
+name = "Log out, or be sent to sign-in when the session ends"
+
+[move-between-pages]
+name = "Move between Home, Weigh-ins and Workouts"
+
+# ── Home ──
+
+[see-progress-on-home]
+name = "See starting, current, lost and goal weight, streak, weekly burn and trend on Home"
+
+[set-starting-and-goal-weight]
+name = "Set a starting weight and a goal weight"
+
+# ── Weigh-ins ──
+
+[log-weigh-in]
+name = "Log a weigh-in"
+
+[edit-weigh-in]
+name = "Change a weigh-in already logged"
+
+[delete-weigh-in]
+name = "Delete a weigh-in"
+
+[add-weigh-in-note]
+name = "Add or edit a note on a day's weigh-in"
+
+[read-weight-charts]
+name = "Read the daily and weekly weight charts and change their date range"
+
+[read-weight-table]
+name = "Read weigh-ins day by day or week by week in the table"
+
+# ── Workouts ──
+
+[log-workout]
+name = "Log a workout, with an optional note for the day"
+
+[delete-workout]
+name = "Delete one or several workouts"
+
+[review-workouts]
+name = "Review workouts by day, with totals, this week's stats and a date range"
+
+# ── Menu ──
+
+[use-the-menu]
+name = "Open and close the menu"
+
+[change-settings]
+name = "Change settings such as units and save or discard them"
+
+[change-profile-picture]
+name = "Choose a profile picture"
+
+[edit-fight-card]
+name = "Set a fighter name and goal mode on the fight card"
+
+[read-insights]
+name = "Read Insights: streaks, rates, best week and fluctuation"

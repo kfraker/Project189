@@ -59,6 +59,7 @@ def started_on_home(signed_in_page, client):
     return signed_in_page
 
 
+@pytest.mark.flow("move-between-pages")
 def test_nav_click_swaps_the_page_without_a_full_load(started_on_home):
     page = started_on_home
     _go(page, "Workouts", "workouts")
@@ -189,6 +190,7 @@ def _shows(page, path, title, label):
     expect(nav.locator("a.active")).to_have_accessible_name(label)
 
 
+@pytest.mark.flow("move-between-pages")
 def test_back_and_forward_swap_pages_in_place(started_on_home):
     page = started_on_home
     _go(page, "Weigh-ins", "weights")
@@ -350,6 +352,7 @@ def test_focus_moves_to_the_content_and_the_page_is_announced(started_on_home):
         expect(_announced(page)).to_have_text(f"{label} page")
 
 
+@pytest.mark.flow("move-between-pages")
 def test_keyboard_user_lands_in_the_new_pages_content(started_on_home):
     page = started_on_home
     page.get_by_role("navigation", name="Pages").get_by_role("link", name="Workouts").focus()
@@ -526,6 +529,7 @@ def test_unexpected_response_falls_back_to_a_full_load(started_on_home):
     expect(page.locator(".wp-row")).to_have_count(1)
 
 
+@pytest.mark.flow("sign-out")
 def test_signed_out_mid_session_lands_on_sign_in(started_on_home):
     page = started_on_home
     page.context.clear_cookies()

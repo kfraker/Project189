@@ -35,6 +35,7 @@ def _text(page, element_id):
 # ── What the page shows ──────────────────────────────────────────────────────
 
 
+@pytest.mark.flow("see-progress-on-home")
 def test_new_account_shows_empty_cards_and_zero_stats(home):
     open_home, _ = home
     page = open_home()
@@ -45,6 +46,7 @@ def test_new_account_shows_empty_cards_and_zero_stats(home):
     expect(_text(page, "mp-trend")).to_have_text("—")
 
 
+@pytest.mark.flow("see-progress-on-home")
 def test_cards_and_health_bar_reflect_saved_weights(home):
     open_home, client = home
     seed_setting(client, "starting_weight", 230.0)
@@ -62,6 +64,7 @@ def test_cards_and_health_bar_reflect_saved_weights(home):
     expect(_text(page, "healthbar-tooltip")).to_have_text("21.0 lbs to goal")
 
 
+@pytest.mark.flow("see-progress-on-home")
 def test_header_shows_streak_kcal_and_trend(home):
     open_home, client = home
     seed_weight(client, _day(1), 198.0)
@@ -78,6 +81,7 @@ def test_header_shows_streak_kcal_and_trend(home):
 # ── Quick Add → weigh-in ─────────────────────────────────────────────────────
 
 
+@pytest.mark.flow("log-weigh-in", "see-progress-on-home")
 def test_quick_add_weigh_in_updates_card_and_streak(home):
     """Regression for #17: the header streak refreshes right after logging."""
     open_home, client = home
@@ -102,6 +106,7 @@ def test_quick_add_weigh_in_updates_card_and_streak(home):
 # ── Editing the weight cards ─────────────────────────────────────────────────
 
 
+@pytest.mark.flow("edit-weigh-in")
 def test_edit_current_weight_asks_before_overwriting_today(home):
     open_home, client = home
     seed_setting(client, "starting_weight", 230.0)
@@ -124,6 +129,7 @@ def test_edit_current_weight_asks_before_overwriting_today(home):
     assert client.get("/api/latest-weight").get_json()["weight_lbs"] == 208.0
 
 
+@pytest.mark.flow("set-starting-and-goal-weight")
 def test_set_goal_weight_persists(home):
     open_home, client = home
     page = open_home()
@@ -137,6 +143,7 @@ def test_set_goal_weight_persists(home):
     expect(_text(page, "goal-lbs-num")).to_have_text("180")
 
 
+@pytest.mark.flow("set-starting-and-goal-weight")
 def test_starting_weight_stepper_and_kg_preview(home):
     open_home, _ = home
     page = open_home()
@@ -150,6 +157,7 @@ def test_starting_weight_stepper_and_kg_preview(home):
     expect(_text(page, "start-kg-num")).to_have_text("104.8")
 
 
+@pytest.mark.flow("set-starting-and-goal-weight")
 def test_cancel_does_not_save(home):
     open_home, client = home
     page = open_home()
@@ -164,6 +172,7 @@ def test_cancel_does_not_save(home):
 # ── Quick Add → workout ──────────────────────────────────────────────────────
 
 
+@pytest.mark.flow("log-workout", "see-progress-on-home")
 def test_quick_add_workout_updates_kcal_and_streak(home):
     open_home, client = home
     page = open_home()
@@ -188,6 +197,7 @@ def test_quick_add_workout_updates_kcal_and_streak(home):
     assert [(w["date"], w["type"], w["kcal"]) for w in workouts] == [(TODAY, "Basketball", 260)]
 
 
+@pytest.mark.flow("delete-workout")
 def test_remove_workouts_deletes_only_ticked_ones(home):
     """Regression for #23 on Home: in the delete-confirm checklist, only the
     ticked workouts are deleted."""
@@ -216,6 +226,7 @@ def test_remove_workouts_deletes_only_ticked_ones(home):
     assert [w["type"] for w in client.get("/api/workouts").get_json()] == ["Yoga"]
 
 
+@pytest.mark.flow("log-weigh-in")
 def test_opening_log_weigh_in_does_not_pull_focus_from_something_typed_quickly(home):
     """The window used to move focus to Date 50ms after opening, so anything typed in that
     gap (autofill, a quick keyboard user) could lose its text and Save would do nothing."""
@@ -257,6 +268,7 @@ def _covering_element(page, selector):
         ("/workouts", "#wp-add-btn"),  # Workouts page: its own + button
     ],
 )
+@pytest.mark.flow("log-workout")
 def test_log_workout_modal_fully_usable_on_laptop_screen(signed_in_page, path, open_button):
     """Regression for #22: at 1366×768 the modal used to sit under the header,
     footer and health bar, so Save couldn't be clicked."""

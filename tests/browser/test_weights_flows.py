@@ -77,6 +77,7 @@ def test_zero_day_streak_is_blue(weights):
     expect(page.locator("#wt-streak")).to_have_css("color", "rgb(60, 120, 255)")
 
 
+@pytest.mark.flow("read-weight-charts")
 def test_header_shows_streak_and_seven_day_average(weights):
     open_weights, client = weights
     for i, w in enumerate([200.0, 202.0, 204.0]):
@@ -89,6 +90,7 @@ def test_header_shows_streak_and_seven_day_average(weights):
 # ── Charts & ranges ──────────────────────────────────────────────────────────
 
 
+@pytest.mark.flow("read-weight-charts")
 def test_daily_chart_plots_weigh_ins_and_ranges_change_it(weights):
     open_weights, client = weights
     for offset in (0, 1, 2, 20, 40):
@@ -102,6 +104,7 @@ def test_daily_chart_plots_weigh_ins_and_ranges_change_it(weights):
     _wait_for_chart_days(page, "weight-chart", 3)  # only the last 3 days have data in that window
 
 
+@pytest.mark.flow("read-weight-charts")
 def test_switch_between_daily_and_weekly_charts(weights):
     open_weights, client = weights
     for i in range(10):
@@ -118,6 +121,7 @@ def test_switch_between_daily_and_weekly_charts(weights):
     expect(switch).to_have_attribute("aria-label", "Switch to weekly chart")
 
 
+@pytest.mark.flow("read-weight-charts")
 def test_new_account_shows_empty_chart_message(weights):
     open_weights, _ = weights
     page = open_weights()
@@ -127,6 +131,7 @@ def test_new_account_shows_empty_chart_message(weights):
 # ── "Showing max data" info icon (#20) ───────────────────────────────────────
 
 
+@pytest.mark.flow("read-weight-charts")
 def test_info_icon_explains_short_history_on_hover(weights):
     open_weights, client = weights
     for i in range(3):
@@ -144,6 +149,7 @@ def test_info_icon_explains_short_history_on_hover(weights):
     }""")
 
 
+@pytest.mark.flow("read-weight-charts")
 def test_info_icon_hidden_when_history_covers_range(weights):
     open_weights, client = weights
     for i in range(8):
@@ -157,6 +163,7 @@ def test_info_icon_hidden_when_history_covers_range(weights):
 # ── Logging ──────────────────────────────────────────────────────────────────
 
 
+@pytest.mark.flow("log-weigh-in")
 def test_log_weigh_in_adds_point_and_table_row(weights):
     open_weights, client = weights
     seed_weight(client, _day(1), 201.0)
@@ -172,6 +179,7 @@ def test_log_weigh_in_adds_point_and_table_row(weights):
     expect(_row_for(page, TODAY).locator("td.cell-weight")).to_contain_text("199.5 lbs")
 
 
+@pytest.mark.flow("log-weigh-in", "read-weight-table")
 def test_missing_day_can_be_filled_from_the_table(weights):
     open_weights, client = weights
     seed_weight(client, TODAY, 200.0)
@@ -190,6 +198,7 @@ def test_missing_day_can_be_filled_from_the_table(weights):
     assert _rows(client)[_day(1)]["weight_lbs"] == 201.0
 
 
+@pytest.mark.flow("edit-weigh-in")
 def test_clicking_a_row_opens_that_day_for_editing(weights):
     open_weights, client = weights
     seed_weight(client, TODAY, 200.0)
@@ -211,6 +220,7 @@ def test_clicking_a_row_opens_that_day_for_editing(weights):
 # ── Notes ────────────────────────────────────────────────────────────────────
 
 
+@pytest.mark.flow("add-weigh-in-note")
 def test_add_and_edit_a_note_from_the_table(weights):
     open_weights, client = weights
     seed_weight(client, TODAY, 200.0)
@@ -237,6 +247,7 @@ def test_add_and_edit_a_note_from_the_table(weights):
 # ── Deleting ─────────────────────────────────────────────────────────────────
 
 
+@pytest.mark.flow("delete-weigh-in")
 def test_delete_weight_but_keep_note(weights):
     open_weights, client = weights
     _seed_with_note(client, TODAY, 200.0, "rest day")
@@ -254,6 +265,7 @@ def test_delete_weight_but_keep_note(weights):
     assert row["notes"] == "rest day"
 
 
+@pytest.mark.flow("delete-weigh-in")
 def test_delete_whole_entry(weights):
     open_weights, client = weights
     _seed_with_note(client, TODAY, 200.0, "rest day")

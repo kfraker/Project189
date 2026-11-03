@@ -20,6 +20,13 @@ TABLET = {"viewport": {"width": 820, "height": 1180}, "has_touch": True, "is_mob
 
 PAGES = ["/", "/weights", "/workouts"]
 
+# Each page fitting the screen is part of reading that page's main view.
+PAGES_FIT = [
+    pytest.param("/", marks=pytest.mark.flow("see-progress-on-home"), id="/"),
+    pytest.param("/weights", marks=pytest.mark.flow("read-weight-charts"), id="/weights"),
+    pytest.param("/workouts", marks=pytest.mark.flow("review-workouts"), id="/workouts"),
+]
+
 # Each page has its own footer "+" button.
 ADD_BUTTON = {"/": "#mp-footer-add-btn", "/weights": "#chart-add-btn", "/workouts": "#wp-add-btn"}
 
@@ -96,11 +103,12 @@ def _assert_fits_screen(page, selector):
 
 
 class _MobileFlows:
-    @pytest.mark.parametrize("path", PAGES)
+    @pytest.mark.parametrize("path", PAGES_FIT)
     def test_page_does_not_scroll_sideways(self, mobile, path):
         open_page, _ = mobile
         assert _sideways_overflow(open_page(path)) <= 1
 
+    @pytest.mark.flow("read-weight-table")
     def test_weigh_ins_table_view_does_not_scroll_the_page_sideways(self, mobile):
         open_page, _ = mobile
         page = open_page("/weights")
@@ -108,6 +116,7 @@ class _MobileFlows:
         expect(page.locator("#data-table-wrap")).to_be_visible()
         assert _sideways_overflow(page) <= 1
 
+    @pytest.mark.flow("sign-in")
     def test_login_page_fits(self, signed_out_page):
         """Regression: the card's padding was added on top of its 90% width, so on phones
         it filled the screen edge to edge, and its pop-in bounce briefly overflowed it.
@@ -130,6 +139,7 @@ class _MobileFlows:
         _assert_on_screen_and_tappable(page, "#profile-btn")
         _assert_on_screen_and_tappable(page, ADD_BUTTON[path])
 
+    @pytest.mark.flow("move-between-pages")
     def test_nav_links_can_be_tapped_and_change_page(self, mobile):
         open_page, _ = mobile
         page = open_page()
@@ -140,6 +150,7 @@ class _MobileFlows:
             page.wait_for_url(url)
             page.wait_for_load_state("networkidle")
 
+    @pytest.mark.flow("use-the-menu")
     def test_menu_fits_and_closes(self, mobile):
         open_page, _ = mobile
         page = open_page()
@@ -160,6 +171,7 @@ class _MobileFlows:
         assert _sideways_overflow(page) <= 1
         page.keyboard.press("Escape")
 
+    @pytest.mark.flow("log-weigh-in")
     def test_log_a_weigh_in_by_touch(self, mobile):
         open_page, client = mobile
         page = open_page()
@@ -174,6 +186,7 @@ class _MobileFlows:
         expect(page.locator("#history-modal")).to_be_hidden()
         assert any(w["date"] == _day(0) and w["weight_lbs"] == 205 for w in client.get("/api/weights").get_json())
 
+    @pytest.mark.flow("log-workout")
     @pytest.mark.parametrize("path", ["/", "/workouts"])
     def test_log_a_workout_by_touch(self, mobile, path):
         open_page, client = mobile
@@ -206,6 +219,7 @@ class TestTablet(_MobileFlows):
     pass
 
 
+@pytest.mark.flow("log-workout")
 @pytest.mark.browser_context_args(viewport={"width": 640, "height": 360}, has_touch=True, is_mobile=True)
 @pytest.mark.parametrize("path", ["/", "/workouts"])
 def test_log_workout_window_scrolls_on_a_very_short_screen(mobile, path):

@@ -44,6 +44,7 @@ def test_page_loads_cleanly_signed_in(signed_in_page, path, nav_label, title):
 # ── Signed in: header nav reaches every page ─────────────────────────────────
 
 
+@pytest.mark.flow("move-between-pages")
 def test_header_nav_links_reach_each_page(signed_in_page):
     page = signed_in_page
     page.goto("/")
@@ -57,12 +58,14 @@ def test_header_nav_links_reach_each_page(signed_in_page):
 # ── Signed out ───────────────────────────────────────────────────────────────
 
 
+@pytest.mark.flow("sign-in")
 def test_signed_out_home_shows_login(signed_out_page):
     page = signed_out_page
     page.goto("/")
     expect(page.get_by_text("Sign in with Google")).to_be_visible()
 
 
+@pytest.mark.flow("sign-in")
 @pytest.mark.parametrize("path", ["/weights", "/workouts"])
 def test_signed_out_pages_redirect_to_login(signed_out_page, path):
     page = signed_out_page
