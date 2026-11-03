@@ -35,7 +35,8 @@ Sizes: **S** is about one sitting, **M** is a couple of sittings.
 - **4.4 User flow coverage** (M). Code coverage shows that lines ran, not that a user's goal works. **Done when:** every user flow is listed and tagged to the tests that prove it, by device; each run reports flow coverage with the gaps named; and CI fails if a test names an unlisted flow or a covered flow loses its test.
 
 - **4.5 Dates in every time zone** (M). A streak bug appeared when the clocks changed, and CI runs in UTC so it couldn't catch it. **Done when:** date handling is reviewed in the browser and on the server, and key date flows are tested across time zones and clock changes.
-  - *Found 2026-11-02:* the Weigh-ins table's `addDays` turns local midnight into a UTC date, so east of UTC (e.g. Berlin, Tokyo) adding a day returns the same day and the table's date loop never ends, freezing the page. Fix first.
+  - **4.5a Page dates.** Done: the browser works out every calendar date in the visitor's own time zone. This fixed a Weigh-ins freeze east of UTC, charts and weekly views a day off there, and three clock-change slips. It's tested in four time zones, and a lint rule stops the UTC conversion coming back.
+  - **4.5b The server's "today"** (S). The server uses UTC, which for US visitors is already tomorrow after 7–8pm, so the Weigh-ins streak drops to 0 every evening. **Done when:** pages send their local date with stats requests, the server uses it when it's within a day of its own, and tests cover the evening case.
 
 ## Epic 5: Keeping it running
 - **5.1 Uptime checks and error alerts** (S). **Done when:** an outage or a burst of errors sends an alert, and that's been tested.

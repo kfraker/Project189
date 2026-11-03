@@ -6,6 +6,8 @@ import globals from "globals";
 const SHELL_HELPERS = [
   "fmtLbs",
   "getTodayISO",
+  "isoDate",
+  "daysAgoISO",
   "formatDateDisplay",
   "formatDateShort",
   "modalOpen",
@@ -27,6 +29,15 @@ export default [
       "no-empty": ["error", { allowEmptyCatch: true }],
       "no-implicit-globals": "error",
       "no-unused-vars": ["error", { caughtErrors: "none" }],
+      // toISOString() converts to UTC, so as a calendar date it's a day off east or west
+      // of UTC (it froze the Weigh-ins table in Europe). Use isoDate() from shell.js.
+      "no-restricted-syntax": [
+        "error",
+        {
+          selector: "CallExpression[callee.property.name='toISOString']",
+          message: "toISOString() gives the UTC date, not the visitor's. Use isoDate() from shell.js.",
+        },
+      ],
     },
   },
   {
