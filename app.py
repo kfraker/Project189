@@ -31,6 +31,22 @@ def _valid_date(s: str) -> bool:
         return False
 
 
+def _server_today() -> date:
+    """The server's own date: UTC on Vercel. Tests pin it to a fixed day."""
+    return date.today()
+
+
+def _visitor_today() -> date:
+    """The visitor's date, sent by the page as ?today=YYYY-MM-DD. The server's UTC date
+    is already tomorrow for US visitors in the evening. Every time zone's date is within
+    a day of UTC, so anything further off is ignored and the server's own date is used."""
+    server = _server_today()
+    sent = request.args.get("today", "")
+    if _valid_date(sent) and abs((date.fromisoformat(sent) - server).days) <= 1:
+        return date.fromisoformat(sent)
+    return server
+
+
 def get_db():
     conn = psycopg.connect(DATABASE_URL, row_factory=dict_row)
     schema = app.config.get("DB_SCHEMA", "public")
@@ -287,7 +303,7 @@ def get_weights():
                 "SELECT MAX(date) as d FROM weights WHERE user_id = %s AND weight_lbs IS NOT NULL",
                 (current_user_id(),),
             ).fetchone()["d"]
-            anchor = date.fromisoformat(latest) if latest else date.today()
+            anchor = date.fromisoformat(latest) if latest else _server_today()
             start = (anchor - timedelta(days=days - 1)).isoformat()
             rows = conn.execute(
                 "SELECT date, weight_lbs, weight_kg, notes FROM weights "
@@ -330,7 +346,7 @@ def latest_weight():
 def weight_stats():
     conn = get_db()
     try:
-        today = date.today()
+        today = _visitor_today()
 
         seven_days_ago = (today - timedelta(days=6)).isoformat()
         week_rows = conn.execute(
@@ -553,7 +569,7 @@ def save_preference():
 def home_stats():
     conn = get_db()
     try:
-        today = date.today()
+        today = _visitor_today()
 
         # Active streak: union of weight-logged and workout dates
         weight_dates = {
