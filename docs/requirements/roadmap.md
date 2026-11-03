@@ -30,11 +30,12 @@ Sizes: **S** is about one sitting, **M** is a couple of sittings.
 
 - **4.1 Fast first load** (M). Done: Home's download fell from 4.57 MB to 0.69 MB, images are sized to how they're displayed, unneeded downloads are gone, static files are cached, and plates appear whole.
 - **4.2 Performance budget** (S). Done: CI fails if a page's download size, request count or Largest Contentful Paint (2.5 s on emulated 4G) goes past its limit, and tests prove the check trips.
-- **4.3 Phone and tablet tests** (M). **Done when:** key flows run at phone and tablet sizes with touch: no sideways scrolling, tappable buttons, windows that fit and close, and logging that works. Any bugs found are fixed or deliberately deferred.
+- **4.3 Phone and tablet tests** (M). Done: key flows run at two phone sizes, a tablet and a sideways phone with touch, in Chromium's emulation. The one bug found, Home's Log Workout window not being compact on small phones, is fixed.
 
 - **4.4 User flow coverage** (M). Code coverage shows that lines ran, not that a user's goal works. **Done when:** every user flow is listed and tagged to the tests that prove it, by device; each run reports flow coverage with the gaps named; and CI fails if a test names an unlisted flow or a covered flow loses its test.
 
 - **4.5 Dates in every time zone** (M). A streak bug appeared when the clocks changed, and CI runs in UTC so it couldn't catch it. **Done when:** date handling is reviewed in the browser and on the server, and key date flows are tested across time zones and clock changes.
+  - *Found 2026-11-02:* the Weigh-ins table's `addDays` turns local midnight into a UTC date, so east of UTC (e.g. Berlin, Tokyo) adding a day returns the same day and the table's date loop never ends, freezing the page. Fix first.
 
 ## Epic 5: Keeping it running
 - **5.1 Uptime checks and error alerts** (S). **Done when:** an outage or a burst of errors sends an alert, and that's been tested.

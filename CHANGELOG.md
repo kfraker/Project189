@@ -2,7 +2,11 @@
 
 ## Unreleased
 
+### Fixed
+- On short screens (700px tall or less), Home's Log Workout window lacked the compact layout the Workouts page has, so on a small phone "+ Add Activity" started below the visible part of the window. Home now has the same `@media (max-height: 700px)` rules.
+
 ### Added
+- Phone and tablet browser tests (`tests/browser/test_mobile.py`, 47 tests): 360×640, 390×844 and 820×1180 with touch, plus 640×360 landscape. They cover sideways overflow, tap targets, windows, touch logging and the custom cursor. Draft findings triaged: the cursor-after-tap failures were already fixed by the 4.1.0 touch change, and 9 failures were mistakes in the draft (wrong button ids, a heading that's never shown).
 - Performance budget in CI (`tests/browser/test_performance_budget.py`). Each page loads with an empty cache under emulated 4G (10 Mbps, 40 ms), and fails on bytes received, request count, or Largest Contentful Paint over 2.5 s. Limits are about 20% above sizes measured on 2026-11-02. An unmeasured warm-up load runs first, so the test server's cold start (2.9 s on the first page) isn't counted. Two tests prove the gate trips: an oversized image and a slow network.
 
 ## 4.1.5 (2026-11-02)

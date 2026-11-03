@@ -31,7 +31,6 @@ v4.1 added a separate [database sandbox](#database-sandbox), a published [roadma
 Full requirements are in [docs/requirements/roadmap.md](docs/requirements/roadmap.md), and the reasoning behind big choices is in the [decision log](docs/decisions.md).
 
 - **Demo mode:** one click from the sign-in page into a private, temporary account full of realistic data, with a guided tour. No sign-up, and it's wiped when you leave.
-- **Mobile test coverage:** the browser test suite extended to phone and tablet sizes with touch input.
 - **Nutrition page:** already marked "Coming Soon" in the header.
 
 ## Pages
@@ -284,7 +283,7 @@ First-time setup for browser tests: `python -m playwright install chromium`.
 
 **CI:** every push to `dev`/`main`, and every pull request, runs the full suite on GitHub Actions against a throwaway Postgres (a few minutes). Coverage is uploaded to Codecov. When a browser test fails, screenshots and Playwright traces are attached to the run (`browser-test-failures` artifact; open a trace at https://trace.playwright.dev).
 
-632 tests in all. 460 API/server tests cover all API endpoints (including the Home header stats), sign-in and multi-user isolation, business logic, date-range boundaries, page structure across Home/Weigh-ins/Workouts, and the migration runner. 172 browser tests cover the user flows on every page, the shell (menu, settings, profile, cursor), each page's lifecycle (restarted 20 times in place without anything piling up), in-page navigation (swaps, Back/Forward, rapid clicks, fallbacks, focus, fades), a 35-step stress test whose pages must look identical to a fresh load, and a performance budget. Tests run in an isolated `test` schema that is wiped before every test, so real data is never touched.
+679 tests in all. 460 API/server tests cover all API endpoints (including the Home header stats), sign-in and multi-user isolation, business logic, date-range boundaries, page structure across Home/Weigh-ins/Workouts, and the migration runner. 219 browser tests cover the user flows on every page, the shell (menu, settings, profile, cursor), each page's lifecycle (restarted 20 times in place without anything piling up), in-page navigation (swaps, Back/Forward, rapid clicks, fallbacks, focus, fades), a 35-step stress test whose pages must look identical to a fresh load, a performance budget, and phone and tablet checks. Tests run in an isolated `test` schema that is wiped before every test, so real data is never touched.
 
 **Coverage is measured on every run** (settings in `.coveragerc`, switched on in `pytest.ini`). After any run:
 
@@ -302,6 +301,8 @@ One-time setup (needs Node.js): `npm install --prefix tools/coverage`.
 **All code in one report:** after a test run, `npm --prefix tools/coverage run report` merges Python and page-code coverage into `coverage/all-html/index.html`, one table with a single combined total. CI builds the same report on every push (in the `coverage-report` artifact), and Codecov shows both halves as the `python` and `javascript` flags.
 
 **Coverage guard (ratchet):** `tools/coverage/baseline.json` records line coverage for Python, page code and combined. After the full test run, CI runs `npm --prefix tools/coverage run check`, which **fails the build if any of the three drops more than 0.5 points** below the baseline. Coverage can only go up. When it does (or a drop is intentional, e.g. deleting well-tested code), refresh the baseline after a full local run with `npm --prefix tools/coverage run baseline` and commit the file. Codecov flags drops of more than 0.5% on each commit as well. Current baseline (2026-11-02): 99.1% of Python lines, 75.4% of page-code lines, 76.7% combined. Page-code coverage read 84.5% before the code was formatted, because compressed lines counted as covered if a test touched any part of them. The tests didn't change; the measurement became more accurate.
+
+**Phone and tablet:** `tests/browser/test_mobile.py` runs at a small phone (360×640), a phone (390×844) and a tablet (820×1180) with touch on. On each it checks for sideways scrolling, that nav, footer and window buttons can be tapped, that windows fit and close, and that a weigh-in and a workout can be logged by touch. It also checks that the desktop custom cursor stays hidden after a tap. A phone turned sideways (640×360) checks that the Log Workout window scrolls to reach its buttons. These run in Chromium's phone emulation, not on real devices.
 
 **Performance budget:** `tests/browser/test_performance_budget.py` loads each page with an empty cache on a network slowed to a typical 4G connection. CI fails if a page downloads more than its size or request limit, or if its Largest Contentful Paint (when the main content appears) takes more than 2.5 seconds, Google's threshold for "good". Each page's limit sits about 20% above its current size:
 

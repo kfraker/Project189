@@ -74,6 +74,23 @@
     .wpm-note-section { margin-top: 10px; }
     .wpm-day-row .table-delete-btn,
     .wpm-staged-row .table-delete-btn { color: rgba(255,255,255,0.5); border-color: rgba(255,45,120,0.3); }
+
+    /* Same compact Log Workout window as the Workouts page on short screens */
+    @media (max-height: 700px) {
+        .wp-modal-card { max-height: 96vh; }
+        .wp-modal-head { padding: 10px 20px 9px; }
+        .wp-modal-body { padding: 10px 20px; }
+        .wpm-date-wrap { margin-bottom: 8px; }
+        .wpm-day-section { margin-bottom: 8px; }
+        .wpm-day-heading { margin-bottom: 3px; }
+        .wpm-entries-wrap { height: 80px; }
+        .wpm-divider { margin: 7px 0 5px; }
+        .wpm-add-label { margin-bottom: 6px; }
+        .wpm-add-activity-btn { padding: 6px; margin-top: 6px; }
+        .wpm-note-section { margin-top: 8px; }
+        #workout-note-input { height: 38px; }
+        .wp-modal-foot { padding: 7px 20px 9px; }
+    }
     .wp-modal-foot { display: flex; justify-content: flex-end; gap: 8px; padding: 10px 20px 14px; border-top: 1px solid rgba(255,255,255,0.1); flex-shrink: 0; }
 </style>
 {% endblock %}
