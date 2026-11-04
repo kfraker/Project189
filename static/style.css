@@ -2326,6 +2326,21 @@ body.note-open .custom-scrollbar-track {
     justify-content: flex-end;
 }
 
+/* Four pics in a row are ~646px wide: on phones, show them 2×2 so Save stays on screen */
+@media (max-width: 720px) {
+    #profile-pic-picker {
+        padding: 28px 24px;
+        gap: 24px;
+        max-width: calc(100vw - 32px);
+        box-sizing: border-box;
+    }
+    .pic-options-row {
+        display: grid;
+        grid-template-columns: repeat(2, auto);
+        gap: 20px;
+    }
+}
+
 .pic-option {
     width: 116px;
     height: 116px;

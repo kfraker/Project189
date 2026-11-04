@@ -1,5 +1,15 @@
 # Changelog
 
+## 4.2.1 (2026-11-03)
+
+### Fixed
+- On phones, the profile picture picker was about 646px wide (four 116px pictures in a row plus padding), so on a 360–390px screen its Save button hung off the right edge. Below 720px wide the pictures now sit in a 2×2 grid with less padding, and the picker is capped at the screen width minus 32px.
+- `tools/coverage/check_flows.py` crashed on a Windows console (cp1252) printing the table's ✅. It now writes UTF-8.
+
+### Added
+- Phone and tablet touch tests for the 10 flows that only had desktop tests (`tests/browser/test_mobile.py`, 30 tests): logging out, setting the goal weight, editing, deleting and noting a weigh-in from the table, deleting a workout, switching to kilograms, choosing a profile picture, filling in the fight card, and reading Insights. Each runs at 360×640, 390×844 and 820×1180 with touch. Flow coverage is now 57 of 57 flow-device pairs (100%); baseline and `docs/user-flows.md` refreshed. Two first-run failures: the profile picture picker (a real bug, fixed above) and a test mistake (the goal test didn't confirm overwriting the already-saved goal).
+- User flow coverage. `tests/flows.toml` lists 19 user flows; browser tests name the flows they prove with `@pytest.mark.flow`, and `tests/flow_coverage.py` records each passing test's flows and device (desktop, or phone/tablet by the emulated screen's shorter side) to `coverage/flows.json`. `tools/coverage/check_flows.py` prints the flow-by-device table and gaps (also to the GitHub Actions run summary), writes `docs/user-flows.md` with `--update`, and fails CI if a pair in `tools/coverage/flow_baseline.json` loses its test. A test naming an unlisted flow stops the run at collection. Starting point: 37 of 57 pairs (65%), with 10 flows untested on phone and tablet. 71 existing tests tagged, plus 11 tests for the tooling.
+
 ## 4.2.0 (2026-11-03)
 
 ### Fixed

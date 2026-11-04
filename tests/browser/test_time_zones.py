@@ -48,27 +48,32 @@ def _show_weekly(page):
 class _TimeZoneFlows:
     OFFSET = "+00:00"
 
+    @pytest.mark.flow("read-weight-charts")
     def test_daily_chart_puts_each_weight_on_its_day(self, weights):
         page = weights()
         last_week = DAYS[-7:]
         assert _chart(page, "weight-chart", "c.data.labels.slice(-1)[0]") == "Nov 4"
         assert _chart(page, "weight-chart", "c.data.datasets[0].data.slice(-7)") == [WEIGHT[d] for d in last_week]
 
+    @pytest.mark.flow("read-weight-charts")
     def test_seven_day_average_uses_the_last_seven_days(self, weights):
         page = weights()
         expected = sum(WEIGHT[d] for d in DAYS[-7:]) / 7
         assert _chart(page, "weight-chart", "c.data.datasets[2].data.slice(-1)[0]") == expected
 
+    @pytest.mark.flow("read-weight-charts")
     def test_rolling_weeks_end_today(self, weights):
         page = weights("rolling")
         _show_weekly(page)
         assert _chart(page, "weekly-chart", "c.data.labels") == ["10/22–10/28", "10/29–11/04"]
 
+    @pytest.mark.flow("read-weight-charts")
     def test_calendar_weeks_run_monday_to_sunday(self, weights):
         page = weights("iso")
         _show_weekly(page)
         assert _chart(page, "weekly-chart", "c.data.labels") == ["10/19–10/25", "10/26–11/01", "11/02–11/08"]
 
+    @pytest.mark.flow("read-weight-table")
     def test_table_lists_each_day_once_newest_first(self, weights):
         page = weights()
         page.locator("#view-toggle-btn").click()
@@ -113,6 +118,7 @@ def _insight(page, label):
     return page.locator(".insight-card", has_text=label).locator(".insight-value")
 
 
+@pytest.mark.flow("read-insights")
 @pytest.mark.browser_context_args(timezone_id="America/New_York")
 def test_largest_weekly_loss_counts_a_week_with_a_25_hour_day(signed_in_page, client):
     seed_weight(client, "2026-10-26", 205.0)
@@ -121,6 +127,7 @@ def test_largest_weekly_loss_counts_a_week_with_a_25_hour_day(signed_in_page, cl
     expect(_insight(_open(signed_in_page, "/"), "Largest Weekly Loss")).not_to_have_text("—")
 
 
+@pytest.mark.flow("read-insights")
 @pytest.mark.browser_context_args(timezone_id="America/New_York")
 def test_daily_fluctuation_counts_a_23_hour_day(signed_in_page, client):
     seed_weight(client, "2026-03-08", 200.0)  # the clocks go forward, so this day has 23 hours
@@ -129,6 +136,7 @@ def test_daily_fluctuation_counts_a_23_hour_day(signed_in_page, client):
     expect(_insight(_open(signed_in_page, "/"), "Avg Daily Fluctuation")).not_to_have_text("—")
 
 
+@pytest.mark.flow("review-workouts")
 @pytest.mark.browser_context_args(timezone_id="America/New_York")
 def test_workouts_this_week_includes_seven_days_late_in_the_evening(signed_in_page, client):
     client.post("/api/workout", json={"date": "2026-10-31", "type": "Yoga", "duration_min": 30, "kcal": 100})

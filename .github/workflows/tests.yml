@@ -74,6 +74,10 @@ jobs:
       - name: Coverage report + guard (fails if coverage dropped below tools/coverage/baseline.json)
         run: npm --prefix tools/coverage run check
 
+      - name: User flow coverage report + guard (fails if a flow covered in tools/coverage/flow_baseline.json lost its test)
+        if: always()
+        run: python tools/coverage/check_flows.py
+
       - name: Upload Python coverage to Codecov
         if: always()
         uses: codecov/codecov-action@v7

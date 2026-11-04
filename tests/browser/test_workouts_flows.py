@@ -50,6 +50,7 @@ def _pick_range(page, value):
 # ── What the page shows ──────────────────────────────────────────────────────
 
 
+@pytest.mark.flow("review-workouts")
 def test_new_account_shows_empty_state(workouts):
     open_workouts, _ = workouts
     page = open_workouts()
@@ -60,6 +61,7 @@ def test_new_account_shows_empty_state(workouts):
     expect(page.locator("#wp-streak")).to_have_css("color", "rgb(60, 120, 255)")
 
 
+@pytest.mark.flow("review-workouts")
 def test_table_groups_workouts_by_day_with_totals_and_note(workouts):
     open_workouts, client = workouts
     _seed_workout(client, TODAY, "Basketball", 30, 260)
@@ -81,6 +83,7 @@ def test_table_groups_workouts_by_day_with_totals_and_note(workouts):
     expect(page.locator("#wp-streak")).to_have_text("1")
 
 
+@pytest.mark.flow("review-workouts")
 def test_day_group_collapses_and_expands(workouts):
     open_workouts, client = workouts
     _seed_workout(client, TODAY, "Yoga", 20, 100)
@@ -92,6 +95,7 @@ def test_day_group_collapses_and_expands(workouts):
     expect(group).to_have_class("wp-date-group")
 
 
+@pytest.mark.flow("review-workouts")
 def test_range_filter_shows_older_days_and_is_remembered(workouts):
     open_workouts, client = workouts
     _seed_workout(client, TODAY, "Yoga", 20, 100)
@@ -110,6 +114,7 @@ def test_range_filter_shows_older_days_and_is_remembered(workouts):
 # ── Logging ──────────────────────────────────────────────────────────────────
 
 
+@pytest.mark.flow("log-workout")
 def test_log_workout_with_day_note(workouts):
     open_workouts, client = workouts
     page = open_workouts()
@@ -139,6 +144,7 @@ def test_log_workout_with_day_note(workouts):
 # ── Deleting ─────────────────────────────────────────────────────────────────
 
 
+@pytest.mark.flow("delete-workout")
 def test_delete_single_workout_from_table_after_confirming(workouts):
     open_workouts, client = workouts
     _seed_workout(client, TODAY, "Yoga", 20, 100)
@@ -155,6 +161,7 @@ def test_delete_single_workout_from_table_after_confirming(workouts):
     assert _saved(client) == []
 
 
+@pytest.mark.flow("delete-workout")
 def test_cancel_delete_keeps_workout(workouts):
     open_workouts, client = workouts
     _seed_workout(client, TODAY, "Yoga", 20, 100)
@@ -179,6 +186,7 @@ def _mark_both_for_removal(page):
     expect(page.locator("#wp-del-checks input[type=checkbox]")).to_have_count(2)
 
 
+@pytest.mark.flow("delete-workout")
 def test_remove_several_and_confirm_all(workouts):
     """Regression for #23: with every box ticked (the default), all are deleted."""
     open_workouts, client = workouts
@@ -192,6 +200,7 @@ def test_remove_several_and_confirm_all(workouts):
     assert _saved(client) == []
 
 
+@pytest.mark.flow("delete-workout")
 def test_remove_several_then_confirm_only_some(workouts):
     """Regression for #23: mark two workouts for removal, untick one in the
     delete-confirm checklist — only the ticked one is deleted."""
@@ -211,6 +220,7 @@ def test_remove_several_then_confirm_only_some(workouts):
 # ── Discard-changes guard ────────────────────────────────────────────────────
 
 
+@pytest.mark.flow("log-workout")
 def test_cancel_with_unsaved_changes_asks_before_discarding(workouts):
     open_workouts, client = workouts
     page = open_workouts()
@@ -232,6 +242,7 @@ def test_cancel_with_unsaved_changes_asks_before_discarding(workouts):
     assert _saved(client) == []
 
 
+@pytest.mark.flow("log-workout")
 def test_cancel_without_changes_closes_immediately(workouts):
     open_workouts, _ = workouts
     page = open_workouts()

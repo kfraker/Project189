@@ -19,6 +19,8 @@ import app as app_module
 from app import app as flask_app
 from db_migrations import run_migrations
 
+pytest_plugins = ["tests.flow_coverage"]
+
 TEST_SCHEMA = "test"
 
 _TABLES = ("workout_day_notes", "workouts", "preferences", "settings", "weights", "users")
