@@ -88,6 +88,7 @@ def main():
     if not RESULT.exists():
         sys.exit("No coverage/flows.json: run the full test suite first.")
     flows = json.loads(RESULT.read_text(encoding="utf-8"))["flows"]
+    sys.stdout.reconfigure(encoding="utf-8")  # the table's ✅ can't print on a cp1252 Windows console
     report = "\n".join(summary(flows))
     print(report)
     if os.environ.get("GITHUB_STEP_SUMMARY"):

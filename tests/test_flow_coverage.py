@@ -2,7 +2,9 @@
 guard that fails when a covered flow loses its test."""
 
 import importlib.util
+import io
 import json
+import sys
 from pathlib import Path
 
 import pytest
@@ -94,3 +96,12 @@ def test_update_accepts_new_coverage_and_writes_the_flow_list(tmp_path, monkeypa
     base, doc = _run_check(tmp_path, monkeypatch, {"desktop": ["t1"], "phone": ["t2"]}, [], ["--update"])
     assert json.loads(base.read_text())["covered"] == ["log-weigh-in/desktop", "log-weigh-in/phone"]
     assert "`t2`" in doc.read_text(encoding="utf-8")
+
+
+def test_report_prints_on_a_windows_console(tmp_path, monkeypatch):
+    """The table's ✅ crashed the report on Windows, whose console encodes cp1252."""
+    raw = io.BytesIO()
+    monkeypatch.setattr("sys.stdout", io.TextIOWrapper(raw, encoding="cp1252"))
+    _run_check(tmp_path, monkeypatch, {"desktop": ["t1"]}, ["log-weigh-in/desktop"])
+    sys.stdout.flush()
+    assert "✅".encode() in raw.getvalue()

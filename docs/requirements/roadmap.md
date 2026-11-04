@@ -26,7 +26,7 @@ Sizes: **S** is about one sitting, **M** is a couple of sittings.
 - **3.1 Formatting and lint** (M). Done: the existing code is cleaned up with no behavior change, and CI fails on new violations.
 
 ## Epic 4: Fast and works on every screen
-*Status: in progress (4.6 proposed).*
+*Status: done.*
 
 - **4.1 Fast first load** (M). Done: Home's download fell from 4.57 MB to 0.69 MB, images are sized to how they're displayed, unneeded downloads are gone, static files are cached, and plates appear whole.
 - **4.2 Performance budget** (S). Done: CI fails if a page's download size, request count or Largest Contentful Paint (2.5 s on emulated 4G) goes past its limit, and tests prove the check trips.
@@ -38,7 +38,7 @@ Sizes: **S** is about one sitting, **M** is a couple of sittings.
   - **4.5a Page dates.** Done: the browser works out every calendar date in the visitor's own time zone. This fixed a Weigh-ins freeze east of UTC, charts and weekly views a day off there, and three clock-change slips. It's tested in four time zones, and a lint rule stops the UTC conversion coming back.
   - **4.5b The server's "today"** (S). Done: Home and Weigh-ins send the visitor's date with their stats requests, and the server uses it when it's within a day of its own. This fixed the Weigh-ins streak dropping to 0 every US evening. Tests pin the server's date to cover the evening case.
 
-- **4.6 Close the phone and tablet flow gaps** (M, proposed). 4.4 found 10 flows tested only on desktop: logging out, setting starting and goal weight, editing, deleting and noting weigh-ins, deleting workouts, settings, profile picture, fight card and Insights. **Done when:** each has a touch test at phone and tablet size, bugs found are fixed or deliberately deferred, and flow coverage reaches 57 of 57.
+- **4.6 Close the phone and tablet flow gaps** (M). Done: the 10 flows 4.4 found tested only on desktop now have touch tests at two phone sizes and a tablet, so flow coverage is 57 of 57. The one bug found, the profile picture picker hanging off phone screens, is fixed.
 
 ## Epic 5: Keeping it running
 - **5.1 Uptime checks and error alerts** (S). **Done when:** an outage or a burst of errors sends an alert, and that's been tested.
