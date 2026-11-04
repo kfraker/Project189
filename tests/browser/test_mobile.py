@@ -76,6 +76,34 @@ def _assert_on_screen_and_tappable(page, selector):
     assert problem is None, f"{selector}: {problem}"
 
 
+def _tap(page, selector):
+    """Scroll `selector` into view, check a finger would land on it, then tap it."""
+    page.locator(selector).scroll_into_view_if_needed()
+    _assert_on_screen_and_tappable(page, selector)
+    page.locator(selector).tap()
+
+
+def _open_menu_item(page, button_id):
+    _tap(page, "#profile-btn")
+    expect(page.locator("#menu-modal")).to_be_visible()
+    _tap(page, f"#{button_id}")
+
+
+def _open_table_row(page, day):
+    """The Weigh-ins table, with `day`'s row in view; returns that row's selector."""
+    _tap(page, "#view-toggle-btn")
+    expect(page.locator("#data-table-wrap")).to_be_visible()
+    return f'tr.daily-row:has(td.cell-weight[data-date="{day}"])'
+
+
+def _weights(client):
+    return {r["date"]: r for r in client.get("/api/weights?range=all").get_json()}
+
+
+def _prefs(client):
+    return client.get("/api/preferences").get_json()
+
+
 def _log_yoga(page, path, scroll=False):
     """Open Log Workout from `path`, pick Yoga and add it. Add Activity must be in view
     straight away unless `scroll` is set, for screens too short to show the whole window."""
@@ -202,6 +230,133 @@ class _MobileFlows:
         page.locator("#mp-footer-add-btn").tap()
         expect(page.locator("#quick-add-modal")).to_be_visible()
         expect(page.locator("#site-cursor")).to_be_hidden()
+
+    # ── Flows that were only tested on desktop (story 4.6) ──
+
+    @pytest.mark.flow("sign-out")
+    def test_log_out_by_touch(self, mobile):
+        open_page, _ = mobile
+        page = open_page()
+        _open_menu_item(page, "menu-logout-btn")
+        page.wait_for_url("**/login")
+        expect(page.get_by_role("link", name="Sign in with Google")).to_be_visible()
+
+    @pytest.mark.flow("set-starting-and-goal-weight")
+    def test_set_goal_weight_by_touch(self, mobile):
+        open_page, client = mobile
+        page = open_page()
+        _tap(page, "#goal-plate")
+        expect(page.locator("#goal-modal")).to_be_visible()
+        _assert_fits_screen(page, "#goal-modal .modal-card")
+        page.locator("#goal-input").fill("180")
+        _tap(page, "#goal-save")
+        _tap(page, "#goal-overwrite-confirm")  # a goal of 189 is already saved
+        expect(page.locator("#goal-modal")).to_be_hidden()
+        expect(page.locator("#goal-lbs-num")).to_have_text("180")
+        assert client.get("/api/settings").get_json()["goal_weight"]["value_lbs"] == 180
+
+    @pytest.mark.flow("edit-weigh-in")
+    def test_edit_a_weigh_in_from_the_table_by_touch(self, mobile):
+        open_page, client = mobile
+        page = open_page("/weights")
+        row = _open_table_row(page, _day(1))
+        _tap(page, f"{row} td.cell-weight")
+        expect(page.locator("#history-modal")).to_be_visible()
+        page.locator("#history-weight").fill("199.5")
+        _tap(page, "#history-save")
+        _tap(page, "#history-overwrite-confirm")
+        expect(page.locator(f"{row} td.cell-weight")).to_contain_text("199.5 lbs")
+        assert _weights(client)[_day(1)]["weight_lbs"] == 199.5
+
+    @pytest.mark.flow("delete-weigh-in")
+    def test_delete_a_weigh_in_by_touch(self, mobile):
+        open_page, client = mobile
+        page = open_page("/weights")
+        row = _open_table_row(page, _day(1))
+        _tap(page, f'{row} button[aria-label="Delete this entry"]')
+        expect(page.locator("#row-delete-modal")).to_be_visible()
+        with page.expect_response(lambda r: r.request.method == "DELETE"):
+            _tap(page, "#row-delete-ok")
+        expect(page.locator("#row-delete-modal")).to_be_hidden()
+        assert _day(1) not in _weights(client)
+
+    @pytest.mark.flow("add-weigh-in-note")
+    def test_add_a_note_by_touch(self, mobile):
+        open_page, client = mobile
+        page = open_page("/weights")
+        row = _open_table_row(page, _day(1))
+        _tap(page, f'{row} button[aria-label="Add note"]')
+        expect(page.locator("#note-popover")).to_be_visible()
+        _assert_fits_screen(page, "#note-popover")
+        page.locator("#note-popover-text").fill("felt great")
+        _tap(page, "#note-popover-save")
+        expect(page.locator("#note-popover")).to_be_hidden()
+        assert _weights(client)[_day(1)]["notes"] == "felt great"
+
+    @pytest.mark.flow("delete-workout")
+    def test_delete_a_workout_by_touch(self, mobile):
+        open_page, client = mobile
+        page = open_page("/workouts")
+        _tap(page, ".wp-row .wp-del-btn")
+        expect(page.locator("#app-confirm-modal")).to_be_visible()
+        with page.expect_response(lambda r: r.request.method == "DELETE"):
+            _tap(page, "#app-confirm-ok")
+        expect(page.locator("#wp-empty")).to_be_visible()
+        assert client.get("/api/workouts").get_json() == []
+
+    @pytest.mark.flow("change-settings")
+    def test_switch_to_kilograms_by_touch(self, mobile):
+        open_page, client = mobile
+        page = open_page()
+        _open_menu_item(page, "menu-settings-btn")
+        expect(page.locator("#settings-modal")).to_be_visible()
+        assert _sideways_overflow(page) <= 1
+        _tap(page, "#prof-kg-btn")
+        with page.expect_response("**/api/preference"):
+            _tap(page, "#settings-save")
+        expect(page.locator("#settings-modal")).to_be_hidden()
+        expect(page.locator(".plate").first).to_have_class("plate kg-primary")
+        assert _prefs(client)["pref_unit"] == "kg"
+
+    @pytest.mark.flow("change-profile-picture")
+    def test_choose_a_profile_picture_by_touch(self, mobile):
+        open_page, client = mobile
+        page = open_page()
+        _open_menu_item(page, "menu-settings-btn")
+        _tap(page, "#change-pic-btn")
+        expect(page.locator("#profile-pic-picker")).to_be_visible()
+        _assert_fits_screen(page, "#profile-pic-picker")  # it was ~644px wide, so Save hung off a phone
+        _tap(page, '.pic-option[data-pic="3"]')
+        with page.expect_response("**/api/preference"):
+            _tap(page, "#pic-save-btn")
+        expect(page.locator("#profile-btn-img")).to_have_attribute("src", "/static/profile3button.png")
+        assert _prefs(client)["pref_profile_pic"] == "3"
+
+    @pytest.mark.flow("edit-fight-card")
+    def test_fill_in_the_fight_card_by_touch(self, mobile):
+        open_page, client = mobile
+        page = open_page()
+        _open_menu_item(page, "menu-profile-btn")
+        expect(page.locator("#fight-card-modal")).to_be_visible()
+        assert _sideways_overflow(page) <= 1
+        page.locator("#fight-name").fill("Test Fighter")
+        _tap(page, "#fight-goal-muscle")
+        with page.expect_response("**/api/preference"):
+            _tap(page, "#fight-card-save")
+        expect(page.locator("#fight-card-modal")).to_be_hidden()
+        expect(page.locator("#lost-plate-label")).to_have_text("GAINED")
+        assert _prefs(client)["fight_goal_mode"] == "muscle"
+
+    @pytest.mark.flow("read-insights")
+    def test_read_insights_by_touch(self, mobile):
+        open_page, _ = mobile
+        page = open_page()
+        _open_menu_item(page, "menu-insights-btn")
+        expect(page.locator("#insights-modal")).to_be_visible()
+        assert _sideways_overflow(page) <= 1
+        expect(page.locator(".insight-card", has_text="Longest Streak").locator(".insight-value")).to_have_text("14")
+        _tap(page, "#insights-close")
+        expect(page.locator("#insights-modal")).to_be_hidden()
 
 
 @pytest.mark.browser_context_args(**SMALL_PHONE)
