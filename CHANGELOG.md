@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## 4.2.1 (2026-11-03)
 
 ### Fixed
 - On phones, the profile picture picker was about 646px wide (four 116px pictures in a row plus padding), so on a 360–390px screen its Save button hung off the right edge. Below 720px wide the pictures now sit in a 2×2 grid with less padding, and the picker is capped at the screen width minus 32px.
