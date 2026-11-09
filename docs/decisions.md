@@ -2,6 +2,10 @@
 
 Key decisions behind Sweat Equity and why they were made. Newest first. Earlier entries were written up afterward from project history.
 
+## Check uptime and errors once a day with GitHub Actions, and add no new services (2026-11-05)
+**Decision:** a scheduled GitHub Action checks the live site once a day and fails if a page is down or returns a server error; GitHub's failure email is the alert. No uptime service (such as UptimeRobot) or error tracker (such as Sentry) is added, and backups rely on Neon.
+**Why:** the app has two regular users, so finding a problem within a day is acceptable, and every extra account is one more thing to secure and maintain. Scheduled jobs are already limited to once a day to save Actions minutes. **Gap:** an outage or error can go unnoticed for up to 24 hours, and errors on pages the check doesn't visit are only seen in Vercel's logs. If that ever matters, UptimeRobot's free plan is the first upgrade.
+
 ## Let the page tell the server what day it is (2026-11-03)
 **Decision:** Home and Weigh-ins send the visitor's local date with their stats requests. The server uses it if it's within a day of its own UTC date, and otherwise uses its own.
 **Why:** "today" depends on where the visitor is, and the server runs in UTC. Storing each user's time zone would need a setting and a migration, and would still be wrong while travelling. The page already knows the right date. A visitor could only change their own stats with it, and the one-day window keeps it to a date that really is "today" somewhere.

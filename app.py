@@ -140,6 +140,23 @@ def login_page():
     return render_template("login.html")
 
 
+@app.route("/health")
+def health():
+    """For the daily uptime check: 200 "ok" if the app can reach its database, otherwise
+    503. Open to anyone, so it says nothing more; the reason goes to the server log."""
+    try:
+        conn = get_db()
+        try:
+            conn.execute("SELECT 1").fetchone()
+        finally:
+            conn.close()
+        body, status = "ok", 200
+    except Exception:
+        app.logger.exception("Health check: database unreachable")
+        body, status = "unavailable", 503
+    return body, status, {"Content-Type": "text/plain; charset=utf-8", "Cache-Control": "no-store"}
+
+
 @app.route("/auth/google")
 def auth_google():
     return oauth.google.authorize_redirect(url_for("auth_google_callback", _external=True))

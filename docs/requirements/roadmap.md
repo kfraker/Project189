@@ -41,8 +41,13 @@ Sizes: **S** is about one sitting, **M** is a couple of sittings.
 - **4.6 Close the phone and tablet flow gaps** (M). Done: the 10 flows 4.4 found tested only on desktop now have touch tests at two phone sizes and a tablet, so flow coverage is 57 of 57. The one bug found, the profile picture picker hanging off phone screens, is fixed.
 
 ## Epic 5: Keeping it running
-- **5.1 Uptime checks and error alerts** (S). **Done when:** an outage or a burst of errors sends an alert, and that's been tested.
-- **5.2 Tested backups** (S). **Done when:** the backup approach is written down and a restore has been proven on a throwaway copy.
+No new accounts or services: checks run on GitHub Actions and backups stay on Neon (see the decision log, 2026-11-05).
+
+- **5.1 Health check** (S). A `/health` address that runs a quick database query and answers "ok", or a 503 error if the database can't be reached. No sign-in needed, never cached, and it gives away no details. Also raises the coverage floor to the latest full run. Done: 8 tests cover the healthy case, the database being down, a failed query and nothing sensitive in the response, and the floor is now 76.0% for page code and 77.4% combined.
+- **5.2 Daily uptime and error check** (S). A GitHub Action runs once a day (and on demand). It checks `/health`, the login page and the other public pages on the live site, and fails if any is down or returns a server error, so GitHub emails the owner. GitHub only runs scheduled and manual workflows from `main`, so the live proof happens at release (5.5). **Done when:** the check passes against the app running locally, and fails against a broken address and a missing page.
+- **5.3 Backup plan** (S, timeboxed spike). Find out what Neon's free plan can restore and how far back, then write a short restore runbook. **Done when:** the runbook is in the repo and the decision log records what's covered and any gap.
+- **5.4 Prove the restore** (S). Restore into a throwaway Neon branch, compare row counts with production, time it, then delete the branch. **Done when:** the result and timing are logged in the runbook.
+- **5.5 Release v4.3.0** (S, needs approval). **Done when:** the release is live, tagged and verified, a manual run of the daily check passes on the live site, and a run pointed at a broken address fails and GitHub's email arrives.
 
 ## Epic 6: Accessibility checks
 - **6.1 Automated accessibility tests** (M). **Done when:** every page is checked automatically against WCAG 2.2 AA in CI, and issues found are fixed or deliberately deferred.
