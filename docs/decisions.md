@@ -2,6 +2,10 @@
 
 Key decisions behind Sweat Equity and why they were made. Newest first. Earlier entries were written up afterward from project history.
 
+## Keep a daily Neon snapshot with a scheduled GitHub Action (2026-11-09)
+**Decision:** a daily GitHub Action replaces the free plan's single Neon snapshot with a fresh one, using a Neon API key scoped to this project and stored as a GitHub secret. Before each release it's also run by hand. It only deletes snapshots it made.
+**Why:** Neon's free plan keeps only 6 hours of history, and its one manual snapshot doesn't renew itself, so a problem noticed the next day couldn't be undone. Daily scheduled snapshots and longer history need a paid plan. A daily encrypted export kept in GitHub was turned down: it would put the production database password in GitHub, and this public repo's Action files can be downloaded by any signed-in GitHub user, so it would rely entirely on the encryption. **Gap:** there's only ever one snapshot. A problem that started more than 6 hours ago and is still unnoticed when the next snapshot runs can't be recovered. The runbook's first step, disabling the workflow, protects the good snapshot once a problem is found.
+
 ## Check uptime and errors once a day with GitHub Actions, and add no new services (2026-11-05)
 **Decision:** a scheduled GitHub Action checks the live site once a day and fails if a page is down or returns a server error; GitHub's failure email is the alert. No uptime service (such as UptimeRobot) or error tracker (such as Sentry) is added, and backups rely on Neon.
 **Why:** the app has two regular users, so finding a problem within a day is acceptable, and every extra account is one more thing to secure and maintain. Scheduled jobs are already limited to once a day to save Actions minutes. **Gap:** an outage or error can go unnoticed for up to 24 hours, and errors on pages the check doesn't visit are only seen in Vercel's logs. If that ever matters, UptimeRobot's free plan is the first upgrade. GitHub also turns off scheduled workflows in a public repo after 60 days without activity; turning it back on in the Actions tab restarts it.

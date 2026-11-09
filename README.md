@@ -182,6 +182,10 @@ Once a day, a GitHub Action ([uptime.yml](.github/workflows/uptime.yml)) visits 
 
 To run it by hand, open **Actions → Uptime check → Run workflow** (an optional address lets you point it somewhere broken to test the email), or locally: `python tools/uptime/check_site.py https://sweatequity.kfraker.dev`. Signed-in pages aren't visited, so errors there show only in Vercel's logs; see the [decision log](docs/decisions.md).
 
+## Backups and restore
+
+Neon keeps every change for 6 hours, so the database can be rewound to any moment in that window. On top of that, a daily GitHub Action ([backup.yml](.github/workflows/backup.yml)) replaces the free plan's single Neon snapshot with a fresh one, so there's always a copy up to a day old, and a failed run emails the owner. The [restore runbook](docs/restore.md) covers what can be recovered, the steps, and the gap: a problem found more than a day after it started can't be undone on the free plan.
+
 ## Database Migrations
 
 Schema changes are managed by a small hand-rolled migration system in `db_migrations/` — no ORM, no external migration library, consistent with the rest of the app's plain-SQL `psycopg` style. Each numbered module (currently just `m0001_baseline.py`) exposes a `VERSION` and an `up(conn)` function; `run_migrations()` (called from `init_db()` on every app startup) applies any migration whose version isn't yet recorded in the `schema_migrations` table, in order. Migrations are forward-only — to make a schema change, add a new `db_migrations/m000N_description.py` file rather than editing an existing one; it'll run automatically the next time the app starts.
@@ -200,12 +204,15 @@ Project189/
 ├── docs/screenshots/           # README images (not deployed)
 ├── docs/requirements/          # Upcoming work as epics and stories
 ├── docs/decisions.md           # Key decisions and why they were made
+├── docs/restore.md             # Backups, what they cover, and how to restore
 ├── pytest.ini / .coveragerc    # Test markers and coverage settings
 ├── codecov.yml                 # Codecov reporting settings
 ├── .github/workflows/tests.yml # CI: full suite + coverage guard on every push
 ├── .github/workflows/uptime.yml # Daily check of the live site; a failure emails the owner
+├── .github/workflows/backup.yml # Daily Neon snapshot of the production database
 ├── tools/coverage/             # Node tooling: page-code coverage, combined report, ratchet
 ├── tools/uptime/check_site.py  # The daily uptime check (standard library only)
+├── tools/backup/snapshot.py    # The daily snapshot job (standard library only)
 ├── tools/sandbox/              # Mock data for the sandbox database
 ├── tools/lint/                 # ESLint and Prettier for the page code
 ├── tools/images/               # Builds the served images from the originals
@@ -292,7 +299,7 @@ First-time setup for browser tests: `python -m playwright install chromium`.
 
 **CI:** every push to `dev`/`main`, and every pull request, runs the full suite on GitHub Actions against a throwaway Postgres (a few minutes). Coverage is uploaded to Codecov. When a browser test fails, screenshots and Playwright traces are attached to the run (`browser-test-failures` artifact; open a trace at https://trace.playwright.dev).
 
-777 tests in all. 503 API/server tests cover all API endpoints (including the Home header stats), sign-in and multi-user isolation, business logic, date-range boundaries, page structure across Home/Weigh-ins/Workouts, and the migration runner, the `/health` endpoint and the daily uptime check script. 274 browser tests cover the user flows on every page, the shell (menu, settings, profile, cursor), each page's lifecycle (restarted 20 times in place without anything piling up), in-page navigation (swaps, Back/Forward, rapid clicks, fallbacks, focus, fades), a 35-step stress test whose pages must look identical to a fresh load, a performance budget, phone and tablet checks, and time zone checks. Tests run in an isolated `test` schema that is wiped before every test, so real data is never touched.
+789 tests in all. 515 API/server tests cover all API endpoints (including the Home header stats), sign-in and multi-user isolation, business logic, date-range boundaries, page structure across Home/Weigh-ins/Workouts, and the migration runner, the `/health` endpoint, the daily uptime check script and the daily backup script. 274 browser tests cover the user flows on every page, the shell (menu, settings, profile, cursor), each page's lifecycle (restarted 20 times in place without anything piling up), in-page navigation (swaps, Back/Forward, rapid clicks, fallbacks, focus, fades), a 35-step stress test whose pages must look identical to a fresh load, a performance budget, phone and tablet checks, and time zone checks. Tests run in an isolated `test` schema that is wiped before every test, so real data is never touched.
 
 **Coverage is measured on every run** (settings in `.coveragerc`, switched on in `pytest.ini`). After any run:
 
