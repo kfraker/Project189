@@ -1,0 +1,29 @@
+# Daily uptime and error check of the live site. A failed run makes GitHub email the owner.
+# Scheduled and manual runs only work once this file is on main (GitHub's rule).
+# The check itself is tools/uptime/check_site.py, tested in tests/test_uptime_check.py.
+name: Uptime check
+
+on:
+  schedule:
+    - cron: "17 13 * * *" # once a day, 13:17 UTC (morning in the US)
+  workflow_dispatch:
+    inputs:
+      base_url:
+        description: "Site to check (point it at a broken address to test the failure email)"
+        default: "https://sweatequity.kfraker.dev"
+        required: true
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Check the live site
+        env:
+          BASE_URL: ${{ inputs.base_url || 'https://sweatequity.kfraker.dev' }}
+        run: python3 tools/uptime/check_site.py "$BASE_URL"
