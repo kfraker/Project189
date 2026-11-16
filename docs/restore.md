@@ -21,6 +21,8 @@ The free plan allows only one manual snapshot, so the job deletes yesterday's be
 2. Work out roughly when the problem started.
 3. If it started **less than 6 hours ago**, use instant restore (below). Otherwise, if it started **before** the time in the snapshot's name, use the snapshot (below). If neither, the data can't be recovered from backups.
 
+> **The production branch is shared.** It holds two databases: `neondb` (Sweat Equity) and `faceless_channels` (the Faceless Channels app). Restores and snapshots cover the whole branch, so restoring onto the production branch rolls **both** back. If only Sweat Equity's data is wrong, restore into a new branch instead and copy just the `neondb` data back, or accept that Faceless Channels loses the same stretch of changes. Backlog #30 moves `faceless_channels` out of this project, which removes the problem.
+
 ## Restore to a moment in the last 6 hours
 
 1. In the [Neon console](https://console.neon.tech), open the project and go to **Backup & restore**.
@@ -59,4 +61,28 @@ To add one without it ever being shown or saved anywhere else, run `gh secret se
 
 ## Proven restore
 
-*Filled in by story 5.4: a restore into a throwaway branch, row counts compared with production, and how long it took.*
+Tested on 2026-11-16 (story 5.4), against production, using a one-off script run through the Neon API with a project-scoped key. Each method restored into a throwaway branch, which was deleted straight afterwards. Production was only read, never changed.
+
+| Method | Restored from | Result | Time to a usable copy |
+|---|---|---|---|
+| Instant restore | Production as it was 5 minutes earlier | Every table matched | 10.7s and 12.7s (two runs) |
+| Daily snapshot | `daily-2026-11-16T0504Z`, taken for the test | Every table matched | 12.7s and 10.7s (two runs) |
+
+"Time to a usable copy" runs from asking Neon for the branch to having counted every row in it. That covers creating the branch and its compute, the cold start, and connecting.
+
+Row counts in Sweat Equity's database (`neondb`), production versus restored:
+
+| Table | Rows |
+|---|---|
+| preferences | 63 |
+| weights | 15 |
+| settings | 4 |
+| workouts | 4 |
+| users | 2 |
+| workout_day_notes | 2 |
+| schema_migrations | 1 |
+| **Total** | **91** |
+
+The `faceless_channels` database on the same branch (16 tables, 31 rows) also matched both times. The first run found it by accident: the script counted the first database it found, which was the wrong one. That's how the shared-branch warning above came to light, so the second run counted every database.
+
+The snapshot taken for the test was left in place. The nightly job replaces it, since its name starts with `daily-`.
