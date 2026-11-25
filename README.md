@@ -1,6 +1,6 @@
 # Sweat Equity
 
-![Version](https://img.shields.io/badge/version-4.2.1-ff2d78)
+![Version](https://img.shields.io/badge/version-4.3.0-ff2d78)
 [![Tests](https://github.com/kfraker/Project189/actions/workflows/tests.yml/badge.svg?branch=main)](https://github.com/kfraker/Project189/actions/workflows/tests.yml?query=branch%3Amain)
 [![Coverage](https://codecov.io/gh/kfraker/Project189/branch/main/graph/badge.svg)](https://app.codecov.io/gh/kfraker/Project189/tree/main)
 
@@ -24,7 +24,7 @@ A retro-styled weight and workout tracker built with Flask and Postgres (Neon). 
 - **New CI pipeline and tracked testing:** every push runs API and browser tests on GitHub Actions, with Python and JavaScript coverage reported to Codecov and guarded against drops. See [Running Tests & Viewing Coverage](#running-tests--viewing-coverage).
 - **New look:** redrawn backgrounds for Home, Weigh-ins and Workouts.
 
-v4.1 added a separate [database sandbox](#database-sandbox), a published [roadmap](docs/requirements/roadmap.md) and [decision log](docs/decisions.md), and dependency alerts. v4.2 added a [performance budget](#running-tests--viewing-coverage), phone, tablet and time zone tests, and fixes they found, including a Weigh-ins freeze for visitors east of UTC. Full details are in the [changelog](CHANGELOG.md).
+v4.1 added a separate [database sandbox](#database-sandbox), a published [roadmap](docs/requirements/roadmap.md) and [decision log](docs/decisions.md), and dependency alerts. v4.2 added a [performance budget](#running-tests--viewing-coverage), phone, tablet and time zone tests, and fixes they found, including a Weigh-ins freeze for visitors east of UTC. v4.3 added a `/health` address, a [daily uptime and error check](#uptime-and-error-check), and [daily database backups](#backups-and-restore) with a tested restore. Full details are in the [changelog](CHANGELOG.md).
 
 ## Roadmap
 
@@ -176,6 +176,16 @@ Each release gets a version tag, a GitHub Release and a [changelog](CHANGELOG.md
 
 Database migrations only go forward, so if a release changed the database, check that the older code still works with it before rolling back.
 
+## Uptime and error check
+
+Once a day, a GitHub Action ([uptime.yml](.github/workflows/uptime.yml)) visits the live site and checks everything a signed-out visitor can reach: `/health` (the app and its database), the home and login pages, the stylesheet, the sign-in redirects on the other pages, the API refusing signed-out requests, and Google sign-in starting. If anything is down, returns the wrong status or a server error, or is missing its sign-in button, the run fails and GitHub emails the owner. The log names the failing check and status, never the page's content.
+
+To run it by hand, open **Actions → Uptime check → Run workflow** (an optional address lets you point it somewhere broken to test the email), or locally: `python tools/uptime/check_site.py https://sweatequity.kfraker.dev`. Signed-in pages aren't visited, so errors there show only in Vercel's logs; see the [decision log](docs/decisions.md).
+
+## Backups and restore
+
+Neon keeps every change for 6 hours, so the database can be rewound to any moment in that window. On top of that, a daily GitHub Action ([backup.yml](.github/workflows/backup.yml)) replaces the free plan's single Neon snapshot with a fresh one, so there's always a copy up to a day old, and a failed run emails the owner. The [restore runbook](docs/restore.md) covers what can be recovered, the steps, and the gap: a problem found more than a day after it started can't be undone on the free plan.
+
 ## Database Migrations
 
 Schema changes are managed by a small hand-rolled migration system in `db_migrations/` — no ORM, no external migration library, consistent with the rest of the app's plain-SQL `psycopg` style. Each numbered module (currently just `m0001_baseline.py`) exposes a `VERSION` and an `up(conn)` function; `run_migrations()` (called from `init_db()` on every app startup) applies any migration whose version isn't yet recorded in the `schema_migrations` table, in order. Migrations are forward-only — to make a schema change, add a new `db_migrations/m000N_description.py` file rather than editing an existing one; it'll run automatically the next time the app starts.
@@ -194,10 +204,15 @@ Project189/
 ├── docs/screenshots/           # README images (not deployed)
 ├── docs/requirements/          # Upcoming work as epics and stories
 ├── docs/decisions.md           # Key decisions and why they were made
+├── docs/restore.md             # Backups, what they cover, and how to restore
 ├── pytest.ini / .coveragerc    # Test markers and coverage settings
 ├── codecov.yml                 # Codecov reporting settings
 ├── .github/workflows/tests.yml # CI: full suite + coverage guard on every push
+├── .github/workflows/uptime.yml # Daily check of the live site; a failure emails the owner
+├── .github/workflows/backup.yml # Daily Neon snapshot of the production database
 ├── tools/coverage/             # Node tooling: page-code coverage, combined report, ratchet
+├── tools/uptime/check_site.py  # The daily uptime check (standard library only)
+├── tools/backup/snapshot.py    # The daily snapshot job (standard library only)
 ├── tools/sandbox/              # Mock data for the sandbox database
 ├── tools/lint/                 # ESLint and Prettier for the page code
 ├── tools/images/               # Builds the served images from the originals
@@ -249,6 +264,7 @@ Project189/
 | `GET` | `/` | Home dashboard |
 | `GET` | `/weights` | Weigh-ins page (charts + table) |
 | `GET` | `/workouts` | Workout tracking page |
+| `GET` | `/health` | Uptime check, no sign-in needed: `ok` (200) if the database is reachable, otherwise `unavailable` (503). Never cached; failure details go only to the server log |
 | `GET` | `/api/weights?range=7d` | Fetch weight entries for a range (`7d`, `30d`, `90d`, `1y`, `all`, or `custom&days=N`) |
 | `POST` | `/api/weight` | Log or overwrite a weight entry |
 | `DELETE` | `/api/weight/<date>` | Delete an entire entry (weight + note) by date |
@@ -283,7 +299,7 @@ First-time setup for browser tests: `python -m playwright install chromium`.
 
 **CI:** every push to `dev`/`main`, and every pull request, runs the full suite on GitHub Actions against a throwaway Postgres (a few minutes). Coverage is uploaded to Codecov. When a browser test fails, screenshots and Playwright traces are attached to the run (`browser-test-failures` artifact; open a trace at https://trace.playwright.dev).
 
-757 tests in all. 483 API/server tests cover all API endpoints (including the Home header stats), sign-in and multi-user isolation, business logic, date-range boundaries, page structure across Home/Weigh-ins/Workouts, and the migration runner. 274 browser tests cover the user flows on every page, the shell (menu, settings, profile, cursor), each page's lifecycle (restarted 20 times in place without anything piling up), in-page navigation (swaps, Back/Forward, rapid clicks, fallbacks, focus, fades), a 35-step stress test whose pages must look identical to a fresh load, a performance budget, phone and tablet checks, and time zone checks. Tests run in an isolated `test` schema that is wiped before every test, so real data is never touched.
+789 tests in all. 515 API/server tests cover all API endpoints (including the Home header stats), sign-in and multi-user isolation, business logic, date-range boundaries, page structure across Home/Weigh-ins/Workouts, and the migration runner, the `/health` endpoint, the daily uptime check script and the daily backup script. 274 browser tests cover the user flows on every page, the shell (menu, settings, profile, cursor), each page's lifecycle (restarted 20 times in place without anything piling up), in-page navigation (swaps, Back/Forward, rapid clicks, fallbacks, focus, fades), a 35-step stress test whose pages must look identical to a fresh load, a performance budget, phone and tablet checks, and time zone checks. Tests run in an isolated `test` schema that is wiped before every test, so real data is never touched.
 
 **Coverage is measured on every run** (settings in `.coveragerc`, switched on in `pytest.ini`). After any run:
 
@@ -300,7 +316,7 @@ One-time setup (needs Node.js): `npm install --prefix tools/coverage`.
 
 **All code in one report:** after a test run, `npm --prefix tools/coverage run report` merges Python and page-code coverage into `coverage/all-html/index.html`, one table with a single combined total. CI builds the same report on every push (in the `coverage-report` artifact), and Codecov shows both halves as the `python` and `javascript` flags.
 
-**Coverage guard (ratchet):** `tools/coverage/baseline.json` records line coverage for Python, page code and combined. After the full test run, CI runs `npm --prefix tools/coverage run check`, which **fails the build if any of the three drops more than 0.5 points** below the baseline. Coverage can only go up. When it does (or a drop is intentional, e.g. deleting well-tested code), refresh the baseline after a full local run with `npm --prefix tools/coverage run baseline` and commit the file. Codecov flags drops of more than 0.5% on each commit as well. Current baseline (2026-11-02): 99.1% of Python lines, 75.4% of page-code lines, 76.7% combined. Page-code coverage read 84.5% before the code was formatted, because compressed lines counted as covered if a test touched any part of them. The tests didn't change; the measurement became more accurate.
+**Coverage guard (ratchet):** `tools/coverage/baseline.json` records line coverage for Python, page code and combined. After the full test run, CI runs `npm --prefix tools/coverage run check`, which **fails the build if any of the three drops more than 0.5 points** below the baseline. Coverage can only go up. When it does (or a drop is intentional, e.g. deleting well-tested code), refresh the baseline after a full local run with `npm --prefix tools/coverage run baseline` and commit the file. Codecov flags drops of more than 0.5% on each commit as well. Current baseline (2026-11-05): 99.1% of Python lines, 76.0% of page-code lines, 77.4% combined. Page-code coverage read 84.5% before the code was formatted, because compressed lines counted as covered if a test touched any part of them. The tests didn't change; the measurement became more accurate.
 
 **Phone and tablet:** `tests/browser/test_mobile.py` runs at a small phone (360×640), a phone (390×844) and a tablet (820×1180) with touch on. On each it checks for sideways scrolling, that nav, footer and window buttons can be tapped, that windows fit and close, and that every user flow works by touch, from logging a weigh-in to settings, the fight card and Insights. It also checks that the desktop custom cursor stays hidden after a tap. A phone turned sideways (640×360) checks that the Log Workout window scrolls to reach its buttons. These run in Chromium's phone emulation, not on real devices.
 

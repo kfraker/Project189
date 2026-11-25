@@ -1,0 +1,32 @@
+# Daily Neon snapshot of the production database. A failed run makes GitHub email the owner.
+# Run it by hand before a release, too (Actions > Daily backup > Run workflow).
+# Scheduled and manual runs only work once this file is on main (GitHub's rule).
+# The job itself is tools/backup/snapshot.py, tested in tests/test_backup_snapshot.py.
+# Restoring is in docs/restore.md.
+name: Daily backup
+
+on:
+  schedule:
+    - cron: "41 7 * * *" # once a day, 07:41 UTC (the middle of the night in the US)
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: backup # never two at once: each one deletes the previous snapshot
+  cancel-in-progress: false
+
+jobs:
+  snapshot:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Replace the daily snapshot
+        env:
+          NEON_API_KEY: ${{ secrets.NEON_API_KEY }}
+          NEON_PROJECT_ID: ${{ secrets.NEON_PROJECT_ID }}
+          NEON_BRANCH_ID: ${{ secrets.NEON_BRANCH_ID }}
+        run: python3 tools/backup/snapshot.py
