@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## 4.3.0 (2026-11-25)
 
 ### Added
 - `GET /health` for the upcoming daily uptime check. It opens a database connection and runs `SELECT 1`, returning `ok` (200) or `unavailable` (503) as `text/plain` with `Cache-Control: no-store`. It needs no sign-in, sets no cookie, and keeps failure details out of the response; they go to the server log (`app.logger.exception`). `tests/test_health.py` (8 tests) covers the healthy case, a refused connection, a failed query (the connection is still closed), HEAD requests, and no connection details, error text or cookies in the response.
